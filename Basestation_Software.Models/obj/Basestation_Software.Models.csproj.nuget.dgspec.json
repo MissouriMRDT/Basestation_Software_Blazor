@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/workspaces/Basestation_Software/Basestation_Software.Models/Basestation_Software.Models.csproj": {}
+    "/workspaces/Basestation_Software_Blazor/Basestation_Software.Models/Basestation_Software.Models.csproj": {}
   },
   "projects": {
-    "/workspaces/Basestation_Software/Basestation_Software.Models/Basestation_Software.Models.csproj": {
+    "/workspaces/Basestation_Software_Blazor/Basestation_Software.Models/Basestation_Software.Models.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/workspaces/Basestation_Software/Basestation_Software.Models/Basestation_Software.Models.csproj",
+        "projectUniqueName": "/workspaces/Basestation_Software_Blazor/Basestation_Software.Models/Basestation_Software.Models.csproj",
         "projectName": "Basestation_Software.Models",
-        "projectPath": "/workspaces/Basestation_Software/Basestation_Software.Models/Basestation_Software.Models.csproj",
+        "projectPath": "/workspaces/Basestation_Software_Blazor/Basestation_Software.Models/Basestation_Software.Models.csproj",
         "packagesPath": "/root/.nuget/packages/",
-        "outputPath": "/workspaces/Basestation_Software/Basestation_Software.Models/obj/",
+        "outputPath": "/workspaces/Basestation_Software_Blazor/Basestation_Software.Models/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/root/.nuget/NuGet/NuGet.Config"

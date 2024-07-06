@@ -9,63 +9,63 @@ build_property.EnforceExtendedAnalyzerRules =
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = Basestation_Software.Web
 build_property.RootNamespace = Basestation_Software.Web
-build_property.ProjectDir = /workspaces/Basestation_Software/Basestation_Software.Web/
+build_property.ProjectDir = /workspaces/Basestation_Software_Blazor/Basestation_Software.Web/
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
 build_property.RazorLangVersion = 8.0
 build_property.SupportLocalizedComponentNames = 
 build_property.GenerateRazorMetadataSourceChecksumAttributes = 
-build_property.MSBuildProjectDirectory = /workspaces/Basestation_Software/Basestation_Software.Web
+build_property.MSBuildProjectDirectory = /workspaces/Basestation_Software_Blazor/Basestation_Software.Web
 build_property._RazorSourceGeneratorDebug = 
 
-[/workspaces/Basestation_Software/Basestation_Software.Web/Core/App.razor]
+[/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/App.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29yZS9BcHAucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/workspaces/Basestation_Software/Basestation_Software.Web/Core/Components/Map.razor]
+[/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/Components/Map.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29yZS9Db21wb25lbnRzL01hcC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/workspaces/Basestation_Software/Basestation_Software.Web/Core/Components/TaskTimer.razor]
+[/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/Components/TaskTimer.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29yZS9Db21wb25lbnRzL1Rhc2tUaW1lci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/workspaces/Basestation_Software/Basestation_Software.Web/Core/Components/Waypoints.razor]
+[/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/Components/Waypoints.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29yZS9Db21wb25lbnRzL1dheXBvaW50cy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/workspaces/Basestation_Software/Basestation_Software.Web/Core/Layout/NavMenu.razor]
+[/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/Layout/NavMenu.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29yZS9MYXlvdXQvTmF2TWVudS5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/workspaces/Basestation_Software/Basestation_Software.Web/Core/Pages/Error.razor]
+[/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/Pages/Error.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29yZS9QYWdlcy9FcnJvci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/workspaces/Basestation_Software/Basestation_Software.Web/Core/Pages/RAM.razor]
+[/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/Pages/RAM.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29yZS9QYWdlcy9SQU0ucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/workspaces/Basestation_Software/Basestation_Software.Web/Core/Pages/RED.razor]
+[/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/Pages/RED.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29yZS9QYWdlcy9SRUQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/workspaces/Basestation_Software/Basestation_Software.Web/Core/Pages/RID.razor]
+[/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/Pages/RID.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29yZS9QYWdlcy9SSUQucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/workspaces/Basestation_Software/Basestation_Software.Web/Core/Pages/RON.razor]
+[/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/Pages/RON.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29yZS9QYWdlcy9ST04ucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/workspaces/Basestation_Software/Basestation_Software.Web/Core/Routes.razor]
+[/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/Routes.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29yZS9Sb3V0ZXMucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[/workspaces/Basestation_Software/Basestation_Software.Web/Core/_Imports.razor]
+[/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/_Imports.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29yZS9fSW1wb3J0cy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
-[/workspaces/Basestation_Software/Basestation_Software.Web/Core/Layout/MainLayout.razor]
+[/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/Layout/MainLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29yZS9MYXlvdXQvTWFpbkxheW91dC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = b-tcxvfpzedq

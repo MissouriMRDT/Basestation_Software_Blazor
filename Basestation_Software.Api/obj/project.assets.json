@@ -7116,11 +7116,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "/workspaces/Basestation_Software/Basestation_Software.Api/Basestation_Software.Api.csproj",
+      "projectUniqueName": "/workspaces/Basestation_Software_Blazor/Basestation_Software.Api/Basestation_Software.Api.csproj",
       "projectName": "Basestation_Software.Api",
-      "projectPath": "/workspaces/Basestation_Software/Basestation_Software.Api/Basestation_Software.Api.csproj",
+      "projectPath": "/workspaces/Basestation_Software_Blazor/Basestation_Software.Api/Basestation_Software.Api.csproj",
       "packagesPath": "/root/.nuget/packages/",
-      "outputPath": "/workspaces/Basestation_Software/Basestation_Software.Api/obj/",
+      "outputPath": "/workspaces/Basestation_Software_Blazor/Basestation_Software.Api/obj/",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "/root/.nuget/NuGet/NuGet.Config"
@@ -7135,8 +7135,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "/workspaces/Basestation_Software/Basestation_Software.Models/Basestation_Software.Models.csproj": {
-              "projectPath": "/workspaces/Basestation_Software/Basestation_Software.Models/Basestation_Software.Models.csproj"
+            "/workspaces/Basestation_Software_Blazor/Basestation_Software.Models/Basestation_Software.Models.csproj": {
+              "projectPath": "/workspaces/Basestation_Software_Blazor/Basestation_Software.Models/Basestation_Software.Models.csproj"
             }
           }
         }

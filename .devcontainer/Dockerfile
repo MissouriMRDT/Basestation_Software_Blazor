@@ -1,0 +1,21 @@
+FROM ubuntu:oracular-20240617
+
+# Set Non-Interactive Mode
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Set Timezone
+ARG TZ="America/Chicago"
+RUN echo "${TZ}" > /etc/localtime && \
+    echo "${TZ}" > /etc/timezone
+
+# Install Required Ubuntu Packages
+RUN apt-get update && apt-get install --no-install-recommends -y dotnet-sdk-8.0 \
+    python3 python-is-python3 gnome-keyring sqlite3 nano net-tools git ssh
+
+# Set Labels
+LABEL authors="Missouri S&T Mars Rover Design Team"
+LABEL maintainer="Mars Rover Design Team <marsrover@mst.edu>"
+LABEL org.opencontainers.image.source=https://github.com/missourimrdt/basestation_software
+LABEL org.opencontainers.image.licenses=GPL-3.0-only
+LABEL org.opencontainers.image.version="v0.0.1"
+LABEL org.opencontainers.image.description="Docker Image for Ubuntu Blazor Server Development"

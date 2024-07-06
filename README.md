@@ -92,8 +92,8 @@ In Blazor WASM, the application runs in the browser using WebAssembly. The entir
    git clone https://github.com/your-username/your-repo.git
    cd your-repo
    ```
-
-2. Open in the Devcontainer
+2. Open the workspace.
+3. Open in the Devcontainer
 
 ### Running Basestation_Software
 
