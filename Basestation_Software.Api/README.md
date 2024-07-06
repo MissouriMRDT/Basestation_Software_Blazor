@@ -1,6 +1,4 @@
-Sure, here's a README.md file for your .NET Web API project:
 
-```markdown
 # .NET Web API with SQLite
 
 This is a .NET Web API project that uses SQLite as its database. The project demonstrates how to use Entity Framework Core (EF Core) to manage database migrations and build a database structure using code.
@@ -113,10 +111,3 @@ The application will start and be accessible at `http://localhost:5000`.
 ## Contributing
 
 Contributions are welcome! Please submit a pull request or open an issue to discuss any changes or improvements.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-```
-
-This README provides an overview of setting up and running the project, as well as an explanation of database migrations and code-first development with EF Core and SQLite. Feel free to adjust any details to better fit your specific project.
