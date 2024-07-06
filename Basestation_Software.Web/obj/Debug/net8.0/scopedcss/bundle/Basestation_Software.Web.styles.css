@@ -1,4 +1,5 @@
 @import '_content/Blazored.Toast/Blazored.Toast.bundle.scp.css';
+@import '_content/LeafletForBlazor/LeafletForBlazor.bundle.scp.css';
 
 /* _content/Basestation_Software.Web/Core/Layout/MainLayout.razor.rz.scp.css */
 .page[b-tcxvfpzedq] {

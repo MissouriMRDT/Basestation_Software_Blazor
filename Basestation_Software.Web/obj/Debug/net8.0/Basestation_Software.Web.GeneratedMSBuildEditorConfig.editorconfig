@@ -18,6 +18,10 @@ build_property.GenerateRazorMetadataSourceChecksumAttributes =
 build_property.MSBuildProjectDirectory = /workspaces/Basestation_Software_Blazor/Basestation_Software.Web
 build_property._RazorSourceGeneratorDebug = 
 
+[/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/App.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29yZS9BcHAucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/Components/RoverMap.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29yZS9Db21wb25lbnRzL1JvdmVyTWFwLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
@@ -65,11 +69,3 @@ build_metadata.AdditionalFiles.CssScope =
 [/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/Layout/MainLayout.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29yZS9MYXlvdXQvTWFpbkxheW91dC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = b-tcxvfpzedq
-
-[/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/Pages/_Hosts.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Q29yZS9QYWdlcy9fSG9zdHMuY3NodG1s
-build_metadata.AdditionalFiles.CssScope = 
-
-[/workspaces/Basestation_Software_Blazor/Basestation_Software.Web/Core/Pages/_Layout.cshtml]
-build_metadata.AdditionalFiles.TargetPath = Q29yZS9QYWdlcy9fTGF5b3V0LmNzaHRtbA==
-build_metadata.AdditionalFiles.CssScope = 

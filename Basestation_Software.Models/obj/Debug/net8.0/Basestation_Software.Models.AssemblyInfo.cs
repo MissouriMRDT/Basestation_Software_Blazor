@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Basestation_Software.Models")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5467524391648d8970a10fd7b5dbd0b0dca19a4d")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e7e9580e0313f3e7e2b1659fb64eb926ea36ebb2")]
 [assembly: System.Reflection.AssemblyProductAttribute("Basestation_Software.Models")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Basestation_Software.Models")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

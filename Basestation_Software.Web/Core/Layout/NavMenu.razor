@@ -1,6 +1,6 @@
 ﻿@rendermode InteractiveServer
 @inject NavigationManager UriHelper
-@inject IJSRuntime JSRuntime
+@inject IJSRuntime _JSRuntime
 @inject CookieService _CookieService
 
 <link rel="stylesheet" href="_content/Radzen.Blazor/css/@_radzenTheme" />
@@ -95,11 +95,11 @@
             theme = "dark";
         }
 
-        await JSRuntime.InvokeVoidAsync( "changeTheme", theme );
+        await _JSRuntime.InvokeVoidAsync( "changeTheme", theme );
         await _CookieService.SetValue("theme", theme);
         await InvokeAsync( StateHasChanged );
     }
-    
+
     string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
 
     void ToggleNavMenu()

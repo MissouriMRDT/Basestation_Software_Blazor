@@ -28,6 +28,31 @@
           "build/_._": {}
         }
       },
+      "LeafletForBlazor/2.0.6.8": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.AspNetCore.Components.Web": "7.0.0"
+        },
+        "compile": {
+          "lib/net7.0/LeafletForBlazor.dll": {}
+        },
+        "runtime": {
+          "lib/net7.0/LeafletForBlazor.dll": {}
+        },
+        "contentFiles": {
+          "contentFiles/any/net7.0/map_color.ico": {
+            "buildAction": "Content",
+            "codeLanguage": "any",
+            "copyToOutput": false
+          }
+        },
+        "build": {
+          "buildTransitive/LeafletForBlazor.props": {}
+        },
+        "buildMultiTargeting": {
+          "buildMultiTargeting/LeafletForBlazor.props": {}
+        }
+      },
       "Microsoft.AspNetCore.Authorization/8.0.2": {
         "type": "package",
         "dependencies": {
@@ -366,6 +391,52 @@
         "tool/runtimes/osx-x64/native/ClearScriptV8.osx-x64.dylib",
         "tool/runtimes/win-x64/native/ClearScriptV8.win-x64.dll",
         "tool/runtimes/win-x86/native/ClearScriptV8.win-x86.dll"
+      ]
+    },
+    "LeafletForBlazor/2.0.6.8": {
+      "sha512": "6wG5aZsDWATsPmpDbZZmZ7kruq3vltl2odcMKYvkNbjzT1XuMPgg3SaUXlMVjXTkSmtbzsQTvgwYyRio/cAeIg==",
+      "type": "package",
+      "path": "leafletforblazor/2.0.6.8",
+      "files": [
+        ".nupkg.metadata",
+        ".signature.p7s",
+        "License (2).md",
+        "Readme.md",
+        "build/LeafletForBlazor.props",
+        "build/Microsoft.AspNetCore.StaticWebAssets.props",
+        "buildMultiTargeting/LeafletForBlazor.props",
+        "buildTransitive/LeafletForBlazor.props",
+        "content/map_color.ico",
+        "contentFiles/any/net7.0/map_color.ico",
+        "leafletforblazor.2.0.6.8.nupkg.sha512",
+        "leafletforblazor.nuspec",
+        "lib/net7.0/LeafletForBlazor.dll",
+        "map_color.png",
+        "staticwebassets/LeafletForBlazor.bundle.scp.css",
+        "staticwebassets/LeafletMapFunctionalities.js",
+        "staticwebassets/RealTime/Map.js",
+        "staticwebassets/RealTime/geojson/fromObject.js",
+        "staticwebassets/RealTime/geometry/point.js",
+        "staticwebassets/RealTime/geometry/points.js",
+        "staticwebassets/RealTime/geometry/polygons.js",
+        "staticwebassets/RealTime/geometry/polylines.js",
+        "staticwebassets/RealTime/helper/felicia.js",
+        "staticwebassets/RealTime/layers/basemap.js",
+        "staticwebassets/RealTime/layers/geometricLayers.js",
+        "staticwebassets/background.png",
+        "staticwebassets/basemap_layers.js",
+        "staticwebassets/create_on_the_fly_css.js",
+        "staticwebassets/custom_map_controls.js",
+        "staticwebassets/docs/images/map000test.png",
+        "staticwebassets/esri_interops.js",
+        "staticwebassets/helper.js",
+        "staticwebassets/other_overlays.js",
+        "staticwebassets/plugins.js",
+        "staticwebassets/plugins/Leaflet.LinearMeasurement.css",
+        "staticwebassets/plugins/Leaflet.LinearMeasurement.js",
+        "staticwebassets/plugins/easyPrint.js",
+        "staticwebassets/plugins/geolet.js",
+        "staticwebassets/plugins/testare.js"
       ]
     },
     "Microsoft.AspNetCore.Authorization/8.0.2": {
@@ -889,6 +960,7 @@
     "net8.0": [
       "Basestation_Software.Models >= 1.0.0",
       "Blazored.Toast >= 4.2.1",
+      "LeafletForBlazor >= 2.0.6.8",
       "Microsoft.AspNetCore.Components.WebAssembly.Server >= 8.0.6",
       "Radzen.Blazor >= 4.33.3"
     ]
@@ -937,6 +1009,10 @@
           "Blazored.Toast": {
             "target": "Package",
             "version": "[4.2.1, )"
+          },
+          "LeafletForBlazor": {
+            "target": "Package",
+            "version": "[2.0.6.8, )"
           },
           "Microsoft.AspNetCore.Components.WebAssembly.Server": {
             "target": "Package",
