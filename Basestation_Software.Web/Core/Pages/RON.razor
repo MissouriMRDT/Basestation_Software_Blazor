@@ -50,7 +50,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-
+        await InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()

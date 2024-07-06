@@ -1,4 +1,4 @@
-@rendermode InteractiveWebAssembly
+@rendermode InteractiveServer
 
 @if (!_dataLoaded)
 {
@@ -26,8 +26,7 @@ else
             <h6 class="card-subtitle">View waypoints and rover position.</h6>
         </div>
         <div class="card-body">
-            <div id="map" style="height: 300px; position: relative;">
-            </div>
+             <RealTimeMap height="460px" width="620px"></RealTimeMap>
         </div>
     </div>
 }
@@ -48,7 +47,7 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        
+        await InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()

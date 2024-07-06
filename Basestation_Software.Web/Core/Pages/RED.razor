@@ -11,7 +11,7 @@
         <div class="col-md-5">
             <div class="row-5 mb-4">
                 <div class="col-12">
-                    <Map />
+                    <RoverMap />
                 </div>
             </div>
             <div class="row flex-grow-1">
@@ -44,7 +44,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-
+        await InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()
