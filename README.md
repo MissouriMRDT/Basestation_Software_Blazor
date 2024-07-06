@@ -1,6 +1,3 @@
-Here's a comprehensive README.md file for the entire project:
-
-```markdown
 # Basestation Software
 
 Basestation Software is a multi-tier application designed to manage and interact with a SQLite database using a REST API, a class library for object models, and a Blazor web application for the frontend. The project is structured into three main components:
