@@ -1,0 +1,12 @@
+/workspaces/Basestation_Software/Basestation_Software.Models/bin/Debug/net8.0/Basestation_Software.Models.deps.json
+/workspaces/Basestation_Software/Basestation_Software.Models/bin/Debug/net8.0/Basestation_Software.Models.dll
+/workspaces/Basestation_Software/Basestation_Software.Models/bin/Debug/net8.0/Basestation_Software.Models.pdb
+/workspaces/Basestation_Software/Basestation_Software.Models/obj/Debug/net8.0/Basestation_Software.Models.GeneratedMSBuildEditorConfig.editorconfig
+/workspaces/Basestation_Software/Basestation_Software.Models/obj/Debug/net8.0/Basestation_Software.Models.AssemblyInfoInputs.cache
+/workspaces/Basestation_Software/Basestation_Software.Models/obj/Debug/net8.0/Basestation_Software.Models.AssemblyInfo.cs
+/workspaces/Basestation_Software/Basestation_Software.Models/obj/Debug/net8.0/Basestation_Software.Models.csproj.CoreCompileInputs.cache
+/workspaces/Basestation_Software/Basestation_Software.Models/obj/Debug/net8.0/Basestation_Software.Models.sourcelink.json
+/workspaces/Basestation_Software/Basestation_Software.Models/obj/Debug/net8.0/Basestation_Software.Models.dll
+/workspaces/Basestation_Software/Basestation_Software.Models/obj/Debug/net8.0/refint/Basestation_Software.Models.dll
+/workspaces/Basestation_Software/Basestation_Software.Models/obj/Debug/net8.0/Basestation_Software.Models.pdb
+/workspaces/Basestation_Software/Basestation_Software.Models/obj/Debug/net8.0/ref/Basestation_Software.Models.dll

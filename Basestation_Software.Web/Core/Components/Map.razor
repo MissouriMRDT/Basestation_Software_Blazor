@@ -1,0 +1,58 @@
+@rendermode InteractiveWebAssembly
+
+@if (!_dataLoaded)
+{
+    <div class="row">
+        <div class="spinner-border text-dark" role="status">
+</div>
+        <div class="col-1">
+            <h3>Loading...</h3>
+        </div>
+    </div>
+}
+else
+{
+    <style>
+        .scrollable {
+            max-height: 50vh; 
+            overflow-y: auto;
+            display: block;
+        }
+    </style>
+
+    <div class="card full-height">
+        <div class="card-header">
+            <h5>Map</h5>
+            <h6 class="card-subtitle">View waypoints and rover position.</h6>
+        </div>
+        <div class="card-body">
+            <div id="map" style="height: 300px; position: relative;">
+            </div>
+        </div>
+    </div>
+}
+
+
+@code
+{
+    // Declare page member variables.
+
+    // Flags.
+    private bool _dataLoaded = false;
+
+    protected override void OnInitialized()
+    {
+        // Create some timers.
+        _dataLoaded = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        
+    }
+
+    public void Dispose()
+    {
+
+    }
+}

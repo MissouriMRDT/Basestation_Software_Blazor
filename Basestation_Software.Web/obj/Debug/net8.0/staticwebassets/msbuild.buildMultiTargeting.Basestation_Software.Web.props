@@ -1,0 +1,3 @@
+﻿<Project>
+  <Import Project="../build/Basestation_Software.Web.props" />
+</Project>

@@ -1,0 +1,113 @@
+﻿@rendermode InteractiveServer
+@inject NavigationManager UriHelper
+@inject IJSRuntime JSRuntime
+@inject CookieService _CookieService
+
+<link rel="stylesheet" href="_content/Radzen.Blazor/css/@_radzenTheme" />
+<nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3 mat-glass shadow-sm  fixed-top">
+    <div class="container">
+        <a class="navbar-brand"><img src="@_image" height="35"/></a>
+        <button class="navbar-toggler" @onclick="ToggleNavMenu" type="button" data-toggle="collapse" data-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="@NavMenuCssClass navbar-collapse d-sm-inline-flex" @onclick="CollapseNavMenu">
+            <ul class="navbar-nav flex-grow-1">
+                <div class="border border-start-0 border-top-0 border-bottom-0 border-1">&nbsp;</div>
+                <li class="nav-item">
+                    <a class="nav-link bold" href="/">RED</a>
+                </li>
+                <div class="border border-start-0 border-top-0 border-bottom-0 border-1">&nbsp;</div>
+                <li class="nav-item">
+                    <a class="nav-link bold" href="RAM">RAM</a>
+                </li>
+                <div class="border border-start-0 border-top-0 border-bottom-0 border-1">&nbsp;</div>
+                <li class="nav-item">
+                    <a class="nav-link bold" href="RON">RON</a>
+                </li>
+                <div class="border border-start-0 border-top-0 border-bottom-0 border-1">&nbsp;</div>
+                <li class="nav-item">
+                    <a class="nav-link bold" href="RID">RID</a>
+                </li>
+                <div class="border border-start-0 border-top-0 border-bottom-0 border-1">&nbsp;</div>
+            </ul>
+            <div class="nav ms-auto me-3 justify-content-end">
+                <div class="d-flex">
+                    <label for="checkbox">
+                        <input type="checkbox" name="" id="checkbox" @bind="@isDarkMode">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    <BlazoredToasts ShowProgressBar="true" Timeout="5" />
+</nav>
+
+
+@code {
+    // Declare page member variables.
+    bool collapseNavMenu = true;
+    private string _image = "images/swoosh.png";
+    private bool _isDarkMode = false;
+    private string _radzenTheme = "default-base.css";
+    private bool isDarkMode { get { return _isDarkMode; } set { ToggleDarkMode( value ); } }
+
+    /// <summary>
+    /// Runs when the webpage initializes.
+    /// </summary>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Get the theme cookie from the users browser.
+            string cookieVal = await _CookieService.GetValue("theme");
+            // Check if the value is empty.
+            if (cookieVal == string.Empty)
+            {
+                // Put a new cookie in the browser.
+                await _CookieService.SetValue("theme", "light");
+            }
+            else
+            {
+                switch (cookieVal)
+                {
+                    case "light":
+                        isDarkMode = false;
+                        break;
+                    case "dark":
+                        isDarkMode = true;
+                        break;
+                }
+            }
+        }
+    }
+
+    private async Task ToggleDarkMode( bool value )
+    {
+        string theme = "light";
+        _radzenTheme = "default-base.css";
+
+        _isDarkMode = value;
+
+        if (_isDarkMode)
+        {
+            _radzenTheme = "dark-base.css";
+            theme = "dark";
+        }
+
+        await JSRuntime.InvokeVoidAsync( "changeTheme", theme );
+        await _CookieService.SetValue("theme", theme);
+        await InvokeAsync( StateHasChanged );
+    }
+    string NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+
+    void ToggleNavMenu()
+    {
+        collapseNavMenu = !collapseNavMenu;
+    }
+
+    void CollapseNavMenu()
+    {
+        collapseNavMenu = true;
+    }
+}
