@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="../buildMultiTargeting/Basestation_Software.Web.props" />
-</Project>
