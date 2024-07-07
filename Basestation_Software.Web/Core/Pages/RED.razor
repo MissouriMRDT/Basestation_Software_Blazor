@@ -1,5 +1,6 @@
 ﻿@page "/"
 @inject GPSWaypointService _GPSWaypointService
+@inject MapTileService _MapTileService
 
 <PageTitle>Rover Engagement Display</PageTitle>
 
@@ -18,11 +19,26 @@
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header">
-                            <h2>Other</h2>
+                            <h2>MapTiles API TEST</h2>
                             <h6 class="card-subtitle">Test 2</h6>
                         </div>
                         <div class="card-body scrollable" style="max-height: 48vh">
-                            
+                            <EditForm FormName="MapTileTest" Model="@this" OnValidSubmit="@HandleSubmit">
+                                <InputFile class="mb-2" OnChange="@FileChange"/>
+                                <div class="mb-3">
+                                    <label for="xInput" class="form-label">X Coordinate</label>
+                                    <InputNumber @bind-Value="x" class="form-control" id="xInput" />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="yInput" class="form-label">Y Coordinate</label>
+                                    <InputNumber @bind-Value="y" class="form-control" id="yInput" />
+                                </div>
+                                <div class="mb-3">
+                                    <label for="zInput" class="form-label">Z Coordinate</label>
+                                    <InputNumber @bind-Value="z" class="form-control" id="zInput" />
+                                </div>
+                                <button type="submit" class="btn btn-primary">Submit</button>
+                            </EditForm>
                         </div>
                     </div>
                 </div>
@@ -34,6 +50,8 @@
 @code
 {
     // Declare page member variables.
+    private int x, y, z;
+    MemoryStream fileData = new MemoryStream();
 
     // Flags.
 
@@ -49,5 +67,24 @@
 
     public void Dispose()
     {
+
+    }
+
+    private async Task FileChange(InputFileChangeEventArgs e)
+    {
+        await e.File.OpenReadStream().CopyToAsync(fileData);
+    }
+
+    private async Task HandleSubmit()
+    {
+        var image = fileData.ToArray();
+        var tile = new MapTile
+            {
+                ImageData = image, // Assuming MapTile.ImageData can store the byte array.
+                X = x,
+                Y = y,
+                Z = z
+            };
+        await _MapTileService.AddMapTile(tile); // Assuming _MapTileService is injected and available
     }
 }

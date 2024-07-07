@@ -33,12 +33,23 @@ namespace Basestation_Software.Api.Entities
         /// </summary>
         /// <value></value>
         public DbSet<GPSWaypoint> Waypoints { get; set; }
+        public DbSet<MapTile> MapTiles { get; set; }
 
         /// <summary>
         /// Configure the primary key for the Waypoints table.
         /// </summary>
         /// <param name="modelBuilder"></param>
         public void Configure(EntityTypeBuilder<GPSWaypoint> modelBuilder)
+        {
+            modelBuilder.HasKey(x => x.ID);
+            modelBuilder.Property(x => x.ID)
+                .HasColumnName(@"ID")
+                //.HasColumnType("int") Weirdly this was upsetting SQLite
+                .IsRequired()
+                .ValueGeneratedOnAdd()
+                ;
+        }
+        public void Configure(EntityTypeBuilder<MapTile> modelBuilder)
         {
             modelBuilder.HasKey(x => x.ID);
             modelBuilder.Property(x => x.ID)

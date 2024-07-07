@@ -14,6 +14,8 @@ builder.Services.AddRadzenComponents();
 builder.Services.AddScoped<CookieService>();
 builder.Services.AddHttpClient<GPSWaypointService>();
 builder.Services.AddSingleton<GPSWaypointService>();
+builder.Services.AddHttpClient<MapTileService>();
+builder.Services.AddSingleton<MapTileService>();
 builder.Services.AddSingleton<TaskTimerService>();
 builder.Services.AddBlazoredToast();
 
