@@ -1,5 +1,3 @@
-@rendermode InteractiveServer
-@inject GPSWaypointService _GPSWaypointService
 
 <style>
     .scrollable {
@@ -11,10 +9,9 @@
 
 <div class="card full-height">
     <div class="card-header">
-        <h5>Map</h5>
-        <h6 class="card-subtitle">View waypoints and rover position.</h6>
+        <h5>Ping Graph</h5>
     </div>
-    <div class="card-body">
+    <div class="card-body scrollable">
         @if (!_dataLoaded)
         {
             <div class="row">
@@ -26,10 +23,11 @@
         }
         else
         {
-                    <RealTimeMap height="460px" width="620px"></RealTimeMap>
+        
         }
     </div>
 </div>
+
 
 @code
 {
@@ -41,12 +39,11 @@
     protected override void OnInitialized()
     {
         // Create some timers.
-        _dataLoaded = true;
     }
 
     protected override async Task OnInitializedAsync()
     {
-        await InvokeAsync(StateHasChanged);
+        
     }
 
     public void Dispose()

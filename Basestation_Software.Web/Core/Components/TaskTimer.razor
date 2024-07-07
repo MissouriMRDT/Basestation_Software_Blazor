@@ -1,33 +1,34 @@
 @inject TaskTimerService _TaskTimerService
 
-@if (!_dataLoaded)
-{
-    <div class="row">
-        <div class="spinner-border " role="status"></div>
-        <div class="col">
-            <h3>Loading...</h3>
-        </div>
+<style>
+    .scrollable {
+        max-height: 50vh; 
+        overflow-y: auto;
+        display: block;
+    }
+</style>
+
+<div class="card full-height">
+    <div class="card-header">
+        <h5>Task Timer</h5>
+        <h6 class="card-subtitle">Time task sims for Autonomy, Science, Extreme Retrieval/Delivery, and Equipment Servicing</h6>
     </div>
-}
-else
-{
-    <style>
-        .scrollable {
-            max-height: 50vh; 
-            overflow-y: auto;
-            display: block;
+    <div class="card-body scrollable">
+        @if (!_dataLoaded)
+        {
+            <div class="row">
+                <div class="spinner-border " role="status"></div>
+                <div class="col">
+                    <h3>Loading...</h3>
+                </div>
+            </div>
         }
-    </style>
-
-    <div class="card full-height">
-        <div class="card-header">
-
-        </div>
-        <div class="card-body scrollable">
-           
-        </div>
+        else
+        {
+        
+        }
     </div>
-}
+</div>
 
 
 @code
