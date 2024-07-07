@@ -26,7 +26,7 @@
         }
         else
         {
-                    <RealTimeMap height="460px" width="620px"></RealTimeMap>
+            <RealTimeMap Parameters="@parameters" height="460px" width="620px"></RealTimeMap>
         }
     </div>
 </div>
@@ -38,9 +38,44 @@
     // Flags.
     private bool _dataLoaded = false;
 
+    // Map configuration parameters.
+    private RealTimeMap.Basemap basemaps;
+    private RealTimeMap.LoadParameters parameters;
+    
     protected override void OnInitialized()
     {
-        // Create some timers.
+        basemaps = new RealTimeMap.Basemap()
+        {
+            basemap_layers = new List<RealTimeMap.BasemapConfigLayer>
+            {
+                new RealTimeMap.BasemapConfigLayer()
+                {
+                    url = "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                    attribution = "©Open Street Map",
+                    title = "Open Street Map",
+                    detect_retina = true
+                },
+                new RealTimeMap.BasemapConfigLayer()
+                {
+                    url = "http://localhost:5001/api/MapTiles/{z}/{y}/{x}.png",
+                    attribution = "Cached To Basestation_Software.Api",
+                    title = "Cached Map Data"
+                }
+            }
+        };
+    
+        parameters = new RealTimeMap.LoadParameters()
+        {
+            location = new RealTimeMap.Location()
+            {
+                latitude = 37.951764,
+                longitude = -91.778441,
+            },
+            zoom_level = 18,
+            basemap = basemaps
+        };
+
+        // Toggle component is done loading.
         _dataLoaded = true;
     }
 
