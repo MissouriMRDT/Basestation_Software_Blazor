@@ -81,7 +81,7 @@ namespace Basestation_Software.Web.Core.Services
         {
             try
             {
-                return await _HttpClient.GetFromJsonAsync<MapTile?>($"http://localhost:5000/api/GPSWaypoint/{z}/{y}/{x}");
+                return await _HttpClient.GetFromJsonAsync<MapTile?>($"http://localhost:5000/api/MapTiles/{z}/{y}/{x}");
             }
             catch (Exception)
             {
