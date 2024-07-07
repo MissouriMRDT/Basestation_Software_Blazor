@@ -52,6 +52,25 @@ namespace Basestation_Software.Web.Core.Services
         }
 
         /// <summary>
+        /// Returns the tile image with the given x, y, z
+        /// </summary>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        /// <param name="z"></param>
+        /// <returns></returns>
+        public async Task<MapTile?> GetMapTileImage(int x, int y, int z)
+        {
+            try 
+            {
+                return await _HttpClient.GetFromJsonAsync<MapTile?>($"http://localhost:5000/api/MapTiles/{z}/{y}/{x}.png");
+            } 
+            catch (Exception) 
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Returns the tile with the given x, y, z
         /// </summary>
         /// <param name="x"></param>
@@ -60,7 +79,14 @@ namespace Basestation_Software.Web.Core.Services
         /// <returns></returns>
         public async Task<MapTile?> GetMapTile(int x, int y, int z)
         {
-            return await _HttpClient.GetFromJsonAsync<MapTile?>($"http://localhost:5000/api/GPSWaypoint/{z}/{y}/{x}.png");
+            try
+            {
+                return await _HttpClient.GetFromJsonAsync<MapTile?>($"http://localhost:5000/api/GPSWaypoint/{z}/{y}/{x}");
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
     }
 }

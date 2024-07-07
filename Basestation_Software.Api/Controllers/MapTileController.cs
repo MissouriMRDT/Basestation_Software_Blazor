@@ -79,12 +79,27 @@ namespace Basestation_Software.Api.Controllers
         }
 
         [HttpGet("{z}/{y}/{x}.png")]
-        public async Task<IActionResult> GetMapTile(int z, int y, int x)
+        public async Task<IActionResult> GetMapTileImage(int z, int y, int x)
         {
             MapTile? dbTile = await _TileRepository.GetMapTile(x, y, z);
             if (dbTile is not null && dbTile.ImageData is not null)
             {
                 return File(dbTile.ImageData, "image/png");
+            }
+            else
+            {
+                return NotFound();
+            }
+
+        }
+
+        [HttpGet("{z}/{y}/{x}")]
+        public async Task<IActionResult> GetMapTile(int z, int y, int x)
+        {
+            MapTile? dbTile = await _TileRepository.GetMapTile(x, y, z);
+            if (dbTile is not null)
+            {
+                return Ok(dbTile);
             }
             else
             {

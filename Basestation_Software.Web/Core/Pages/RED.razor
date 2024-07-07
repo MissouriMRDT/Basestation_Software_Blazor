@@ -86,7 +86,19 @@
             }
 
             // Now imageBytes contains the byte array of the uploaded image
-            await _MapTileService.AddMapTile(new MapTile {X = 0, Y = 0, Z = 0, ImageData = imageBytes});
+            // Check if the 0,0,0 location already exists in the database
+            MapTile? mapTile = await _MapTileService.GetMapTile(0, 0, 0);
+            if (mapTile is not null)
+            {
+                // If it does, update the image data
+                mapTile.ImageData = imageBytes;
+                await _MapTileService.UpdateMapTile(mapTile);
+            }
+            else
+            {
+                // If it doesn't, add a new map tile
+                await _MapTileService.AddMapTile(new MapTile {X = 0, Y = 0, Z = 0, ImageData = imageBytes});
+            }
         }
     }
 }
