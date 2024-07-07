@@ -1,14 +1,30 @@
 ﻿@page "/"
 @inject GPSWaypointService _GPSWaypointService
 @inject MapTileService _MapTileService
-@rendermode InteractiveServer
 
 <PageTitle>Rover Engagement Display</PageTitle>
 
 <div class="container">
     <div class="row mt-3">
         <div class="col-md-7">
-            <Waypoints />
+            <div class="row-5 mb-4">
+                <div class="col-12">
+                    <Waypoints />
+                </div>
+            </div>
+            <div class="row flex-grow-1">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h2>MapTiles API TEST</h2>
+                            <h6 class="card-subtitle">Test 2</h6>
+                        </div>
+                        <div class="card-body scrollable" style="max-height: 48vh">
+                            <TaskTimer />                   
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="col-md-5">
             <div class="row-5 mb-4">
@@ -99,6 +115,8 @@
                 // If it doesn't, add a new map tile
                 await _MapTileService.AddMapTile(new MapTile {X = 0, Y = 0, Z = 0, ImageData = imageBytes});
             }
+
+            _ToastService.ShowSuccess("Image saved successfully!");
         }
     }
 }
