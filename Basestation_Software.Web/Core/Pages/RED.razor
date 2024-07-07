@@ -1,6 +1,7 @@
 ﻿@page "/"
 @inject GPSWaypointService _GPSWaypointService
 @inject MapTileService _MapTileService
+@rendermode InteractiveServer
 
 <PageTitle>Rover Engagement Display</PageTitle>
 
@@ -23,22 +24,13 @@
                             <h6 class="card-subtitle">Test 2</h6>
                         </div>
                         <div class="card-body scrollable" style="max-height: 48vh">
-                            <EditForm FormName="MapTileTest" Model="@this" OnValidSubmit="@HandleSubmit">
-                                <InputFile class="mb-2" OnChange="@FileChange"/>
-                                <div class="mb-3">
-                                    <label for="xInput" class="form-label">X Coordinate</label>
-                                    <InputNumber @bind-Value="x" class="form-control" id="xInput" />
-                                </div>
-                                <div class="mb-3">
-                                    <label for="yInput" class="form-label">Y Coordinate</label>
-                                    <InputNumber @bind-Value="y" class="form-control" id="yInput" />
-                                </div>
-                                <div class="mb-3">
-                                    <label for="zInput" class="form-label">Z Coordinate</label>
-                                    <InputNumber @bind-Value="z" class="form-control" id="zInput" />
-                                </div>
-                                <button type="submit" class="btn btn-primary">Submit</button>
-                            </EditForm>
+                            @if (imagePreview != null)
+                            {
+                                <img src="@imagePreview" alt="Image Preview" width="200" />
+                            }
+
+                            <InputFile OnChange=@HandleFileSelected accept="image/png" />
+                            <button class="btn btn-sm btn-outline-success" @onclick="async () => await ConvertImageToByteArray()" title="Save File"><i class="bi bi-inline-text" /> Save File</button>                       
                         </div>
                     </div>
                 </div>
@@ -50,8 +42,9 @@
 @code
 {
     // Declare page member variables.
-    private int x, y, z;
-    MemoryStream fileData = new MemoryStream();
+    private IBrowserFile file;
+    private string imagePreview;
+    private byte[] imageBytes;
 
     // Flags.
 
@@ -70,21 +63,30 @@
 
     }
 
-    private async Task FileChange(InputFileChangeEventArgs e)
+    private async Task HandleFileSelected(InputFileChangeEventArgs e)
     {
-        await e.File.OpenReadStream().CopyToAsync(fileData);
+        file = e.File;
+
+        if (file != null)
+        {
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream().ReadAsync(buffer);
+            imagePreview = $"data:image/png;base64,{Convert.ToBase64String(buffer)}";
+        }
     }
 
-    private async Task HandleSubmit()
+    private async Task ConvertImageToByteArray()
     {
-        var image = fileData.ToArray();
-        var tile = new MapTile
+        if (file != null)
+        {
+            using (var stream = new MemoryStream())
             {
-                ImageData = image, // Assuming MapTile.ImageData can store the byte array.
-                X = x,
-                Y = y,
-                Z = z
-            };
-        await _MapTileService.AddMapTile(tile); // Assuming _MapTileService is injected and available
+                await file.OpenReadStream().CopyToAsync(stream);
+                imageBytes = stream.ToArray();
+            }
+
+            // Now imageBytes contains the byte array of the uploaded image
+            await _MapTileService.AddMapTile(new MapTile {X = 0, Y = 0, Z = 0, ImageData = imageBytes});
+        }
     }
 }

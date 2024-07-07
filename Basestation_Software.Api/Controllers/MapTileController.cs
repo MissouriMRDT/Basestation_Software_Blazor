@@ -63,8 +63,23 @@ namespace Basestation_Software.Api.Controllers
             }
         }
 
-        [HttpGet("{z}/{x}/{y}.png")]
-        public async Task<IActionResult> GetMapTile(int z, int x, int y)
+        [HttpDelete("{z}/{y}/{x}")]
+        public async Task<IActionResult> DeleteMapTile(int z, int y, int x)
+        {
+            MapTile? tileToDelete = await _TileRepository.GetMapTile(x, y, z);    
+            MapTile? dbTile = await _TileRepository.DeleteMapTile(tileToDelete?.ID ?? -1);
+            if (dbTile is not null)
+            {
+                return Ok();
+            }
+            else
+            {
+                return NotFound();
+            }
+        }
+
+        [HttpGet("{z}/{y}/{x}.png")]
+        public async Task<IActionResult> GetMapTile(int z, int y, int x)
         {
             MapTile? dbTile = await _TileRepository.GetMapTile(x, y, z);
             if (dbTile is not null && dbTile.ImageData is not null)
