@@ -10,7 +10,7 @@ RUN echo "${TZ}" > /etc/localtime && \
 
 # Install Required Ubuntu Packages
 RUN apt-get update && apt-get install --no-install-recommends -y dotnet-sdk-8.0 \
-    python3 python-is-python3 gnome-keyring sqlite3 nano net-tools git ssh
+    python3 python-is-python3 gnome-keyring sqlite3 nano net-tools git ssh git-lfs
 
 # Set Labels
 LABEL authors="Missouri S&T Mars Rover Design Team"

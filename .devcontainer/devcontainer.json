@@ -30,7 +30,9 @@
 				"k--kato.docomment",
 				"PKief.material-icon-theme",
 				"christian-kohler.path-intellisense",
-				"austincummings.razor-plus"
+				"austincummings.razor-plus",
+				"GitHub.copilot",
+				"GitHub.copilot-chat"
 			]
 		}
 	},

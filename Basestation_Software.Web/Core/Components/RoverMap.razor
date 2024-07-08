@@ -1,4 +1,5 @@
 @rendermode InteractiveServer
+@inject MapTileService _MapTileService
 @inject GPSWaypointService _GPSWaypointService
 
 <style>
@@ -11,8 +12,15 @@
 
 <div class="card full-height">
     <div class="card-header">
-        <h5>Map</h5>
-        <h6 class="card-subtitle">View waypoints and rover position.</h6>
+        <div class="d-flex justify-content-between align-items-center">
+            <h5 class="mr-auto">Map</h5>
+            @if (_cachingMapTiles)
+            {
+                <div>
+                    <h6 class="col">Caching map tiles... (only caches in dev mode)</h6>
+                </div>
+            }
+        </div>
     </div>
     <div class="card-body">
         @if (!_dataLoaded)
@@ -26,7 +34,7 @@
         }
         else
         {
-            <RealTimeMap Parameters="@parameters" height="460px" width="620px"></RealTimeMap>
+            <RealTimeMap Parameters="@parameters" height="460px" width="620px" OnZoomLevelEndChange="@OnZoomLevel"></RealTimeMap>
         }
     </div>
 </div>
@@ -37,6 +45,7 @@
 
     // Flags.
     private bool _dataLoaded = false;
+    private bool _cachingMapTiles = false;
 
     // Map configuration parameters.
     private RealTimeMap.Basemap basemaps;
@@ -44,48 +53,116 @@
     
     protected override void OnInitialized()
     {
+        // Add layers to the map, use openmaps by default.
         basemaps = new RealTimeMap.Basemap()
         {
             basemap_layers = new List<RealTimeMap.BasemapConfigLayer>
             {
                 new RealTimeMap.BasemapConfigLayer()
                 {
-                    url = "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-                    attribution = "©Open Street Map",
-                    title = "Open Street Map",
-                    detect_retina = true
-                },
-                new RealTimeMap.BasemapConfigLayer()
-                {
                     url = "http://localhost:5001/api/MapTiles/{z}/{y}/{x}.png",
-                    attribution = "Cached To Basestation_Software.Api",
-                    title = "Cached Map Data"
+                    attribution = "Basestation_Software.Api",
+                    title = "AutoCache API Storage",
+                    max_zoom = 20
                 }
             }
         };
     
+        // Construct the parameters object.
         parameters = new RealTimeMap.LoadParameters()
         {
+            // Set the default location when the map is initialized.
             location = new RealTimeMap.Location()
             {
                 latitude = 37.951764,
                 longitude = -91.778441,
             },
             zoom_level = 18,
-            basemap = basemaps
+            basemap = basemaps,
+            map_scale = new RealTimeMap.MapScale()
+            {
+                has = true,
+                meters = true,
+                miles = false
+            }
         };
-
-        // Toggle component is done loading.
-        _dataLoaded = true;
     }
+
 
     protected override async Task OnInitializedAsync()
     {
+        // Toggle component is done loading.
+        _dataLoaded = true;
         await InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()
     {
 
+    }
+
+    public async Task OnZoomLevel(RealTimeMap.MapZoomEventArgs args)
+    {
+        #if DEBUG
+        using (HttpClient client = new HttpClient())
+        {
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+            client.DefaultRequestHeaders.Referrer = new Uri("http://mt1.google.com");
+
+            var tasks = new List<Task>();
+
+            // Convert geographic bounds to tile coordinates
+            int tileX = LonToTileX(args.centerOfView.longitude, args.zoomLevel);
+            int tileY = LatToTileY(args.centerOfView.latitude, args.zoomLevel);
+            
+            for (int y = (tileY - 3); y < (tileY + 3); y++)
+            {
+                for (int x = (tileX - 3); x < (tileX + 3); x++)
+                {
+                    MapTile? mapTile = await _MapTileService.GetMapTile(x, y, args.zoomLevel);
+                    if (mapTile is null)
+                    {
+                        string url = $"http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={args.zoomLevel}";
+                        tasks.Add(DownloadAndSaveTile(client, url, x, y, args.zoomLevel));
+                        _cachingMapTiles = true;
+                    }
+                }
+            }
+
+            await Task.WhenAll(tasks);
+            _cachingMapTiles = false;
+        }
+        #endif
+    }
+
+    private async Task DownloadAndSaveTile(HttpClient client, string url, int x, int y, int z)
+    {
+        var response = await client.GetAsync(url);
+        try
+        {
+            response.EnsureSuccessStatusCode();
+        }
+        catch (HttpRequestException e)
+        {
+            Console.WriteLine($"An error occurred: {e.Message}");
+            return;
+        }
+        using (var memoryStream = new MemoryStream())
+        {
+            await response.Content.CopyToAsync(memoryStream);
+            byte[] imageBytes = memoryStream.ToArray();
+            await _MapTileService.AddMapTile(new MapTile { X = x, Y = y, Z = z, ImageData = imageBytes });
+        }
+    }
+
+    private int LonToTileX(double lon, int zoom)
+    {
+        return (int)Math.Floor((lon + 180.0) / 360.0 * Math.Pow(2.0, zoom));
+    }
+
+    private int LatToTileY(double lat, int zoom)
+    {
+        double latRad = lat * Math.PI / 180.0;
+        return (int)Math.Floor((1.0 - Math.Log(Math.Tan(latRad) + 1.0 / Math.Cos(latRad)) / Math.PI) / 2.0 * Math.Pow(2.0, zoom));
     }
 }
