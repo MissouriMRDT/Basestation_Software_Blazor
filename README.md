@@ -92,8 +92,17 @@ In Blazor WASM, the application runs in the browser using WebAssembly. The entir
    git clone https://github.com/your-username/your-repo.git
    cd your-repo
    ```
-2. Open the workspace.
-3. Open in the Devcontainer
+
+2. Install Git LFS (if not already installed) and pull LFS files:
+
+   ```sh
+   git lfs install
+   git lfs pull
+   ```
+
+3. Open the workspace.
+
+4. Open in the Devcontainer.
 
 ### Running Basestation_Software
 
