@@ -5,4 +5,12 @@ namespace Basestation_Software.Models.Timers
         Stopwatch,
         Countdown
     }
+
+    public enum TaskType
+    {
+        Autonomy,
+        Science,
+        ExtremeDelivery,
+        EquipmentServicing
+    }
 }

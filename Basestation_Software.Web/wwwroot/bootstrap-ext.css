@@ -1,0 +1,18 @@
+.card-header {
+    background-color: #9a0000; 
+    color: white;
+}
+
+.card .read-more:hover {
+    font-size: 14px;
+}
+
+.card:hover {
+    box-shadow: 8px 8px 8px rgba(225, 3, 3, 0.692);
+    transform:scale(1.004);
+}
+
+.card {
+    border:1px solid black;
+    transition:.3s;
+}

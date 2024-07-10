@@ -10,11 +10,6 @@ html, body {
     font-weight: bold;
 }
 
-.card-header {
-    background-color: #9a0000; 
-    color: white;
-}
-
 a, .btn-link {
     color: #006bb7;
 }

@@ -9,9 +9,13 @@
 </style>
 
 <div class="card full-height">
-    <div class="card-header">
-        <h5>Task Timer</h5>
-        <h6 class="card-subtitle">Time task sims for Autonomy, Science, Extreme Retrieval/Delivery, and Equipment Servicing</h6>
+    <div class="card-header d-flex justify-content-between">
+        <div class="col">
+            <h4>Task Timer</h4>
+        </div>
+        <div class="col text-end">
+            <RadzenDropDown @bind-Value=@value Data=@(Enum.GetValues(typeof(TaskType)))></RadzenDropDown>
+        </div>
     </div>
     <div class="card-body scrollable">
         @if (!_dataLoaded)
@@ -25,7 +29,7 @@
         }
         else
         {
-        
+            
         }
     </div>
 </div>
@@ -34,6 +38,7 @@
 @code
 {
     // Declare page member variables.
+    private TaskType value = TaskType.Autonomy;
 
     // Flags.
     private bool _dataLoaded = false;
@@ -45,7 +50,29 @@
 
     protected override async Task OnInitializedAsync()
     {
-        
+        // Loop through the task timer types enum.
+        foreach (TaskType TaskType in Enum.GetValues(typeof(TaskType)))
+        {
+            // Check if a task timer for the current type exists.
+            StopwatchTimer? taskTimer = _TaskTimerService.GetStopwatchTimer(TaskType);
+            // Check if the timer is null.
+            if (taskTimer == null)
+            {
+                // Create a new timer.
+                _TaskTimerService.AddStopwatch(OnStopwatchTick, TaskType);
+            }
+        }
+
+        // Set data is loaded.
+        _dataLoaded = true;
+    }
+
+    private async Task OnStopwatchTick(TaskType timerName, TimeSpan timeElapsed)
+    {
+        // Update member variables.
+
+        // Update the timer.
+        await InvokeAsync(StateHasChanged);
     }
 
     public void Dispose()
