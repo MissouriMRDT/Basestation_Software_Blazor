@@ -89,8 +89,8 @@ In Blazor WASM, the application runs in the browser using WebAssembly. The entir
 1. Clone the repository:
 
    ```sh
-   git clone https://github.com/your-username/your-repo.git
-   cd your-repo
+   git clone https://github.com/MissouriMRDT/Basestation_Software_Blazor.git
+   cd Basestation_Software_Blazor
    ```
 
 2. Install Git LFS (if not already installed) and pull LFS files:
