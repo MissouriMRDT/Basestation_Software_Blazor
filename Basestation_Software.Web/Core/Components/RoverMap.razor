@@ -1,6 +1,6 @@
-@rendermode InteractiveServer
 @inject MapTileService _MapTileService
 @inject GPSWaypointService _GPSWaypointService
+@inject NavigationManager _NavigationManager
 
 <style>
     .scrollable {
@@ -10,7 +10,7 @@
     }
 </style>
 
-<div class="card full-height">
+<div class="card full-height" style="width: 650px">
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="mr-auto">Map</h5>
@@ -53,6 +53,11 @@
     
     protected override void OnInitialized()
     {
+        // Get base URI for the API endpoint.
+        Uri baseUri = new Uri(_NavigationManager.BaseUri);
+        string baseUriWithoutPort = $"{baseUri.Scheme}://{baseUri.Host}";
+
+
         // Add layers to the map, use openmaps by default.
         basemaps = new RealTimeMap.Basemap()
         {
@@ -60,7 +65,7 @@
             {
                 new RealTimeMap.BasemapConfigLayer()
                 {
-                    url = "http://localhost:5001/api/MapTiles/{z}/{y}/{x}.png",
+                    url = baseUriWithoutPort + ":5000/api/MapTiles/{z}/{y}/{x}.png",
                     attribution = "Basestation_Software.Api",
                     title = "AutoCache API Storage",
                     max_zoom = 20

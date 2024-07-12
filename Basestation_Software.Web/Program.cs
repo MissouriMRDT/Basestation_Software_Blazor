@@ -9,7 +9,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
-builder.Services.AddServerSideBlazor().AddCircuitOptions(option => { option.DetailedErrors = true; });
+builder.Services.AddServerSideBlazor()
+        .AddCircuitOptions(option => { option.DetailedErrors = true; })
+        .AddHubOptions(option => option.MaximumReceiveMessageSize = 10_000_000); // Configures the message size for SignalR connections.
 builder.Services.AddRadzenComponents();
 builder.Services.AddScoped<CookieService>();
 builder.Services.AddHttpClient<GPSWaypointService>();

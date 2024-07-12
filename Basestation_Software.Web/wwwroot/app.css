@@ -1,5 +1,11 @@
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    margin: 1rem;
+}
+
+.page {
+    min-width: 1280px; /* Specify your desired minimum width */
+    min-height: 720px; /* Specify your desired minimum height */
 }
 
 .container, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl {
