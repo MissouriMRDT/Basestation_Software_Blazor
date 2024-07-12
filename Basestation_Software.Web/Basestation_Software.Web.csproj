@@ -8,6 +8,7 @@
     <PackageReference Include="Blazored.Toast" Version="4.2.1" />
     <PackageReference Include="LeafletForBlazor" Version="2.0.6.8" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.6" />
+    <PackageReference Include="OpenCvSharp4" Version="4.10.0.20240616" />
     <PackageReference Include="Radzen.Blazor" Version="4.33.3" />
   </ItemGroup>
 
