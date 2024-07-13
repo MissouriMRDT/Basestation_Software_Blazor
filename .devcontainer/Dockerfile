@@ -10,7 +10,40 @@ RUN echo "${TZ}" > /etc/localtime && \
 
 # Install Required Ubuntu Packages
 RUN apt-get update && apt-get install --no-install-recommends -y dotnet-sdk-8.0 \
-    python3 python-is-python3 gnome-keyring sqlite3 nano net-tools git ssh git-lfs
+    python3 \ 
+    python-is-python3 \ 
+    gnome-keyring \
+    sqlite3 \ 
+    nano \ 
+    net-tools \ 
+    git \ 
+    ssh \
+    git-lfs \
+    libexpat1 \ 
+    apt-transport-https \ 
+    software-properties-common \ 
+    wget \ 
+    unzip \ 
+    ca-certificates \ 
+    build-essential \ 
+    cmake \ 
+    libtbb-dev \ 
+    libatlas-base-dev \ 
+    libgtk2.0-dev \ 
+    libavcodec-dev \ 
+    libavformat-dev \ 
+    libswscale-dev \ 
+    libdc1394-dev \ 
+    libxine2-dev \ 
+    libv4l-dev \ 
+    libtheora-dev \ 
+    libvorbis-dev \ 
+    libxvidcore-dev \ 
+    libopencore-amrnb-dev \ 
+    libopencore-amrwb-dev \ 
+    x264 \ 
+    libtesseract-dev \ 
+    libgdiplus
 
 # Set Labels
 LABEL authors="Missouri S&T Mars Rover Design Team"
