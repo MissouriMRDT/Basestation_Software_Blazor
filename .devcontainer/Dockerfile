@@ -1,4 +1,4 @@
-FROM ubuntu:oracular-20240617
+FROM ubuntu:jammy-20240627.1
 
 # Set Non-Interactive Mode
 ARG DEBIAN_FRONTEND=noninteractive
