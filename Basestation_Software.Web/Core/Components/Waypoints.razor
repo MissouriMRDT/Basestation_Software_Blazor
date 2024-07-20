@@ -1,14 +1,6 @@
 @rendermode InteractiveServer
 @inject GPSWaypointService _GPSWaypointService
 
-<style>
-    .scrollable {
-        max-height: 50vh; 
-        overflow-y: auto;
-        display: block;
-    }
-</style>
-
 <div class="card full-height">
     <div class="card-header">
         <div class="row">
@@ -27,7 +19,7 @@
             </div>
         </div>
     </div>
-    <div class="card-body scrollable">
+    <div class="card-body scrollable" style="padding: 0; max-height: 20vh; overflow-y: auto; display: block;">
         @if (!_dataLoaded)
         {
             <div class="row">
