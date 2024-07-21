@@ -1,0 +1,170 @@
+@implements IDisposable
+@inject TaskTimerService _TaskTimerService
+
+<style>
+    .scrollable {
+        max-height: 50vh; 
+        overflow-y: auto;
+        display: block;
+    }
+
+    @@keyframes flash {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0; }
+    }
+
+    .flash-animation {
+        animation: flash 1s infinite;
+    }
+</style>
+
+<div class="card full-height">
+    <div class="card-header d-flex justify-content-between">
+        <div class="col">
+            <h4>Task Timer</h4>
+        </div>
+        <div class="col text-end">
+            <RadzenDropDown @bind-Value=@TimerTaskType Data=@(Enum.GetValues(typeof(TaskType)))></RadzenDropDown>
+        </div>
+    </div>
+    <div class="card-body scrollable">
+        @if (!_dataLoaded)
+        {
+            <div class="row">
+                <div class="spinn</div>er-border " role="status"></div>
+                <div class="col">
+                    <h3>Loading...</h3>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                <div class="col">
+                    <h3>@_timerTaskType</h3>
+                </div>
+                <div class="col text-end">
+                    @if (_currentTimer is not null && _currentTimer.IsFinished)
+                    {
+                        <button class="btn btn-primary" @onclick="() => _currentTimer.Reset()">Reset</button>
+                    }
+                    else if (_currentTimer is not null && (_currentTimer.IsPaused || _currentTimer.IsFinished || !_currentTimer.IsStarted))
+                    {
+                        <button class="@(_currentTimer is not null && _currentTimer.IsPaused ? "flash-animation btn btn-success" : "btn btn-success")" @onclick="() => _currentTimer.Start()">Start</button>
+                        <button class="btn btn-primary" @onclick="() => _currentTimer.Reset()">Reset</button>
+                    }
+                    else if (_currentTimer is not null && _currentTimer.IsStarted)
+                    {
+                        <button class="btn btn-danger" @onclick="() => _currentTimer.Stop()">Stop</button>
+                        <button class="btn btn-primary" @onclick="() => _currentTimer.Reset()">Reset</button>
+                    }
+                </div>
+            </div>
+            <br>
+            <div class="row justify-content-evenly">
+                @if (_currentTimer is not null)
+                {
+                    // Loop through each checkpoint and build a row of progress bars next to each other with different colors.
+                    @for (int i = 0; i < _currentTimer.CheckPoints.Count; i++)
+                    {
+                        int widthPercentage = (int)((_currentTimer.CheckPoints[_currentTimer.CheckPoints.Keys.ElementAt(i)].TotalSeconds / _currentTimer.EndPoint.TotalSeconds) * 100);
+                        <div style="width: @(widthPercentage)%; margin-left: 0rem; margin-right: 0rem; padding-left: 0rem; padding-right: 0rem;">
+                            <center><h5>@_currentTimer.CheckPoints.ElementAt(i).Key</h5></center>
+                            <RadzenProgressBar 
+                                @bind-Value="@_elapsedTime" 
+                                Min="@(_currentTimer.CheckPoints.Values.Take(i).Select(checkpoint => checkpoint.TotalSeconds).Sum())" 
+                                Max="@(_currentTimer.CheckPoints.Values.Take(i + 1).Select(checkpoint => checkpoint.TotalSeconds).Sum() )" 
+                                ShowValue="false"
+                                ProgressBarStyle="@progressBarColors[i]"
+                                Style="margin-left: 0rem; margin-right: 0rem; padding-left: 0rem; padding-right: 0rem; height: 50px;" />
+                        </div>
+                    }
+                }
+            </div>
+            <div class="row">
+                <center>
+                    <h4 class="@(_currentTimer is not null && _currentTimer.IsFinished ? "flash-animation" : "")">
+                        Time Elapsed: @(_currentTimer is not null ? _currentTimer.ElapsedTime.ToString(@"hh\:mm\:ss\.f") : "TmrErr")
+                    </h4>
+                </center>
+            </div>
+            <div class="row justify-content-between">
+                <div class="col">
+                    <button class="btn btn-dark-outline">Last Checkpoint</button>
+                </div>
+                <div class="col text-end">
+                    <button class="btn btn-dark-outline">Next Checkpoint</button>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+
+@code
+{
+    // Declare page member variables.
+    private double _elapsedTime = 0;
+    private TaskTimer? _currentTimer;
+    private TaskType _timerTaskType = TaskType.Autonomy;
+    private TaskType TimerTaskType 
+    { 
+        get 
+        { 
+            return _timerTaskType;
+        } 
+        set 
+        { 
+            // Remove the timer change event.
+            _TaskTimerService.TimerTickNotifiers[_timerTaskType] -= TimerTick;
+            // Update the timer task type.
+            _timerTaskType = value;
+            // Add the timer change event.
+            _TaskTimerService.TimerTickNotifiers[_timerTaskType] += TimerTick;
+            // Update the current timer.
+            _currentTimer = _TaskTimerService.GetTaskTimer(_timerTaskType);
+        }
+    }
+
+    // Flags.
+    private bool _dataLoaded = false;
+
+    // Create a list of Radzen ProgressBarStyles to use for each checkpoint.
+    List<ProgressBarStyle> progressBarColors = new List<ProgressBarStyle>
+    {
+        ProgressBarStyle.Primary,
+        ProgressBarStyle.Success,
+        ProgressBarStyle.Warning,
+        ProgressBarStyle.Info,
+        ProgressBarStyle.Danger
+    };
+
+    protected override void OnInitialized()
+    {
+        // Set the default timer to autonomy.
+        _currentTimer = _TaskTimerService.GetTaskTimer(_timerTaskType);
+        // Add the timer change event.
+        _TaskTimerService.TimerTickNotifiers[_timerTaskType] += TimerTick;
+
+        // Set data is loaded.
+        _dataLoaded = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Nothing to do yet.
+    }
+
+    void IDisposable.Dispose()
+    {
+        // Remove the timer change event.
+        _TaskTimerService.TimerTickNotifiers[_timerTaskType] -= TimerTick;
+    }
+
+    private async Task TimerTick(TimeSpan timeElapsed)
+    {
+        // Update the elapsed time.
+        _elapsedTime = timeElapsed.TotalSeconds;
+        await InvokeAsync(StateHasChanged);
+    }
+}

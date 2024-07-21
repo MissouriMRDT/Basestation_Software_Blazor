@@ -1,5 +1,6 @@
 html, body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    margin: 0rem;
 }
 
 .container, .container-lg, .container-md, .container-sm, .container-xl, .container-xxl {
@@ -25,7 +26,7 @@ a, .btn-link {
 }
 
 .content {
-    padding-top: 1.0rem;
+    padding-top: 1.1rem;
 }
 
 h1:focus {

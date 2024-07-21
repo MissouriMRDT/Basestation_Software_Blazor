@@ -1,4 +1,5 @@
 ﻿@page "/RID"
+@implements IDisposable
 
 <PageTitle>Rover Imagery Display</PageTitle>
 
@@ -53,7 +54,7 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    public void Dispose()
+    void IDisposable.Dispose()
     {
     }
 }

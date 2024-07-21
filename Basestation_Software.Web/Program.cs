@@ -10,7 +10,11 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 builder.Services.AddServerSideBlazor()
-        .AddCircuitOptions(option => { option.DetailedErrors = true; })
+        .AddCircuitOptions(option => 
+        { 
+            option.DetailedErrors = true;
+            option.DisconnectedCircuitRetentionPeriod = TimeSpan.FromSeconds(10);
+        })
         .AddHubOptions(option => option.MaximumReceiveMessageSize = 10_000_000); // Configures the message size for SignalR connections.
 builder.Services.AddRadzenComponents();
 builder.Services.AddScoped<CookieService>();

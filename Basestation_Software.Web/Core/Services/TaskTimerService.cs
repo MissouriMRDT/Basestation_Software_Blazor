@@ -6,127 +6,136 @@ using Basestation_Software.Models.Timers;
 
 namespace Basestation_Software.Web.Core.Services
 {
-    public class StopwatchTimer
-    {
-        // Declare member variables.
-        private Timer? _timer;
-        private DateTime _startTime;
-        private TimeSpan _elapsedTime;
-        private TaskType _timerName;
-
-        // Delegates and events.
-        public delegate Task TimerTickCallback(TaskType timerName, TimeSpan elapsedTime);
-        private event TimerTickCallback? TimerTickNotifier;
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
-        /// <param name="callback"></param>
-        /// <param name="timerName"></param>
-        public StopwatchTimer(TimerTickCallback callback, TaskType timerName)
-        {
-            TimerTickNotifier += callback;
-            _timerName = timerName;
-        }
-
-        /// <summary>
-        /// Start the timer.
-        /// </summary>
-        public void Start()
-        {
-            _startTime = DateTime.UtcNow;
-            _timer = new Timer(UpdateElapsedTime, null, 0, 1000);
-        }
-
-        /// <summary>
-        /// Stop the timer.
-        /// </summary>
-        public void Stop()
-        {
-            _timer?.Change(Timeout.Infinite, Timeout.Infinite);
-            _timer?.Dispose();
-        }
-
-        /// <summary>
-        /// Get the time elapsed.
-        /// </summary>
-        /// <returns></returns>
-        public TimeSpan GetElapsedTime()
-        {
-            return _elapsedTime;
-        }
-
-        /// <summary>
-        /// Accessor for the timer name.
-        /// </summary>
-        /// <returns></returns>
-        public TaskType GetTimerName()
-        {
-            return _timerName;
-        }
-
-        /// <summary>
-        /// Updates timer metrics.
-        /// </summary>
-        /// <param name="state"></param>
-        /// <returns></returns>
-        private async void UpdateElapsedTime(object? state)
-        {
-            _elapsedTime = DateTime.UtcNow - _startTime;
-            if (TimerTickNotifier is not null)
-            {
-                await TimerTickNotifier.Invoke(_timerName, _elapsedTime);
-            }
-            else
-            {
-                // Nothing is using the timer anymore, stop it.
-                Stop();
-            }
-        }
-
-
-    }
-
     public class TaskTimerService
     {
         // Declare member variables.
-        private List<StopwatchTimer> _stopwatches = new List<StopwatchTimer>();
+        private List<TaskTimer> _taskTimers = new List<TaskTimer>();
+
+        // Create a dictionary of event handlers for updating the UIs.
+        public delegate Task TimerTickCallback(TimeSpan elapsedTime);
+        public Dictionary<TaskType, TimerTickCallback?> TimerTickNotifiers = new Dictionary<TaskType, TimerTickCallback?>();
 
         /// <summary>
         /// Constructor.
         /// </summary>
         public TaskTimerService()
         {
-            // Nothing to do.
+            // Loop through the task timer types enum.
+            foreach (TaskType TaskType in Enum.GetValues(typeof(TaskType)))
+            {
+                // Check if a task timer for the current type exists.
+                TaskTimer? taskTimer = GetTaskTimer(TaskType);
+                // Check if the timer is null.
+                if (taskTimer == null)
+                {
+                    // Create a new timer.
+                    TaskTimer newTimer = new TaskTimer(OnTimerTick, TaskType);
+                    // Configure the timer.
+                    switch (TaskType)
+                    {
+                        case TaskType.Autonomy:
+                            // Total time for the task.
+                            newTimer.EndPoint = TimeSpan.FromSeconds(80);
+                            // Add checkpoints.
+                            newTimer.CheckPoints = new Dictionary<string, TimeSpan>
+                            {
+                                { "Setup", TimeSpan.FromSeconds(10) },
+                                { "Autonomy Task", TimeSpan.FromSeconds(60) },
+                                { "PackUp", TimeSpan.FromSeconds(10) }
+                            };
+                            break;
+                        case TaskType.Science:
+                            // Total time for the task.
+                            newTimer.EndPoint = TimeSpan.FromMinutes(50);
+                            // Add checkpoints.
+                            newTimer.CheckPoints = new Dictionary<string, TimeSpan>
+                            {
+                                { "Setup", TimeSpan.FromMinutes(10) },
+                                { "Science Task", TimeSpan.FromMinutes(30) },
+                                { "PackUp", TimeSpan.FromMinutes(10) },
+                            };
+                            break;
+                        case TaskType.ExtremeDelivery:
+                            // Total time for the task.
+                            newTimer.EndPoint = TimeSpan.FromMinutes(80);
+                            // Add checkpoints.
+                            newTimer.CheckPoints = new Dictionary<string, TimeSpan>
+                            {
+                                { "Setup", TimeSpan.FromMinutes(10) },
+                                { "Extreme Retrieval/Delivery Task", TimeSpan.FromMinutes(60) },
+                                { "PackUp", TimeSpan.FromMinutes(10) },
+                            };
+                            break;
+                        case TaskType.EquipmentServicing:
+                            // Total time for the task.
+                            newTimer.EndPoint = TimeSpan.FromMinutes(50);
+                            // Add checkpoints.
+                            newTimer.CheckPoints = new Dictionary<string, TimeSpan>
+                            {
+                                { "Setup", TimeSpan.FromMinutes(10) },
+                                { "Equipment Servicing Task", TimeSpan.FromMinutes(30) },
+                                { "PackUp", TimeSpan.FromMinutes(10) },
+                            };
+                            break;
+                        default:
+                            newTimer.EndPoint = TimeSpan.FromMinutes(1);
+                            break;
+                    }
+                    // Add the timer to the service.
+                    AddTaskTimer(newTimer);
+                }
+
+                // Add the timer tick callback to the dictionary.
+                TimerTickNotifiers.Add(TaskType, null);
+            }
         }
 
-        /// <summary>
-        /// Given a method callback this will create a new stopwatch timer and call the given callback every second.
-        /// </summary>
-        /// <param name="callback">The method callback to run every timer update.</param>
-        /// <param name="stopwatchName">The name/alias of the timer.</param>
-        public void AddStopwatch(StopwatchTimer.TimerTickCallback callback, TaskType stopwatchName)
+        private async Task OnTimerTick(TaskType timerName, TimeSpan timeElapsed)
         {
-            _stopwatches.Add(new StopwatchTimer(callback, stopwatchName));
+            // Invoke the timer tick callback.
+            if (TimerTickNotifiers.ContainsKey(timerName) && TimerTickNotifiers[timerName] is not null)
+            {
+                await TimerTickNotifiers[timerName]!.Invoke(timeElapsed);
+            }
         }
 
         /// <summary>
-        /// Give a name/alias, remove a stopwatch.
+        /// Add a task timer to the list of task timers.
         /// </summary>
-        /// <param name="stopwatchName">The name of the stopwatch to remove.</param>
-        public void RemoveStopwatch(TaskType stopwatchName)
+        /// <param name="taskTimer">The task timer object.</param>
+        public void AddTaskTimer(TaskTimer taskTimer)
         {
-            _stopwatches.Remove(_stopwatches.First(x => x.GetTimerName() == stopwatchName));
+            _taskTimers.Add(taskTimer);
         }
 
         /// <summary>
-        /// Given a key get the stopwatch.
+        /// Remove a task timer from the list of task timers.
         /// </summary>
-        /// <param name="stopwatchName">The name/alias of the stopwatch timer.</param>
+        /// <param name="taskTimerType">The tasktimer object type to remove.</param>
+        public void RemoveTaskTimer(TaskType taskTimerType)
+        {
+            TaskTimer? taskTimer = GetTaskTimer(taskTimerType);
+            if (taskTimer != null)
+            {
+                _taskTimers.RemoveAll(t => t == taskTimer);
+            }
+        }
+
+        /// <summary>
+        /// Get a task timer from the list of task timers.
+        /// </summary>
+        /// <param name="TaskTimerName">The name of the task timer to retrieve.</param>
         /// <returns></returns>
-        public StopwatchTimer? GetStopwatchTimer(TaskType stopwatchName)
+        public TaskTimer? GetTaskTimer(TaskType timerType)
         {
-            return _stopwatches.FirstOrDefault(x => x.GetTimerName() == stopwatchName);
-        }
+            foreach (TaskTimer taskTimer in _taskTimers)
+            {
+                if (taskTimer.TaskType == timerType)
+                {
+                    return taskTimer;
+                }
+            }
+            return null;
+        }  
     }
 }

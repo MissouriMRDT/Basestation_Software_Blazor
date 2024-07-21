@@ -1,5 +1,5 @@
 ﻿@page "/"
-@inject GPSWaypointService _GPSWaypointService
+@implements IDisposable
 @inject MapTileService _MapTileService
 
 <PageTitle>Rover Engagement Display</PageTitle>
@@ -20,7 +20,7 @@
             </div>
             <div class="row flex-grow-1">
                 <div class="col-12">
-                    <TaskTimer />
+                    <TaskTimers />
                 </div>
             </div>
             <div class="row flex-grow-1">
@@ -77,9 +77,9 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    public void Dispose()
+    void IDisposable.Dispose()
     {
-
+        // Do nothing yet.
     }
 
     private async Task HandleFileSelected(InputFileChangeEventArgs e)

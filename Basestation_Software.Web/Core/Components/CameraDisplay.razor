@@ -1,3 +1,4 @@
+@implements IDisposable
 @using OpenCvSharp
 
 <style>
@@ -63,7 +64,7 @@
         }
     }
 
-    public void Dispose()
+    void IDisposable.Dispose()
     {
 
     }

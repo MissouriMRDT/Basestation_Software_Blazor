@@ -1,4 +1,4 @@
-@rendermode InteractiveServer
+@implements IDisposable
 @inject GPSWaypointService _GPSWaypointService
 
 <div class="card full-height">
@@ -130,7 +130,7 @@
         await _GPSWaypointService.RefreshGPSWaypoints();
     }
 
-    public void Dispose()
+    void IDisposable.Dispose()
     {
         _GPSWaypointService.UnsubscribeFromWaypointsChanges(SyncCache);
     }
