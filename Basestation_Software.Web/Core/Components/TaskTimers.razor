@@ -18,6 +18,19 @@
     }
 </style>
 
+@* This modal is used for configuring the checkpoints of the current timer. *@
+<Modal @ref="TimerSettingsModal" Size="modal-xl">
+    <Header>
+        <center>Global Search</center>
+    </Header>
+    <Body>
+        <p>Test</p>
+    </Body>
+    <Footer>
+        <button type="button" class="btn btn-sm btn-primary text-white" data-dismiss="modal" @onclick="async () => await TimerSettingsModal!.Close()">Close</button>
+    </Footer>
+</Modal>
+
 <div class="card full-height">
     <div class="card-header d-flex justify-content-between">
         <div class="col">
@@ -40,8 +53,11 @@
         else
         {
             <div class="row">
-                <div class="col">
+                <div class="col d-flex align-items-center">
                     <h3>@_timerTaskType</h3>
+                    <button class="btn btn-link" @onclick="@(() => TimerSettingsModal!.Open())">
+                        <i class="bi bi-gear-fill"></i>
+                    </button>
                 </div>
                 <div class="col text-end">
                     @if (_currentTimer is not null && _currentTimer.IsFinished)
@@ -77,23 +93,24 @@
                                 ShowValue="false"
                                 ProgressBarStyle="@progressBarColors[i]"
                                 Style="margin-left: 0rem; margin-right: 0rem; padding-left: 0rem; padding-right: 0rem; height: 50px;" />
+                            <center><small>(@(TaskTimer.TimeSpanToShortReadableString(_currentTimer.CheckPoints.ElementAt(i).Value)))</small></center>
                         </div>
                     }
                 }
             </div>
             <div class="row">
                 <center>
-                    <h4 class="@(_currentTimer is not null && _currentTimer.IsFinished ? "flash-animation" : "")">
+                    <h4 class="@(_currentTimer is not null && _currentTimer.IsFinished ? "flash-animation" : "")" style="padding-top: 1rem;">
                         Time Elapsed: @(_currentTimer is not null ? _currentTimer.ElapsedTime.ToString(@"hh\:mm\:ss\.f") : "TmrErr")
                     </h4>
                 </center>
             </div>
             <div class="row justify-content-between">
                 <div class="col">
-                    <button class="btn btn-dark-outline">Last Checkpoint</button>
+                    <button class="btn btn-dark-outline" @onclick="() => _currentTimer?.SkipToPreviousCheckPoint()">Last Checkpoint</button>
                 </div>
                 <div class="col text-end">
-                    <button class="btn btn-dark-outline">Next Checkpoint</button>
+                    <button class="btn btn-dark-outline" @onclick="() => _currentTimer?.SkipToNextCheckPoint()">Next Checkpoint</button>
                 </div>
             </div>
         }
@@ -128,6 +145,9 @@
 
     // Flags.
     private bool _dataLoaded = false;
+
+    // Modals.
+    private Modal? TimerSettingsModal;
 
     // Create a list of Radzen ProgressBarStyles to use for each checkpoint.
     List<ProgressBarStyle> progressBarColors = new List<ProgressBarStyle>

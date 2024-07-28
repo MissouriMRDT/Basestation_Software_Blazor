@@ -10,13 +10,24 @@ namespace Basestation_Software.Models.Timers
         // Declare member variables.
         public Timer? Timer { get; private set; }
         public TaskType TaskType { get; private set; } = TaskType.Autonomy;
-        public DateTime StartPoint { get; set; } = DateTime.MinValue;
+        private bool _startPointChanged = false;
+        private DateTime _startPoint = DateTime.MinValue;
+        public DateTime StartPoint
+        {
+            get { return _startPoint; }
+            set
+            {
+                _startPoint = value;
+                _startPointChanged = true;
+            }
+        }
         public TimeSpan EndPoint { get; set; } = TimeSpan.MaxValue;
         public TimeSpan ElapsedTime { get; private set; } = TimeSpan.Zero;
         public Dictionary<string, TimeSpan> CheckPoints { get; set; } = new Dictionary<string, TimeSpan>();
         public bool IsStarted { get; private set; } = false;
         public bool IsPaused { get; private set; } = false;
         public bool IsFinished { get; private set; } = false;
+        public bool IsBeingConfigured { get; private set; } = false;
 
         // Delegates and events.
         public delegate Task TimerTickCallback(TaskType timerTaskType, TimeSpan elapsedTime);
@@ -89,14 +100,88 @@ namespace Basestation_Software.Models.Timers
         }
 
         /// <summary>
+        /// Given a checkpoint name, skip the timer to that checkpoint.
+        /// </summary>
+        /// <param name="checkPointName">The name of the checkpoint to skip to.</param>
+        public void SkipToCheckPoint(string checkPointName)
+        {
+            if (CheckPoints.ContainsKey(checkPointName))
+            {
+                // Sum all the checkpoints up to the checkpoint we want to skip to.
+                StartPoint = DateTime.Now - TimeSpan.FromSeconds(CheckPoints.Take(CheckPoints.Keys.ToList().IndexOf(checkPointName) + 1).Sum(x => x.Value.TotalSeconds));
+                UpdateElapsedTime(null);
+            }
+        }
+
+        /// <summary>
+        /// Skip to the next checkpoint.
+        /// </summary>
+        public void SkipToNextCheckPoint()
+        {
+            if (CheckPoints.Count > 0)
+            {
+                // Figure out which checkpoints we are between. Checkpoints should be added in order since we are using a dictionary that just stores the duration of each checkpoint.
+                foreach (var checkPoint in CheckPoints)
+                {
+                    // Sum the checkpoints before with this one.
+                    double checkPointStart = CheckPoints.Take(CheckPoints.Keys.ToList().IndexOf(checkPoint.Key) + 1).Sum(x => x.Value.TotalSeconds);
+                    // Check if the elapsed time is between the current checkpoint and the next checkpoint.
+                    if (checkPointStart >= ElapsedTime.TotalSeconds)
+                    {
+                        SkipToCheckPoint(checkPoint.Key);
+                        break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Go back to the previous checkpoint.
+        /// </summary>
+        public void SkipToPreviousCheckPoint()
+        {
+            if (CheckPoints.Count > 0)
+            {
+                // Figure out which checkpoints we are between. Checkpoints should be added in order since we are using a dictionary that just stores the duration of each checkpoint.
+                foreach (var checkPoint in CheckPoints)
+                {
+                    // Sum the checkpoints before with this one.
+                    double checkPointStart = CheckPoints.Take(CheckPoints.Keys.ToList().IndexOf(checkPoint.Key) + 1).Sum(x => x.Value.TotalSeconds);
+                    // Check if the elapsed time is between the current checkpoint and the next checkpoint.
+                    if (checkPointStart <= ElapsedTime.TotalSeconds)
+                    {
+                        // Check if the checkpoint start is zero. This means we haven't reached the first checkpoint yet.
+                        if (checkPointStart == 0)
+                        {
+                            StartPoint = DateTime.Now;
+                            UpdateElapsedTime(null);
+                            break;
+                        }
+                        else
+                        {
+                            SkipToCheckPoint(checkPoint.Key);
+                            break;
+                        }
+                    }
+                    else
+                    {
+                        // If we are at the first checkpoint, reset the timer.
+                        Reset();
+                        break;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         /// Updates timer metrics.
         /// </summary>
         /// <param name="state"></param>
         /// <returns></returns>
         private async void UpdateElapsedTime(object? state)
         {
-            // Check if the timer is paused.
-            if (!IsPaused)
+            // Check if the timer is paused, but if the start time was changed, we need to update the elapsed time.
+            if (!IsPaused || _startPointChanged)
             {
                 // Check if the timer is finished.
                 if (DateTime.Now - StartPoint >= EndPoint)
@@ -105,6 +190,7 @@ namespace Basestation_Software.Models.Timers
                     IsFinished = true;
                 }
                 ElapsedTime = DateTime.Now - StartPoint;
+                _startPointChanged = false;
             }
             if (TimerTickNotifier is not null)
             {
@@ -112,6 +198,37 @@ namespace Basestation_Software.Models.Timers
             }
         }
 
+        /// <summary>
+        /// Converts a timespan into a short readable string. For example, 1h 30m 20s.
+        /// </summary>
+        /// <param name="timeSpan">The timespan to parse into a short string.</param>
+        /// <returns></returns>
+        public static string TimeSpanToShortReadableString(TimeSpan timeSpan)
+        {
+            if (timeSpan.TotalSeconds < 1)
+            {
+                return "0s";
+            }
 
+            var parts = new List<string>();
+
+            if (timeSpan.Hours > 0)
+            {
+                parts.Add($"{timeSpan.Hours}h");
+            }
+
+            if (timeSpan.Minutes > 0)
+            {
+                parts.Add($"{timeSpan.Minutes}m");
+            }
+
+            if (timeSpan.Seconds > 0)
+            {
+                parts.Add($"{timeSpan.Seconds}s");
+            }
+
+            return string.Join(" ", parts);
+        }
     }
+
 }

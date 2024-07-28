@@ -90,6 +90,12 @@ namespace Basestation_Software.Web.Core.Services
             }
         }
 
+        /// <summary>
+        /// Runs when a timer ticks.
+        /// </summary>
+        /// <param name="timerName">The task type.</param>
+        /// <param name="timeElapsed">The current time elapsed in the task.</param>
+        /// <returns></returns>
         private async Task OnTimerTick(TaskType timerName, TimeSpan timeElapsed)
         {
             // Invoke the timer tick callback.
@@ -136,6 +142,6 @@ namespace Basestation_Software.Web.Core.Services
                 }
             }
             return null;
-        }  
+        }
     }
 }

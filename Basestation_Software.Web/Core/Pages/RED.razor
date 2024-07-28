@@ -35,25 +35,6 @@
                     <RoverMap />
                 </div>
             </div>
-            <div class="row flex-grow-1">
-                <div class="col-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h2>MapTiles API TEST</h2>
-                            <h6 class="card-subtitle">Test 2</h6>
-                        </div>
-                        <div class="card-body scrollable" style="max-height: 48vh">
-                            @if (imagePreview != null)
-                            {
-                                <img src="@imagePreview" alt="Image Preview" width="200" />
-                            }
-
-                            <InputFile OnChange=@HandleFileSelected accept="image/png" />
-                            <button class="btn btn-sm btn-outline-success" @onclick="async () => await ConvertImageToByteArray()" title="Save File"><i class="bi bi-inline-text" /> Save File</button>                       
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 </div>
@@ -61,9 +42,6 @@
 @code
 {
     // Declare page member variables.
-    private IBrowserFile file;
-    private string imagePreview;
-    private byte[] imageBytes;
 
     // Flags.    
 
@@ -80,46 +58,5 @@
     void IDisposable.Dispose()
     {
         // Do nothing yet.
-    }
-
-    private async Task HandleFileSelected(InputFileChangeEventArgs e)
-    {
-        file = e.File;
-
-        if (file != null)
-        {
-            var buffer = new byte[file.Size];
-            await file.OpenReadStream().ReadAsync(buffer);
-            imagePreview = $"data:image/png;base64,{Convert.ToBase64String(buffer)}";
-        }
-    }
-
-    private async Task ConvertImageToByteArray()
-    {
-        if (file != null)
-        {
-            using (var stream = new MemoryStream())
-            {
-                await file.OpenReadStream().CopyToAsync(stream);
-                imageBytes = stream.ToArray();
-            }
-
-            // Now imageBytes contains the byte array of the uploaded image
-            // Check if the 0,0,0 location already exists in the database
-            MapTile? mapTile = await _MapTileService.GetMapTile(0, 0, 0);
-            if (mapTile is not null)
-            {
-                // If it does, update the image data
-                mapTile.ImageData = imageBytes;
-                await _MapTileService.UpdateMapTile(mapTile);
-            }
-            else
-            {
-                // If it doesn't, add a new map tile
-                await _MapTileService.AddMapTile(new MapTile {X = 0, Y = 0, Z = 0, ImageData = imageBytes});
-            }
-
-            _ToastService.ShowSuccess("Image saved successfully!");
-        }
     }
 }
