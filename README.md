@@ -67,12 +67,6 @@ In Blazor WASM, the application runs in the browser using WebAssembly. The entir
   - Larger download size due to the .NET runtime.
   - Limited access to server resources and capabilities.
 
-#### Each page and component can be specifically configured to run either server or client side. Put these at the top of your component to specify.
-  - `@rendermode InteractiveServer`
-  - `@rendermode InteractiveWebAssembly`
-
-  If you don't specify one of these, then the component or page will be STATIC.
-
 ## 3rd Party Libraries
  - [Bootstrap (for premade icons and CSS classes)](https://getbootstrap.com/docs/5.3/getting-started/introduction/)
  - [Radzen (for premade components)](https://blazor.radzen.com/dashboard)
