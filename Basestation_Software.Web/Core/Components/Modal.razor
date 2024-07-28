@@ -1,0 +1,209 @@
+@implements IDisposable
+
+<style>
+    .scrollable {
+        max-height: 50vh; 
+        overflow-y: auto;
+        display: block;
+    }
+
+    @@media (max-width: 767.98px) {
+            .modal {
+                max-height: 95vh;
+            }
+
+            .modal-body {
+                overflow-y: auto;
+                max-height: 75vh;
+            }
+        }
+
+        .scrollable {
+        max-height: 50vh; 
+        overflow-y: auto;
+        display: block;
+    }
+
+    @@keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(100%);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes fadeOutUp {
+        from {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        to {
+            opacity: 0;
+            transform: translateY(-100%);
+        }
+    }
+
+    .fade-in-up {
+        animation: fadeInUp 0.1s ease-out forwards;
+    }
+
+    .fade-out-up {
+        animation: fadeOutUp 0.1s ease-out forwards;
+    }
+
+    @@keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+        to {
+            opacity: 0.45;
+        }
+    }
+
+    @@keyframes fadeOut {
+        from {
+            opacity: 0.45;
+        }
+        to {
+            opacity: 0;
+        }
+    }
+
+    .fade-in {
+        animation: fadeIn 0.1s ease-out forwards;
+    }
+
+    .fade-out {
+        animation: fadeOut 0.1s ease-out forwards;
+    }
+</style>
+
+<div class="modal @ModalClass" tabindex="-1" role="dialog" style="display: @ModalDisplay;" @onfocusout="@(async () => await OnClose())">
+    <div class="modal-dialog modal-dialog-centered @Size text-dark-emphasis" role="document" style="z-index:1055;">
+        <div class="modal-content @ModalWindowAnimation">
+            @if (Header is not null)
+            {
+                <div class="modal-header @HeaderClass" style="@HeaderStyle">
+                    @Header
+                </div>
+            }
+
+            @if (Body is not null)
+            {
+                <div class="modal-body @BodyClass" style="@BodyStyle">
+                    @Body
+                </div>
+            }
+
+            @if (Footer is not null)
+            {
+                <div class="modal-footer @FooterClass" style="@FooterStyle">
+                    @Footer
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="modal-backdrop show @ModalBackdropAnimation" data-dismiss="modal" @onclick="async () => await Close()"></div>
+
+</div>
+
+@code
+{
+    // Component Parameters.
+    [Parameter]
+    public RenderFragment? Header { get; set; }
+    [Parameter]
+    public RenderFragment? Body { get; set; }
+    [Parameter]
+    public RenderFragment? Footer { get; set; }
+
+    [Parameter]
+    public string HeaderClass { get; set; } = string.Empty;
+    [Parameter]
+    public string HeaderStyle { get; set; } = string.Empty;
+    [Parameter]
+    public string BodyClass { get; set; } = string.Empty;
+    [Parameter]
+    public string BodyStyle { get; set; } = string.Empty;
+    [Parameter]
+    public string FooterClass { get; set; } = string.Empty;
+    [Parameter]
+    public string FooterStyle { get; set; } = string.Empty;
+    [Parameter]
+    public string Size { get; set; } = string.Empty;
+    [Parameter]
+    public EventCallback CloseEventNotifiers { get; set; }
+
+    // Declare page member variables.
+    private string ModalDisplay = "none;";
+    private string ModalClass = "";
+    private string ModalWindowAnimation = "";
+    private string ModalBackdropAnimation = "";
+
+    // Flags.
+    private bool ShowBackdrop = false;
+
+    /// <summary>
+    /// Called whenever the component is destroyed.
+    /// </summary>
+    void IDisposable.Dispose()
+    {
+        // Nothing to do yet.
+    }
+    
+    protected override void OnParametersSet()
+    {
+        // Can be used to update variables if the parameters change after the component has been initialized.
+    }
+
+    /// <summary>
+    /// Show the modal.
+    /// </summary>
+    public void Open()
+    {
+        // Show the modal.
+        ModalWindowAnimation = "fade-in-up";
+        ModalBackdropAnimation = "fade-in";
+        ModalClass = "show";
+        ModalDisplay = "block;";
+        ShowBackdrop = true;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Hide the modal.
+    /// </summary>
+    public async Task Close()
+    {
+        // Hide the modal.
+        ModalWindowAnimation = "fade-out-up";
+        ModalBackdropAnimation = "fade-out";
+        StateHasChanged();
+        await Task.Delay(100); // Wait for the animation to complete
+        ModalDisplay = "none;";
+        ModalClass = "";
+        ShowBackdrop = false;
+
+        // Notify the parent component that the modal has been closed.
+        if (CloseEventNotifiers.HasDelegate)
+        {
+            await CloseEventNotifiers.InvokeAsync(true);
+        }
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Ran when the modal is closed.
+    /// </summary>
+    private async Task OnClose()
+    {
+        if (CloseEventNotifiers.HasDelegate)
+        {
+            await CloseEventNotifiers.InvokeAsync(true);
+        }
+    }
+}
