@@ -39,7 +39,7 @@ namespace Basestation_Software.Web.Core.Services
         /// <returns></returns>
         public async Task<string> GetValue(string key, string def = "")
         {
-            var cValue = await GetCookie();
+			var cValue = await GetCookie();
             if (string.IsNullOrEmpty(cValue)) return def;                
 
             var vals = cValue.Split(';');
