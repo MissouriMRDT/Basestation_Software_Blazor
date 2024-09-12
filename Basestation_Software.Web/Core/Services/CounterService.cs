@@ -7,8 +7,7 @@
 
 		private int count = 0;
 
-		public delegate Task CountListener();
-		private event CountListener? _countNotifier;
+		private event Func<Task>? CountNotifier;
 
 		// Constructor
 		public CounterService(HttpClient httpClient)
@@ -19,15 +18,15 @@
 		public void CountUp()
 		{
 			count++;
-			if (_countNotifier is not null)
+			if (CountNotifier is not null)
 			{
-				_countNotifier.Invoke();
+				CountNotifier.Invoke();
 			}
 		}
 
-		public void Subscribe(CountListener listener)
+		public void Subscribe(Func<Task> listener)
 		{
-			_countNotifier += listener;
+			CountNotifier += listener;
 		}
 
 		public int GetCount()
