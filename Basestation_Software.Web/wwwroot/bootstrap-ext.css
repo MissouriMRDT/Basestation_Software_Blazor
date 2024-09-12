@@ -8,11 +8,11 @@
 }
 
 .card:hover {
-    box-shadow: 8px 8px 8px rgba(225, 3, 3, 0.692);
-    transform:scale(1.004);
+    box-shadow: 5px 5px 0px rgba(209, 3, 3, 0.692);
+/*    transform:scale(1.004);*/
 }
 
 .card {
     border:1px solid black;
-    transition:.3s;
+    transition:.25s;
 }
