@@ -27,6 +27,11 @@
 			CountNotifier += listener;
 		}
 
+		public void Unsubscribe(Func<Task> listener)
+		{
+			CountNotifier -= listener;
+		}
+
 		public int GetCount()
 		{
 			return _count;

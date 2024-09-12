@@ -1,4 +1,5 @@
-﻿@inject CounterService _CounterService
+﻿@implements IDisposable
+@inject CounterService _CounterService
 
 <div class="card full-height">
 	<div class="card-header">
@@ -14,9 +15,15 @@
 	{
 		await InvokeAsync(StateHasChanged);
 	}
+
 	protected override async Task OnInitializedAsync()
 	{
 		_CounterService.Subscribe(Update);
 		await InvokeAsync(StateHasChanged);
+	}
+
+	public void Dispose()
+	{
+		_CounterService.Unsubscribe(Update);
 	}
 }
