@@ -2,17 +2,14 @@
 {
 	public class CounterService
 	{
-		// Injected services
-		private readonly HttpClient _httpClient;
-
-		private int _count = 0;
+		private int _count;
 
 		private event Func<Task>? CountNotifier;
 
 		// Constructor
-		public CounterService(HttpClient httpClient)
+		public CounterService()
 		{
-			_httpClient = httpClient;
+			_count = 0;
 		}
 
 		public void CountUp()
