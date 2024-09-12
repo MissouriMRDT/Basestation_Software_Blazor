@@ -3,25 +3,23 @@
 	public class CounterService
 	{
 		// Injected services
-		private readonly HttpClient _HttpClient;
+		private readonly HttpClient _httpClient;
 
-		private int count = 0;
+		private int _count = 0;
 
 		private event Func<Task>? CountNotifier;
 
 		// Constructor
 		public CounterService(HttpClient httpClient)
 		{
-			_HttpClient = httpClient;
+			_httpClient = httpClient;
 		}
 
 		public void CountUp()
 		{
-			count++;
-			if (CountNotifier is not null)
-			{
-				CountNotifier.Invoke();
-			}
+			_count++;
+			// Question Mark operator is equivalent to null-checking
+			CountNotifier?.Invoke();
 		}
 
 		public void Subscribe(Func<Task> listener)
@@ -31,7 +29,7 @@
 
 		public int GetCount()
 		{
-			return count;
+			return _count;
 		}
 	}
 }
