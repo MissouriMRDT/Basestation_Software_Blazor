@@ -1,12 +1,29 @@
-﻿<div class="card full-height">
+﻿@implements IDisposable
+@inject CounterService _CounterService
+
+<div class="card full-height">
 	<div class="card card-header">
 		<h3>Counter</h3>
 	</div>
 
-	<p>Example Text</p>
-	<button>Count Up</button>
+	<p>Count: @_CounterService.GetCount()</p>
+	<button @onclick="_CounterService.CountUp">Count Up</button>
 </div>
 
 @code {
+	private async Task Update()
+	{
+		await InvokeAsync(StateHasChanged);
+	}
 
+	protected override async Task OnInitializedAsync()
+	{
+		_CounterService.SubscribeToCount(Update);
+		await InvokeAsync(StateHasChanged);
+	}
+
+	public void Dispose()
+	{
+		_CounterService.UnscribeToCount(Update);
+	}
 }
