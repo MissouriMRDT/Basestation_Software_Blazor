@@ -1,0 +1,13 @@
+﻿.cam-container {
+    resize: horizontal;
+    overflow: auto;
+    max-width: 100%;
+    min-width: 50%;
+    align-self: center;
+}
+
+.cam-display {
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+}

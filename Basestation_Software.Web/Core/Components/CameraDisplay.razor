@@ -1,0 +1,33 @@
+﻿@inject CameraService _CameraController
+@implements IDisposable
+
+<link rel="stylesheet" type="text/css" href="CameraDisplay.razor.css?version=0.1">
+
+<div class="card full-height">
+    <div class="card-header">
+        <h3>Camera Display</h3>
+    </div>
+    <div class="cam-container">
+        <img class="cam-display" src="@_CameraController.GetFrameData()" />
+    </div>
+    <p>Component Content</p>
+</div>
+
+@code {
+    private async Task Update()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _CameraController.SubscribeToNewFrame(Update);
+        _ = _CameraController.WatchForFrames();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    void IDisposable.Dispose()
+    {
+        _CameraController.UnsubscribeFromNewFrame(Update);
+    }
+}
