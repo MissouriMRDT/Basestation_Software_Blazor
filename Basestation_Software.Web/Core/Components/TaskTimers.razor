@@ -33,9 +33,7 @@
 
 <div class="card full-height">
     <div class="card-header d-flex justify-content-between">
-        <div class="col">
-            <h4>Task Timer</h4>
-        </div>
+            <h3>Task Timer</h3>
         <div class="col text-end">
             <RadzenDropDown @bind-Value=@TimerTaskType Data=@(Enum.GetValues(typeof(TaskType)))></RadzenDropDown>
         </div>

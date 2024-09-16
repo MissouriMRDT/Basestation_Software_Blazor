@@ -3,6 +3,19 @@
     color: white;
 }
 
+.card-header h3 {
+    font-size: larger;
+    margin-block: auto;
+    height: 100%;
+    vertical-align: middle;
+}
+
+.card-header .vr {
+    width: 1px;
+    margin-inline: 10px;
+    opacity: 100%;
+}
+
 .card .read-more:hover {
     font-size: 14px;
 }
