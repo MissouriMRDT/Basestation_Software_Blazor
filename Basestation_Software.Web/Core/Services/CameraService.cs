@@ -16,6 +16,7 @@ namespace Basestation_Software.Web.Core.Services
 		{
 			// ffmpeg -f dshow -i video="Integrated Camera" -f mpegts -codec:v mpeg1video -s 320x240 -b:v 64k -maxrate 128k -bf 0 udp://@239.255.255.255:1234
 			_capture = new VideoCapture("udp://239.255.255.255:1234");
+			_capture.Set(VideoCaptureProperties.BufferSize, 0);
 			_frameData = string.Empty;
 		}
 
