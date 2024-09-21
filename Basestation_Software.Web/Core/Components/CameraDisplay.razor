@@ -1,4 +1,4 @@
-﻿@inject CameraService _CameraController
+﻿@inject CameraService _CameraService
 @implements IDisposable
 
 <link rel="stylesheet" type="text/css" href="CameraDisplay.razor.css?version=0.1">
@@ -8,32 +8,46 @@
         <h3>Camera Display</h3>
     </div>
     <div class="cam-container">
-        <img class="cam-display" src="@_CameraController.GetFrameData()" />
+        <img class="cam-display" src="@_CameraService.GetFrameData(_sourceIndex)" />
     </div>
-    <p>Component Content</p>
+    <div class="source-buttons-container">
+        @for (int i = 0; i < 8; i++)
+        {
+            <button @onclick="() => SetSource(i)">@(i + 1)</button>
+        }
+    </div>
+    <p>Source: @_sourceIndex</p>
+    <p>L: @_CameraService.Debug()</p>
 </div>
 
 @code {
     private bool _prerendered = false;
+    private int _sourceIndex = 0;
 
-    private async Task Update()
+    private async Task OnNewFrame()
     {
         await InvokeAsync(StateHasChanged);
     }
 
     protected override async Task OnInitializedAsync()
     {
-        // _CameraController.WatchForFrames();
-        _CameraController.SubscribeToNewFrame(Update);
+        _CameraService.SubscribeToNewFrame(OnNewFrame, _sourceIndex);
         await InvokeAsync(StateHasChanged);
+    }
+
+    private void SetSource(int newSourceIndex)
+    {
+        _CameraService.UnsubscribeFromNewFrame(OnNewFrame, _sourceIndex);
+        _sourceIndex = newSourceIndex;
+        _CameraService.SubscribeToNewFrame(OnNewFrame, _sourceIndex);
     }
 
     void IDisposable.Dispose()
     {
         if (_prerendered)
         {
-            _CameraController.UnsubscribeFromNewFrame(Update);
-            _CameraController.Dispose();
+            _CameraService.UnsubscribeFromNewFrame(OnNewFrame, _sourceIndex);
+            _CameraService.Dispose();
         }
         else
         {

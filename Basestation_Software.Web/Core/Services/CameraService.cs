@@ -1,101 +1,49 @@
-﻿using OpenCvSharp;
-using System.Text.RegularExpressions;
-
-namespace Basestation_Software.Web.Core.Services
+﻿namespace Basestation_Software.Web.Core.Services
 {
 	public class CameraService
 	{
-		// OpenCV video capture
-		private VideoCapture? _capture;
-		// data of most recent captured frame
-		private string _frameData;
+		private readonly static string[] _sources = [
+			"127.0.0.0:1234", 
+			"127.0.0.0:1235"
+			];
 
-		private CancellationTokenSource _tokenSource = new();
-
-		private event Func<Task>? NewFrameListener;
+		private static SingleCameraController[] _controllers = new SingleCameraController[_sources.Length];
 
 		public CameraService()
 		{
-			// ffmpeg -f dshow -i video="Integrated Camera" -f mpegts -codec:v mpeg1video -s 320x240 -b:v 64k -maxrate 128k -bf 0 udp://@239.255.255.255:1234
-			InitCapture();
-			_frameData = string.Empty;
-		}
-
-		private void InitCapture()
-		{
-			// create capture
-			_capture = new VideoCapture("udp://127.0.0.0:1234");
-
-			// configure capture settings
-			// buffer size is supposed to control the amount of frames of old video opencv stores, but it seems to be very undersupported and appears to not be doing anything
-			// https://stackoverflow.com/questions/30032063/opencv-videocapture-lag-due-to-the-capture-buffer
-			_capture.Set(VideoCaptureProperties.BufferSize, 3);
-			_capture.Set(VideoCaptureProperties.FrameWidth, 320);
-			_capture.Set(VideoCaptureProperties.FrameHeight, 240);
-
-			_ = WatchForFrames(_tokenSource.Token);
-		}
-
-		public string GetFrameData()
-		{
-			return _frameData;
-		}
-		
-		public void SubscribeToNewFrame(Func<Task> listener)
-		{
-			NewFrameListener += listener;
-		}
-
-		public void UnsubscribeFromNewFrame(Func<Task> listener)
-		{
-			NewFrameListener -= listener;
-		}
-
-		/// <summary>
-		/// Used to initialize the camera service. Watches for new camera frames and invokes the new frame event.
-		/// </summary>
-		public async Task WatchForFrames(CancellationToken token)
-		{
-			_ = FindLatestFrame(token);
-			while (!token.IsCancellationRequested)
+			// set up controllers array
+			for (int i = 0; i < _sources.Length; i++)
 			{
-				await TryRetriveFrame(token);
+				_controllers[i] = new SingleCameraController(_sources[i]);
 			}
 		}
 
-		/// <summary>
-		/// Continuously reads from the frame buffer as fast as possible to make sure TryRetriveFrame returns the latest camera frame. 
-		/// </summary>
-		private async Task FindLatestFrame(CancellationToken token)
+		public int Debug()
 		{
-			while (!token.IsCancellationRequested)
-			{
-				_capture?.Grab();
-				await Task.Delay(1, token);
-			}
+			return _controllers.Length;
 		}
 
-		public async Task TryRetriveFrame(CancellationToken token)
+		public void SubscribeToNewFrame(Func<Task> listener, int source)
 		{
-			using (Mat frame = new())
-			{
-				// Grab returns true when a new frame is found
-				_capture?.Retrieve(frame);
-				string base64 = Convert.ToBase64String(frame.ToBytes());
-				_frameData = $"data:image/gif;base64,{base64}";
-
-				NewFrameListener?.Invoke();
-				await Task.Delay(16, token);
-			}
+			_controllers[source].SubscribeToNewFrame(listener);
 		}
 
-		/// <summary>
-		///	Releases all used resources and stops getting frames.
-		/// </summary>
+		public void UnsubscribeFromNewFrame(Func<Task> listener, int source)
+		{
+			_controllers[source].SubscribeToNewFrame(listener);
+		}
+
+		public string GetFrameData(int source)
+		{
+			return _controllers[source].GetFrameData();
+		}
+
 		public void Dispose()
 		{
-			_tokenSource.Cancel();
-			_capture?.Dispose();
+			foreach (var c in _controllers)
+			{
+				c.Dispose();
+			}
 		}
 	}
 }

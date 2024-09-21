@@ -11,3 +11,12 @@
     width: 100%;
     object-fit: contain;
 }
+
+.source-buttons-container {
+    display: flex;
+    flex-direction: row;
+    margin-inline: 5%;
+}
+.source-buttons-container button {
+    flex: 1;
+}
