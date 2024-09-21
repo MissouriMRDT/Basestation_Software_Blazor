@@ -26,7 +26,9 @@ namespace Basestation_Software.Web.Core.Services
 			// create capture
 			_capture = new VideoCapture("udp://127.0.0.0:1234");
 
-			// configure capture
+			// configure capture settings
+			// buffer size is supposed to control the amount of frames of old video opencv stores, but it seems to be very undersupported and appears to not be doing anything
+			// https://stackoverflow.com/questions/30032063/opencv-videocapture-lag-due-to-the-capture-buffer
 			_capture.Set(VideoCaptureProperties.BufferSize, 3);
 			_capture.Set(VideoCaptureProperties.FrameWidth, 320);
 			_capture.Set(VideoCaptureProperties.FrameHeight, 240);
@@ -54,26 +56,36 @@ namespace Basestation_Software.Web.Core.Services
 		/// </summary>
 		public async Task WatchForFrames(CancellationToken token)
 		{
+			_ = FindLatestFrame(token);
 			while (!token.IsCancellationRequested)
 			{
-				await TryFindFrame();
+				await TryRetriveFrame(token);
 			}
 		}
 
-		public async Task TryFindFrame()
+		/// <summary>
+		/// Continuously reads from the frame buffer as fast as possible to make sure TryRetriveFrame returns the latest camera frame. 
+		/// </summary>
+		private async Task FindLatestFrame(CancellationToken token)
+		{
+			while (!token.IsCancellationRequested)
+			{
+				_capture?.Grab();
+				await Task.Delay(1, token);
+			}
+		}
+
+		public async Task TryRetriveFrame(CancellationToken token)
 		{
 			using (Mat frame = new())
 			{
 				// Grab returns true when a new frame is found
-				if (_capture != null && _capture.Grab())
-				{
-					_capture?.Retrieve(frame);
-					string base64 = Convert.ToBase64String(frame.ToBytes());
-					_frameData = $"data:image/gif;base64,{base64}";
+				_capture?.Retrieve(frame);
+				string base64 = Convert.ToBase64String(frame.ToBytes());
+				_frameData = $"data:image/gif;base64,{base64}";
 
-					NewFrameListener?.Invoke();
-				};
-				await Task.Delay(16);
+				NewFrameListener?.Invoke();
+				await Task.Delay(16, token);
 			}
 		}
 
