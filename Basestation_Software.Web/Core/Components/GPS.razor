@@ -1,0 +1,143 @@
+@implements IDisposable
+@inject IJSRuntime _IJSRuntime
+
+<style>
+    .gps {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-template-rows: repeat(10, 1fr) 250px;
+        justify-items: center;
+    }
+    .gps p {
+        margin: 0;
+    }
+</style>
+
+<script>
+    // Create global roverAttitude collection if it doesn't exist.
+    if (window.roverAttitude === undefined) { window.roverAttitude = {}; }
+
+    window.roverAttitude.@(ID) = {
+        dotNetComponent: null,
+        width: 0,
+        height: 0,
+        cornerRoll: 0,
+        bgCanvas: null,
+        fgCanvas: null,
+        bgCtx: null,
+        fgCtx: null,
+        // Create attitude indicator.
+        init: (dotNetComponent) => {
+            this.dotNetComponent = dotNetComponent;
+            this.bgCanvas = document.getElementById("@(ID)-bg");
+            this.fgCanvas = document.getElementById("@(ID)-fg");
+            this.bgctx = this.bgCanvas.getContext("2d");
+            this.fgctx = this.fgCanvas.getContext("2d");
+            addEventListener("resize", this.resizeCanvas);
+        },
+        resizeCanvas: () => {
+            this.width = this.canvas.clientWidth;
+            this.height = this.canvas.clientHeight;
+            if (this.canvas.width !== this.width || this.canvas.height !== this.height) {
+                this.canvas.width = this.width;
+                this.canvas.height = this.height;
+            }
+            this.cornerRoll = Math.atan(this.height / this.width);
+        },
+        draw: (pitch, roll) => {
+            // Pitch relative to upright [-90D,90U]
+            if (pitch > 90) { pitch = 90; }
+            else if (pitch < -90) { pitch = -90; }
+            // Roll relative to upright [-180L, 180R]
+            if (roll > 180) { roll = 180; }
+            else if (roll < -180) { roll = -180; }
+            // TODO: update attitude indicator
+        }
+    };
+</script>
+
+<div class="card full-height">
+    <div class="card-header">
+        <h5 class="mr-auto">NAV</h5>
+    </div>
+    <div class="card-body gps w-100">
+        <p>Lat [&#176;]</p><p>Lon [&#176;]</p><p>Alt [m]</p>
+        <p>@($"{Lat:00.0000000}")</p><p>@($"{Lon:000.0000000}")</p><p>@($"{Alt:000.00}")</p>
+        <p>Satellites [&#176;]</p><p /><p>Heading [&#176;]</p>
+        <p>@($"{Satellites:00}")</p><p /><p>@($"{Heading:00.00000}")</p>
+        <p>Horiz [m]</p><p>Vert [m]</p><p>Hdg [&#176;]</p>
+        <p>@($"{AccurHor:0000.000}")</p><p>@($"{AccurVer:0000.000}")</p><p>@($"{AccurHdg:000.00000}")</p>
+        <p>Pitch [&#176;]</p><p>Yaw [&#176;]</p><p>Roll [&#176;]</p>
+        <p>@($"{Pitch:00.0}")</p><p>@($"{Yaw:00.0}")</p><p>@($"{Roll:00.0}")</p>
+        <p style="grid-area: 9 / 1 / 10 / 4">XYZ Acceleration [ms&#8315;&#178;]</p>
+        <p>@($"{AccelX:00.0}")</p><p>@($"{AccelY:00.0}")</p><p>@($"{AccelZ:00.0}")</p>
+        <canvas id="@ID-fg" style="grid-area: 11 / 1 / 12 / 4"></canvas>
+        <canvas id="@ID-bg" style="grid-area: 11 / 1 / 12 / 4"></canvas>
+    </div>
+</div>
+
+@code
+{
+    // Component parameters.
+    [Parameter]
+    public string ID { get; set; } = "";
+
+    // State
+    private double Lat = 0, Lon = 0, Alt = 0;
+    private float AccurHor = 0, AccurVer = 0, AccurHdg = 0;
+    private float Heading = 0;
+    private uint Satellites = 0;
+    private float Pitch = 0, Yaw = 0, Roll = 0;
+    private float AccelX = 0, AccelY = 0, AccelZ = 0;
+
+    // Declare page member variables.
+    private string jsInteropName;
+    private Random random;
+
+
+    protected override void OnInitialized()
+    {
+        random = new Random();
+        this.jsInteropName = $"window.roverAttitude.{ID}";
+        new System.Threading.Timer(async _ =>  // async void
+        {
+            // Update display with dummy data.
+            Lat = Math.Clamp(Lat + random.NextDouble(), -90, 90);
+            Lon = Math.Clamp(Lat + random.NextDouble(), -180, 180);
+            Alt = Math.Clamp(Alt + random.NextDouble(), 1200, 1400);
+            AccurHor = (float)Math.Clamp(AccurHor + random.NextDouble() * 0.01, -10, 10);
+            AccurVer = (float)Math.Clamp(AccurVer + random.NextDouble() * 0.01, -10, 10);
+            AccurHdg = (float)Math.Clamp(AccurHdg + random.NextDouble(), -360, 360);
+            Heading = (float)Math.Clamp(Heading + random.NextDouble(), -180, 180);
+            Satellites = Math.Min(0, Math.Max(Satellites + (uint)random.Next(0, 2), 24));
+            Pitch = (float)Math.Clamp(Pitch + random.NextDouble(), -90, 90);
+            Yaw = (float)Math.Clamp(Yaw + random.NextDouble(), -180, 180);
+            Roll = (float)Math.Clamp(Roll + random.NextDouble(), -180, 180);
+            AccelX = (float)Math.Clamp(AccelX + random.NextDouble(), -15, 15);
+            AccelY = (float)Math.Clamp(AccelY + random.NextDouble(), -15, 15);
+            AccelZ = (float)Math.Clamp(AccelZ + random.NextDouble(), -15, 15);
+            // we need StateHasChanged() because this is an async void handler
+            // we need to Invoke it because we could be on the wrong Thread
+            await InvokeAsync(StateHasChanged);
+        }, null, 0, 1000);
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Initialize attitude indicator.
+            await _IJSRuntime.InvokeVoidAsync($"{jsInteropName}.init", [DotNetObjectReference.Create(this)]);
+        } else
+        {
+            // TODO: update state from rovecomm
+        }
+    }
+
+    void IDisposable.Dispose() { }
+}
