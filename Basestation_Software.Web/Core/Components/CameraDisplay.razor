@@ -14,6 +14,8 @@
 </div>
 
 @code {
+    private bool _prerendered = false;
+
     private async Task Update()
     {
         await InvokeAsync(StateHasChanged);
@@ -21,13 +23,21 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // _CameraController.WatchForFrames();
         _CameraController.SubscribeToNewFrame(Update);
-        _ = _CameraController.WatchForFrames();
         await InvokeAsync(StateHasChanged);
     }
 
     void IDisposable.Dispose()
     {
-        _CameraController.UnsubscribeFromNewFrame(Update);
+        if (_prerendered)
+        {
+            _CameraController.UnsubscribeFromNewFrame(Update);
+            _CameraController.Dispose();
+        }
+        else
+        {
+            _prerendered = true;
+        }
     }
 }

@@ -10,6 +10,8 @@ namespace Basestation_Software.Web.Core.Services
 		// data of most recent captured frame
 		private string _frameData;
 
+		private CancellationTokenSource _tokenSource = new();
+
 		private event Func<Task>? NewFrameListener;
 
 		public CameraService()
@@ -19,7 +21,7 @@ namespace Basestation_Software.Web.Core.Services
 			_frameData = string.Empty;
 		}
 
-		public void InitCapture()
+		private void InitCapture()
 		{
 			// create capture
 			_capture = new VideoCapture("udp://127.0.0.0:1234");
@@ -28,6 +30,8 @@ namespace Basestation_Software.Web.Core.Services
 			_capture.Set(VideoCaptureProperties.BufferSize, 3);
 			_capture.Set(VideoCaptureProperties.FrameWidth, 320);
 			_capture.Set(VideoCaptureProperties.FrameHeight, 240);
+
+			_ = WatchForFrames(_tokenSource.Token);
 		}
 
 		public string GetFrameData()
@@ -46,28 +50,40 @@ namespace Basestation_Software.Web.Core.Services
 		}
 
 		/// <summary>
-		/// Used to initialize the camera serice. Watches for new camera frames and invokes the new frame event.
+		/// Used to initialize the camera service. Watches for new camera frames and invokes the new frame event.
 		/// </summary>
-		public async Task WatchForFrames()
+		public async Task WatchForFrames(CancellationToken token)
 		{
-
-			while (true)
+			while (!token.IsCancellationRequested)
 			{
-				using (Mat frame = new())
-				{
-					// Grab returns true when a new frame is found
-					if (_capture != null && _capture.Grab())
-					{
-						_capture?.Retrieve(frame);
-						string base64 = Convert.ToBase64String(frame.ToBytes());
-						_frameData = $"data:image/gif;base64,{base64}";
-
-						NewFrameListener?.Invoke();
-					};
-					await Task.Delay(16);
-				}
+				await TryFindFrame();
 			}
+		}
 
+		public async Task TryFindFrame()
+		{
+			using (Mat frame = new())
+			{
+				// Grab returns true when a new frame is found
+				if (_capture != null && _capture.Grab())
+				{
+					_capture?.Retrieve(frame);
+					string base64 = Convert.ToBase64String(frame.ToBytes());
+					_frameData = $"data:image/gif;base64,{base64}";
+
+					NewFrameListener?.Invoke();
+				};
+				await Task.Delay(16);
+			}
+		}
+
+		/// <summary>
+		///	Releases all used resources and stops getting frames.
+		/// </summary>
+		public void Dispose()
+		{
+			_tokenSource.Cancel();
+			_capture?.Dispose();
 		}
 	}
 }
