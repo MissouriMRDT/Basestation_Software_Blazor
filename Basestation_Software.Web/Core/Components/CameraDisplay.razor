@@ -13,7 +13,9 @@
     <div class="source-buttons-container">
         @for (int i = 0; i < 8; i++)
         {
-            <button @onclick="() => SetSource(i)">@(i + 1)</button>
+            // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
+            var _i = i;
+            <button @onclick="() => SetSource(_i)">@(_i + 1)</button>
         }
     </div>
     <p>Source: @_sourceIndex</p>
@@ -38,7 +40,10 @@
     private void SetSource(int newSourceIndex)
     {
         _CameraService.UnsubscribeFromNewFrame(OnNewFrame, _sourceIndex);
+
         _sourceIndex = newSourceIndex;
+        StateHasChanged();
+
         _CameraService.SubscribeToNewFrame(OnNewFrame, _sourceIndex);
     }
 

@@ -24,7 +24,7 @@ namespace Basestation_Software.Web.Core.Services
 		private void InitCapture(string source)
 		{
 			// create capture
-			_capture = new VideoCapture("udp://127.0.0.0:1234");
+			_capture = new VideoCapture(source);
 
 			// configure capture settings
 			// buffer size is supposed to control the amount of frames of old video opencv stores, but it seems to be very undersupported and appears to not be doing anything

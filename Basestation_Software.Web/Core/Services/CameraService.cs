@@ -3,8 +3,8 @@
 	public class CameraService
 	{
 		private readonly static string[] _sources = [
-			"127.0.0.0:1234", 
-			"127.0.0.0:1235"
+			"udp://127.0.0.0:1234?overrun_nonfatal=1&fifo_size=50000000",
+			"udp://127.0.0.0:1235?overrun_nonfatal=1&fifo_size=50000000"
 			];
 
 		private static SingleCameraController[] _controllers = new SingleCameraController[_sources.Length];
@@ -30,7 +30,7 @@
 
 		public void UnsubscribeFromNewFrame(Func<Task> listener, int source)
 		{
-			_controllers[source].SubscribeToNewFrame(listener);
+			_controllers[source].UnsubscribeFromNewFrame(listener);
 		}
 
 		public string GetFrameData(int source)
