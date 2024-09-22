@@ -48,7 +48,7 @@ public class RoveCommService : IHostedService
     {
         TCP.On(dataId, handler);
         UDP.On(dataId, handler);
-        _logger.LogInformation($"Subscribed to {dataId} with type {RoveCommUtils.DataTypeFromType(typeof(T))}");
+        _logger.LogInformation("Subscribed to {DataID} with type {DataType}.", dataId, RoveCommUtils.DataTypeFromType(typeof(T)));
     }
 
     /// <summary>
@@ -102,7 +102,7 @@ public class RoveCommService : IHostedService
     {
         UDP.Clear(dataId, handler);
         TCP.Clear(dataId, handler);
-        _logger.LogInformation($"Unsubscribed from {dataId} with type {RoveCommUtils.DataTypeFromType(typeof(T))}.");
+        _logger.LogInformation("Unsubscribed from {DataID} with type {DataType}.", dataId, RoveCommUtils.DataTypeFromType(typeof(T)));
     }
 
     /// <summary>
