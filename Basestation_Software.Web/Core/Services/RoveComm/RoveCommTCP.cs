@@ -80,8 +80,8 @@ public class RoveCommTCP
             catch (Exception e)
             {
                 _logger?.LogError($"An exception occurred in RoveComm UDP: {e.Message}");
-				_logger?.LogError(e.StackTrace);
-			}
+                _logger?.LogError(e.StackTrace);
+            }
             finally
             {
                 // Close connections.
@@ -256,9 +256,9 @@ public class RoveCommTCP
         {
             _logger?.LogError($"Failed to send TCP packet: {e.Message}");
             return false;
-		}
-		_logger?.LogInformation($"TCP: Sent RoveCommPacket with DataID {packet.DataID} and type {packet.DataType}[{packet.DataCount}] to {dest}.");
-		return true;
+        }
+        _logger?.LogInformation($"TCP: Sent RoveCommPacket with DataID {packet.DataID} and type {packet.DataType}[{packet.DataCount}] to {dest}.");
+        return true;
     }
     public async Task<bool> SendAsync<T>(RoveCommPacket<T> packet, string ip, CancellationToken cancelToken = default) =>
         await SendAsync(packet, ip, Port, cancelToken);
@@ -279,12 +279,12 @@ public class RoveCommTCP
         {
             try
             {
-				// Check if the client has enough bytes available to read a packet.
-				// TCP is a stream protocol, so if not enough bytes are available now, more will come in later.
-				if (connection.Client.Available < RoveCommConsts.HeaderSize)
-				{
-					continue;
-				}
+                // Check if the client has enough bytes available to read a packet.
+                // TCP is a stream protocol, so if not enough bytes are available now, more will come in later.
+                if (connection.Client.Available < RoveCommConsts.HeaderSize)
+                {
+                    continue;
+                }
                 // Get a reference to the stream managed by the TcpClient.
                 NetworkStream stream = connection.GetStream();
                 // Quit reading if no new data is received after 30 seconds.
@@ -296,7 +296,7 @@ public class RoveCommTCP
                 int bytesRead = await stream.ReadAsync(headerBuf, cancelToken);
                 if (bytesRead == 0)
                 {
-					_logger?.LogWarning("Failed to receive TCP data.");
+                    _logger?.LogWarning("Failed to receive TCP data.");
                     return;
                 }
 

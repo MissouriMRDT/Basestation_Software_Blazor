@@ -49,7 +49,7 @@ public class RoveCommUDP : IDisposable
 
         // Open new UDP socket.
         _logger?.LogInformation($"Starting RoveComm UDP on port {Port}.");
-        Task.Run(async () => 
+        Task.Run(async () =>
         {
             try
             {
@@ -62,12 +62,12 @@ public class RoveCommUDP : IDisposable
                     await ReceiveAndCallback(cancelToken);
                     // Don't hog the async queue.
                     await Task.Delay(RoveCommConsts.UpdateRate);
-				}
-			}
+                }
+            }
             catch (Exception e)
             {
                 _logger?.LogError($"An exception occurred in RoveComm UDP: {e.Message}");
-				_logger?.LogError(e.StackTrace);
+                _logger?.LogError(e.StackTrace);
             }
             finally
             {
@@ -130,11 +130,11 @@ public class RoveCommUDP : IDisposable
         {
             _logger?.LogError($"Failed to send UDP packet: {e.Message}");
             return false;
-		}
-		_logger?.LogInformation($"UDP: Sent RoveCommPacket with DataID {packet.DataID} and Data {packet.DataType}[{packet.DataCount}] to {dest}.");
-		// int localPort = (_UDPServer!.Client.LocalEndPoint as IPEndPoint)!.Port;
-		// _logger?.LogInformation($"Sent from port: {localPort}.");
-		return true;
+        }
+        _logger?.LogInformation($"UDP: Sent RoveCommPacket with DataID {packet.DataID} and Data {packet.DataType}[{packet.DataCount}] to {dest}.");
+        // int localPort = (_UDPServer!.Client.LocalEndPoint as IPEndPoint)!.Port;
+        // _logger?.LogInformation($"Sent from port: {localPort}.");
+        return true;
     }
     public bool Send<T>(RoveCommPacket<T> packet, string ip) => Send(packet, ip, Port);
 
@@ -187,18 +187,18 @@ public class RoveCommUDP : IDisposable
 
         try
         {
-			// We still want to process datagrams which are too small to parse; we just discard them.
-			if (_UDPServer!.Available == 0)
-			{
-				return;
-			}
+            // We still want to process datagrams which are too small to parse; we just discard them.
+            if (_UDPServer!.Available == 0)
+            {
+                return;
+            }
 
             var result = await _UDPServer!.ReceiveAsync(cancelToken);
             IPEndPoint fromIP = result.RemoteEndPoint;
             byte[] data = result.Buffer;
-			// If there aren't enough bytes to parse the header, the error will be caught and logged.
+            // If there aren't enough bytes to parse the header, the error will be caught and logged.
             RoveCommHeader header = RoveCommUtils.ParseHeader(data);
-			RoveCommDataType dataType = RoveCommUtils.ParseDataType(header.DataType);
+            RoveCommDataType dataType = RoveCommUtils.ParseDataType(header.DataType);
             switch (dataType)
             {
                 case RoveCommDataType.INT8_T: ProcessPacket(RoveCommUtils.ParsePacket<sbyte>(data)); break;
@@ -211,10 +211,10 @@ public class RoveCommUDP : IDisposable
                 case RoveCommDataType.DOUBLE: ProcessPacket(RoveCommUtils.ParsePacket<double>(data)); break;
                 case RoveCommDataType.CHAR: ProcessPacket(RoveCommUtils.ParsePacket<char>(data)); break;
             }
-			_logger?.LogInformation($"UDP: Received RoveCommPacket with DataID {header.DataID} and Data {dataType}[{header.DataCount}] from {fromIP}.");
-		}
-		// RoveComm couldn't parse something:
-		catch (RoveCommException e)
+            _logger?.LogInformation($"UDP: Received RoveCommPacket with DataID {header.DataID} and Data {dataType}[{header.DataCount}] from {fromIP}.");
+        }
+        // RoveComm couldn't parse something:
+        catch (RoveCommException e)
         {
             _logger?.LogError($"Failed to read UDP packet: {e.Message}");
         }

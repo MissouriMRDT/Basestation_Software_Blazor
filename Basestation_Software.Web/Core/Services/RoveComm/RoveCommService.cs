@@ -62,17 +62,17 @@ public class RoveCommService : IHostedService
     /// </exception>
     public void On<T>(string boardName, string dataIdString, RoveCommCallback<T> handler)
     {
-		RoveCommUtils.FindByBoardAndDataID(boardName, dataIdString, out var boardDesc, out var packetDesc);
-		if (boardDesc is null)
-		{
-			throw new Exception($"Failed to subscribe to RoveComm: {boardName} Board not found in RoveCommManifest.");
-		}
-		else if (packetDesc is null)
-		{
-			throw new Exception($"Failed to subscribe to RoveComm: {dataIdString} not found for {boardName} Board.");
-		}
+        RoveCommUtils.FindByBoardAndDataID(boardName, dataIdString, out var boardDesc, out var packetDesc);
+        if (boardDesc is null)
+        {
+            throw new Exception($"Failed to subscribe to RoveComm: {boardName} Board not found in RoveCommManifest.");
+        }
+        else if (packetDesc is null)
+        {
+            throw new Exception($"Failed to subscribe to RoveComm: {dataIdString} not found for {boardName} Board.");
+        }
 
-		RoveCommDataType handlerType = RoveCommUtils.DataTypeFromType(typeof(T));
+        RoveCommDataType handlerType = RoveCommUtils.DataTypeFromType(typeof(T));
         if (packetDesc.DataType != handlerType)
         {
             throw new Exception($"Failed to subscribe to RoveComm: {handlerType} does not match type of {dataIdString} ({packetDesc.DataType}).");
@@ -102,7 +102,7 @@ public class RoveCommService : IHostedService
     {
         UDP.Clear(dataId, handler);
         TCP.Clear(dataId, handler);
-		_logger.LogInformation($"Unsubscribed from {dataId} with type {RoveCommUtils.DataTypeFromType(typeof(T))}.");
+        _logger.LogInformation($"Unsubscribed from {dataId} with type {RoveCommUtils.DataTypeFromType(typeof(T))}.");
     }
 
     /// <summary>
@@ -116,17 +116,17 @@ public class RoveCommService : IHostedService
     /// </exception>
     public void Clear<T>(string boardName, string dataIdString, RoveCommCallback<T> handler)
     {
-		RoveCommUtils.FindByBoardAndDataID(boardName, dataIdString, out var boardDesc, out var packetDesc);
-		if (boardDesc is null)
-		{
-			throw new Exception($"Failed to unsubscribe from RoveComm: {boardName} Board not found in RoveCommManifest.");
-		}
-		else if (packetDesc is null)
-		{
-			throw new Exception($"Failed to unsubscribe from RoveComm: {dataIdString} not found for {boardName} Board.");
-		}
+        RoveCommUtils.FindByBoardAndDataID(boardName, dataIdString, out var boardDesc, out var packetDesc);
+        if (boardDesc is null)
+        {
+            throw new Exception($"Failed to unsubscribe from RoveComm: {boardName} Board not found in RoveCommManifest.");
+        }
+        else if (packetDesc is null)
+        {
+            throw new Exception($"Failed to unsubscribe from RoveComm: {dataIdString} not found for {boardName} Board.");
+        }
 
-		RoveCommDataType handlerType = RoveCommUtils.DataTypeFromType(typeof(T));
+        RoveCommDataType handlerType = RoveCommUtils.DataTypeFromType(typeof(T));
         if (packetDesc.DataType != handlerType)
         {
             throw new Exception($"Failed to unsubscribe from RoveComm: {handlerType} does not match type of {dataIdString} ({packetDesc.DataType}).");
@@ -188,15 +188,15 @@ public class RoveCommService : IHostedService
     /// </exception>
     public bool Send<T>(string boardName, string commandName, List<T> data, bool reliable = false)
     {
-		RoveCommUtils.FindByBoardAndDataID(boardName, commandName, out var boardDesc, out var packetDesc);
+        RoveCommUtils.FindByBoardAndDataID(boardName, commandName, out var boardDesc, out var packetDesc);
         if (boardDesc is null)
-		{
+        {
             throw new Exception($"Failed to send RoveCommPacket: {boardName} Board not found in RoveCommManifest.");
         }
-		else if (packetDesc is null)
-		{
-			throw new Exception($"Failed to send RoveCommPacket: {commandName} not found for {boardName} Board.");
-		}
+        else if (packetDesc is null)
+        {
+            throw new Exception($"Failed to send RoveCommPacket: {commandName} not found for {boardName} Board.");
+        }
 
         RoveCommDataType handlerType = RoveCommUtils.DataTypeFromType(typeof(T));
         if (packetDesc.DataType != handlerType)
@@ -225,17 +225,17 @@ public class RoveCommService : IHostedService
     /// </exception>
     public async Task<bool> SendAsync<T>(string boardName, string commandName, List<T> data, bool reliable = false, CancellationToken cancelToken = default)
     {
-		RoveCommUtils.FindByBoardAndDataID(boardName, commandName, out var boardDesc, out var packetDesc);
-		if (boardDesc is null)
-		{
-			throw new Exception($"Failed to send RoveCommPacket: {boardName} Board not found in RoveCommManifest.");
-		}
-		else if (packetDesc is null)
-		{
-			throw new Exception($"Failed to send RoveCommPacket: {commandName} not found for {boardName} Board.");
-		}
+        RoveCommUtils.FindByBoardAndDataID(boardName, commandName, out var boardDesc, out var packetDesc);
+        if (boardDesc is null)
+        {
+            throw new Exception($"Failed to send RoveCommPacket: {boardName} Board not found in RoveCommManifest.");
+        }
+        else if (packetDesc is null)
+        {
+            throw new Exception($"Failed to send RoveCommPacket: {commandName} not found for {boardName} Board.");
+        }
 
-		RoveCommDataType handlerType = RoveCommUtils.DataTypeFromType(typeof(T));
+        RoveCommDataType handlerType = RoveCommUtils.DataTypeFromType(typeof(T));
         if (packetDesc.DataType != handlerType)
         {
             throw new Exception($"Failed to send RoveCommPacket: {handlerType} does not match type of {commandName} ({packetDesc.DataType}).");
@@ -258,10 +258,11 @@ public class RoveCommService : IHostedService
     public async Task<List<T>?> Listen<T>(int dataId, int timeout = 30_000)
     {
         var promise = new TaskCompletionSource<List<T>>();
-        RoveCommCallback<T> callback = async (payload) => {
-                promise.SetResult(payload);
-                await Task.CompletedTask;
-            };
+        RoveCommCallback<T> callback = async (payload) =>
+        {
+            promise.SetResult(payload);
+            await Task.CompletedTask;
+        };
 
         On(dataId, callback);
 
@@ -277,10 +278,10 @@ public class RoveCommService : IHostedService
         {
             return null;
         }
-		finally
-		{
-			Clear(dataId, callback);
-		}
+        finally
+        {
+            Clear(dataId, callback);
+        }
     }
 
     public void Subscribe(string boardName)
