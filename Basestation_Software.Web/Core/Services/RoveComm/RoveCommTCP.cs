@@ -69,18 +69,19 @@ public class RoveCommTCP
                     {
                         TcpClient client = await _TCPServer!.AcceptTcpClientAsync(cancelToken);
                         _connections.Add(client);
-                        _logger?.LogError($"Established connection with {client.Client.RemoteEndPoint}");
+                        _logger?.LogInformation($"Accepted connection with remote: {client.Client.RemoteEndPoint}");
                     }
                     // Read packets and trigger callbacks.
                     await ReceiveAndCallback(cancelToken);
                     // Don't hog the async queue.
-                    await Task.Yield();
+                    await Task.Delay(RoveCommConsts.UpdateRate);
                 }
             }
             catch (Exception e)
             {
                 _logger?.LogError($"An exception occurred in RoveComm UDP: {e.Message}");
-            }
+				_logger?.LogError(e.StackTrace);
+			}
             finally
             {
                 // Close connections.
@@ -204,7 +205,7 @@ public class RoveCommTCP
             _logger?.LogError($"Failed to send TCP packet: {e.Message}");
             return false;
         }
-        _logger?.LogInformation($"TCP: Sent RoveCommPacket with DataID {packet.DataID}, DataCount {packet.DataCount}, and DataType {packet.DataType}.");
+        _logger?.LogInformation($"TCP: Sent RoveCommPacket with DataID {packet.DataID} and type {packet.DataType}[{packet.DataCount}] to {dest}.");
         return true;
     }
     public bool Send<T>(RoveCommPacket<T> packet, string ip) => Send(packet, ip, Port);
@@ -255,9 +256,9 @@ public class RoveCommTCP
         {
             _logger?.LogError($"Failed to send TCP packet: {e.Message}");
             return false;
-        }
-        _logger?.LogInformation($"TCP: Sent RoveCommPacket with DataID {packet.DataID}, DataCount {packet.DataCount}, and DataType {packet.DataType}.");
-        return true;
+		}
+		_logger?.LogInformation($"TCP: Sent RoveCommPacket with DataID {packet.DataID} and type {packet.DataType}[{packet.DataCount}] to {dest}.");
+		return true;
     }
     public async Task<bool> SendAsync<T>(RoveCommPacket<T> packet, string ip, CancellationToken cancelToken = default) =>
         await SendAsync(packet, ip, Port, cancelToken);
@@ -278,6 +279,12 @@ public class RoveCommTCP
         {
             try
             {
+				// Check if the client has enough bytes available to read a packet.
+				// TCP is a stream protocol, so if not enough bytes are available now, more will come in later.
+				if (connection.Client.Available < RoveCommConsts.HeaderSize)
+				{
+					continue;
+				}
                 // Get a reference to the stream managed by the TcpClient.
                 NetworkStream stream = connection.GetStream();
                 // Quit reading if no new data is received after 30 seconds.
@@ -289,8 +296,10 @@ public class RoveCommTCP
                 int bytesRead = await stream.ReadAsync(headerBuf, cancelToken);
                 if (bytesRead == 0)
                 {
+					_logger?.LogWarning("Failed to receive TCP data.");
                     return;
                 }
+
                 RoveCommHeader header = RoveCommUtils.ParseHeader(readBuf);
                 RoveCommDataType dataType = RoveCommUtils.ParseDataType(header.DataType);
                 int dataTypeSize = RoveCommUtils.DataTypeSize(dataType);
@@ -312,7 +321,7 @@ public class RoveCommTCP
                     case RoveCommDataType.DOUBLE: ProcessPacket(RoveCommUtils.ParsePacket<double>(packetBuf.Span)); break;
                     case RoveCommDataType.CHAR: ProcessPacket(RoveCommUtils.ParsePacket<char>(packetBuf.Span)); break;
                 }
-                _logger?.LogInformation($"TCP: Received RoveCommPacket with DataID {header.DataID}, DataCount {header.DataCount}, and DataType {dataType}.");
+                _logger?.LogInformation($"TCP: Received RoveCommPacket with DataID {header.DataID} and Data {dataType}[{header.DataCount}] from {connection.Client.RemoteEndPoint as IPEndPoint}.");
             }
             // RoveComm couldn't parse something:
             catch (RoveCommException e)
@@ -417,9 +426,9 @@ public class RoveCommTCP
     }
     private void _clearCallback<T>(Dictionary<int, RoveCommEmitter<T>> callbacks, RoveCommCallback<T> handler)
     {
-        foreach (int dataId in callbacks.Keys)
+        foreach (var emitter in callbacks.Values)
         {
-            callbacks[dataId].Notifier -= handler;
+            emitter.Notifier -= handler;
         }
     }
 

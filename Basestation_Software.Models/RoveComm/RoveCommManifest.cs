@@ -7,6 +7,7 @@ public static class RoveCommConsts
     public static readonly int TCPPort = 12000;
     public static readonly int HeaderSize = 6;
     public static readonly int MaxDataSize = 65535 / 3;
+	public static readonly int UpdateRate = 100; // milliseconds
 }
 
 public enum RoveCommDataType

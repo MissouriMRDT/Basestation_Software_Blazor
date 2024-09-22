@@ -96,16 +96,46 @@ public static class RoveCommUtils
         };
     }
 
+	/// <summary>
+	/// Query a board's info form the Manifest by its name.
+	/// </summary>
+	/// <param name="boardName">The name of the board.</param>
+	/// <param name="boardDesc">The RoveCommBoardDesc to fill in with informaiton, if the board is found.</param>
+	/// <returns>True if the board was found in the Manifest.</returns>
+	public static bool FindBoardByName(string boardName, out RoveCommBoardDesc? boardDesc)
+	{
+		return RoveCommManifest.Boards.TryGetValue(boardName, out boardDesc);
+	}
 
-    /// <summary>
-    /// Read a RoveCommPacket header from the given byte buffer.
-    /// </summary>
-    /// <param name="data">The byte buffer to read; assumed to be in Big Endian.</param>
-    /// <returns>The parsed RoveCommHeader.</returns>
-    /// <exception cref="RoveCommException">
-    /// Thrown if a RoveCommHeader could not be read from the given buffer.
-    /// </exception>
-    public static RoveCommHeader ParseHeader(ReadOnlySpan<byte> data)
+	/// <summary>
+	/// Query board and packet info from the Manifest by their names.
+	/// </summary>
+	/// <param name="boardName">The name of the board.</param>
+	/// <param name="dataIdString">The name of the packet.</param>
+	/// <param name="boardDesc">The RoveCommBoardDesc to fill in with information, if the board is found.</param>
+	/// <param name="packetDesc">The RoveCommPacketDesc to fill in with information, if the packet is found.</param>
+	/// <returns>True only if both the board and the packet were found in the manifest.</returns>
+	public static bool FindByBoardAndDataID(string boardName, string dataIdString, out RoveCommBoardDesc? boardDesc, out RoveCommPacketDesc? packetDesc)
+	{
+		packetDesc = null;
+		return RoveCommManifest.Boards.TryGetValue(boardName, out boardDesc)
+			&& (
+				   boardDesc.Commands.TryGetValue(dataIdString, out packetDesc)
+				|| boardDesc.Telemetry.TryGetValue(dataIdString, out packetDesc)
+				|| boardDesc.Errors.TryGetValue(dataIdString, out packetDesc)
+			);
+	}
+
+
+	/// <summary>
+	/// Read a RoveCommPacket header from the given byte buffer.
+	/// </summary>
+	/// <param name="data">The byte buffer to read; assumed to be in Big Endian.</param>
+	/// <returns>The parsed RoveCommHeader.</returns>
+	/// <exception cref="RoveCommException">
+	/// Thrown if a RoveCommHeader could not be read from the given buffer.
+	/// </exception>
+	public static RoveCommHeader ParseHeader(ReadOnlySpan<byte> data)
     {
         if (data.Length < RoveCommConsts.HeaderSize)
         {
