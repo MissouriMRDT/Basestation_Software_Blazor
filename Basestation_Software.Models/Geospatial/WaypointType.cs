@@ -1,11 +1,10 @@
-namespace Basestation_Software.Models.Geospatial
+namespace Basestation_Software.Models.Geospatial;
+
+public enum WaypointType
 {
-    public enum WaypointType
-    {
-        Navigation,
-        Marker,
-        Object,
-        Gate,
-        Obstacle
-    }
+    Navigation,
+    Marker,
+    Object,
+    Gate,
+    Obstacle
 }

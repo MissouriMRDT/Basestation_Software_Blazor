@@ -70,10 +70,10 @@
     }
 </style>
 
-<div class="card full-height" style="width: 650px">
+<div class="card full-height">
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mr-auto">Map</h5>
+            <h3>Map</h3>
             @if (_cachingMapTiles)
             {
                 <div>
@@ -94,7 +94,7 @@
         }
         else
         {
-            <div id="@ID" style="width: 645px; height: 460px; position: relative;"></div>
+            <div id="@ID" style="height: 460px; position: relative;"></div>
         }
     </div>
     <div class="card-footer" id="cursorPosition"></div>
