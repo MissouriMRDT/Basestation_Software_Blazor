@@ -1,4 +1,5 @@
 ﻿using OpenCvSharp;
+using System.Reflection.Metadata.Ecma335;
 using System.Text.RegularExpressions;
 
 namespace Basestation_Software.Web.Core.Services
@@ -18,13 +19,13 @@ namespace Basestation_Software.Web.Core.Services
 		{
 			// ffmpeg -f dshow -i video="Integrated Camera" -f mpegts -codec:v mpeg1video -s 320x240 -b:v 64k -maxrate 128k -bf 0 udp://@239.255.255.255:1234
 			_frameData = string.Empty;
-			InitCapture(source);
+			_ = InitCapture(source);
 		}
 
-		public void InitCapture(string source)
+		public async Task InitCapture(string source)
 		{
 			// create capture
-			_capture = new VideoCapture(source);
+			_capture = await SpawnCaptureAsync(source);
 
 			// configure capture settings
 			// buffer size is supposed to control the amount of frames of old video opencv stores, but it seems to be very undersupported and appears to not be doing anything
@@ -35,6 +36,11 @@ namespace Basestation_Software.Web.Core.Services
 			_tokenSource = new();
 
 			_ = WatchForFrames(_tokenSource.Token);
+		}
+
+		public async Task<VideoCapture> SpawnCaptureAsync(string source)
+		{
+			return await Task.Run(() => new VideoCapture(source));
 		}
 
 		public string GetFrameData()
@@ -80,7 +86,6 @@ namespace Basestation_Software.Web.Core.Services
 		{
 			using (Mat frame = new())
 			{
-				// Grab returns true when a new frame is found
 				_capture?.Retrieve(frame);
 				string base64 = Convert.ToBase64String(frame.ToBytes());
 				_frameData = $"data:image/gif;base64,{base64}";
