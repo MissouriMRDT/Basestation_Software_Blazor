@@ -18,32 +18,37 @@
 			}
 		}
 
-		public int Debug()
+		public void SubscribeToNewFrame(Func<Task> listener, int sourceIndex)
 		{
-			return _controllers.Length;
+			_controllers[sourceIndex].SubscribeToNewFrame(listener);
 		}
 
-		public void SubscribeToNewFrame(Func<Task> listener, int source)
+		public void UnsubscribeFromNewFrame(Func<Task> listener, int sourceIndex)
 		{
-			_controllers[source].SubscribeToNewFrame(listener);
+			_controllers[sourceIndex].UnsubscribeFromNewFrame(listener);
 		}
 
-		public void UnsubscribeFromNewFrame(Func<Task> listener, int source)
+		public string GetFrameData(int sourceIndex)
 		{
-			_controllers[source].UnsubscribeFromNewFrame(listener);
+			return _controllers[sourceIndex].GetFrameData();
 		}
 
-		public string GetFrameData(int source)
+		public void InitCapture(int sourceIndex)
 		{
-			return _controllers[source].GetFrameData();
+			_controllers[sourceIndex].InitCapture(_sources[sourceIndex]);
 		}
 
-		public void Dispose()
+		public void DisposeAll()
 		{
 			foreach (var c in _controllers)
 			{
 				c.Dispose();
 			}
+		}
+
+		public void Dispose(int sourceIndex)
+		{
+			_controllers[sourceIndex].Dispose();
 		}
 	}
 }

@@ -15,11 +15,11 @@
         {
             // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
             var _i = i;
-            <button @onclick="() => SetSource(_i)">@(_i + 1)</button>
+            <button class="@("btn btn-secondary " + ((_sourceIndex == _i) ? "active" : ""))" @onclick="() => SetSource(_i)">@(_i + 1)</button>
         }
     </div>
     <p>Source: @_sourceIndex</p>
-    <p>L: @_CameraService.Debug()</p>
+    <button @onclick="RestartCam">restart</button>
 </div>
 
 @code {
@@ -47,12 +47,19 @@
         _CameraService.SubscribeToNewFrame(OnNewFrame, _sourceIndex);
     }
 
+    private void RestartCam()
+    {
+        _CameraService.Dispose(_sourceIndex);
+        _CameraService.InitCapture(_sourceIndex);
+        _CameraService.SubscribeToNewFrame(OnNewFrame, _sourceIndex);
+    }
+
     void IDisposable.Dispose()
     {
         if (_prerendered)
         {
             _CameraService.UnsubscribeFromNewFrame(OnNewFrame, _sourceIndex);
-            _CameraService.Dispose();
+            _CameraService.DisposeAll();
         }
         else
         {
