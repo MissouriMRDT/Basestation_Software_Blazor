@@ -3,16 +3,16 @@ using Basestation_Software.Web.Core.Services;
 using Blazored.Toast;
 using Radzen;
 
+#pragma warning disable IDE0211 // Convert to 'Program.Main' style program
 var builder = WebApplication.CreateBuilder(args);
-#pragma warning restore IDE0211 // Convert to 'Program.Main' style program
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 builder.Services.AddServerSideBlazor()
-        .AddCircuitOptions(option => 
-        { 
+        .AddCircuitOptions(option =>
+        {
             option.DetailedErrors = true;
             option.DisconnectedCircuitRetentionPeriod = TimeSpan.FromSeconds(10);
         })
