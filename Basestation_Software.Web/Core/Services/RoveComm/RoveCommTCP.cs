@@ -6,6 +6,8 @@ namespace Basestation_Software.Web.Core.Services.RoveComm;
 
 public class RoveCommTCP
 {
+    public static readonly int ConnectionTimeout = 10_000;
+
     public bool Running { get; private set; }
     public int Port { get; private set; }
     private readonly List<TcpClient> _connections = [];
@@ -180,18 +182,14 @@ public class RoveCommTCP
         // If no existing connection was found, open a new one.
         if (client is null)
         {
-            try
+            _logger?.LogInformation("Attempting to establish a connection with {Dest}.", dest);
+            client = new TcpClient(AddressFamily.InterNetwork);
+            if (!client.ConnectAsync(dest).Wait(TimeSpan.FromMilliseconds(ConnectionTimeout)))
             {
-                _logger?.LogInformation("Attempting to establish a connection with {Dest}.", dest);
-                client = new TcpClient(AddressFamily.InterNetwork);
-                client.Connect(dest);
-                _logger?.LogInformation("Established connection with {Remote}.", client.Client.RemoteEndPoint as IPEndPoint);
-            }
-            catch (Exception e)
-            {
-                _logger?.LogError(e, "Failed to connect to remote host:");
+                _logger?.LogError("Failed to connect to remote host: The operation has timed out.");
                 return false;
             }
+            _logger?.LogInformation("Established connection with {Remote}.", client.Client.RemoteEndPoint as IPEndPoint);
             _connections.Add(client);
         }
         // Write the packet to the client's NetworkStream.
@@ -201,7 +199,7 @@ public class RoveCommTCP
         }
         catch (Exception e)
         {
-            _logger?.LogError(e, "Failed to send TCP packet:");
+            _logger?.LogError("Failed to send TCP packet: {Error}", e.Message);
             return false;
         }
         _logger?.LogInformation("TCP: Sent RoveCommPacket with DataID {DataID} and type {DataType}[{DataCount}] to {Dest}.", packet.DataID, packet.DataType, packet.DataCount, dest);
@@ -232,18 +230,18 @@ public class RoveCommTCP
         // If no existing connection was found, open a new one.
         if (client is null)
         {
+            client = new TcpClient(AddressFamily.InterNetwork);
+            _logger?.LogInformation("Attempting to establish a connection with {Dest}.", dest);
             try
             {
-                client = new TcpClient(AddressFamily.InterNetwork);
-                _logger?.LogInformation("Attempting to establish a connection with {Dest}.", dest);
-                await client.ConnectAsync(dest);
-                _logger?.LogInformation("Established connection with {Remote}.", client.Client.RemoteEndPoint as IPEndPoint);
+                await client.ConnectAsync(dest).WaitAsync(TimeSpan.FromMilliseconds(ConnectionTimeout), cancelToken);
             }
             catch (Exception e)
             {
-                _logger?.LogError(e, "Failed to connect to remote host:");
+                _logger?.LogError("Failed to connect to remote host: {Error}", e.Message);
                 return false;
             }
+            _logger?.LogInformation("Established connection with {Remote}.", client.Client.RemoteEndPoint as IPEndPoint);
             _connections.Add(client);
         }
         // Write the packet to the client's NetworkStream.
@@ -253,7 +251,7 @@ public class RoveCommTCP
         }
         catch (Exception e)
         {
-            _logger?.LogError(e, "Failed to send TCP packet:");
+            _logger?.LogError("Failed to send TCP packet: {Error}", e.Message);
             return false;
         }
         _logger?.LogInformation("TCP: Sent RoveCommPacket with DataID {DataID} and Data {DataType}[{DataCount}] to {Dest}.", packet.DataID, packet.DataType, packet.DataCount, dest);
@@ -330,7 +328,7 @@ public class RoveCommTCP
             // Network problems:
             catch (Exception e)
             {
-                _logger?.LogError(e, "Failed to receive TCP data:");
+                _logger?.LogError("Failed to receive TCP data: {Error}", e.Message);
             }
         }
     }

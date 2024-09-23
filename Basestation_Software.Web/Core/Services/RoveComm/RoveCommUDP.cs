@@ -49,13 +49,20 @@ public class RoveCommUDP : IDisposable
 
         // Open new UDP socket.
         _logger?.LogInformation("Starting RoveComm UDP on port {Port}.", Port);
+        try
+        {
+            _UDPServer = new UdpClient(Port, AddressFamily.InterNetwork);
+        }
+        catch (Exception e)
+        {
+            _logger?.LogError(e, "Failed to start RoveComm UDP:");
+            return;
+        }
+        Running = true;
         Task.Run(async () =>
         {
             try
             {
-                _UDPServer = new UdpClient(Port, AddressFamily.InterNetwork);
-                // int localPort = (_UDPServer!.Client.LocalEndPoint as IPEndPoint)!.Port;
-                Running = true;
                 while (!cancelToken.IsCancellationRequested)
                 {
                     // Read packets and trigger callbacks.
@@ -127,7 +134,7 @@ public class RoveCommUDP : IDisposable
         }
         catch (Exception e)
         {
-            _logger?.LogError(e, "Failed to send UDP packet:");
+            _logger?.LogError("Failed to send UDP packet: {Error}", e.Message);
             return false;
         }
 
@@ -164,7 +171,7 @@ public class RoveCommUDP : IDisposable
         }
         catch (Exception e)
         {
-            _logger?.LogError(e, "Failed to send UDP packet:");
+            _logger?.LogError("Failed to send UDP packet: {Error}", e.Message);
             return false;
         }
 
@@ -220,7 +227,7 @@ public class RoveCommUDP : IDisposable
         // Network problems:
         catch (Exception e)
         {
-            _logger?.LogError(e, "Failed to receive UDP data:");
+            _logger?.LogError("Failed to receive UDP data: {Error}", e.Message);
         }
     }
 

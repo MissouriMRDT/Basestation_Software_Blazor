@@ -267,7 +267,7 @@ public static class RoveCommUtils
                 {
                     for (int i = 0; i < header.DataCount; i++)
                     {
-                        packetData.Add(BinaryPrimitives.ReadUInt32BigEndian(dataBuf.Slice(i * 4, 4)));
+                        packetData.Add(BinaryPrimitives.ReadSingleBigEndian(dataBuf.Slice(i * 4, 4)));
                     }
 
                     break;

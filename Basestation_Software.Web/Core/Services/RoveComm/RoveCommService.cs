@@ -65,17 +65,17 @@ public class RoveCommService : IHostedService
         RoveCommUtils.FindByBoardAndDataID(boardName, dataIdString, out var boardDesc, out var packetDesc);
         if (boardDesc is null)
         {
-            throw new Exception($"Failed to subscribe to RoveComm: {boardName} Board not found in RoveCommManifest.");
+            throw new RoveCommException($"Failed to subscribe to RoveComm: {boardName} Board not found in RoveCommManifest.");
         }
         else if (packetDesc is null)
         {
-            throw new Exception($"Failed to subscribe to RoveComm: {dataIdString} not found for {boardName} Board.");
+            throw new RoveCommException($"Failed to subscribe to RoveComm: {dataIdString} not found for {boardName} Board.");
         }
 
         RoveCommDataType handlerType = RoveCommUtils.DataTypeFromType(typeof(T));
         if (packetDesc.DataType != handlerType)
         {
-            throw new Exception($"Failed to subscribe to RoveComm: {handlerType} does not match type of {dataIdString} ({packetDesc.DataType}).");
+            throw new RoveCommException($"Failed to subscribe to RoveComm: {handlerType} does not match type of {dataIdString} ({packetDesc.DataType}).");
         }
 
         On(packetDesc.DataID, handler);
@@ -119,17 +119,17 @@ public class RoveCommService : IHostedService
         RoveCommUtils.FindByBoardAndDataID(boardName, dataIdString, out var boardDesc, out var packetDesc);
         if (boardDesc is null)
         {
-            throw new Exception($"Failed to unsubscribe from RoveComm: {boardName} Board not found in RoveCommManifest.");
+            throw new RoveCommException($"Failed to unsubscribe from RoveComm: {boardName} Board not found in RoveCommManifest.");
         }
         else if (packetDesc is null)
         {
-            throw new Exception($"Failed to unsubscribe from RoveComm: {dataIdString} not found for {boardName} Board.");
+            throw new RoveCommException($"Failed to unsubscribe from RoveComm: {dataIdString} not found for {boardName} Board.");
         }
 
         RoveCommDataType handlerType = RoveCommUtils.DataTypeFromType(typeof(T));
         if (packetDesc.DataType != handlerType)
         {
-            throw new Exception($"Failed to unsubscribe from RoveComm: {handlerType} does not match type of {dataIdString} ({packetDesc.DataType}).");
+            throw new RoveCommException($"Failed to unsubscribe from RoveComm: {handlerType} does not match type of {dataIdString} ({packetDesc.DataType}).");
         }
 
         Clear(packetDesc.DataID, handler);
@@ -191,22 +191,22 @@ public class RoveCommService : IHostedService
         RoveCommUtils.FindByBoardAndDataID(boardName, commandName, out var boardDesc, out var packetDesc);
         if (boardDesc is null)
         {
-            throw new Exception($"Failed to send RoveCommPacket: {boardName} Board not found in RoveCommManifest.");
+            throw new RoveCommException($"Failed to send RoveCommPacket: {boardName} Board not found in RoveCommManifest.");
         }
         else if (packetDesc is null)
         {
-            throw new Exception($"Failed to send RoveCommPacket: {commandName} not found for {boardName} Board.");
+            throw new RoveCommException($"Failed to send RoveCommPacket: {commandName} not found for {boardName} Board.");
         }
 
         RoveCommDataType handlerType = RoveCommUtils.DataTypeFromType(typeof(T));
         if (packetDesc.DataType != handlerType)
         {
-            throw new Exception($"Failed to send RoveCommPacket: {handlerType} does not match type of {commandName} ({packetDesc.DataType}).");
+            throw new RoveCommException($"Failed to send RoveCommPacket: {handlerType} does not match type of {commandName} ({packetDesc.DataType}).");
         }
 
         if (data.Count != packetDesc.DataCount)
         {
-            throw new Exception($"Failed to send RoveCommPacket: incorrect data size to fill {commandName}.");
+            throw new RoveCommException($"Failed to send RoveCommPacket: incorrect data size to fill {commandName}.");
         }
 
         return Send(packetDesc.DataID, data, boardDesc.IP, reliable);
@@ -228,22 +228,22 @@ public class RoveCommService : IHostedService
         RoveCommUtils.FindByBoardAndDataID(boardName, commandName, out var boardDesc, out var packetDesc);
         if (boardDesc is null)
         {
-            throw new Exception($"Failed to send RoveCommPacket: {boardName} Board not found in RoveCommManifest.");
+            throw new RoveCommException($"Failed to send RoveCommPacket: {boardName} Board not found in RoveCommManifest.");
         }
         else if (packetDesc is null)
         {
-            throw new Exception($"Failed to send RoveCommPacket: {commandName} not found for {boardName} Board.");
+            throw new RoveCommException($"Failed to send RoveCommPacket: {commandName} not found for {boardName} Board.");
         }
 
         RoveCommDataType handlerType = RoveCommUtils.DataTypeFromType(typeof(T));
         if (packetDesc.DataType != handlerType)
         {
-            throw new Exception($"Failed to send RoveCommPacket: {handlerType} does not match type of {commandName} ({packetDesc.DataType}).");
+            throw new RoveCommException($"Failed to send RoveCommPacket: {handlerType} does not match type of {commandName} ({packetDesc.DataType}).");
         }
 
         if (data.Count != packetDesc.DataCount)
         {
-            throw new Exception($"Failed to send RoveCommPacket: incorrect data size to fill {commandName}.");
+            throw new RoveCommException($"Failed to send RoveCommPacket: incorrect data size to fill {commandName}.");
         }
 
         return await SendAsync(packetDesc.DataID, data, boardDesc.IP, reliable, cancelToken);
@@ -282,6 +282,28 @@ public class RoveCommService : IHostedService
         {
             Clear(dataId, callback);
         }
+    }
+
+    /// <summary>
+    /// Wait asynchronously until the desired packet from the Manifest arrives.
+    /// </summary>
+    /// <param name="boardName">The name of the board as shown in the Manifest.</param>
+    /// <param name="dataIdString">The name of the Telemetry or Error message as shown in the Manifest.</param>
+    /// <param name="timeout">The number of milliseconds before returning null.</param>
+    /// <returns>The payload if a packet is received within the timeout, null if none.</returns>
+    public async Task<List<T>?> Listen<T>(string boardName, string dataIdString, int timeout = 30_000)
+    {
+        RoveCommUtils.FindByBoardAndDataID(boardName, dataIdString, out var boardDesc, out var packetDesc);
+        if (boardDesc is null)
+        {
+            throw new RoveCommException($"Failed to send RoveCommPacket: {boardName} Board not found in RoveCommManifest.");
+        }
+        else if (packetDesc is null)
+        {
+            throw new RoveCommException($"Failed to send RoveCommPacket: {dataIdString} not found for {boardName} Board.");
+        }
+
+        return await Listen<T>(packetDesc.DataID, timeout);
     }
 
     public void Subscribe(string boardName)
