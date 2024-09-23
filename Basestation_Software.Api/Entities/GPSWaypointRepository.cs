@@ -28,7 +28,7 @@ namespace Basestation_Software.Api.Entities
             // Make sure the ID is null.
             waypoint.ID = null;
             // Add new row to database table.
-            var result = await _REDDatabase.Waypoints.AddAsync(waypoint);
+        Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<GPSWaypoint> result = await _REDDatabase.Waypoints.AddAsync(waypoint);
             await _REDDatabase.SaveChangesAsync();
             // Return the inserted value.
             return result.Entity;

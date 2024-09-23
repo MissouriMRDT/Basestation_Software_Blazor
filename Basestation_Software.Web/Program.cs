@@ -4,6 +4,7 @@ using Blazored.Toast;
 using Radzen;
 
 var builder = WebApplication.CreateBuilder(args);
+#pragma warning restore IDE0211 // Convert to 'Program.Main' style program
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
