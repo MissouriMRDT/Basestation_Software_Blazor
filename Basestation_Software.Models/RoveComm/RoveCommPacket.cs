@@ -29,7 +29,7 @@ public class RoveCommPacket<T>
     }
 
     public RoveCommPacket(int dataId, int dataCount) :
-        this(dataId, new List<T>(dataCount))
+        this(dataId, new List<T>(new T[dataCount]))
     { }
 
     public RoveCommHeader GetHeader()

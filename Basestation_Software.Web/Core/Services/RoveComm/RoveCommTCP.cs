@@ -17,7 +17,7 @@ public class RoveCommTCP
     private class RoveCommEmitter<T>
     {
         public event RoveCommCallback<T>? Notifier;
-        public void Invoke(RoveCommPacket<T> packet) => Notifier?.Invoke(packet.Data);
+        public void Invoke(RoveCommPacket<T> packet) => Notifier?.Invoke(packet);
     }
 
     private readonly Dictionary<int, RoveCommEmitter<sbyte>> _callbacksInt8 = [];

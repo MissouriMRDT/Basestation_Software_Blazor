@@ -11,8 +11,9 @@
             <div class="col">
                 <button type="button" class="btn btn-primary" @onclick="SendPacketUDP">Send UDP Packet</button>
                 <button type="button" class="btn btn-primary" @onclick="SendPacketTCP">Send TCP Packet</button>
-                <button type="button" class="btn btn-primary" @onclick="SendManifestPacket">Send Packet From Manifest</button>
-                <button type="button" class="btn btn-primary" disabled="@_isDisabled" @onclick="ListenForPacket">Listen for Packet</button>
+                <br>
+                <button type="button" class="btn btn-primary" @onclick="SendManifestPacket">Send Packet from Manifest</button>
+                <button type="button" class="btn btn-primary" disabled="@_isDisabled" @onclick="ListenForPacket">Listen for Packet from Manifest</button>
             </div>
             <h3>@_message</h3>
             @if (!_dataLoaded)
@@ -47,9 +48,18 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Subscribe to all DataIDs (only for INT32_T packets).
+        // Subscribe to all DataIDs for each type.
+        _RoveCommService.On<sbyte>(0, AddMessage);
+        _RoveCommService.On<byte>(0, AddMessage);
+        _RoveCommService.On<short>(0, AddMessage);
+        _RoveCommService.On<ushort>(0, AddMessage);
         _RoveCommService.On<int>(0, AddMessage);
-        _RoveCommService.On<float>("Core", "DriveLeftRight", async (payload) =>
+        _RoveCommService.On<uint>(0, AddMessage);
+        _RoveCommService.On<float>(0, AddMessage);
+        _RoveCommService.On<double>(0, AddMessage);
+        _RoveCommService.On<char>(0, AddMessage);
+
+        _RoveCommService.On<float>("Core", "DriveLeftRight", async (packet) =>
         {
             _messages.Add("Received DriveLeftRight packet.");
             _dataLoaded = true;
@@ -59,9 +69,16 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    public async Task AddMessage(List<int> payload)
+    public async Task AddMessage<T>(RoveCommPacket<T> packet)
     {
-        _messages.Add($"Received Packet. Data: {string.Join(", ", payload)}");
+        if (RoveCommUtils.FindNameByDataID(packet.DataID, out string? boardName, out string? packetName))
+        {
+            _messages.Add($"Received {packetName} from {boardName}. Data: {string.Join(", ", packet.Data)}");
+        }
+        else
+        {
+            _messages.Add($"Received Packet with unknown DataID {packet.DataID}. Data: {string.Join(", ", packet.Data)}");
+        }
         _dataLoaded = true;
         await InvokeAsync(StateHasChanged);
     }
@@ -78,7 +95,7 @@
     {
         _message = "Waiting...";
         _isDisabled = true;
-        var result = await _RoveCommService.Listen<int>(0, 3000);
+        var result = await _RoveCommService.Listen<float>("Core", "DriveLeftRight", 3000);
         if (result is not null)
         {
             _message = "Received!";
@@ -94,7 +111,7 @@
     {
         await _RoveCommService.SendAsync<float>("Core", "DriveLeftRight", [5.5f, 5.5f]);
         // For testing, also send a copy to the loopback address, since RoveComm will send the packet to 192.168.2.110.
-        RoveCommUtils.FindByBoardAndDataID("Core", "DriveLeftRight", out var board, out var packet);
+        RoveCommUtils.FindDataIDByName("Core", "DriveLeftRight", out var board, out var packet);
         await _RoveCommService.SendAsync<float>(packet!.DataID, [5.5f, 5.5f], "127.0.0.1");
     }
 

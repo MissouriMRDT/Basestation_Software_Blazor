@@ -2,12 +2,6 @@ using Basestation_Software.Models.RoveComm;
 
 namespace Basestation_Software.Web.Core.Services.RoveComm;
 
-/// <summary>
-/// A function to be called by RoveComm when a relevant RoveCommPacket is received.
-/// </summary>
-/// <param name="payload">The Data field of the received RoveCommPacket.</param>
-public delegate Task RoveCommCallback<T>(List<T> payload);
-
 public class RoveCommService : IHostedService
 {
 
@@ -62,7 +56,7 @@ public class RoveCommService : IHostedService
     /// </exception>
     public void On<T>(string boardName, string dataIdString, RoveCommCallback<T> handler)
     {
-        RoveCommUtils.FindByBoardAndDataID(boardName, dataIdString, out var boardDesc, out var packetDesc);
+        RoveCommUtils.FindDataIDByName(boardName, dataIdString, out var boardDesc, out var packetDesc);
         if (boardDesc is null)
         {
             throw new RoveCommException($"Failed to subscribe to RoveComm: {boardName} Board not found in RoveCommManifest.");
@@ -116,7 +110,7 @@ public class RoveCommService : IHostedService
     /// </exception>
     public void Clear<T>(string boardName, string dataIdString, RoveCommCallback<T> handler)
     {
-        RoveCommUtils.FindByBoardAndDataID(boardName, dataIdString, out var boardDesc, out var packetDesc);
+        RoveCommUtils.FindDataIDByName(boardName, dataIdString, out var boardDesc, out var packetDesc);
         if (boardDesc is null)
         {
             throw new RoveCommException($"Failed to unsubscribe from RoveComm: {boardName} Board not found in RoveCommManifest.");
@@ -188,7 +182,7 @@ public class RoveCommService : IHostedService
     /// </exception>
     public bool Send<T>(string boardName, string commandName, List<T> data, bool reliable = false)
     {
-        RoveCommUtils.FindByBoardAndDataID(boardName, commandName, out var boardDesc, out var packetDesc);
+        RoveCommUtils.FindDataIDByName(boardName, commandName, out var boardDesc, out var packetDesc);
         if (boardDesc is null)
         {
             throw new RoveCommException($"Failed to send RoveCommPacket: {boardName} Board not found in RoveCommManifest.");
@@ -225,7 +219,7 @@ public class RoveCommService : IHostedService
     /// </exception>
     public async Task<bool> SendAsync<T>(string boardName, string commandName, List<T> data, bool reliable = false, CancellationToken cancelToken = default)
     {
-        RoveCommUtils.FindByBoardAndDataID(boardName, commandName, out var boardDesc, out var packetDesc);
+        RoveCommUtils.FindDataIDByName(boardName, commandName, out var boardDesc, out var packetDesc);
         if (boardDesc is null)
         {
             throw new RoveCommException($"Failed to send RoveCommPacket: {boardName} Board not found in RoveCommManifest.");
@@ -254,13 +248,13 @@ public class RoveCommService : IHostedService
     /// </summary>
     /// <param name="dataId">The DataID to listen for.</param>
     /// <param name="timeout">The number of milliseconds before returning null.</param>
-    /// <returns>The payload if a packet is received within the timeout, null if none.</returns>
-    public async Task<List<T>?> Listen<T>(int dataId, int timeout = 30_000)
+    /// <returns>The RoveCommPacket if received within the timeout, null if none.</returns>
+    public async Task<RoveCommPacket<T>?> Listen<T>(int dataId, int timeout = 30_000)
     {
-        var promise = new TaskCompletionSource<List<T>>();
-        RoveCommCallback<T> callback = async (payload) =>
+        var promise = new TaskCompletionSource<RoveCommPacket<T>>();
+        RoveCommCallback<T> callback = async (packet) =>
         {
-            promise.SetResult(payload);
+            promise.SetResult(packet);
             await Task.CompletedTask;
         };
 
@@ -290,10 +284,10 @@ public class RoveCommService : IHostedService
     /// <param name="boardName">The name of the board as shown in the Manifest.</param>
     /// <param name="dataIdString">The name of the Telemetry or Error message as shown in the Manifest.</param>
     /// <param name="timeout">The number of milliseconds before returning null.</param>
-    /// <returns>The payload if a packet is received within the timeout, null if none.</returns>
-    public async Task<List<T>?> Listen<T>(string boardName, string dataIdString, int timeout = 30_000)
+    /// <returns>The RoveCommPacket if received within the timeout, null if none.</returns>
+    public async Task<RoveCommPacket<T>?> Listen<T>(string boardName, string dataIdString, int timeout = 30_000)
     {
-        RoveCommUtils.FindByBoardAndDataID(boardName, dataIdString, out var boardDesc, out var packetDesc);
+        RoveCommUtils.FindDataIDByName(boardName, dataIdString, out var boardDesc, out var packetDesc);
         if (boardDesc is null)
         {
             throw new RoveCommException($"Failed to send RoveCommPacket: {boardName} Board not found in RoveCommManifest.");

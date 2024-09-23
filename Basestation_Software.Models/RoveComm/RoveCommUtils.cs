@@ -21,6 +21,12 @@ public class RoveCommException : Exception
 }
 
 /// <summary>
+/// A function to be called by RoveComm when a relevant RoveCommPacket is received.
+/// </summary>
+/// <param name="packet">The Data field of the received RoveCommPacket.</param>
+public delegate Task RoveCommCallback<T>(RoveCommPacket<T> packet);
+
+/// <summary>
 /// Helper functions used by RoveComm internally.
 /// </summary>
 public static class RoveCommUtils
@@ -111,19 +117,60 @@ public static class RoveCommUtils
     /// Query board and packet info from the Manifest by their names.
     /// </summary>
     /// <param name="boardName">The name of the board.</param>
-    /// <param name="dataIdString">The name of the packet.</param>
+    /// <param name="packetName">The name of the packet.</param>
     /// <param name="boardDesc">The RoveCommBoardDesc to fill in with information, if the board is found.</param>
     /// <param name="packetDesc">The RoveCommPacketDesc to fill in with information, if the packet is found.</param>
-    /// <returns>True only if both the board and the packet were found in the manifest.</returns>
-    public static bool FindByBoardAndDataID(string boardName, string dataIdString, out RoveCommBoardDesc? boardDesc, out RoveCommPacketDesc? packetDesc)
+    /// <returns>True only if both the board and the packet were found in the Manifest.</returns>
+    public static bool FindDataIDByName(string boardName, string packetName, out RoveCommBoardDesc? boardDesc, out RoveCommPacketDesc? packetDesc)
     {
         packetDesc = null;
         return RoveCommManifest.Boards.TryGetValue(boardName, out boardDesc)
             && (
-                   boardDesc.Commands.TryGetValue(dataIdString, out packetDesc)
-                || boardDesc.Telemetry.TryGetValue(dataIdString, out packetDesc)
-                || boardDesc.Errors.TryGetValue(dataIdString, out packetDesc)
+                   boardDesc.Commands.TryGetValue(packetName, out packetDesc)
+                || boardDesc.Telemetry.TryGetValue(packetName, out packetDesc)
+                || boardDesc.Errors.TryGetValue(packetName, out packetDesc)
             );
+    }
+
+    /// <summary>
+    /// Query board and packet names from the Manifest by its DataID.
+    /// </summary>
+    /// <param name="dataId">The DataID to search for.</param>
+    /// <param name="boardName">The board name, if the DataID is found.</param>
+    /// <param name="packetName">The packet name, if the DataID is found.</param>
+    /// <returns>True only if the DataID was found in the Manifest.</returns>
+    public static bool FindNameByDataID(int dataId, out string? boardName, out string? packetName)
+    {
+        boardName = null;
+        packetName = null;
+        foreach (var (bname, bdesc) in RoveCommManifest.Boards)
+        {
+            foreach (var (pname, pdesc) in bdesc.Commands)
+            {
+                if (pdesc.DataID == dataId) {
+                    boardName = bname;
+                    packetName = pname;
+                    return true;
+                }
+            }
+            foreach (var (pname, pdesc) in bdesc.Telemetry)
+            {
+                if (pdesc.DataID == dataId) {
+                    boardName = bname;
+                    packetName = pname;
+                    return true;
+                }
+            }
+            foreach (var (pname, pdesc) in bdesc.Errors)
+            {
+                if (pdesc.DataID == dataId) {
+                    boardName = bname;
+                    packetName = pname;
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
 
@@ -216,86 +263,85 @@ public static class RoveCommUtils
         {
             // SEXY PATTERN MATCHING
             case List<sbyte> packetData:
+            {
+                var casted = MemoryMarshal.Cast<byte, sbyte>(dataBuf);
+                for (int i = 0; i < header.DataCount; i++)
                 {
-                    var casted = MemoryMarshal.Cast<byte, sbyte>(dataBuf);
-                    for (int i = 0; i < header.DataCount; i++) packetData.Add(casted[i]);
-                    break;
+                    packetData[i] = casted[i];
                 }
+                break;
+            }
             case List<byte> packetData:
+            {
+                // No cast necessary -- already bytes.
+                for (int i = 0; i < header.DataCount; i++)
                 {
-                    // No cast necessary -- already bytes.
-                    for (int i = 0; i < header.DataCount; i++) packetData.Add(dataBuf[i]);
-                    break;
+                    packetData[i] = dataBuf[i];
                 }
+                break;
+            }
             case List<short> packetData:
+            {
+                for (int i = 0; i < header.DataCount; i++)
                 {
-                    for (int i = 0; i < header.DataCount; i++)
-                    {
-                        packetData.Add(BinaryPrimitives.ReadInt16BigEndian(dataBuf.Slice(i * 2, 2)));
-                    }
-
-                    break;
+                    packetData[i] = BinaryPrimitives.ReadInt16BigEndian(dataBuf.Slice(i * 2, 2));
                 }
+                break;
+            }
             case List<ushort> packetData:
+            {
+                for (int i = 0; i < header.DataCount; i++)
                 {
-                    for (int i = 0; i < header.DataCount; i++)
-                    {
-                        packetData.Add(BinaryPrimitives.ReadUInt16BigEndian(dataBuf.Slice(i * 2, 2)));
-                    }
-
-                    break;
+                    packetData[i] = BinaryPrimitives.ReadUInt16BigEndian(dataBuf.Slice(i * 2, 2));
                 }
+                break;
+            }
             case List<int> packetData:
+            {
+                for (int i = 0; i < header.DataCount; i++)
                 {
-                    for (int i = 0; i < header.DataCount; i++)
-                    {
-                        packetData.Add(BinaryPrimitives.ReadInt32BigEndian(dataBuf.Slice(i * 4, 4)));
-                    }
-
-                    break;
+                    packetData[i] = BinaryPrimitives.ReadInt32BigEndian(dataBuf.Slice(i * 4, 4));
                 }
+                break;
+            }
             case List<uint> packetData:
+            {
+                for (int i = 0; i < header.DataCount; i++)
                 {
-                    for (int i = 0; i < header.DataCount; i++)
-                    {
-                        packetData.Add(BinaryPrimitives.ReadUInt32BigEndian(dataBuf.Slice(i * 4, 4)));
-                    }
-
-                    break;
+                    packetData[i] = BinaryPrimitives.ReadUInt32BigEndian(dataBuf.Slice(i * 4, 4));
                 }
+                break;
+            }
             case List<float> packetData:
+            {
+                for (int i = 0; i < header.DataCount; i++)
                 {
-                    for (int i = 0; i < header.DataCount; i++)
-                    {
-                        packetData.Add(BinaryPrimitives.ReadSingleBigEndian(dataBuf.Slice(i * 4, 4)));
-                    }
-
-                    break;
+                    packetData[i] = BinaryPrimitives.ReadSingleBigEndian(dataBuf.Slice(i * 4, 4));
                 }
+                break;
+            }
             case List<double> packetData:
+            {
+                for (int i = 0; i < header.DataCount; i++)
                 {
-                    for (int i = 0; i < header.DataCount; i++)
-                    {
-                        packetData.Add(BinaryPrimitives.ReadDoubleBigEndian(dataBuf.Slice(i * 8, 8)));
-                    }
-
-                    break;
+                    packetData[i] = BinaryPrimitives.ReadDoubleBigEndian(dataBuf.Slice(i * 8, 8));
                 }
+                break;
+            }
             case List<char> packetData:
+            {
+                for (int i = 0; i < header.DataCount; i++)
                 {
-                    for (int i = 0; i < header.DataCount; i++)
-                    {
-                        // Careful: C# stores chars in UTF-16, so they are 2 bytes wide.
-                        // This can cause encoding errors if converting byte[] directly to string.
-                        packetData.Add((char)dataBuf[i]);
-                    }
-
-                    break;
+                    // Careful: C# stores chars in UTF-16, so they are 2 bytes wide.
+                    // This can cause encoding errors if converting byte[] directly to string.
+                    packetData[i] = (char)dataBuf[i];
                 }
+                break;
+            }
             default:
-                {
-                    throw new RoveCommException("Failed to parse RoveCommPacket: invalid data type.");
-                }
+            {
+                throw new RoveCommException("Failed to parse RoveCommPacket: invalid data type.");
+            }
         }
 
         return packet;
@@ -313,7 +359,7 @@ public static class RoveCommUtils
         int dataSize = packet.DataCount * DataTypeSize(packet.DataType);
         if (dataSize > RoveCommConsts.MaxDataSize)
         {
-            throw new RoveCommException("Failed to pack RoveCommPacket: payload exceeds max data size.");
+            throw new RoveCommException("Failed to pack RoveCommPacket: packet exceeds max data size.");
         }
         byte[] dataBuf = new byte[RoveCommConsts.HeaderSize + dataSize];
         PackPacket(dataBuf, packet);
@@ -329,7 +375,7 @@ public static class RoveCommUtils
         }
         if (packetSize > RoveCommConsts.HeaderSize + RoveCommConsts.MaxDataSize)
         {
-            throw new RoveCommException("Failed to pack RoveCommPacket: payload exceeds max data size.");
+            throw new RoveCommException("Failed to pack RoveCommPacket: packet exceeds max data size.");
         }
         // Pack header in network byte order.
         PackHeader(dest, packet.GetHeader());
@@ -339,91 +385,82 @@ public static class RoveCommUtils
         switch (packet.Data)
         {
             case List<sbyte> packetData:
+            {
+                var casted = MemoryMarshal.Cast<byte, sbyte>(dataBuf);
+                for (int i = 0; i < packet.DataCount; i++)
                 {
-                    var casted = MemoryMarshal.Cast<byte, sbyte>(dataBuf);
-                    for (int i = 0; i < packet.DataCount; i++)
-                    {
-                        casted[i] = packetData[i];
-                    }
-
-                    break;
+                    casted[i] = packetData[i];
                 }
+                break;
+            }
             case List<byte> packetData:
+            {
+                for (int i = 0; i < packet.DataCount; i++)
                 {
-                    for (int i = 0; i < packet.DataCount; i++)
-                    {
-                        dataBuf[0] = packetData[0];
-                    }
-
-                    break;
+                    dataBuf[0] = packetData[0];
                 }
+                break;
+            }
             case List<short> packetData:
+            {
+                for (int i = 0; i < packet.DataCount; i++)
                 {
-                    for (int i = 0; i < packet.DataCount; i++)
-                    {
-                        BinaryPrimitives.WriteInt16BigEndian(dataBuf.Slice(i * 2, 2), packetData[i]);
-                    }
-
-                    break;
+                    BinaryPrimitives.WriteInt16BigEndian(dataBuf.Slice(i * 2, 2), packetData[i]);
                 }
+                break;
+            }
             case List<ushort> packetData:
+            {
+                for (int i = 0; i < packet.DataCount; i++)
                 {
-                    for (int i = 0; i < packet.DataCount; i++)
-                    {
-                        BinaryPrimitives.WriteUInt16BigEndian(dataBuf.Slice(i * 2, 2), packetData[i]);
-                    }
-
-                    break;
+                    BinaryPrimitives.WriteUInt16BigEndian(dataBuf.Slice(i * 2, 2), packetData[i]);
                 }
+                break;
+            }
             case List<int> packetData:
+            {
+                for (int i = 0; i < packet.DataCount; i++)
                 {
-                    for (int i = 0; i < packet.DataCount; i++)
-                    {
-                        BinaryPrimitives.WriteInt32BigEndian(dataBuf.Slice(i * 4, 4), packetData[i]);
-                    }
-
-                    break;
+                    BinaryPrimitives.WriteInt32BigEndian(dataBuf.Slice(i * 4, 4), packetData[i]);
                 }
+                break;
+            }
             case List<uint> packetData:
+            {
+                for (int i = 0; i < packet.DataCount; i++)
                 {
-                    for (int i = 0; i < packet.DataCount; i++)
-                    {
-                        BinaryPrimitives.WriteUInt32BigEndian(dataBuf.Slice(i * 4, 4), packetData[i]);
-                    }
-
-                    break;
+                    BinaryPrimitives.WriteUInt32BigEndian(dataBuf.Slice(i * 4, 4), packetData[i]);
                 }
+                break;
+            }
             case List<float> packetData:
+            {
+                for (int i = 0; i < packet.DataCount; i++)
                 {
-                    for (int i = 0; i < packet.DataCount; i++)
-                    {
-                        BinaryPrimitives.WriteSingleBigEndian(dataBuf.Slice(i * 4, 4), packetData[i]);
-                    }
-
-                    break;
+                    BinaryPrimitives.WriteSingleBigEndian(dataBuf.Slice(i * 4, 4), packetData[i]);
                 }
+                break;
+            }
             case List<double> packetData:
+            {
+                for (int i = 0; i < packet.DataCount; i++)
                 {
-                    for (int i = 0; i < packet.DataCount; i++)
-                    {
-                        BinaryPrimitives.WriteDoubleBigEndian(dataBuf.Slice(i * 8, 8), packetData[i]);
-                    }
-
-                    break;
+                    BinaryPrimitives.WriteDoubleBigEndian(dataBuf.Slice(i * 8, 8), packetData[i]);
                 }
+                break;
+            }
             case List<char> packetData:
+            {
+                for (int i = 0; i < packet.DataCount; i++)
                 {
-                    for (int i = 0; i < packet.DataCount; i++)
-                    {
-                        dataBuf[i] = (byte)packetData[i];
-                    }
-
-                    break;
+                    dataBuf[i] = (byte)packetData[i];
                 }
+                break;
+            }
             default:
-                {
-                    throw new RoveCommException("Failed to pack RoveCommPacket: invalid data type.");
-                }
+            {
+                throw new RoveCommException("Failed to pack RoveCommPacket: invalid data type.");
+            }
         }
     }
 }
