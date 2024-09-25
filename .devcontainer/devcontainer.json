@@ -6,8 +6,8 @@
         "--name",
         "Basestation_Software",
         // Configure container to use the same network stack as the host machine.
-        "--network",
-        "host",
+        // "--network",
+        // "host",
         // Grants permission to the container to access USBs.
         "--privileged"
     ],
