@@ -1,0 +1,22 @@
+﻿@inject CounterService _CounterService
+<div class="card full-height">
+    <div class="card-header">
+        <h3>Counter</h3>
+    </div>
+
+    <p>Count: @_CounterService.GetCount()</p>
+    <button @onclick="_CounterService.CountUp">Increase Count</button>
+</div>
+
+@code {
+    private async Task Update()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _CounterService.Subscribe(Update);
+        await InvokeAsync(StateHasChanged);
+    }
+}
