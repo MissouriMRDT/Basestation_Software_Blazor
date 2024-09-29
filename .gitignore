@@ -265,3 +265,5 @@ __pycache__/
 *.pyc
 /.vs/ProjectEvaluation/basestation_software.metadata.v7.bin
 /.vs/ProjectEvaluation/basestation_software.projects.v7.bin
+
+/Basestation_Software.Api/Data/*
