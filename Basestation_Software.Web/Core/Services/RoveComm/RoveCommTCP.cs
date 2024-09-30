@@ -6,12 +6,23 @@ namespace Basestation_Software.Web.Core.Services.RoveComm;
 
 public class RoveCommTCP
 {
-    public static readonly int ConnectionTimeout = 10_000;
+    public static readonly int TCPConnectionTimeout = 10_000;
+    public static readonly int TCPMaxClients = 10;
+    
 
     public bool Running { get; private set; }
     public int Port { get; private set; }
-    private readonly List<TcpClient> _connections = [];
+
+    // TCP connections with RoveComm acting as a client.
+    private TcpClient?[] _outgoing;
+    // TCP connections with RoveComm acting as a server.
+    private List<TcpClient> _incoming;
+    // Stops _removeDisconnectedClients() from removing clients while they're is connecting.
+    private List<TcpClient> _connecting;
+
+    // The socket listening for incoming connections.
     private TcpListener? _TCPServer;
+
     private readonly ILogger? _logger;
 
     private class RoveCommEmitter<T>
@@ -34,6 +45,9 @@ public class RoveCommTCP
     {
         Port = port;
         _logger = logger;
+        _incoming = new List<TcpClient>();
+        _outgoing = new TcpClient[TCPMaxClients];
+        _connecting = new List<TcpClient>();
     }
     public RoveCommTCP(ILogger? logger = null) : this(RoveCommConsts.TCPPort, logger) { }
 
@@ -70,7 +84,7 @@ public class RoveCommTCP
                     if (_TCPServer!.Pending())
                     {
                         TcpClient client = await _TCPServer!.AcceptTcpClientAsync(cancelToken);
-                        _connections.Add(client);
+                        _incoming.Add(client);
                         _logger?.LogInformation("Accepted connection from {Remote}.", client.Client.RemoteEndPoint);
                     }
                     // Read packets and trigger callbacks.
@@ -103,12 +117,18 @@ public class RoveCommTCP
         }
 
         Running = false;
-        // Close all connections.
-        foreach (var connection in _connections)
+        // Close all incoming connections.
+        foreach (var connection in _incoming)
         {
             connection.Close();
         }
-        _connections.Clear();
+        _incoming.Clear();
+        // Close all outgoing connections.
+        for (int i = 0; i < TCPMaxClients; i++)
+        {
+            _outgoing[i]?.Close();
+            _outgoing[i] = null;
+        }
         // Close listening socket.
         try
         {
@@ -122,11 +142,32 @@ public class RoveCommTCP
         _logger?.LogInformation("Closed RoveComm TCP.");
     }
 
+    // Iterate through incoming and outgoing connections.
+    private IEnumerable<TcpClient> _iterateConnections()
+    {
+        foreach (var connection in _incoming)
+        {
+            yield return connection;
+        }
+        foreach (var connection in _outgoing)
+        {
+            if (connection is not null)
+            {
+                yield return connection;
+            }
+        }
+    }
+
     // Find existing connection in conneciton list.
     private TcpClient? _findExisting(IPEndPoint remote)
     {
-        foreach (var connection in _connections)
+        foreach (var connection in _iterateConnections())
         {
+            if (connection is null)
+            {
+                continue;
+            }
+
             var connectionEp = connection.Client.RemoteEndPoint as IPEndPoint;
             if (connectionEp is null)
             {
@@ -144,11 +185,12 @@ public class RoveCommTCP
     // Remove all connections that have disconnected.
     private void _removeDisconnectedClients()
     {
-        _connections.RemoveAll(connection =>
-        {
-            if (!connection.Connected)
+        // Remove all closed incoming connections.
+        _incoming.RemoveAll((connection) => {
+            if (!_connecting.Contains(connection) && connection.Client.Connected)
             {
                 _logger?.LogInformation("Disconnected from {Remote}.", connection.Client.RemoteEndPoint as IPEndPoint);
+                connection.Dispose();
                 return true;
             }
             else
@@ -156,6 +198,38 @@ public class RoveCommTCP
                 return false;
             }
         });
+        // Remove all closed outgoing connections.
+        for (int i = 0; i < TCPMaxClients; i++)
+        {
+            var connection = _outgoing[i];
+            if (connection is not null && !_connecting.Contains(connection) && !connection.Client.Connected)
+            {
+                _logger?.LogInformation("Disconnected from {Remote}.", connection.Client.RemoteEndPoint as IPEndPoint);
+                connection.Dispose();
+                _outgoing[i] = null;
+            }
+        };
+    }
+
+    // Create a new TcpClient at the first available spot in the list.
+    private TcpClient? _addNewClient()
+    {
+        int freeSpace = Array.IndexOf(_outgoing, null);
+        if (freeSpace != -1)
+        {
+            // Create a new TcpClient with the local endpoint.
+            // TODO: Add a way to select network interface?
+            IPAddress localIP = Dns.GetHostEntry(Dns.GetHostName()).AddressList[0];
+            int localPort = Port + freeSpace + 1;
+            IPEndPoint localEndPoint = new IPEndPoint(localIP, localPort);
+            TcpClient client = new TcpClient(localEndPoint);
+            _outgoing[freeSpace] = client;
+            return client;
+        }
+        else
+        {
+            return null;
+        }
     }
 
     /// <summary>
@@ -183,14 +257,36 @@ public class RoveCommTCP
         if (client is null)
         {
             _logger?.LogInformation("Attempting to establish a connection with {Dest}.", dest);
-            client = new TcpClient(AddressFamily.InterNetwork);
-            if (!client.ConnectAsync(dest).Wait(TimeSpan.FromMilliseconds(ConnectionTimeout)))
+            try
             {
-                _logger?.LogError("Failed to connect to remote host: The operation has timed out.");
+                client = _addNewClient();
+                if (client is null)
+                {
+                    _logger?.LogError("Failed to connect to remote host: Too many TCP connections open.");
+                    return false;
+                }
+
+                _connecting.Add(client);
+                if (!client.ConnectAsync(dest).Wait(TimeSpan.FromMilliseconds(TCPConnectionTimeout)))
+                {
+                    _logger?.LogError("Failed to connect to remote host: The operation has timed out.");
+                    return false;
+                }
+            }
+            catch (Exception e)
+            {
+                _logger?.LogError("Failed to connect to remote host: {Error}", e.Message);
                 return false;
             }
+            finally
+            {
+                if (client is not null)
+                {
+                    _connecting.Remove(client);
+                }
+            }
+
             _logger?.LogInformation("Established connection with {Remote}.", client.Client.RemoteEndPoint as IPEndPoint);
-            _connections.Add(client);
         }
         // Write the packet to the client's NetworkStream.
         try
@@ -230,19 +326,34 @@ public class RoveCommTCP
         // If no existing connection was found, open a new one.
         if (client is null)
         {
-            client = new TcpClient(AddressFamily.InterNetwork);
             _logger?.LogInformation("Attempting to establish a connection with {Dest}.", dest);
+
             try
             {
-                await client.ConnectAsync(dest).WaitAsync(TimeSpan.FromMilliseconds(ConnectionTimeout), cancelToken);
+                client = _addNewClient();
+                if (client is null)
+                {
+                    _logger?.LogError("Failed to connect to remote host: Too many TCP connections open.");
+                    return false;
+                }
+
+                _connecting.Add(client);
+                await client.ConnectAsync(dest).WaitAsync(TimeSpan.FromMilliseconds(TCPConnectionTimeout), cancelToken);
             }
             catch (Exception e)
             {
                 _logger?.LogError("Failed to connect to remote host: {Error}", e.Message);
                 return false;
             }
+            finally
+            {
+                if (client is not null)
+                {
+                    _connecting.Remove(client);
+                }
+            }
+
             _logger?.LogInformation("Established connection with {Remote}.", client.Client.RemoteEndPoint as IPEndPoint);
-            _connections.Add(client);
         }
         // Write the packet to the client's NetworkStream.
         try
@@ -272,7 +383,7 @@ public class RoveCommTCP
 
         _removeDisconnectedClients();
 
-        foreach (var connection in _connections)
+        foreach (var connection in _iterateConnections())
         {
             try
             {
