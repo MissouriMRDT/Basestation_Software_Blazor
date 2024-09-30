@@ -1,0 +1,187 @@
+﻿@implements IDisposable
+@inject RoveCommService _RoveCommService
+@inject IJSRuntime _IJSRuntime
+@using Basestation_Software.Web.Utils;
+
+<style>
+    .pms {
+        display: grid;
+        padding: 2px; /* Grid exterior border width */
+        grid-template-columns: 2fr 1fr 1fr 2fr 3fr;
+        grid-template-areas:
+            "motors motors core-current core-current pack-current"
+            "core core core-current core-current pack-current"
+            "aux aux aux-current aux-current pack-current"
+            "cs1-current cs1-current cs2-current cs2-current cs3-current"
+            "c1-voltage c2-voltage c2-voltage c3-voltage pack-voltage"
+            "c4-voltage c5-voltage c5-voltage c6-voltage pack-voltage"
+            "reboot reboot e-stop e-stop suicide";
+        place-items: stretch stretch;
+        color: #000;
+        gap: 2px; /* Grid interior border width */
+        background-color: #000; /* Grid border color */
+        font-weight: bold;
+    }
+
+    .pms > p {
+        margin: 0;
+        padding: 0px 20px 0px 20px;
+        align-content: center;
+    }
+
+    .pms > p > span {
+        margin: 0;
+        float: right;
+    }
+
+    .pms > p > button {
+        margin: 0;
+        float: right;
+    }
+
+    .pms > button {
+        margin: 0;
+    }
+</style>
+
+<div class="card full-height">
+    <div class="card-header">
+        <h5 class="mr-auto">PMS</h5>
+    </div>
+    <div class="card-body pms w-100">
+        <p style="grid-area: motors; background-color: @(BusStatus[0] == BusState.ENABLED ? "yellow" : "grey")">Motors<button @onclick="() => toggleBus(0)">@(BusStatus[0] == BusState.ENABLED ? "Disable" : (BusStatus[0] == BusState.DISABLED ? "Enable" : "Pending..."))</button></p>
+        <p style="grid-area: core; background-color: @(BusStatus[1] == BusState.ENABLED ? "yellow" : "grey")">Core<button @onclick="() => toggleBus(1)">@(BusStatus[1] == BusState.ENABLED ? "Disable" : (BusStatus[1] == BusState.DISABLED ? "Enable" : "Pending..."))</button></p>
+        <p style="grid-area: aux; background-color: @(BusStatus[2] == BusState.ENABLED ? "yellow" : "grey")">Aux<button @onclick="() => toggleBus(2)">@(BusStatus[2] == BusState.ENABLED ? "Disable" : (BusStatus[2] == BusState.DISABLED ? "Enable" : "Pending..."))</button></p>
+        <p style="grid-area: core-current; background-color: @ColorGradient.ClampMap(PackCurrent - AuxCurrent, 7.2, 30, COLOR_OK, COLOR_ERROR)">Core Current<span>@($"{PackCurrent - AuxCurrent:0.00}") A</span></p>
+        <p style="grid-area: aux-current; background-color: @ColorGradient.ClampMap(AuxCurrent, 5, 15, COLOR_OK, COLOR_ERROR)">Aux Current<span>@($"{AuxCurrent:0.00}") A</span></p>
+        <p style="grid-area: pack-current; background-color: @ColorGradient.ClampMap(PackCurrent, 9.5, 45, COLOR_OK, COLOR_ERROR)">Pack Current<span>@($"{PackCurrent:0.00}") A</span></p>
+        <p style="grid-area: cs1-current; background-color: #fff">CS1<span>@($"{MiscCurrent[0]:0.00}") A</span></p>
+        <p style="grid-area: cs2-current; background-color: #fff">CS2<span>@($"{MiscCurrent[1]:0.00}") A</span></p>
+        <p style="grid-area: cs3-current; background-color: #fff">CS3<span>@($"{MiscCurrent[2]:0.00}") A</span></p>
+        <p style="grid-area: c1-voltage; background-color: @ColorGradient.ClampMap(CellVoltage[0], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C1<span>@($"{CellVoltage[0]:0.00}") V</span></p>
+        <p style="grid-area: c2-voltage; background-color: @ColorGradient.ClampMap(CellVoltage[1], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C2<span>@($"{CellVoltage[1]:0.00}") V</span></p>
+        <p style="grid-area: c3-voltage; background-color: @ColorGradient.ClampMap(CellVoltage[2], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C3<span>@($"{CellVoltage[2]:0.00}") V</span></p>
+        <p style="grid-area: c4-voltage; background-color: @ColorGradient.ClampMap(CellVoltage[3], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C4<span>@($"{CellVoltage[3]:0.00}") V</span></p>
+        <p style="grid-area: c5-voltage; background-color: @ColorGradient.ClampMap(CellVoltage[4], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C5<span>@($"{CellVoltage[4]:0.00}") V</span></p>
+        <p style="grid-area: c6-voltage; background-color: @ColorGradient.ClampMap(CellVoltage[5], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C6<span>@($"{CellVoltage[5]:0.00}") V</span></p>
+        <p style="grid-area: pack-voltage; background-color: @ColorGradient.ClampMap(PackVoltage, 15, 25, COLOR_ERROR, COLOR_OK)">Pack Voltage<span>@($"{PackVoltage:0.00}") V</span></p>
+        <button style="grid-area: reboot" onclick="@Reboot">REBOOT</button>
+        <button style="grid-area: e-stop" onclick="@EStop">E-STOP</button>
+        <button style="grid-area: suicide" onclick="@Suicide">SUICIDE</button>
+    </div>
+</div>
+
+@code
+{
+    enum BusState
+    {
+        DISABLED,
+        ENABLED,
+        UNKNOWN,
+    }
+
+    // Constants
+    public const uint TELEMETRY_TIMEOUT = 10_000; // ms
+    public static Color COLOR_ERROR = Color.FromArgb(255, 255, 0, 0);
+    public static Color COLOR_OK = Color.FromArgb(255, 0, 255, 0);
+
+    // State
+    private List<BusState> BusStatus = new List<BusState>() { BusState.UNKNOWN, BusState.UNKNOWN, BusState.UNKNOWN }; // Motors, Core, Aux
+    private float PackCurrent = 0, PackVoltage = 0, AuxCurrent = 0;
+    private List<float> CellVoltage = new List<float>() { 0, 0, 0, 0, 0, 0 }; // C1 ... C6
+    private List<float> MiscCurrent = new List<float>() { 0, 0, 0 }; // CS1 ... CS3
+    private System.Threading.Timer TelemetryWatchdog;
+
+    protected override void OnInitialized()
+    {
+        TelemetryWatchdog = new System.Threading.Timer(WatchdogTimeout, null, TELEMETRY_TIMEOUT, Timeout.Infinite);
+
+        _RoveCommService.On<float>("PMS", "PackCurrent", async (RoveCommPacket<float> packet) =>
+        {
+            PackCurrent = packet.Data[0];
+            ResetWatchdog();
+            await InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.On<float>("PMS", "PackVoltage", async (RoveCommPacket<float> packet) =>
+        {
+            PackVoltage = packet.Data[0];
+            ResetWatchdog();
+            await InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.On<float>("PMS", "CellVoltage", async (RoveCommPacket<float> packet) =>
+        {
+            CellVoltage = packet.Data;
+            ResetWatchdog();
+            await InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.On<float>("PMS", "AuxCurrent", async (RoveCommPacket<float> packet) =>
+        {
+            AuxCurrent = packet.Data[0];
+            ResetWatchdog();
+            await InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.On<float>("PMS", "MiscCurrent", async (RoveCommPacket<float> packet) =>
+        {
+            MiscCurrent = packet.Data;
+            ResetWatchdog();
+            await InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.On<float>("PMS", "PackVoltage", async (RoveCommPacket<float> packet) =>
+        {
+            PackVoltage = packet.Data[0];
+            ResetWatchdog();
+            await InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.On<byte>("PMS", "BusStatus", async (RoveCommPacket<byte> packet) =>
+        {
+            for (int i = 0; i < 3; i++)
+                BusStatus[i] = (packet.Data[0] & (1 << i)) == 0 ? BusState.DISABLED : BusState.ENABLED;
+            ResetWatchdog();
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    async void WatchdogTimeout(object? _)
+    {
+        AuxCurrent = 0;
+        PackCurrent = 0;
+        PackVoltage = 0;
+        CellVoltage = [0, 0, 0, 0, 0, 0];
+        BusStatus = [BusState.UNKNOWN, BusState.UNKNOWN, BusState.UNKNOWN];
+        MiscCurrent = [0, 0, 0];
+        await InvokeAsync(StateHasChanged);
+    }
+
+    void ResetWatchdog()
+    {
+        TelemetryWatchdog.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
+    }
+
+    async Task toggleBus(int i)
+    {
+        if (BusStatus[i] == BusState.DISABLED)
+            await _RoveCommService.SendAsync<byte>("PMS", "EnableBus", [(byte)(1 << i)]);
+        else if (BusStatus[i] == BusState.ENABLED)
+            await _RoveCommService.SendAsync<byte>("PMS", "DisableBus", [(byte)(1 << i)]);
+        BusStatus[i] = BusState.UNKNOWN;
+    }
+
+    async Task Reboot()
+    {
+        if (await _IJSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to do this? It will take a few minutes to reboot the network switch."))
+            await _RoveCommService.SendAsync<byte>("PMS", "Reboot", [1]);
+    }
+
+    async Task EStop()
+    {
+        await _RoveCommService.SendAsync<byte>("PMS", "EStop", [1]);
+    }
+
+    async Task Suicide()
+    {
+        if (await _IJSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to do this? You must pull the physical E Stop to turn the rover on again!"))
+            await _RoveCommService.SendAsync<byte>("PMS", "Suicide", [1]);
+    }
+
+    void IDisposable.Dispose() { }
+}
