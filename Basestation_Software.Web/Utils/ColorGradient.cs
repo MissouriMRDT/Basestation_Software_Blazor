@@ -1,7 +1,7 @@
 ﻿using OpenCvSharp;
 using System.Drawing;
 
-namespace Basestation_Software.Web;
+namespace Basestation_Software.Web.Utils;
 
 public class ColorGradient
 {
