@@ -1,0 +1,69 @@
+﻿@inject CameraService _CameraService
+@implements IDisposable
+
+<link rel="stylesheet" type="text/css" href="CameraDisplay.razor.css?version=0.1">
+
+<div class="card full-height">
+    <div class="card-header">
+        <h3>Camera Display</h3>
+    </div>
+    <div class="cam-container">
+        <img class="cam-display" src="@_CameraService.GetFrameData(_sourceIndex)" />
+    </div>
+    <div class="source-buttons-container">
+        @for (int i = 0; i < 8; i++)
+        {
+            // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
+            var _i = i;
+            <button class="@("btn btn-secondary " + ((_sourceIndex == _i) ? "active" : ""))" @onclick="() => SetSource(_i)">@(_i + 1)</button>
+        }
+    </div>
+    <p>Source: @_sourceIndex</p>
+    <button @onclick="RestartCam">restart</button>
+</div>
+
+@code {
+    private bool _prerendered = false;
+    private int _sourceIndex = 0;
+
+    private async Task OnNewFrame()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _CameraService.SubscribeToNewFrame(OnNewFrame, _sourceIndex);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void SetSource(int newSourceIndex)
+    {
+        _CameraService.UnsubscribeFromNewFrame(OnNewFrame, _sourceIndex);
+
+        _sourceIndex = newSourceIndex;
+        StateHasChanged();
+
+        _CameraService.SubscribeToNewFrame(OnNewFrame, _sourceIndex);
+    }
+
+    private void RestartCam()
+    {
+        _CameraService.Dispose(_sourceIndex);
+        _CameraService.InitCapture(_sourceIndex);
+        _CameraService.SubscribeToNewFrame(OnNewFrame, _sourceIndex);
+    }
+
+    void IDisposable.Dispose()
+    {
+        if (_prerendered)
+        {
+            _CameraService.UnsubscribeFromNewFrame(OnNewFrame, _sourceIndex);
+            _CameraService.DisposeAll();
+        }
+        else
+        {
+            _prerendered = true;
+        }
+    }
+}
