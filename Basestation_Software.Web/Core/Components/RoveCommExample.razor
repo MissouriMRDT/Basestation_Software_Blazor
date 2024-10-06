@@ -37,6 +37,7 @@
             await InvokeAsync(StateHasChanged);
         });
 
+        // More consise version of the above without comments
         _RoveCommService.On<float>("Core", "AccelerometerData", async (packet) =>
         {
             driveAccelDataX = packet.Data[0];
@@ -47,7 +48,6 @@
         _RoveCommService.On<float>("Core", "AccelerometerData", OnRecievedAccelerometerData);
 
         // Send a packet to a board.
-        // More consise version of the above without comments
         // The format of parameters is: Board name, Packet Type name, and value to send
         // Setting "reliable" will cause the packet to be sent over TCP rather than UDP
         _ = _RoveCommService.SendAsync<float>("Core", "DriveLeftright", [60.5f, -50.0f], reliable: false);
