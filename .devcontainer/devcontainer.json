@@ -6,8 +6,8 @@
         "--name",
         "Basestation_Software",
         // Configure container to use the same network stack as the host machine.
-        "--network",
-        "host",
+        // "--network",
+        // "host",
         // Grants permission to the container to access USBs.
         "--privileged"
     ],
@@ -41,7 +41,26 @@
 	// "features": {},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
-	// "forwardPorts": [],
+	"forwardPorts": [
+		11000,
+		12000
+	],
+
+	"portsAttributes": {
+		"11000": {
+			"label": "RoveComm UDP",
+			"onAutoForward": "notify"
+		},
+		"12000": {
+			"label": "RoveComm TCP",
+			"onAutoForward": "notify"
+		}
+	},
+
+	"appPort": [
+		"11000:11000/udp",
+		"12000:12000/tcp"
+	],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
 	"postCreateCommand": "dotnet tool install --global dotnet-ef --verbosity diagnostic && dotnet tool install --global dotnet-aspnet-codegenerator --verbosity diagnostic",
