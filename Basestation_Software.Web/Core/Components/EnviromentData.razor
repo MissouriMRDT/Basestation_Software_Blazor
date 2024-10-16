@@ -1,4 +1,7 @@
-﻿<div class="card full-height">
+﻿@implements IDisposable
+@inject RoveCommService _RoveCommService
+
+<div class="card full-height">
 	<div class="card-header">
 		<h3>Enviroment Data</h3>
 	</div>
@@ -6,14 +9,38 @@
 	<p>Temperature: @_temp</p>
 	<button>Request Temperature Data</button>
 	<p>Humidity: @_humidity</p>
-	<button>Request Temperature Data</button>
+	<button @onclick=RequestHumidity>Request Humidity Data</button>
 
 </div>
 
 @code
 {
-	private float _temp = 0f;
-	private float _humidity = 0f;
+	private int _temp = 0;
+	private float _humidity = 0;
 
+	protected override async Task OnInitializedAsync()
+	{
+		_RoveCommService.On<float>("ScienceActuation", "Humidity", async (packet) =>
+		{
+			_humidity = packet.Data[0];
+			await InvokeAsync(StateHasChanged);
+		});
 
+		// use type sbyte as rovecomm sends a signed 8-bit integer (info taken from the manifest)
+		_RoveCommService.On<sbyte>("Instruments", "Temperature", async (packet) =>
+		{
+			// TODO: Implement this!
+		});
+	}
+
+	public void RequestHumidity()
+	{
+		// send humidity request command
+		_ = _RoveCommService.SendAsync<byte>("ScienceActuation", "RequestHumidity", [0], reliable: false);
+	}
+
+	void IDisposable.Dispose()
+	{
+
+	}
 }
