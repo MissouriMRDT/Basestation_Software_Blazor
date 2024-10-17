@@ -1,0 +1,21 @@
+﻿@inject LoggerService _LoggerService
+<div class="card full-height">
+	<div class="card-header">
+		<h3>Logger Tester</h3>
+	</div>
+
+	<button @onclick=AddExampleLog>Add Example Log</button>
+
+</div>
+
+@code {
+	protected override async Task OnInitializedAsync()
+	{
+		_LoggerService.Log("Tester initialized!");
+	}
+
+	public void AddExampleLog()
+	{
+		_LoggerService.Log("Example message");
+	}
+}

@@ -1,0 +1,8 @@
+﻿ul {
+    height: 250px;
+    overflow: scroll;
+}
+
+li:nth-child(2n) {
+    background-color: lightgray;
+}

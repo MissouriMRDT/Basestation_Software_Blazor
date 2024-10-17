@@ -1,0 +1,28 @@
+﻿@inject LoggerService _LoggerService
+
+<div class="card full-height">
+	<div class="card-header">
+		<h3>Logger</h3>
+	</div>
+
+	<ul>
+		@foreach (var log in _LoggerService.GetLogs())
+		{
+			<li>@log</li>
+		}
+	</ul>
+
+</div>
+
+@code {
+	private async Task OnUpdateLog()
+	{
+		await InvokeAsync(StateHasChanged);
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		_LoggerService.Subscribe(OnUpdateLog);
+		await InvokeAsync(StateHasChanged);
+	}
+}
