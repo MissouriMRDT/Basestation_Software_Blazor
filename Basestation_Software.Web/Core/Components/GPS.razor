@@ -1,5 +1,6 @@
 @implements IDisposable
 @inject IJSRuntime _IJSRuntime
+@inject RoveCommService _RoveCommService
 
 <style>
     .gps {
@@ -249,14 +250,50 @@
     private Random random;
 
     protected override void OnInitialized()
-    {
-        random = new Random();
-        this.jsInteropName = $"window.roverAttitude.{ID}";
-        new System.Threading.Timer(async _ =>  // async void
+    {     
+        _RoveCommService.On<double>("GPS", "GPSLatLonAlt", async (RoveCommPacket<double> packet) =>
         {
-            // Place in `on AccuracyData packet` function and use IsDifferential `data[4]` and switch expression `data[3]`
-            IsDifferential = 0f; // data[4];
-            switch (1f) // data[3]
+            Lat = packet.Data[0];
+            Lon = packet.Data[1];
+            Alt = packet.Data[2];
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<float>("GPS", "IMUData", async (RoveCommPacket<float> packet) =>
+        {
+            Pitch = packet.Data[0];
+            Yaw = packet.Data[1];
+            Roll = packet.Data[2];
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<float>("GPS", "CompassData", async (RoveCommPacket<float> packet) =>
+        {
+            Heading = packet.Data[0];
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<byte>("GPS", "SatelliteCountData", async (RoveCommPacket<byte> packet) =>
+        {
+            Satellites = packet.Data[0];
+            await InvokeAsync(StateHasChanged);
+        });
+        
+        _RoveCommService.On<float>("GPS", "AccelerometerData", async (RoveCommPacket<float> packet) =>
+        {
+            AccelX = packet.Data[0];
+            AccelY = packet.Data[1];
+            AccelZ = packet.Data[2];
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<float>("GPS", "AccuracyData", async (RoveCommPacket<float> packet) =>
+        {
+            AccurHor = packet.Data[0];
+            AccurVer = packet.Data[1];
+            AccurHdg = packet.Data[2];
+            IsDifferential = packet.Data[4];
+            switch (packet.Data[3])
             {
                 case 0f:
                     FixType = "No";
@@ -279,31 +316,9 @@
                 default:
                     FixType = "Undefined";
                     break;
-            };
-            // Update display with dummy data.
-            Lat = Math.Clamp(Lat + random.NextDouble() - 0.5, -90, 90);
-            Lon = Math.Clamp(Lat + random.NextDouble() - 0.5, -180, 180);
-            Alt = Math.Clamp(Alt + random.NextDouble() - 0.5, 1200, 1400);
-            AccurHor = (float)Math.Clamp(AccurHor + random.NextDouble() * 0.01 - 0.005, -10, 10);
-            AccurVer = (float)Math.Clamp(AccurVer + random.NextDouble() * 0.01 - 0.005, -10, 10);
-            AccurHdg = (float)Math.Clamp(AccurHdg + random.NextDouble() - 0.5, -360, 360);
-            Heading = (float)Math.Clamp(Heading + random.NextDouble() - 0.5, -180, 180);
-            Satellites = (uint)Math.Min(0, Math.Max((int)Satellites + random.Next(-1, 2), 24));
-            Pitch = (float)Math.Clamp(Pitch + random.NextDouble() - 0.5, -90, 90);
-            Yaw = (float)Math.Clamp(Yaw + random.NextDouble() - 0.5, -180, 180);
-            Roll = (float)Math.Clamp(Roll + random.NextDouble() - 0.5, -180, 180);
-            AccelX = (float)Math.Clamp(AccelX + random.NextDouble() - 0.5, -15, 15);
-            AccelY = (float)Math.Clamp(AccelY + random.NextDouble() - 0.5, -15, 15);
-            AccelZ = (float)Math.Clamp(AccelZ + random.NextDouble() - 0.5, -15, 15);
-            // we need StateHasChanged() because this is an async void handler
-            // we need to Invoke it because we could be on the wrong Thread
+            };            
             await InvokeAsync(StateHasChanged);
-        }, null, 0, 100);
-    }
-
-
-    protected override async Task OnInitializedAsync()
-    {
+        });
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
