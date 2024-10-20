@@ -11,7 +11,7 @@ public class ConfigController : ControllerBase
     // Declare member variables.
     private readonly IConfigRepository _ConfigRepository;
 
-    private static readonly Guid defaultGuid = new Guid("00000000-0000-0000-0000-000000000001");
+    private static readonly Guid _DefaultGuid = new("00000000-0000-0000-0000-000000000001");
 
     /// <summary>
     /// Constructor
@@ -36,7 +36,7 @@ public class ConfigController : ControllerBase
     /// <param name="id">The config id.</param>
     /// <returns>The API response object.</returns>
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteConfig(Guid id) => id.Equals(defaultGuid) || (await _ConfigRepository.DeleteConfig(id)) is null ? Ok() : NotFound();
+    public async Task<IActionResult> DeleteConfig(Guid id) => id.Equals(_DefaultGuid) || (await _ConfigRepository.DeleteConfig(id)) is null ? Ok() : NotFound();
 
     /// <summary>
     /// IN-Code API Endpoint for getting a waypoint to the DB.

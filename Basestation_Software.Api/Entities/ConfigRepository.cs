@@ -87,11 +87,9 @@ public class ConfigRepository : IConfigRepository
     /// <returns>The object stored in the database.</returns>
     public async Task<ConfigEntity?> UpdateConfig(Guid id, Config config)
     {
-        Console.WriteLine("guid {0}", id);
         ConfigEntity? result = await _REDDatabase.Configs.FindAsync(id);
         if (result is null)
         {
-            Console.WriteLine("adding guid {0}", id);
             // Add new row to database table.
             result = (await _REDDatabase.Configs.AddAsync(new ConfigEntity
             {

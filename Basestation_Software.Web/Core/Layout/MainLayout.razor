@@ -1,4 +1,4 @@
-﻿@page "/l/{configID:guid=00000000-0000-0000-0000-000000000001}"
+﻿@page "/l/{ConfigID:guid=00000000-0000-0000-0000-000000000001}"
 
 @using Basestation_Software.Models.Config
 @using System.Text.Json;
@@ -12,64 +12,65 @@
 <PageTitle>MRDT Basestation</PageTitle>
 
 <style>
-	#layout-grid {
-		display: grid;
-		grid-template-columns: repeat(@Config_.Columns, 1fr);
-		grid-template-rows: repeat(@Config_.Columns, 1fr);
-		width: @($"{Config_.Width}vw");
-		height: @($"{Config_.Height}vh");
-	}
+    #layout-grid {
+        display: grid;
+        grid-template-columns: repeat(@Config_.Columns, 1fr);
+        grid-template-rows: repeat(@Config_.Columns, 1fr);
+        width: @($"{Config_.Width}vw");
+        height: @($"{Config_.Height}vh");
+        padding-top: 75px;
+    }
 
-	#copy-area {
-		position: fixed;
-		inset: 10vh 10vw 10vh 10vw;
-		z-index: 2000;
-		display: grid;
-		grid-template-rows: 9fr 1fr;
-		grid-template-columns: 1fr 1fr;
-	}
+    #copy-area {
+        position: fixed;
+        inset: 10vh 10vw 10vh 10vw;
+        z-index: 2000;
+        display: grid;
+        grid-template-rows: 9fr 1fr;
+        grid-template-columns: 1fr 1fr;
+    }
 
-	#copy-area button {
-		font-size: 5vh;
-	}
+    #copy-area button {
+        font-size: 5vh;
+    }
 </style>
 
 <div class="page">
-	<link rel="stylesheet" href="_content/Radzen.Blazor/css/@RadzenTheme" />
-	<nav class="navbar navbar-expand-sm border-bottom box-shadow mb-3 mat-glass shadow-sm fixed-top" style="padding: 8px 16px">
-		<div class="navbar-nav mr-auto">
-			<img src="images/swoosh.svg" height="35" />
-			@NavLinks
-		</div>
-		<div class="nav ms-auto me-e justify-content-end">
-			<select id="configSelect" @onchange=@((ChangeEventArgs __e) => {if (Guid.TryParse(__e?.Value as string, out Guid guid)) Navigate(guid);})>
-				@SelectOptions
-			</select>
-			<button class="btn btn-sm btn-success" @onclick=SaveConfig title="Save"><i class="bi bi-inline-text bi-save2" /></button>
-			<button class="btn btn-sm btn-success" @onclick=NewConfig title="New"><i class="bi bi-inline-text bi-plus-circle" /></button>
-			<button class="btn btn-sm btn-success" @onclick=OpenCopyArea title="Import/Export"><i class="bi bi-inline-text bi-download" /><i class="bi bi-inline-text bi-upload" /></button>
-			<button class="btn btn-sm btn-danger" @onclick=DeleteConfig title="Delete"><i class="bi bi-inline-text bi-trash" /></button>
-			<input class="nav ms-auto me-3 justify-content-end" type="checkbox" name="" id="checkbox" @bind="@IsDarkMode">
-		</div>		
-		<BlazoredToasts ShowProgressBar="true" Position=Blazored.Toast.Configuration.ToastPosition.TopRight DisableTimeout />
-	</nav>
-	<div id="layout-grid" class="container" style="padding-top: 75px;">
-		@CustomRender
-	</div>
-	@if (CopyAreaVisible)
-	{
-		<div id="copy-area">
-			<InputTextArea @ref="CopyArea" @bind-Value="@CopyAreaValue" style="grid-area: 1 / 1 / 2 / 3"/>
-			<button @onclick="ImportConfig" class="btn btn-warning"><i class="bi bi-inline-text bi-upload" /></button>
-			<button @onclick="@(_ => CopyAreaVisible = false)" class="btn btn-success"><i class="bi bi-inline-text bi-x-circle" /></button>
-		</div>
-	}
+    <link rel="stylesheet" href="_content/Radzen.Blazor/css/@RadzenTheme" />
+    <nav class="navbar navbar-expand-sm border-bottom box-shadow mb-3 mat-glass shadow-sm fixed-top" style="padding: 8px 16px">
+        <div class="navbar-nav mr-auto">
+            <img src="images/swoosh.svg" height="35" />
+            @NavLinks
+        </div>
+        <div class="nav ms-auto me-e justify-content-end">
+            <select id="configSelect" @onchange=@((ChangeEventArgs __e) => {if (Guid.TryParse(__e?.Value as string, out Guid guid)) Navigate(guid);})>
+                @SelectOptions
+            </select>
+            <button class="btn btn-sm btn-success" @onclick=SaveConfig title="Save"><i class="bi bi-inline-text bi-save2" /></button>
+            <button class="btn btn-sm btn-success" @onclick=NewConfig title="New"><i class="bi bi-inline-text bi-plus-circle" /></button>
+            <button class="btn btn-sm btn-success" @onclick=OpenCopyArea title="Import/Export"><i class="bi bi-inline-text bi-download" /><i class="bi bi-inline-text bi-upload" /></button>
+            <button class="btn btn-sm btn-danger" @onclick=DeleteConfig title="Delete"><i class="bi bi-inline-text bi-trash" /></button>
+            <input class="nav ms-auto me-3 justify-content-end" type="checkbox" name="" id="checkbox" @bind="@IsDarkMode">
+        </div>		
+        <BlazoredToasts ShowProgressBar="true" Position=Blazored.Toast.Configuration.ToastPosition.TopRight DisableTimeout />
+    </nav>
+    <div id="layout-grid">
+        @CustomRender
+    </div>
+    @if (CopyAreaVisible)
+    {
+        <div id="copy-area">
+            <InputTextArea @ref="CopyArea" @bind-Value="@CopyAreaValue" style="grid-area: 1 / 1 / 2 / 3"/>
+            <button @onclick="ImportConfig" class="btn btn-warning"><i class="bi bi-inline-text bi-upload" /></button>
+            <button @onclick="@(_ => CopyAreaVisible = false)" class="btn btn-success"><i class="bi bi-inline-text bi-x-circle" /></button>
+        </div>
+    }
 </div>
 
 <div id="blazor-error-ui">
-	An unhandled error has occurred.
-	<a href="" class="reload">Reload</a>
-	<a class="dismiss">🗙</a>
+    An unhandled error has occurred.
+    <a href="" class="reload">Reload</a>
+    <a class="dismiss">🗙</a>
 </div>
 
 @code {
@@ -77,7 +78,7 @@
     private RenderFragment? NavLinks { get; set; }
     private RenderFragment? CustomRender { get; set; }
     private RenderFragment? SelectOptions { get; set; }
-    private Guid configID;
+    private Guid ConfigID;
     private Config Config_ = new Config();
     private InputTextArea? CopyArea;
     private string CopyAreaValue = "";
@@ -96,10 +97,10 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Get configID from url as specified at @page "/l/{configID:guid?}".
+        // Get ConfigID from url as specified at @page "/l/{ConfigID:guid?}".
         // This workaround depends on <CascadingValue Value="@routeData"> in Routes.razor.
-        // All because `[Parameter] configID` wasn't updating configID with the value from the url.
-        configID = ((Guid?)RouteData_.RouteValues.GetValueOrDefault("configID", null) ?? configID);
+        // All because `[Parameter] ConfigID` wasn't updating ConfigID with the value from the url.
+        ConfigID = ((Guid?)RouteData_.RouteValues.GetValueOrDefault("ConfigID", null) ?? ConfigID);
 
         _ConfigService.SubscribeToConfigChanges(ConfigChanged);
         await _ConfigService.RefreshConfigs(); // We rely on RefreshConfigs calling ConfigChanged.
@@ -107,14 +108,20 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender) await SetDarkMode(IsDarkMode);
+        if (firstRender)
+        {
+            // Thes funcitons cannot be called from the first time ConfigChanged runs because of prerendering.
+            await _IJSRuntime.InvokeVoidAsync("eval", $"document.getElementById(\"configSelect\").value = \"{ConfigID}\";");
+            await SetDarkMode(IsDarkMode);
+        }
     }
 
     private async Task Navigate(Guid guid)
     {
-        configID = guid;
-        _NavigationManager.NavigateTo($"/l/{configID}");
+        ConfigID = guid;
+        _NavigationManager.NavigateTo($"/l/{ConfigID}");
         await _ConfigService.RefreshConfigs(); // We rely on RefreshConfigs awaiting ConfigChanged.
+        await _IJSRuntime.InvokeVoidAsync("eval", $"document.getElementById(\"configSelect\").value = \"{ConfigID}\";");
         await SetDarkMode(IsDarkMode); // Shall be called after ConfigChanged.
     }
 
@@ -123,7 +130,7 @@
         NavLinks = CreateNavlinks();
         SelectOptions = CreateSelectOptions();
 
-        Config? config = _ConfigService.GetConfig(configID);
+        Config? config = _ConfigService.GetConfig(ConfigID);
         if (config is not null)
         {
             Config_ = config;
@@ -131,7 +138,7 @@
         }
         else
         {
-            _ToastService.ShowError($"Config with id={configID} not found.");
+            _ToastService.ShowError($"Config with id={ConfigID} not found.");
         }
 
         await InvokeAsync(StateHasChanged);
@@ -179,7 +186,7 @@
         int i = 0;
         foreach (Component component in Config_.Components)
         {
-            Type? componentType = Type.GetType(component.Type);
+            Type? componentType = Type.GetType("Basestation_Software.Web.Core.Components." + component.Type);
             if (componentType is null)
             {
                 _ToastService.ShowWarning($"Component type {component.Type} not found.");
@@ -188,13 +195,10 @@
 
             builder.OpenElement(i, "div"); // <div>
             builder.AddAttribute(i + 1, "style",
-                $"grid-area: {component.Top} / {component.Left} / {component.Bottom} / {component.Right}; place-self: {component.PlaceSelf}"
+                $"grid-area: {component.Y + 1} / {component.X + 1} / span {component.Height} / span {component.Width}; place-self: {component.PlaceSelf}"
             );
             builder.OpenComponent(i + 2, componentType); // <componentType>
-                                                         // Needed for RoverMap, GPS and maybe others
-            if (component.ID is null)
-                builder.AddComponentParameter(i + 3, "ID", $"_{i}");
-            else
+            if (component.ID is not null) // Needed for RoverMap, GPS and maybe others
                 builder.AddComponentParameter(i + 3, "ID", component.ID);
             builder.CloseComponent(); // </componentType>
             builder.CloseElement(); // </div>
@@ -211,7 +215,7 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task SaveConfig() => await _ConfigService.UpdateConfig(configID, Config_);
+    private async Task SaveConfig() => await _ConfigService.UpdateConfig(ConfigID, Config_);
 
     private async Task NewConfig()
     {
@@ -223,22 +227,22 @@
 
     private async Task DeleteConfig()
     {
-        Guid guid = configID;
-        configID = new Guid("00000000-0000-0000-0000-000000000001");
+        Guid guid = ConfigID;
+        ConfigID = new Guid("00000000-0000-0000-0000-000000000001");
         await _ConfigService.DeleteConfig(guid);
-        await Navigate(configID);
+        await Navigate(ConfigID);
     }
 
-	private void OpenCopyArea()
-	{
-		CopyAreaValue = JsonSerializer.Serialize(Config_);
-		CopyAreaVisible = true;
-	}
+    private void OpenCopyArea()
+    {
+        CopyAreaValue = JsonSerializer.Serialize(Config_);
+        CopyAreaVisible = true;
+    }
 
-	private async Task ImportConfig()
-	{
-		CopyAreaVisible = false;
-		Config_ = JsonSerializer.Deserialize<Config?>(CopyAreaValue) ?? Config_;
+    private async Task ImportConfig()
+    {
+        CopyAreaVisible = false;
+        Config_ = JsonSerializer.Deserialize<Config?>(CopyAreaValue) ?? Config_;
         await SaveConfig(); // We rely on UpdateConfig awaiting ConfigChanged.
         await SetDarkMode(IsDarkMode); // Shall be called after ConfigChanged.
     }
