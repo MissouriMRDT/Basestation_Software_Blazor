@@ -2,12 +2,6 @@
 @inject TaskTimerService _TaskTimerService
 
 <style>
-    .scrollable {
-        max-height: 50vh; 
-        overflow-y: auto;
-        display: block;
-    }
-
     @@keyframes flash {
         0%, 100% { opacity: 1; }
         50% { opacity: 0; }
@@ -31,7 +25,7 @@
     </Footer>
 </Modal>
 
-<div class="card full-height">
+<div class="card full-height customizable">
     <div class="card-header d-flex justify-content-between">
             <h3>Task Timer</h3>
         <div class="col text-end">

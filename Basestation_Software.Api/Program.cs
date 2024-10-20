@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddDbContext<REDDatabase>(options => options.UseSqlite(builder.Configuration.GetConnectionString("RED_DB")));
+builder.Services.AddScoped<IConfigRepository, ConfigRepository>();
 builder.Services.AddScoped<IGPSWaypointRepository, GPSWaypointRepository>();
 builder.Services.AddScoped<IMapTileRepository, MapTileRepository>();
 builder.Services.AddEndpointsApiExplorer();

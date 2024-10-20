@@ -1,14 +1,13 @@
-﻿@inject CameraService _CameraService
-@implements IDisposable
+﻿@implements IDisposable
 
 <link rel="stylesheet" type="text/css" href="CameraDisplay.razor.css?version=0.1">
 
-<div class="card full-height">
+<div class="card full-height customizable">
     <div class="card-header">
         <h3>Camera Display</h3>
     </div>
     <div class="cam-container">
-        <img class="cam-display" src="@_CameraService.GetFrameData(_sourceIndex)" />
+        <img class="cam-display" src="images/loading.jpg" />
     </div>
     <div class="source-buttons-container">
         @for (int i = 0; i < 8; i++)
@@ -33,33 +32,23 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _CameraService.SubscribeToNewFrame(OnNewFrame, _sourceIndex);
         await InvokeAsync(StateHasChanged);
     }
 
     private void SetSource(int newSourceIndex)
     {
-        _CameraService.UnsubscribeFromNewFrame(OnNewFrame, _sourceIndex);
-
         _sourceIndex = newSourceIndex;
         StateHasChanged();
-
-        _CameraService.SubscribeToNewFrame(OnNewFrame, _sourceIndex);
     }
 
     private void RestartCam()
     {
-        _CameraService.Dispose(_sourceIndex);
-        _CameraService.InitCapture(_sourceIndex);
-        _CameraService.SubscribeToNewFrame(OnNewFrame, _sourceIndex);
     }
 
     void IDisposable.Dispose()
     {
         if (_prerendered)
         {
-            _CameraService.UnsubscribeFromNewFrame(OnNewFrame, _sourceIndex);
-            _CameraService.DisposeAll();
         }
         else
         {

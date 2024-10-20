@@ -24,8 +24,9 @@ builder.Services.AddHttpClient<GPSWaypointService>();
 builder.Services.AddSingleton<GPSWaypointService>();
 builder.Services.AddHttpClient<MapTileService>();
 builder.Services.AddSingleton<MapTileService>();
+builder.Services.AddHttpClient<ConfigService>();
+builder.Services.AddSingleton<ConfigService>();
 builder.Services.AddSingleton<TaskTimerService>();
-builder.Services.AddSingleton<CameraService>();
 
 builder.Services.AddSingleton<RoveCommService>();
 builder.Services.AddHostedService((sp) => sp.GetRequiredService<RoveCommService>());

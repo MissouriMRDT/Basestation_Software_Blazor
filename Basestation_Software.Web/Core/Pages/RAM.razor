@@ -7,22 +7,20 @@
     }
 </style>
 
-<div class="container">
-    <ul class="nav nav-tabs nav-fill">
-        <li class="nav-item"><a data-toggle="tab" class='nav-link @(_activeTab == "Autonomy" ? "active" : "")' @onclick='() => SetActiveTab("Autonomy")'><h2 style="color: red">Autonomy</h2></a></li>
-        <li class="nav-item"><a data-toggle="tab" class='nav-link @(_activeTab == "Arm" ? "active" : "")' @onclick='() => SetActiveTab("Arm")'><h2 style="color: red;">Arm</h2></a></li>
-        <li class="nav-item"><a data-toggle="tab" class='nav-link @(_activeTab == "Science" ? "active" : "")' @onclick='() => SetActiveTab("Science")'><h2 style="color: red;">Science</h2></a></li>
-    </ul>
-    <div class="tab-content">
-        <div class='tab-pane @(_activeTab == "Autonomy" ? "show active" : "")' id="Autonomy">
+<ul class="nav nav-tabs nav-fill">
+    <li class="nav-item"><a data-toggle="tab" class='nav-link @(_activeTab == "Autonomy" ? "active" : "")' @onclick='() => SetActiveTab("Autonomy")'><h2 style="color: red">Autonomy</h2></a></li>
+    <li class="nav-item"><a data-toggle="tab" class='nav-link @(_activeTab == "Arm" ? "active" : "")' @onclick='() => SetActiveTab("Arm")'><h2 style="color: red;">Arm</h2></a></li>
+    <li class="nav-item"><a data-toggle="tab" class='nav-link @(_activeTab == "Science" ? "active" : "")' @onclick='() => SetActiveTab("Science")'><h2 style="color: red;">Science</h2></a></li>
+</ul>
+<div class="tab-content">
+    <div class='tab-pane @(_activeTab == "Autonomy" ? "show active" : "")' id="Autonomy">
             
-        </div>
-        <div class='tab-pane @(_activeTab == "Arm" ? "show active" : "")' id="Arm">
+    </div>
+    <div class='tab-pane @(_activeTab == "Arm" ? "show active" : "")' id="Arm">
             
-        </div>
-        <div class='tab-pane @(_activeTab == "Science" ? "show active" : "")' id="Science">
+    </div>
+    <div class='tab-pane @(_activeTab == "Science" ? "show active" : "")' id="Science">
             
-        </div>
     </div>
 </div>
 
