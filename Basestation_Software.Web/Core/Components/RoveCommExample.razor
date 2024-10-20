@@ -1,0 +1,123 @@
+@implements IAsyncDisposable
+@inject RoveCommService _RoveCommService
+@using Basestation_Software.Models.RoveComm
+
+<div class="card full-height">
+    <div class="card-header">
+        <h5>RoveComm Test</h5>
+    </div>
+    <div class="card-body scrollable">
+        <div class="row">
+            <div class="col">
+                <button type="button" class="btn btn-primary" @onclick="SendPacketUDP">Send UDP Packet</button>
+                <button type="button" class="btn btn-primary" @onclick="SendPacketTCP">Send TCP Packet</button>
+                <br>
+                <button type="button" class="btn btn-primary" @onclick="SendManifestPacket">Send Packet from Manifest</button>
+                <button type="button" class="btn btn-primary" disabled="@_isDisabled" @onclick="ListenForPacket">Listen for Packet from Manifest</button>
+            </div>
+            <h3>@_message</h3>
+            @if (!_dataLoaded)
+            {
+                <div class="row">
+                    <div class="spinner-border " role="status"></div>
+                    <div class="col">
+                        <h3>Waiting for packets...</h3>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <ul>
+                    @foreach(var message in _messages)
+                    {
+                        <li>@message</li>
+                    }
+                </ul>
+            }
+        </div>
+    </div>
+</div>
+
+
+@code
+{
+    private bool _dataLoaded = false;
+    private string? _message;
+    private bool _isDisabled;
+    private readonly List<string> _messages = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to all DataIDs for each type.
+        _RoveCommService.On<sbyte>(0, AddMessage);
+        _RoveCommService.On<byte>(0, AddMessage);
+        _RoveCommService.On<short>(0, AddMessage);
+        _RoveCommService.On<ushort>(0, AddMessage);
+        _RoveCommService.On<int>(0, AddMessage);
+        _RoveCommService.On<uint>(0, AddMessage);
+        _RoveCommService.On<float>(0, AddMessage);
+        _RoveCommService.On<double>(0, AddMessage);
+        _RoveCommService.On<char>(0, AddMessage);
+
+        _RoveCommService.On<float>("Core", "DriveLeftRight", async (packet) =>
+        {
+            _messages.Add("Received DriveLeftRight packet.");
+            _dataLoaded = true;
+            await InvokeAsync(StateHasChanged);
+        });
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async Task AddMessage<T>(RoveCommPacket<T> packet)
+    {
+        if (RoveCommUtils.FindNameByDataID(packet.DataID, out string? boardName, out string? packetName))
+        {
+            _messages.Add($"Received {packetName} from {boardName}. Data: {string.Join(", ", packet.Data)}");
+        }
+        else
+        {
+            _messages.Add($"Received Packet with unknown DataID {packet.DataID}. Data: {string.Join(", ", packet.Data)}");
+        }
+        _dataLoaded = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async Task SendPacketTCP()
+    {
+        await _RoveCommService.SendAsync<int>(6969, [1, 2, 3], "127.0.0.1", reliable: true);
+    }
+    public async Task SendPacketUDP()
+    {
+        await _RoveCommService.SendAsync<int>(6969, [1, 2, 3], "127.0.0.1", reliable: false);
+    }
+    public async Task ListenForPacket()
+    {
+        _message = "Waiting...";
+        _isDisabled = true;
+        var result = await _RoveCommService.Listen<float>("Core", "DriveLeftRight", 3000);
+        if (result is not null)
+        {
+            _message = "Received!";
+        }
+        else
+        {
+            _message = "Timed out.";
+        }
+        _isDisabled = false;
+    }
+
+    public async Task SendManifestPacket()
+    {
+        await _RoveCommService.SendAsync<float>("Core", "DriveLeftRight", [5.5f, 5.5f]);
+        // For testing, also send a copy to the loopback address, since RoveComm will send the packet to 192.168.2.110.
+        RoveCommUtils.FindDataIDByName("Core", "DriveLeftRight", out var board, out var packet);
+        await _RoveCommService.SendAsync<float>(packet!.DataID, [5.5f, 5.5f], "127.0.0.1");
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        _RoveCommService.Clear<int>(AddMessage);
+        await Task.CompletedTask;
+    }
+}
