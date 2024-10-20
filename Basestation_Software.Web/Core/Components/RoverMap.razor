@@ -4,65 +4,7 @@
 @inject NavigationManager _NavigationManager
 @inject IJSRuntime _IJSRuntime
 
-<script>
-    // Create global roverMaps collection if it doesn't exist.
-    if (window.roverMaps === undefined) { window.roverMaps = {}; }
-
-    // JS interop
-    window.roverMaps.@(ID) = {
-        lMap: null,
-        waypointLayerGroup: null,
-        dotNetComponent: null,
-        // Create leaflet map.
-        init: (dotNetComponent, urlTemplate) => {
-            this.dotNetComponent = dotNetComponent;
-            this.lMap = L.map("@(ID)", {
-                center: [@InitialLat, @InitialLong],
-                zoom: @InitialZoomLevel,
-                contextmenu: true,
-                contextmenuWidth: 140,
-                contextmenuItems: [{
-                    text: "Add Waypoint",
-                    callback: window.roverMaps.@(ID).addWaypoint
-                }]
-            }).addLayer(L.tileLayer(urlTemplate, {
-                attribution: "Basestation_Software.Api",
-                maxNativeZoom: 18,
-                maxZoom: 21,
-            })).addControl(L.control.scale({
-                metric: true,
-                imperial: false
-            }));
-            this.lMap.on('zoomend', window.roverMaps.@(ID).onZoomLevelChange);
-            this.lMap.on('moveend', window.roverMaps.@(ID).onZoomLevelChange);
-            this.waypointLayerGroup = L.layerGroup([]).addTo(this.lMap);
-        },
-        // Call component.OnZoomLevel.
-        onZoomLevelChange: () => {
-            let center = this.lMap.getCenter();
-            let zoom = this.lMap.getZoom();
-            this.dotNetComponent.invokeMethodAsync("OnZoomLevel", center.lat, center.lng, zoom);
-        },
-        // Call component.AddWaypoint.
-        addWaypoint: event => {
-            this.dotNetComponent.invokeMethodAsync("AddWaypoint", event.latlng.lat, event.latlng.lng);
-        },
-        // Create a waypoint marker.
-        addWaypointMarker: (lat, lng, radius, color) => {
-            if (radius === 0) {
-                L.circleMarker([lat, lng], { radius: 20, color: color, dashArray: "15.4 16", fill: false }).addTo(this.waypointLayerGroup);
-            } else {
-                L.circle([lat, lng], { radius: radius, color: color }).addTo(this.waypointLayerGroup);
-            }
-        },
-        // Clear waypoint markers.
-        clearWaypointMarkers: () => {
-            this.waypointLayerGroup.clearLayers();
-        }
-    };
-</script>
-
-<div class="card full-height" style="width: 680px">
+<div class="card h-100">
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
             <h3>Map</h3>
@@ -86,7 +28,7 @@
         }
         else
         {
-            <div id="@ID" style="width: 665px; height: 500px; position: relative;"></div>
+            <div class="w-100 h-100 "id="@ID" style="position: relative;"></div>
         }
     </div>
     <div class="card-footer" id="cursorPosition"></div>
@@ -98,13 +40,11 @@
     [Parameter]
     public string ID { get; set; } = "";
     [Parameter]
-    public double InitialLat { get; set; } = 40;
-
+    public double InitialLat { get; set; } = 37.951764;
     [Parameter]
-    public double InitialLong { get; set; } = -100;
-
+    public double InitialLong { get; set; } = -91.778441;
     [Parameter]
-    public int InitialZoomLevel { get; set; } = 2;
+    public int InitialZoomLevel { get; set; } = 18;
 
     // Declare page member variables.
     private string jsInteropName;
@@ -117,7 +57,6 @@
     {
         this.jsInteropName = $"window.roverMaps.{ID}";
     }
-
 
     protected override async Task OnInitializedAsync()
     {
@@ -132,7 +71,14 @@
         {
             // Create leaflet map.
             Uri baseUri = new Uri(_NavigationManager.BaseUri);
-            await _IJSRuntime.InvokeVoidAsync($"{jsInteropName}.init", [DotNetObjectReference.Create(this), $"{baseUri.Scheme}://{baseUri.Host}:5000/api/MapTiles/{{z}}/{{y}}/{{x}}.png"]);
+            await _IJSRuntime.InvokeVoidAsync($"createRoverMap", [
+                ID,
+                DotNetObjectReference.Create(this),
+                $"{baseUri.Scheme}://{baseUri.Host}:5000/api/MapTiles/{{z}}/{{y}}/{{x}}.png",
+                InitialLat,
+                InitialLong,
+                InitialZoomLevel
+            ]);
 
             // Plot waypoints and keep them updated.
             await PlotWaypoints();
@@ -151,13 +97,12 @@
     {
         await Task.WhenAll(_GPSWaypointService.GetGPSWaypoints().ConvertAll<Task>(waypoint =>
         {
-            return _IJSRuntime.InvokeVoidAsync($"{jsInteropName}.addWaypointMarker",
-        [
-            waypoint.Latitude.GetValueOrDefault(0),
-            waypoint.Longitude.GetValueOrDefault(0),
-            waypoint.SearchRadius.GetValueOrDefault(0),
-            ColorTranslator.ToHtml(Color.FromArgb(waypoint.WaypointColor.GetValueOrDefault(0)))
-        ]).AsTask();
+            return _IJSRuntime.InvokeVoidAsync($"{jsInteropName}.addWaypointMarker", [
+                waypoint.Latitude.GetValueOrDefault(0),
+                waypoint.Longitude.GetValueOrDefault(0),
+                waypoint.SearchRadius.GetValueOrDefault(0),
+                ColorTranslator.ToHtml(Color.FromArgb(waypoint.WaypointColor.GetValueOrDefault(0)))
+            ]).AsTask();
         }));
     }
 
@@ -165,16 +110,16 @@
     public async Task AddWaypoint(double lat, double lon)
     {
         await _GPSWaypointService.AddGPSWaypoint(new GPSWaypoint
-            {
-                ID = -1,
-                Name = "",
-                Latitude = lat,
-                Longitude = lon,
-                Altitude = 0,
-                WaypointColor = 0,
-                SearchRadius = 0,
-                Type = WaypointType.Navigation,
-            });
+        {
+            ID = -1,
+            Name = "",
+            Latitude = lat,
+            Longitude = lon,
+            Altitude = 0,
+            WaypointColor = 0,
+            SearchRadius = 0,
+            Type = WaypointType.Navigation,
+        });
     }
 
     [JSInvokable]
@@ -209,7 +154,7 @@
     await Task.WhenAll(tasks);
     _cachingMapTiles = false;
     }
-        #endif
+#endif
     }
 
     private async Task DownloadAndSaveTile(HttpClient client, string url, int x, int y, int z)

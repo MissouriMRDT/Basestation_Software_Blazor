@@ -13,42 +13,11 @@
     }
 </style>
 
-<script>
-    // Create global roverAttitude collection if it doesn't exist.
-    if (window.roverAttitude === undefined) { window.roverAttitude = {}; }
-
-    window.roverAttitude.@(ID) = {
-        dotNetComponent: null,
-        svg: null,
-        svgPitch: null,
-        svgRoll: null,
-        svgPointer: null,
-        init: (dotNetComponent) => {
-            this.dotNetComponent = dotNetComponent;
-            this.svg = document.getElementById("@(ID)");
-            this.svgPitch = this.svg.getElementById("pitch");
-            this.svgRoll = this.svg.getElementById("roll");
-            this.svgPointer = this.svg.getElementById("pointer");
-        },
-        update: (pitch, roll) => {
-            // Pitch relative to upright [-90D,90U]
-            if (pitch > 90) { pitch = 90; }
-            else if (pitch < -90) { pitch = -90; }
-            // Roll relative to upright [-180L, 180R]
-            if (roll > 180) { roll = 180; }
-            else if (roll < -180) { roll = -180; }
-            this.pitch.transform.baseVal.getItem(0).setTranslate(-60, pitch - 60);
-            this.pitch.transform.baseVal.getItem(1).setRotate(roll, 90, 90 - pitch);
-            this.roll.transform.baseVal.getItem(0).setRotate(roll, 30, 30);
-        }
-    };
-</script>
-
-<div class="card full-height">
+<div class="card h-100">
     <div class="card-header">
         <h5 class="mr-auto">NAV</h5>
     </div>
-    <div class="card-body gps w-100">
+    <div class="card-body gps">
         <p>Lat [&#176;]</p><p>Lon [&#176;]</p><p>Alt [m]</p>
         <p>@($"{Lat:00.0000000}")</p><p>@($"{Lon:000.0000000}")</p><p>@($"{Alt:000.00}")</p>
         <p>Satellites [&#176;]</p><p /><p>Heading [&#176;]</p>
@@ -262,7 +231,6 @@
 
 @code
 {
-
     // Component parameters.
     [Parameter]
     public string ID { get; set; } = "";
@@ -279,7 +247,6 @@
     // Declare page member variables.
     private string jsInteropName;
     private Random random;
-
 
     protected override void OnInitialized()
     {
@@ -341,15 +308,10 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            // Initialize attitude indicator.
-            await _IJSRuntime.InvokeVoidAsync($"{jsInteropName}.init", [DotNetObjectReference.Create(this)]);
-        } else
-        {
-            // TODO: update state from rovecomm
+        if (firstRender) // Initialize attitude indicator.
+            await _IJSRuntime.InvokeVoidAsync($"createRoverAttitude", [ID, DotNetObjectReference.Create(this)]);
+        else
             await _IJSRuntime.InvokeVoidAsync($"{jsInteropName}.update", [Pitch, Roll]);
-        }
     }
 
     void IDisposable.Dispose() { }
