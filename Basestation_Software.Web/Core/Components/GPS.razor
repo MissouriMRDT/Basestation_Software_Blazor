@@ -251,7 +251,7 @@
 
     protected override void OnInitialized()
     {     
-        _RoveCommService.On<double>("GPS", "GPSLatLonAlt", async (RoveCommPacket<double> packet) =>
+        _RoveCommService.On<double>("Nav", "GPSLatLonAlt", async (RoveCommPacket<double> packet) =>
         {
             Lat = packet.Data[0];
             Lon = packet.Data[1];
@@ -259,7 +259,7 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<float>("GPS", "IMUData", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.On<float>("Nav", "IMUData", async (RoveCommPacket<float> packet) =>
         {
             Pitch = packet.Data[0];
             Yaw = packet.Data[1];
@@ -267,19 +267,19 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<float>("GPS", "CompassData", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.On<float>("Nav", "CompassData", async (RoveCommPacket<float> packet) =>
         {
             Heading = packet.Data[0];
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<byte>("GPS", "SatelliteCountData", async (RoveCommPacket<byte> packet) =>
+        _RoveCommService.On<byte>("Nav", "SatelliteCountData", async (RoveCommPacket<byte> packet) =>
         {
             Satellites = packet.Data[0];
             await InvokeAsync(StateHasChanged);
         });
-        
-        _RoveCommService.On<float>("GPS", "AccelerometerData", async (RoveCommPacket<float> packet) =>
+
+        _RoveCommService.On<float>("Nav", "AccelerometerData", async (RoveCommPacket<float> packet) =>
         {
             AccelX = packet.Data[0];
             AccelY = packet.Data[1];
@@ -287,7 +287,7 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<float>("GPS", "AccuracyData", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.On<float>("Nav", "AccuracyData", async (RoveCommPacket<float> packet) =>
         {
             AccurHor = packet.Data[0];
             AccurVer = packet.Data[1];
