@@ -1,7 +1,7 @@
 @implements IDisposable
 @inject GPSWaypointService _GPSWaypointService
 
-<div class="card full-height customizable">
+<div class="card full-height">
     <div class="card-header">
         <div class="row">
             <div class="col-6 d-flex align-self-center">
@@ -154,7 +154,7 @@
     /// Accepts absolutely ridiculous "DMS" values
     /// </summary>
     /// <example>
-    /// "-91.778441", "-91° 46' 42.3876"", "d-5506.70646", "d0m-330402.3876", and "-5,5206.7|0.32*4.056" all give the same value
+    /// "-91.778441", "-91ï¿½ 46' 42.3876"", "d-5506.70646", "d0m-330402.3876", and "-5,5206.7|0.32*4.056" all give the same value
     /// </example>
     /// <param name="dms">degree minute second deliminated by any non numeric</param>
     /// <returns>Degrees</returns>
