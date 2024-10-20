@@ -1,12 +1,15 @@
-﻿using ScottPlot.Blazor;
-using ScottPlot;
-
-namespace Basestation_Software.Web.Core.Services
+﻿namespace Basestation_Software.Web.Core.Services
 {
 	public class RamanGraphService
 	{
-		BlazorPlot BlazorPlot { get; set; } = new();
+        class DataItem
+        {
+            public int Raman_Shift { get; set; }
+            public double Intensity { get; set; }
+        }
 
 
-	}
+    }
+	
+
 }
