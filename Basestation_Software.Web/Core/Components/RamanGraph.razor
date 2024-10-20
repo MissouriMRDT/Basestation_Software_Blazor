@@ -1,24 +1,146 @@
-﻿@using ScottPlot
-@using ScottPlot.Blazor
+﻿@inject RoveCommService _RoveCommService
 
 <div class="card full-height">
-    <div class="card-header">
-        <div class="row">
-            <div class="col-6 d-flex align-self-center">
-                <h5>RamanGraph</h5>
-            </div>
-        </div>
+   <div class="card-header">
+       <h5>Raman Spectroscopy Graph</h5>
    </div>
-</div>
+   <p>
+       <RadzenChart>
+          <RadzenLineSeries Data="@ramanGraph" CategoryProperty="Raman_Shift" ValueProperty="Intensity" />
+       </RadzenChart>
+   </p>
+   <button @onclick=RequestRamanData> Request Raman Spectroscopy Data </button>
+</div> 
 
 
 @code {
+    //Variables
+    private static List<ushort> _raman1 = new List<ushort>(500),
+    _raman2 = new List<ushort>(500),
+    _raman3 = new List<ushort>(500),
+    _raman4 = new List<ushort>(500),
+    _raman5 = new List<ushort>(48);
 
-    BlazorPlot BlazorPlot { get; set; } = new();
 
-    protected override void OnAfterRender(bool firstRender)
+    class DataItem
     {
-        BlazorPlot.Plot.Add.Signal(Generate.Sin());
-        BlazorPlot.Plot.Add.Signal(Generate.Cos());
+        public int Raman_Shift { get; set; }
+        public double Intensity { get; set; }
+
+        public DataItem()
+        {
+            Raman_Shift = 0;
+            Intensity = 0f;
+        }
     }
+
+    DataItem[] ramanGraph = new DataItem[2048];
+
+
+    private async void RequestRamanData()
+    {
+        await _RoveCommService.SendAsync<uint>("Instruments", "RequestRamanReading", [0], reliable: false);
+
+        for (int i = 0; i < 2048; i++)
+        {
+            if (i < 500)
+            {
+                ramanGraph[i] = new DataItem
+                {
+                    Raman_Shift = i,
+                    Intensity = _raman1[i],
+                };
+            }
+            else if (i >= 500 && i < 1000)
+            {
+                ramanGraph[i] = new DataItem
+                {
+                    Raman_Shift = i,
+                    Intensity = _raman2[i - 500],
+                };
+            }
+
+            else if (i >= 1000 && i < 1500)
+            {
+                ramanGraph[i] = new DataItem
+                {
+                    Raman_Shift = i,
+                    Intensity = _raman3[i - 1000],
+                };
+            }
+
+            else if (i >= 1500 && i < 2000)
+            {
+                ramanGraph[i] = new DataItem
+                {
+                    Raman_Shift = i,
+                    Intensity = _raman4[i - 1500],
+                };
+            }
+
+            else
+            {
+                ramanGraph[i] = new DataItem
+                {
+                        Raman_Shift = i,
+                        Intensity = _raman5[i - 2000],
+                };
+            }
+        }
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        //Initialize values of ramanGraph and _raman variables to not throw errors if RoveComm packets not sent
+        for (int i = 0; i < 2048; i++)
+        {
+            ramanGraph[i] = new DataItem();
+        }
+
+        for (int i = 0; i < 500; i++)
+        {
+            _raman1.Add(0);
+            _raman2.Add(0);
+            _raman3.Add(0);
+            _raman4.Add(0);
+        }
+
+        for (int i = 0; i < 48; i++)
+        {
+            _raman5.Add(0);
+        }
+
+        //Receiving RoveComm packets if they are sent in
+        _RoveCommService.On<ushort>("Instruments", "RamanReading_Part1", async (packet) =>
+        {
+            _raman1 = packet.Data;
+            await InvokeAsync(StateHasChanged);
+        });
+
+        await Task.CompletedTask;
+        _RoveCommService.On<ushort>("Instruments", "RamanReading_Part2", async (packet) =>
+        {
+            _raman2 = packet.Data;
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<ushort>("Instruments", "RamanReading_Part3", async (packet) =>
+        {
+            _raman3 = packet.Data;
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<ushort>("Instruments", "RamanReading_Part4", async (packet) =>
+        {
+            _raman4 = packet.Data;
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<ushort>("Instruments", "RamanReading_Part5", async (packet) =>
+        {
+            _raman5 = packet.Data;
+            await InvokeAsync(StateHasChanged);
+        });
+    }     
 }
