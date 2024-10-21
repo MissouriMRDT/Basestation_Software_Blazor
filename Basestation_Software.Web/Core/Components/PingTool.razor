@@ -1,0 +1,141 @@
+@implements IDisposable
+
+@inject PingService PingService
+
+<style>
+    .scrollable {
+        max-height: 50vh;
+        overflow-y: auto;
+        display: block;
+    }
+</style>
+
+<div class="card full-height">
+    <div class="card-header">
+        <h3>Ping Tool</h3>
+    </div>
+    <div class="card-body scrollable">
+        @if (!_dataLoaded)
+        {
+            <div class="row">
+                <div class="spinner-border " role="status"></div>
+                <div class="col">
+                    <h3>Loading...</h3>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                <label>@temp</label>
+            </div>
+            <div class="row">
+                <label>@temp</label>
+            </div>
+
+            @foreach (var device in devices)
+            {
+                <div class="row">
+                    <div class="col" style="flex-grow:0">
+                        <RadzenCheckBox TValue="bool" @bind-Value="device.AutoPing"></RadzenCheckBox>
+                    </div>
+                    <div class="col" style="display:flex; justify-content:flex-start; margin:4px">
+                        <div class="col" style="background-color:lightcoral">
+                            <label>@device.Name</label>
+                        </div>
+                        <div class="col" style="background-color:lightcoral">
+                            <label>@device.IpAddress</label>
+                        </div>
+                        <div class="col" style="background-color:lightcoral">
+                            <label>@device.PingStatus</label>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <button>ICMP</button>
+                    </div>
+                    @if (device.RoveCapable)
+                    {
+                        <div class="col">
+                            <button>Rove</button>
+                        </div>
+                    }
+                </div>
+            }
+
+            <button>Add Device</button>
+        }
+    </div>
+</div>
+
+
+@code
+{
+    // Declare page member variables.
+    private string? temp = "No Data";
+
+    private string goodConnection_hightlight = "background-color:lightgreen";
+    private string poorConnection_hightlight = "background-color:lightcoral";
+
+    private List<Device> devices = new List<Device>
+    {
+        new Device(name: "BasestationSwitch", ipAddress: "192.168.254.2"),
+        new Device(name: "RoverSwitch", ipAddress: "192.168.254.1"),
+        new Device(name: "Rover900MHzRocket", ipAddress: "10.0.0.3"),
+        new Device(name: "Rover5GHzRocket", ipAddress: "10.0.0.20"),
+        new Device(name: "Basestation5GHzRocket", ipAddress: "10.0.0.20"),
+        new Device(name: "Rover2_4GHzRocket", ipAddress: "10.0.0.11"),
+        new Device(name: "Basestation2_4GHzRocket", ipAddress: "10.0.0.12"),
+        new Device(name: "Core", ipAddress: "192.168.2.110", roveCapable: true),
+        new Device(name: "PMS", ipAddress: "192.168.2.102", roveCapable: true),
+        new Device(name: "Nav", ipAddress: "192.168.2.104", roveCapable: true),
+        new Device(name: "BaseStationNav", ipAddress: "192.168.100.112", roveCapable: true),
+        new Device(name: "SignalStack", ipAddress: "192.168.100.101", roveCapable: true),
+        new Device(name: "Arm", ipAddress: "192.168.2.107", roveCapable: true),
+        new Device(name: "ScienceActuation", ipAddress: "192.168.2.108", roveCapable: true),
+        new Device(name: "Autonomy", ipAddress: "192.168.3.100", roveCapable: true),
+        new Device(name: "Camera1", ipAddress: "192.168.4.100", roveCapable: true),
+        new Device(name: "Camera2", ipAddress: "192.168.4.101", roveCapable: true),
+        new Device(name: "Instruments", ipAddress: "192.168.3.105", roveCapable: true)
+    };
+
+    // Flags.
+    private bool _dataLoaded = true; // originally set to false
+
+    protected override void OnInitialized()
+    {
+        // Create some timers.
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await PingIpAddress();
+    }
+
+    void IDisposable.Dispose()
+    {
+
+    }
+
+    private async Task PingIpAddress()
+    {
+        temp = await PingService.PingAsync("142.250.191.100"); // Temporarily pings www.google.com to confirm usability; will eventually modify as needed
+    }
+
+    public class Device
+    {
+        public string Name { get; set; }
+        public string IpAddress { get; set; }
+        public bool AutoPing { get; set; }
+        public string PingStatus { get; set; }
+        public bool RoveCapable { get; set; }
+
+        public Device(string name, string ipAddress, bool autoPing = false, string pingStatus = "-1", bool roveCapable = false)
+        {
+            this.Name = name;
+            this.IpAddress = ipAddress;
+            this.AutoPing = autoPing;
+            this.PingStatus = pingStatus;
+            this.RoveCapable = roveCapable;
+        }
+    }
+}

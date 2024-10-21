@@ -14,6 +14,12 @@
     <PackageReference Include="Radzen.Blazor" Version="4.33.3" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="Core\Components\PingTool.razor">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
