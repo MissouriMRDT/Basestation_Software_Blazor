@@ -1,4 +1,5 @@
 ﻿@inject RoveCommService _RoveCommService
+@using static Basestation_Software.Models.RamanGraphType
 
 <div class="card full-height">
    <div class="card-header">
@@ -15,11 +16,6 @@
 
 
 @code {
-    class DataItem
-    {
-        public int Raman_Shift { get; set; }
-        public double Intensity { get; set; }
-    }
 
     DataItem[] ramanGraph = new DataItem[2048];
 
