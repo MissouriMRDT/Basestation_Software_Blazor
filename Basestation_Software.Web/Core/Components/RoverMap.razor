@@ -2,19 +2,12 @@
 @inject MapTileService _MapTileService
 @inject GPSWaypointService _GPSWaypointService
 @inject NavigationManager _NavigationManager
+@inject IJSRuntime _IJSRuntime
 
-<style>
-    .scrollable {
-        max-height: 50vh; 
-        overflow-y: auto;
-        display: block;
-    }
-</style>
-
-<div class="card full-height" style="width: 650px">
+<div class="card h-100">
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
-            <h5 class="mr-auto">Map</h5>
+            <h3>Map</h3>
             @if (_cachingMapTiles)
             {
                 <div>
@@ -35,65 +28,35 @@
         }
         else
         {
-            <RealTimeMap Parameters="@parameters" height="460px" width="645px" OnZoomLevelEndChange="@OnZoomLevel"></RealTimeMap>
+            <div class="w-100 h-100 "id="@ID" style="position: relative;"></div>
         }
     </div>
+    <div class="card-footer" id="cursorPosition"></div>
 </div>
 
 @code
 {
+    // Component parameters.
+    [Parameter]
+    public string ID { get; set; } = "";
+    [Parameter]
+    public double InitialLat { get; set; } = 37.951764;
+    [Parameter]
+    public double InitialLong { get; set; } = -91.778441;
+    [Parameter]
+    public int InitialZoomLevel { get; set; } = 18;
+
     // Declare page member variables.
+    private string jsInteropName;
 
     // Flags.
     private bool _dataLoaded = false;
     private bool _cachingMapTiles = false;
 
-    // Map configuration parameters.
-    private RealTimeMap.Basemap basemaps;
-    private RealTimeMap.LoadParameters parameters;
-    
     protected override void OnInitialized()
     {
-        // Get base URI for the API endpoint.
-        Uri baseUri = new Uri(_NavigationManager.BaseUri);
-        string baseUriWithoutPort = $"{baseUri.Scheme}://{baseUri.Host}";
-
-
-        // Add layers to the map, use openmaps by default.
-        basemaps = new RealTimeMap.Basemap()
-        {
-            basemap_layers = new List<RealTimeMap.BasemapConfigLayer>
-            {
-                new RealTimeMap.BasemapConfigLayer()
-                {
-                    url = baseUriWithoutPort + ":5000/api/MapTiles/{z}/{y}/{x}.png",
-                    attribution = "Basestation_Software.Api",
-                    title = "AutoCache API Storage",
-                    max_zoom = 20
-                }
-            }
-        };
-    
-        // Construct the parameters object.
-        parameters = new RealTimeMap.LoadParameters()
-        {
-            // Set the default location when the map is initialized.
-            location = new RealTimeMap.Location()
-            {
-                latitude = 37.951764,
-                longitude = -91.778441,
-            },
-            zoom_level = 18,
-            basemap = basemaps,
-            map_scale = new RealTimeMap.MapScale()
-            {
-                has = true,
-                meters = true,
-                miles = false
-            }
-        };
+        this.jsInteropName = $"window.roverMaps.{ID}";
     }
-
 
     protected override async Task OnInitializedAsync()
     {
@@ -102,43 +65,96 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    void IDisposable.Dispose()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (firstRender)
+        {
+            // Create leaflet map.
+            Uri baseUri = new Uri(_NavigationManager.BaseUri);
+            await _IJSRuntime.InvokeVoidAsync($"createRoverMap", [
+                ID,
+                DotNetObjectReference.Create(this),
+                $"{baseUri.Scheme}://{baseUri.Host}:5000/api/MapTiles/{{z}}/{{y}}/{{x}}.png",
+                InitialLat,
+                InitialLong,
+                InitialZoomLevel
+            ]);
 
+            // Plot waypoints and keep them updated.
+            await PlotWaypoints();
+            _GPSWaypointService.SubscribeToWaypointsChanges(OnWaypointSync);
+        }
     }
 
-    public async Task OnZoomLevel(RealTimeMap.MapZoomEventArgs args)
+    private async Task OnWaypointSync()
     {
-        #if DEBUG
-        using (HttpClient client = new HttpClient())
+        // Update waypoint markers.
+        await _IJSRuntime.InvokeVoidAsync($"{jsInteropName}.clearWaypointMarkers");
+        await PlotWaypoints();
+    }
+
+    private async Task PlotWaypoints()
+    {
+        await Task.WhenAll(_GPSWaypointService.GetGPSWaypoints().ConvertAll<Task>(waypoint =>
         {
-            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
-            client.DefaultRequestHeaders.Referrer = new Uri("http://mt1.google.com");
+            return _IJSRuntime.InvokeVoidAsync($"{jsInteropName}.addWaypointMarker", [
+                waypoint.Latitude.GetValueOrDefault(0),
+                waypoint.Longitude.GetValueOrDefault(0),
+                waypoint.SearchRadius.GetValueOrDefault(0),
+                ColorTranslator.ToHtml(Color.FromArgb(waypoint.WaypointColor.GetValueOrDefault(0)))
+            ]).AsTask();
+        }));
+    }
 
-            var tasks = new List<Task>();
+    [JSInvokable]
+    public async Task AddWaypoint(double lat, double lon)
+    {
+        await _GPSWaypointService.AddGPSWaypoint(new GPSWaypoint
+        {
+            ID = -1,
+            Name = "",
+            Latitude = lat,
+            Longitude = lon,
+            Altitude = 0,
+            WaypointColor = 0,
+            SearchRadius = 0,
+            Type = WaypointType.Navigation,
+        });
+    }
 
-            // Convert geographic bounds to tile coordinates
-            int tileX = LonToTileX(args.centerOfView.longitude, args.zoomLevel);
-            int tileY = LatToTileY(args.centerOfView.latitude, args.zoomLevel);
-            
-            for (int y = (tileY - 3); y < (tileY + 3); y++)
-            {
-                for (int x = (tileX - 3); x < (tileX + 3); x++)
-                {
-                    MapTile? mapTile = await _MapTileService.GetMapTile(x, y, args.zoomLevel);
-                    if (mapTile is null)
-                    {
-                        string url = $"http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={args.zoomLevel}";
-                        tasks.Add(DownloadAndSaveTile(client, url, x, y, args.zoomLevel));
-                        _cachingMapTiles = true;
-                    }
-                }
-            }
+    [JSInvokable]
+    public async Task OnZoomLevel(double lat, double lon, int zoom)
+    {
+#if DEBUG
+    using (HttpClient client = new HttpClient())
+    {
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+    client.DefaultRequestHeaders.Referrer = new Uri("http://mt1.google.com");
 
-            await Task.WhenAll(tasks);
-            _cachingMapTiles = false;
+    var tasks = new List<Task>();
+
+    // Convert geographic bounds to tile coordinates
+    int tileX = LonToTileX(lon, zoom);
+    int tileY = LatToTileY(lat, zoom);
+
+    for (int y = (tileY - 3); y < (tileY + 3); y++)
+    {
+    for (int x = (tileX - 3); x < (tileX + 3); x++)
+    {
+        MapTile? mapTile = await _MapTileService.GetMapTile(x, y, zoom);
+        if (mapTile is null)
+        {
+            string url = $"http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={zoom}";
+            tasks.Add(DownloadAndSaveTile(client, url, x, y, zoom));
+            _cachingMapTiles = true;
         }
-        #endif
+    }
+    }
+
+    await Task.WhenAll(tasks);
+    _cachingMapTiles = false;
+    }
+#endif
     }
 
     private async Task DownloadAndSaveTile(HttpClient client, string url, int x, int y, int z)
@@ -171,4 +187,6 @@
         double latRad = lat * Math.PI / 180.0;
         return (int)Math.Floor((1.0 - Math.Log(Math.Tan(latRad) + 1.0 / Math.Cos(latRad)) / Math.PI) / 2.0 * Math.Pow(2.0, zoom));
     }
+
+    void IDisposable.Dispose() { }
 }

@@ -1,18 +1,18 @@
 @implements IDisposable
 @inject GPSWaypointService _GPSWaypointService
 
-<div class="card full-height">
+<div class="card h-100">
     <div class="card-header">
         <div class="row">
             <div class="col-6 d-flex align-self-center">
-                <h5>Waypoints</h5>
-                <div class="border border-start-0 border-top-0 border-bottom-0 border-1">&nbsp;</div>
-                    <RadzenButton ButtonStyle="ButtonStyle.Dark" Text="New Waypoint" Click="@InsertRow" style="margin-left: 10px"  />
+                <h3>Waypoints</h3>
+                <div class="vr">&nbsp;</div>
+                    <RadzenButton ButtonStyle="ButtonStyle.Dark" Text="New Waypoint" Click="@InsertRow" />
             </div>
             <div class ="col-6 d-flex justify-content-end">
                 @if (_waypointsToUpdate.Count > 0 || _waypointsToInsert.Count > 0)
                 {
-                    <div class="border border-start-0 border-top-0 border-bottom-0 border-1">&nbsp;</div>
+                    <div class="vr">&nbsp;</div>
                     <RadzenButton ButtonStyle="ButtonStyle.Primary" Text="Save All" Click="@SaveAllEdits" style="margin-left: 10px; margin-right: 10px" />
                     <RadzenButton ButtonStyle="ButtonStyle.Danger" Text="Cancel All" Click="@CancelAllEdits" style="margin-right: 10px"  />
                 }
@@ -63,7 +63,7 @@
                             @waypoint.Latitude
                         </Template>
                         <EditTemplate Context="waypoint">
-                            <RadzenNumeric Name="Latitude" @bind-Value="waypoint.Latitude" class="form-control form-control-sm" style="z-index: 0;" />
+                            <RadzenTextBox Placeholder="degrees [minutes [seconds]]" Name="Latitude" @bind-Value="waypoint.Latitude" class="form-control form-control-sm" style="z-index: 0;" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn Property="Longitude" Title="Longitude">
@@ -71,7 +71,7 @@
                             @waypoint.Longitude
                         </Template>
                         <EditTemplate Context="waypoint">
-                            <RadzenNumeric Name="Longitude" @bind-Value="waypoint.Longitude" class="form-control form-control-sm" style="z-index: 0;" />
+                            <RadzenTextBox Placeholder="degrees [minutes [seconds]]" Name="Longitude" @bind-Value="waypoint.Longitude" class="form-control form-control-sm" style="z-index: 0;" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn Property="SearchRadius" Title="Search Radius">
@@ -150,6 +150,31 @@
     }
 
     /// <summary>
+    /// Convert DMS to Degrees
+    /// Accepts absolutely ridiculous "DMS" values
+    /// </summary>
+    /// <example>
+    /// "-91.778441", "-91� 46' 42.3876"", "d-5506.70646", "d0m-330402.3876", and "-5,5206.7|0.32*4.056" all give the same value
+    /// </example>
+    /// <param name="dms">degree minute second deliminated by any non numeric</param>
+    /// <returns>Degrees</returns>
+    private double ConvertDMSToDegrees(string dms)
+    {
+        double degrees = 0, multiplier = 1, dcomponent;
+        foreach (string scomponent in Regex.Split(dms, "[^-.\\d]+"))
+        {
+            if (Double.TryParse(scomponent, out dcomponent)) {
+                if (degrees >= 0) // Minus sign propagates
+                    degrees += dcomponent * multiplier;
+                else
+                    degrees -= dcomponent * multiplier;
+            }
+            multiplier /= 60;
+        }
+        return degrees;
+    }
+
+    /// <summary>
     /// Given a single waypoint input, convert it to a waypoint object.
     /// </summary>
     /// <param name="waypoint">The waypoint input object to convert into a waypoint object.</param>
@@ -161,8 +186,8 @@
             {
                 ID = waypoint.ID,
                 Name = waypoint.Name,
-                Latitude = waypoint.Latitude,
-                Longitude = waypoint.Longitude,
+                Latitude = ConvertDMSToDegrees(waypoint.Latitude),
+                Longitude = ConvertDMSToDegrees(waypoint.Longitude),
                 Altitude = waypoint.Altitude,
                 Timestamp = DateTime.Parse(waypoint.Timestamp),
                 WaypointColor = ConvertRgbStringToColor(waypoint.WaypointColor).ToArgb(),
@@ -189,8 +214,8 @@
             {
                 ID = waypoint.ID ?? -1,
                 Name = waypoint.Name ?? "",
-                Latitude = waypoint.Latitude ?? 0,
-                Longitude = waypoint.Longitude ?? 0,
+                Latitude = (waypoint.Latitude ?? 0).ToString(),
+                Longitude = (waypoint.Longitude ?? 0).ToString(),
                 Altitude = waypoint.Altitude ?? 0,
                 Timestamp = waypoint.Timestamp.ToString() ?? DateTime.MinValue.ToString(),
                 WaypointColor = colorString,

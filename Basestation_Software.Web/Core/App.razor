@@ -5,21 +5,26 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
+    <link rel="stylesheet" href="leaflet.css" />
+    <link rel="stylesheet" href="leafletcontextmenu.css" />
     <link rel="stylesheet" href="Basestation_Software.Web.styles.css" />
     <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css" />
     <link rel="stylesheet" href="bootstrap/icons/font/bootstrap-icons.css"/>
-    <link rel="stylesheet" href="app.css" />
-    <link rel="stylesheet" href="radzen-ext.css" />
-    <link rel="stylesheet" href="bootstrap-ext.css" />
+    <link rel="stylesheet" href="app.css?version=0.1" />
+    <link rel="stylesheet" href="radzen-ext.css?version=0.1" />
+    <link rel="stylesheet" href="bootstrap-ext.css?version=0.1s" />
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet />
 </head>
 
 <body>
     <Routes @rendermode="InteractiveServer"/>
+    <script src="leaflet.js"></script>
+    <script src="leafletcontextmenu.js"></script>
     <script src="_framework/blazor.web.js"></script>
     <script src="bootstrap/js/bootstrap.min.js"></script>
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Radzen.Colors).Assembly.GetName().Version)"></script>
+    <script src="components.js"></script>
     <script>
         function changeTheme(theme) {
             document.documentElement.setAttribute("data-bs-theme", theme);
