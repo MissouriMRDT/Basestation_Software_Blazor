@@ -1,0 +1,36 @@
+﻿.cam-container {
+    resize: horizontal;
+    overflow: auto;
+    max-width: 100%;
+    min-width: 50%;
+    align-self: center;
+}
+
+.cam-display {
+    height: 100%;
+    width: 100%;
+    object-fit: contain;
+}
+
+.source-buttons-container {
+    display: flex;
+    flex-direction: row;
+    margin-inline: 5%;
+    margin-block: 1%;
+}
+.source-buttons-container button {
+    flex: 1;
+    margin: 1px;
+}
+
+.source-buttons-container :not(:first-child):not(:last-child) {
+    border-radius: 0;
+}
+
+.source-buttons-container :first-child {
+    border-radius: 20px 0 0 20px;
+}
+
+.source-buttons-container :last-child {
+        border-radius: 0 20px 20px 0;
+}
