@@ -1,0 +1,65 @@
+﻿@inject RoveCommService _RoveCommService
+@using Basestation_Software.Models.RamanGraph
+
+<div class="card full-height">
+   <div class="card-header">
+       <h5>Raman Spectroscopy Graph</h5>
+   </div>
+   <p>
+       <RadzenChart>
+          <RadzenLineSeries Data="@ramanGraph" CategoryProperty="Raman_Shift" ValueProperty="Intensity" />
+            <RadzenValueAxis Min="0" Max="65535" Step="10000" />
+       </RadzenChart>
+   </p>
+   <button @onclick=RequestRamanData> Request Raman Spectroscopy Data </button>
+</div> 
+
+
+@code {
+    DataItem[] ramanGraph = new DataItem[2048];
+
+
+    private async Task RequestRamanData()
+    {
+        await _RoveCommService.SendAsync<uint>("Instruments", "RequestRamanReading", [0], reliable: false);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Initialize ramanGraph
+        for (int i = 0; i < 2048; i++)
+            ramanGraph[i] = new DataItem { Raman_Shift = i, Intensity = 0 };
+
+        //Receiving RoveComm packets if they are sent in
+        _RoveCommService.On<ushort>("Instruments", "RamanReading_Part1", async (packet) =>
+        {
+            for (int i = 0; i < 500; i++) ramanGraph[i].Intensity = packet.Data[i];
+            await InvokeAsync(StateHasChanged);
+        });
+
+        await Task.CompletedTask;
+        _RoveCommService.On<ushort>("Instruments", "RamanReading_Part2", async (packet) =>
+        {
+            for (int i = 0; i < 500; i++) ramanGraph[i + 500].Intensity = packet.Data[i];
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<ushort>("Instruments", "RamanReading_Part3", async (packet) =>
+        {
+            for (int i = 0; i < 500; i++) ramanGraph[i + 1000].Intensity = packet.Data[i];
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<ushort>("Instruments", "RamanReading_Part4", async (packet) =>
+        {
+            for (int i = 0; i < 500; i++) ramanGraph[i + 1500].Intensity = packet.Data[i];
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<ushort>("Instruments", "RamanReading_Part5", async (packet) =>
+        {
+            for (int i = 0; i < 48; i++) ramanGraph[i + 2000].Intensity = packet.Data[i];
+            await InvokeAsync(StateHasChanged);
+        });
+    }     
+}
