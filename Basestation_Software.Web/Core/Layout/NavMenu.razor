@@ -2,7 +2,8 @@
 @inject IJSRuntime _JSRuntime
 @inject CookieService _CookieService
 
-<link rel="stylesheet" href="_content/Radzen.Blazor/css/@_radzenTheme" />
+<link rel="stylesheet" href="_content/Radzen.Blazor/css/default-base.css" />
+<link rel="stylesheet" href=themes/@_colorTheme />
 <nav class="navbar navbar-expand-sm navbar-toggleable-sm border-bottom box-shadow mb-3 mat-glass shadow-sm  fixed-top">
     <div class="container">
         <a class="navbar-brand"><img src="@_image" height="35"/></a>
@@ -48,7 +49,7 @@
     bool collapseNavMenu = true;
     private string _image = "images/swoosh.png";
     private bool _isDarkMode = false;
-    private string _radzenTheme = "default-base.css";
+    private string _colorTheme = "default";
     private bool isDarkMode { get { return _isDarkMode; } set { ToggleDarkMode( value ); } }
 
     /// <summary>
@@ -84,18 +85,17 @@
     private async Task ToggleDarkMode( bool value )
     {
         string theme = "light";
-        _radzenTheme = "default-base.css";
+        _colorTheme = "default.css";
 
         _isDarkMode = value;
 
         if (_isDarkMode)
         {
-            _radzenTheme = "dark-base.css";
+            _colorTheme = "dark.css";
             theme = "dark";
         }
 
         await _JSRuntime.InvokeVoidAsync( "changeTheme", theme );
-        await _CookieService.SetValue("theme", theme);
         await InvokeAsync( StateHasChanged );
     }
 
