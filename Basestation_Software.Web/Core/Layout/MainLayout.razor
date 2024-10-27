@@ -1,4 +1,4 @@
-@page "/l/{ConfigID:guid=00000000-0000-0000-0000-000000000001}"
+﻿@page "/{ConfigID:guid=00000000-0000-0000-0000-000000000001}"
 
 @using Basestation_Software.Models.Config
 @using System.Text.Json;
@@ -98,7 +98,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Get ConfigID from url as specified at @page "/l/{ConfigID:guid?}".
+        // Get ConfigID from url as specified at @page "/{ConfigID:guid?}".
         // This workaround depends on <CascadingValue Value="@routeData"> in Routes.razor.
         // All because `[Parameter] ConfigID` wasn't updating ConfigID with the value from the url.
         ConfigID = ((Guid?)RouteData_.RouteValues.GetValueOrDefault("ConfigID", null) ?? ConfigID);
@@ -120,7 +120,7 @@
     private async Task Navigate(Guid guid)
     {
         ConfigID = guid;
-        _NavigationManager.NavigateTo($"/l/{ConfigID}");
+        _NavigationManager.NavigateTo($"/{ConfigID}");
         await _ConfigService.RefreshConfigs(); // We rely on RefreshConfigs awaiting ConfigChanged.
         await _IJSRuntime.InvokeVoidAsync("eval", $"document.getElementById(\"configSelect\").value = \"{ConfigID}\";");
         await SetDarkMode(IsDarkMode); // Shall be called after ConfigChanged.
@@ -154,7 +154,7 @@
         {
             builder.OpenElement(i, "a"); // <a>
             builder.AddAttribute(i + 1, "class", "nav-item nav-link bold");
-            builder.AddAttribute(i + 2, "href", $"/l/{link.Key}");
+            builder.AddAttribute(i + 2, "href", $"/{link.Key}");
             builder.AddContent(i + 3, link.Value);
             builder.CloseElement(); // </a>
             i += 10;
