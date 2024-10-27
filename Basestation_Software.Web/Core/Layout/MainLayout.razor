@@ -1,4 +1,4 @@
-﻿@page "/l/{ConfigID:guid=00000000-0000-0000-0000-000000000001}"
+@page "/l/{ConfigID:guid=00000000-0000-0000-0000-000000000001}"
 
 @using Basestation_Software.Models.Config
 @using System.Text.Json;
@@ -36,7 +36,8 @@
 </style>
 
 <div class="page">
-    <link rel="stylesheet" href="_content/Radzen.Blazor/css/@RadzenTheme" />
+    <link rel="stylesheet" href="_content/Radzen.Blazor/css/default-base.css" />
+    <link rel="stylesheet" href=themes/@RadzenTheme />
     <nav class="navbar navbar-expand-sm border-bottom box-shadow mb-3 mat-glass shadow-sm fixed-top" style="padding: 8px 16px">
         <div class="navbar-nav mr-auto">
             <img src="images/swoosh.svg" height="35" />
@@ -83,7 +84,7 @@
     private InputTextArea? CopyArea;
     private string CopyAreaValue = "";
     private bool CopyAreaVisible = false;
-    private string RadzenTheme = "dark-base.css";
+    private string RadzenTheme = "dark.css";
     private bool IsDarkMode {
         get => Config_.Dark;
         set
@@ -210,7 +211,7 @@
     private async Task SetDarkMode(bool value)
     {
         Config_.Dark = value;
-        RadzenTheme = Config_.Dark ? "dark-base.css" : "default-base.css";
+        RadzenTheme = Config_.Dark ? "dark.css" : "default.css";
         await _IJSRuntime.InvokeVoidAsync("document.documentElement.setAttribute", ["data-bs-theme", Config_.Dark ? "dark" : "light"]);
         await InvokeAsync(StateHasChanged);
     }
