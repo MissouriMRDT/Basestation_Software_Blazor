@@ -35,7 +35,7 @@
                     <label>AutoPing Delay (seconds): </label>
                 </div>
                 <div class="col" style="">
-                    <RadzenTextBox style="min-width:15%" Value="5"></RadzenTextBox>
+                    <RadzenTextBox style="min-width:15%" Value="5" ValueChanged="@((string value) => UpdateAutoPingDelay(value))"></RadzenTextBox>
                 </div>
             </div>
 
@@ -100,6 +100,8 @@
     private string poorConnection_hightlight = "background-color:lightcoral";
 
     private System.Timers.Timer? autoPingTimer;
+
+    private int autoPingDelay = 5000;
 
     // TODO: Automate retreival of device data from RoveCommManifest.cs:
     private List<Device> devices = new List<Device>
@@ -180,19 +182,19 @@
             {
                 AutoPingProcessRunning = true;
                 autoPingTimer.Enabled = false;
-                Console.WriteLine($"{autoPingTimer}");
-                Console.WriteLine("New AutoPing Instance");
+                //Console.WriteLine($"{autoPingTimer}");
+                //Console.WriteLine("New AutoPing Instance");
                 foreach (Device device in devices)
                 {
                     if (device.AutoPing == true)
                     {
                         Console.WriteLine(device.Name);
                         await PingIpAddressAsync(device, device.IpAddress);
-                        await Task.Delay(5000);
+                        await Task.Delay(autoPingDelay);
                         continue;
                     }
                 }
-                Console.WriteLine("AutoPing Instance Finished");
+                //Console.WriteLine("AutoPing Instance Finished");
                 AutoPingProcessRunning = false;
                 autoPingTimer.Enabled = true;
             }
@@ -208,6 +210,18 @@
         foreach (Device device in devices)
         {
             device.AutoPing = value;
+        }
+    }
+
+    private void UpdateAutoPingDelay(string delay)
+    {
+        try
+        {
+            autoPingDelay = int.Parse(delay) * 1000;
+        }
+        catch
+        {
+            autoPingDelay = 5000;
         }
     }
 
