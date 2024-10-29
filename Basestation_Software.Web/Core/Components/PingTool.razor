@@ -1,3 +1,7 @@
+@using System.Net.NetworkInformation;
+@using System.Diagnostics;
+@using System.ComponentModel;
+
 @implements IDisposable
 
 @inject PingService PingService
@@ -27,42 +31,61 @@
         else
         {
             <div class="row">
-                <label>@temp</label>
+                <div class="col" style="display:flex; flex-grow:0; flex-basis:content; align-items:center">
+                    <label>AutoPing Delay (seconds): </label>
+                </div>
+                <div class="col" style="">
+                    <RadzenTextBox style="min-width:15%" Value="5"></RadzenTextBox>
+                </div>
             </div>
+
             <div class="row">
-                <label>@temp</label>
+                <div class="col" style="display:flex; flex-grow:0; flex-basis:content; align-items:center">
+                    <RadzenCheckBox Name="AutoPingAll_CheckBox" TValue="bool" ValueChanged="@((bool value) => AutoPingAll(value))"></RadzenCheckBox>
+                </div>
+                <div class="col">
+                    <label>AutoPing All</label>
+                </div>
             </div>
+
+            <!-- For Spacing -->
+            <div class="row" style="height:16px"/>
 
             @foreach (var device in devices)
             {
                 <div class="row">
-                    <div class="col" style="flex-grow:0">
+                    <div class="col" style="flex-grow:0; align-content:center">
                         <RadzenCheckBox TValue="bool" @bind-Value="device.AutoPing"></RadzenCheckBox>
                     </div>
-                    <div class="col" style="display:flex; justify-content:flex-start; margin:4px">
-                        <div class="col" style="background-color:lightcoral">
+                    <div class="col" style="display:flex; justify-content:flex-start; @device.PingStatusHighlight; min-width:40%">
+                        <div class="col" style="margin:4px">
                             <label>@device.Name</label>
                         </div>
-                        <div class="col" style="background-color:lightcoral">
+                        <div class="col" style="margin:4px">
                             <label>@device.IpAddress</label>
                         </div>
-                        <div class="col" style="background-color:lightcoral">
+                        <div class="col" style="margin:4px; flex-grow:0">
                             <label>@device.PingStatus</label>
                         </div>
                     </div>
-                    <div class="col">
-                        <button>ICMP</button>
+                    <div class="col" style="flex-grow:0;">
+                        <button onclick="@(() => PingIpAddressAsync(@device, @device.IpAddress))">ICMP</button>
                     </div>
                     @if (device.RoveCapable)
                     {
-                        <div class="col">
+                        <div class="col" style="flex-grow:0">
                             <button>Rove</button>
+                        </div>
+                    } else
+                    {
+                        <!-- Works but shouldn't be necessary -->
+                        <!-- For spacing purposes -->
+                        <div class="col" style="flex-grow:0">
+                            <button style="visibility:hidden">Rove</button>
                         </div>
                     }
                 </div>
             }
-
-            <button>Add Device</button>
         }
     </div>
 </div>
@@ -76,26 +99,19 @@
     private string goodConnection_hightlight = "background-color:lightgreen";
     private string poorConnection_hightlight = "background-color:lightcoral";
 
+    private System.Timers.Timer? autoPingTimer;
+
+    // TODO: Automate retreival of device data from RoveCommManifest.cs:
     private List<Device> devices = new List<Device>
     {
+        new Device(name: "www.google.com", ipAddress: "142.250.190.132"),
         new Device(name: "BasestationSwitch", ipAddress: "192.168.254.2"),
         new Device(name: "RoverSwitch", ipAddress: "192.168.254.1"),
         new Device(name: "Rover900MHzRocket", ipAddress: "10.0.0.3"),
         new Device(name: "Rover5GHzRocket", ipAddress: "10.0.0.20"),
         new Device(name: "Basestation5GHzRocket", ipAddress: "10.0.0.20"),
         new Device(name: "Rover2_4GHzRocket", ipAddress: "10.0.0.11"),
-        new Device(name: "Basestation2_4GHzRocket", ipAddress: "10.0.0.12"),
-        new Device(name: "Core", ipAddress: "192.168.2.110", roveCapable: true),
-        new Device(name: "PMS", ipAddress: "192.168.2.102", roveCapable: true),
-        new Device(name: "Nav", ipAddress: "192.168.2.104", roveCapable: true),
-        new Device(name: "BaseStationNav", ipAddress: "192.168.100.112", roveCapable: true),
-        new Device(name: "SignalStack", ipAddress: "192.168.100.101", roveCapable: true),
-        new Device(name: "Arm", ipAddress: "192.168.2.107", roveCapable: true),
-        new Device(name: "ScienceActuation", ipAddress: "192.168.2.108", roveCapable: true),
-        new Device(name: "Autonomy", ipAddress: "192.168.3.100", roveCapable: true),
-        new Device(name: "Camera1", ipAddress: "192.168.4.100", roveCapable: true),
-        new Device(name: "Camera2", ipAddress: "192.168.4.101", roveCapable: true),
-        new Device(name: "Instruments", ipAddress: "192.168.3.105", roveCapable: true)
+        new Device(name: "Basestation2_4GHzRocket", ipAddress: "10.0.0.12")
     };
 
     // Flags.
@@ -104,11 +120,25 @@
     protected override void OnInitialized()
     {
         // Create some timers.
+        autoPingTimer = new System.Timers.Timer(5000);
+        autoPingTimer.Elapsed += AutoPing;
+        autoPingTimer.AutoReset = true;
+        autoPingTimer.Enabled = true;
+
+        // Pull device IP Addresses from RoveComm Manifest
+        foreach (string board in RoveCommManifest.Boards.Keys)
+        {
+            devices.Add(new Device(
+                name: board,
+                ipAddress: RoveCommManifest.Boards[board].IP,
+                roveCapable: true
+            ));
+        }
     }
 
     protected override async Task OnInitializedAsync()
     {
-        await PingIpAddress();
+        //await PingIpAddress();
     }
 
     void IDisposable.Dispose()
@@ -116,26 +146,127 @@
 
     }
 
-    private async Task PingIpAddress()
+    private async Task PingIpAddressAsync(Device device, string ipAddress)
     {
-        temp = await PingService.PingAsync("142.250.191.100"); // Temporarily pings www.google.com to confirm usability; will eventually modify as needed
+        try
+        {
+            PingReply reply = await PingService.PingAsync(ipAddress);
+            device.PingStatus = reply.Status.ToString();
+
+            // Set PingStatusHighlight
+            if (reply.Status == IPStatus.Success)
+            {
+                device.PingStatusHighlight = goodConnection_hightlight;
+            }
+            else
+            {
+                device.PingStatusHighlight = poorConnection_hightlight;
+            }
+
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
     }
 
-    public class Device
+    private bool AutoPingProcessRunning = false;
+    private async void AutoPing(object? sender, System.Timers.ElapsedEventArgs e)
     {
+        if (!AutoPingProcessRunning) // Ensures that there is not already a process running
+        {
+            try
+            {
+                AutoPingProcessRunning = true;
+                autoPingTimer.Enabled = false;
+                Console.WriteLine($"{autoPingTimer}");
+                Console.WriteLine("New AutoPing Instance");
+                foreach (Device device in devices)
+                {
+                    if (device.AutoPing == true)
+                    {
+                        Console.WriteLine(device.Name);
+                        await PingIpAddressAsync(device, device.IpAddress);
+                        await Task.Delay(5000);
+                        continue;
+                    }
+                }
+                Console.WriteLine("AutoPing Instance Finished");
+                AutoPingProcessRunning = false;
+                autoPingTimer.Enabled = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+    }
+
+    private void AutoPingAll(bool value)
+    {
+        foreach (Device device in devices)
+        {
+            device.AutoPing = value;
+        }
+    }
+
+    public class Device : INotifyPropertyChanged
+    {
+        private string pingStatus;
+        private string pingStatusHighlight;
+        private bool autoPing;
+
         public string Name { get; set; }
         public string IpAddress { get; set; }
-        public bool AutoPing { get; set; }
-        public string PingStatus { get; set; }
+
+        public string PingStatus
+        {
+            get => pingStatus;
+            set
+            {
+                pingStatus = value;
+                OnPropertyChanged(nameof(PingStatus));
+            }
+        }
+
+        public string PingStatusHighlight
+        {
+            get => pingStatusHighlight;
+            set
+            {
+                pingStatusHighlight = value;
+                OnPropertyChanged(nameof(PingStatusHighlight));
+            }
+        }
+
+        public bool AutoPing
+        {
+            get => autoPing;
+            set
+            {
+                autoPing = value;
+                OnPropertyChanged(nameof(AutoPing));
+            }
+        }
+
         public bool RoveCapable { get; set; }
 
         public Device(string name, string ipAddress, bool autoPing = false, string pingStatus = "-1", bool roveCapable = false)
         {
-            this.Name = name;
-            this.IpAddress = ipAddress;
-            this.AutoPing = autoPing;
-            this.PingStatus = pingStatus;
-            this.RoveCapable = roveCapable;
+            Name = name;
+            IpAddress = ipAddress;
+            AutoPing = autoPing;
+            PingStatus = pingStatus;
+            RoveCapable = roveCapable;
+            PingStatusHighlight = "background-color:lightcoral";
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

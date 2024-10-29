@@ -7,6 +7,11 @@ using Radzen;
 #pragma warning disable IDE0211 // Convert to 'Program.Main' style program
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
