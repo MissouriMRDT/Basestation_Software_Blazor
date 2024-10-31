@@ -24,6 +24,8 @@ builder.Services.AddHttpClient<GPSWaypointService>();
 builder.Services.AddSingleton<GPSWaypointService>();
 builder.Services.AddHttpClient<MapTileService>();
 builder.Services.AddSingleton<MapTileService>();
+builder.Services.AddHttpClient<ConfigService>();
+builder.Services.AddSingleton<ConfigService>();
 builder.Services.AddSingleton<TaskTimerService>();
 
 builder.Services.AddSingleton<RoveCommService>();
@@ -32,14 +34,6 @@ builder.Services.AddHostedService((sp) => sp.GetRequiredService<RoveCommService>
 builder.Services.AddBlazoredToast();
 
 var app = builder.Build();
-
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
-{
-    app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-    app.UseHsts();
-}
 
 app.UseHttpsRedirection();
 
