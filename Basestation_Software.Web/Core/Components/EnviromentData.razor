@@ -7,7 +7,7 @@
 	</div>
 
 	<p>Temperature: @_temp</p>
-	<button>Request Temperature Data</button>
+	<button @onclick=RequestTemperature>Request Temperature Data</button>
 	<p>Humidity: @_humidity</p>
 	<button @onclick=RequestHumidity>Request Humidity Data</button>
 
@@ -30,6 +30,8 @@
 		_RoveCommService.On<sbyte>("Instruments", "Temperature", async (packet) =>
 		{
 			// TODO: Implement this!
+			_temp = packet.Data[0];
+			await InvokeAsync(StateHasChanged);
 		});
 	}
 
@@ -37,6 +39,11 @@
 	{
 		// send humidity request command
 		_ = _RoveCommService.SendAsync<byte>("ScienceActuation", "RequestHumidity", [0], reliable: false);
+	}
+
+	public void RequestTemperature()
+	{
+		_ = _RoveCommService.SendAsync<byte>("Instruments", "RequestTemperature", [0], reliable: false);
 	}
 
 	void IDisposable.Dispose()
