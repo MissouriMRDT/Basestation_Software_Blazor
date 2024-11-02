@@ -1,0 +1,9 @@
+﻿.button-container {
+    display: flex;
+    margin-block: 1%;
+
+}
+
+button {
+    margin-inline: 1%;
+}
