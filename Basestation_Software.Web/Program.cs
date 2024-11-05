@@ -3,6 +3,7 @@ using Basestation_Software.Web.Core.Services;
 using Basestation_Software.Web.Core.Services.RoveComm;
 using Blazored.Toast;
 using Radzen;
+using Toolbelt.Blazor.Extensions.DependencyInjection;
 
 #pragma warning disable IDE0211 // Convert to 'Program.Main' style program
 var builder = WebApplication.CreateBuilder(args);
@@ -19,6 +20,7 @@ builder.Services.AddServerSideBlazor()
         })
         .AddHubOptions(option => option.MaximumReceiveMessageSize = 10_000_000); // Configures the message size for SignalR connections.
 builder.Services.AddRadzenComponents();
+builder.Services.AddGamepadList();
 builder.Services.AddScoped<CookieService>();
 builder.Services.AddHttpClient<GPSWaypointService>();
 builder.Services.AddSingleton<GPSWaypointService>();

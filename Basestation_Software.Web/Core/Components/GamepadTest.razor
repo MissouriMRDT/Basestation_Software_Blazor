@@ -1,0 +1,47 @@
+﻿@implements IDisposable
+@inject RoveCommService _RoveCommService
+@inject IJSRuntime _IJSRuntime
+@using Basestation_Software.Web.Utils;
+
+<div class="card h-100">
+    <div class="card-header">
+        <div class="col-6 d-flex align-self-center">
+            <h5>Gamepad Test</h5>
+            <div class="vr">&nbsp;</div>
+            <GamepadSelector @ref=GamepadSelector_ />
+        </div>
+    </div>
+    <div class="card-body w-100">
+        @if (GamepadSelector_?.SelectedGamepad is not null)
+        {
+            <table>
+                <tr><th>Axis</th><th>Value</th></tr>
+                @for (int i = 0; i < GamepadSelector_.SelectedGamepad.Axes.Count; i++)
+                {
+                    <tr><td>@i</td><td>@GamepadSelector_.SelectedGamepad.Axes[i]</td></tr>
+                }
+                <tr><th>Button</th><th>Value</th><th>Pressed</th></tr>
+                @for (int i = 0; i < GamepadSelector_.SelectedGamepad.Buttons.Count; i++)
+                {
+                    <tr><td>@i</td><td>@GamepadSelector_.SelectedGamepad.Buttons[i].Value</td><td>@GamepadSelector_.SelectedGamepad.Buttons[i].Pressed</td></tr>
+                }
+            </table>
+        }
+    </div>
+</div>
+
+@code
+{
+    // State
+    private GamepadSelector GamepadSelector_;
+
+    protected override void OnInitialized()
+    {
+        new Timer(_ =>
+        {
+            InvokeAsync(StateHasChanged);
+        }, null, 0, 100);
+    }
+
+    void IDisposable.Dispose() { }
+}
