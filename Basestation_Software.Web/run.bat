@@ -1,0 +1,1 @@
+"%~dp0bin\Debug\net8.0\win-x64\Basestation_Software.Web.exe" --urls http://localhost:8080
