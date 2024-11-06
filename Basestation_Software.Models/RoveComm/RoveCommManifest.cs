@@ -73,7 +73,7 @@ public static class RoveCommManifest
     {
         ["Core"] = new RoveCommBoardDesc
         (
-            ip: "172.16.10.214",
+            ip: "192.168.2.110",
             commands: new Dictionary<string, RoveCommPacketDesc>
             {
                 // [LeftSpeed, RightSpeed] (-1, 1)-> (-100%, 100%)
@@ -206,7 +206,7 @@ public static class RoveCommManifest
         ),
         ["PMS"] = new RoveCommBoardDesc
         (
-            ip: "172.16.10.214",
+            ip: "192.168.2.102",
             commands: new Dictionary<string, RoveCommPacketDesc>
             {
                 // Power off all systems except network (PMS will stay on)
@@ -331,7 +331,7 @@ public static class RoveCommManifest
         ),
         ["Nav"] = new RoveCommBoardDesc
         (
-            ip: "172.16.10.214",
+            ip: "192.168.2.104",
             commands: new Dictionary<string, RoveCommPacketDesc>
             {
 
@@ -394,11 +394,11 @@ public static class RoveCommManifest
         ),
         ["BaseStationNav"] = new RoveCommBoardDesc
         (
-            ip: "172.16.10.214"
+            ip: "192.168.100.112"
         ),
         ["SignalStack"] = new RoveCommBoardDesc
         (
-            ip: "172.16.10.214",
+            ip: "192.168.100.101",
             commands: new Dictionary<string, RoveCommPacketDesc>
             {
                 // Motor decipercent [-1000, 1000]
@@ -453,7 +453,7 @@ public static class RoveCommManifest
         ),
         ["Arm"] = new RoveCommBoardDesc
         (
-            ip: "172.16.10.214",
+            ip: "192.168.2.107",
             commands: new Dictionary<string, RoveCommPacketDesc>
             {
                 // [X, Y1, Y2, Z, P, R] Motor decipercent [-1000, 1000]
@@ -592,7 +592,7 @@ public static class RoveCommManifest
         ),
         ["ScienceActuation"] = new RoveCommBoardDesc
         (
-            ip: "172.16.10.214",
+            ip: "192.168.2.108",
             commands: new Dictionary<string, RoveCommPacketDesc>
             {
                 // Motor decipercent [-1000, 1000]
@@ -738,7 +738,7 @@ public static class RoveCommManifest
         ),
         ["Autonomy"] = new RoveCommBoardDesc
         (
-            ip: "172.16.10.214",
+            ip: "192.168.3.100",
             commands: new Dictionary<string, RoveCommPacketDesc>
             {
                 // 
@@ -829,7 +829,7 @@ public static class RoveCommManifest
         ),
         ["Camera1"] = new RoveCommBoardDesc
         (
-            ip: "172.16.10.214",
+            ip: "192.168.4.100",
             commands: new Dictionary<string, RoveCommPacketDesc>
             {
                 // Change which camera a feed is looking at. [0] is the feed, [1] is the camera to view.
@@ -891,7 +891,7 @@ public static class RoveCommManifest
         ),
         ["Camera2"] = new RoveCommBoardDesc
         (
-            ip: "172.16.10.214",
+            ip: "192.168.4.101",
             commands: new Dictionary<string, RoveCommPacketDesc>
             {
                 // Take a picture with the current camera. [0] is the camera to take a picture with. [1] tells the camera whether to restart the stream afterwards.
@@ -926,7 +926,7 @@ public static class RoveCommManifest
         ),
         ["IRSpectrometer"] = new RoveCommBoardDesc
         (
-            ip: "172.16.10.214",
+            ip: "192.168.3.104",
             commands: new Dictionary<string, RoveCommPacketDesc>
             {
 
@@ -942,7 +942,7 @@ public static class RoveCommManifest
         ),
         ["Instruments"] = new RoveCommBoardDesc
         (
-            ip: "172.16.10.214",
+            ip: "192.168.3.105",
             commands: new Dictionary<string, RoveCommPacketDesc>
             {
                 // [Green, White] [1-Enabled, 0-Disabled] (bitmasked)
