@@ -126,7 +126,7 @@
 
     // Constants
     public const int UPDATE_INTERVAL = 100;
-    public const double BUMP_SPEED = 0.008;
+    public const double BUMP_SPEED = 0.05, GAMMA_FLIGHTSTICK = 1.5, GAMMA_XBOX = 1.5;
     public readonly List<string> GIMBAL_NAMES = new List<string>()
     {
         "Left Drive", "Right Drive", "Left Main",
@@ -217,9 +217,9 @@
                         double x = GamepadSelector_.SelectedGamepad.Axes[0];
                         double y = -GamepadSelector_.SelectedGamepad.Axes[1];
                         double throttle = Utils.ClampMap(GamepadSelector_.SelectedGamepad.Axes[6], -1.0, 1.0, 1.0, 0.0);
-                        // Clamp deadzone.
-                        x = Math.Abs(x) > DeadZone ? x : 0;
-                        y = Math.Abs(y) > DeadZone ? y : 0;
+                        // Clamp deadzone and scale exponentially.
+                        x = x < -DeadZone ? -Math.Pow(-x, GAMMA_FLIGHTSTICK) : x > DeadZone ? Math.Pow(x, GAMMA_FLIGHTSTICK) : 0;
+                        y = y < -DeadZone ? -Math.Pow(-y, GAMMA_FLIGHTSTICK) : x > DeadZone ? Math.Pow(y, GAMMA_FLIGHTSTICK) : 0;
 
                         // Convert to polar.
                         double r = double.Hypot(x, y);
@@ -335,9 +335,9 @@
                     {
                         x = GamepadSelector_.SelectedGamepad.Axes[0];
                         y = -GamepadSelector_.SelectedGamepad.Axes[1];
-                        // Clamp deadzone.
-                        x = Math.Abs(x) > DeadZone ? x : 0;
-                        y = Math.Abs(y) > DeadZone ? y : 0;
+                        // Clamp deadzone and scale exponentially.
+                        x = x < -DeadZone ? -Math.Pow(-x, GAMMA_XBOX) : x > DeadZone ? Math.Pow(x, GAMMA_XBOX) : 0;
+                        y = y < -DeadZone ? -Math.Pow(-y, GAMMA_XBOX) : x > DeadZone ? Math.Pow(y, GAMMA_XBOX) : 0;
                         // Convert to polar.
                         double r = double.Hypot(x, y);
                         double t = Math.Atan2(y, x);
