@@ -24,6 +24,7 @@ builder.Services.AddSingleton<GPSWaypointService>();
 builder.Services.AddHttpClient<MapTileService>();
 builder.Services.AddSingleton<MapTileService>();
 builder.Services.AddSingleton<TaskTimerService>();
+builder.Services.AddSingleton<CameraService>();
 
 
 builder.Services.AddBlazoredToast();
