@@ -25,9 +25,9 @@ namespace Basestation_Software.Web.Core.Services
 			_controllers?[sourceIndex].InitCapture(_sources[sourceIndex]);
 		}
 
-        public SingleCameraController GetCameraReference(int i)
+        public SingleCameraController GetCameraReference(int sourceIndex)
         {
-            return _controllers[i];
+            return _controllers[sourceIndex];
         }
 
 		public void DisposeAll()
