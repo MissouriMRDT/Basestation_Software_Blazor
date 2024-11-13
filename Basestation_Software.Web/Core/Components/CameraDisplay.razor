@@ -18,8 +18,36 @@
             <button class="@("btn btn-secondary " + ((_sourceIndex == _i) ? "active" : ""))" @onclick="() => SetSource(_i)">@(_i + 1)</button>
         }
     </div>
-    <p>Source: @_sourceIndex</p>
-    <button @onclick="RestartCam">restart</button>
+
+    <div class="settings-container">
+        <div class="settings-row">
+            <button @onclick="RestartCam">restart reciever</button>
+            <button @onclick="ToggleSource">toggle current source</button>
+            <button @onclick="TakeScreenshot">take screenshot</button>
+        </div>
+        @code {
+            // settings input variables
+            private int _framerateInput = 30;
+            private int _bitrateInput = 24000;
+            private int _resolutionInputX = 320;
+            private int _resolutionInputY = 240;
+
+        }
+        <div class="settings-row">
+            <button @onclick="() => ChangeFramerate(_framerateInput)">apply framerate</button>
+            <input @bind="_framerateInput" type="number">
+        </div>
+
+        <div class="settings-row">
+            <button @onclick="() => ChangeBitrate(_bitrateInput)">apply bitrate</button>
+            <input @bind="_bitrateInput" type="number">
+        </div>
+
+        <div class="settings-row">
+            <button @onclick="() => ChangeResolution(_resolutionInputX, _resolutionInputY)">apply resolution</button>
+            <input @bind="_resolutionInputX" type="number">x<input @bind="_resolutionInputY" type="number">
+        </div>
+    </div>
 </div>
 
 @code {
@@ -41,8 +69,9 @@
 
     private void SetSource(int newSourceIndex)
     {
-
+        _CameraService.GetCameraReference(_sourceIndex).FrameNotifier -= OnNewFrame;
         _sourceIndex = newSourceIndex;
+        _CameraService.GetCameraReference(_sourceIndex).FrameNotifier += OnNewFrame;
         StateHasChanged();
 
     }
@@ -51,6 +80,31 @@
     {
         _CameraService.Dispose(_sourceIndex);
         _CameraService.InitCapture(_sourceIndex);
+    }
+
+    private void ToggleSource()
+    {
+
+    }
+
+    private void TakeScreenshot()
+    {
+
+    }
+
+    private void ChangeFramerate(int framerate)
+    {
+
+    }
+
+    private void ChangeBitrate(int bitrate)
+    {
+
+    }
+
+    private void ChangeResolution(int x, int y)
+    {
+        
     }
 
     void IDisposable.Dispose()
