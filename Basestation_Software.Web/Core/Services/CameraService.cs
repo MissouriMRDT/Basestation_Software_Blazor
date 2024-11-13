@@ -1,4 +1,6 @@
-﻿namespace Basestation_Software.Web.Core.Services
+﻿using Basestation_Software.Models.Cameras;
+
+namespace Basestation_Software.Web.Core.Services
 {
 	public class CameraService
 	{
@@ -18,25 +20,15 @@
 			}
 		}
 
-		public void SubscribeToNewFrame(Func<Task> listener, int sourceIndex)
-		{
-			_controllers[sourceIndex].SubscribeToNewFrame(listener);
-		}
-
-		public void UnsubscribeFromNewFrame(Func<Task> listener, int sourceIndex)
-		{
-			_controllers[sourceIndex].UnsubscribeFromNewFrame(listener);
-		}
-
-		public string GetFrameData(int sourceIndex)
-		{
-			return _controllers[sourceIndex].GetFrameData();
-		}
-
 		public void InitCapture(int sourceIndex)
 		{
-			_controllers[sourceIndex].InitCapture(_sources[sourceIndex]);
+			_controllers?[sourceIndex].InitCapture(_sources[sourceIndex]);
 		}
+
+        public SingleCameraController GetCameraReference(int i)
+        {
+            return _controllers[i];
+        }
 
 		public void DisposeAll()
 		{

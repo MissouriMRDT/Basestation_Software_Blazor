@@ -1,8 +1,6 @@
 ﻿using OpenCvSharp;
-using System.Reflection.Metadata.Ecma335;
-using System.Text.RegularExpressions;
 
-namespace Basestation_Software.Web.Core.Services
+namespace Basestation_Software.Models.Cameras
 {
 	public class SingleCameraController
 	{
@@ -13,7 +11,8 @@ namespace Basestation_Software.Web.Core.Services
 
 		private CancellationTokenSource? _tokenSource;
 
-		private event Func<Task>? NewFrameListener;
+        public delegate Task FrameCallback(string frameData);
+        public event FrameCallback? FrameNotifier;
 
 		public SingleCameraController(string source)
 		{
@@ -43,25 +42,10 @@ namespace Basestation_Software.Web.Core.Services
 			return await Task.Run(() => new VideoCapture(source));
 		}
 
-		public string GetFrameData()
-		{
-			return _frameData;
-		}
-		
-		public void SubscribeToNewFrame(Func<Task> listener)
-		{
-			NewFrameListener += listener;
-		}
-
-		public void UnsubscribeFromNewFrame(Func<Task> listener)
-		{
-			NewFrameListener -= listener;
-		}
-
 		/// <summary>
 		/// Used to initialize the camera service. Watches for new camera frames and invokes the new frame event.
 		/// </summary>
-		public async Task WatchForFrames(CancellationToken token)
+		private async Task WatchForFrames(CancellationToken token)
 		{
 			_ = FindLatestFrame(token);
 			while (!token.IsCancellationRequested)
@@ -82,7 +66,7 @@ namespace Basestation_Software.Web.Core.Services
 			}
 		}
 
-		public async Task TryRetriveFrame(CancellationToken token)
+		private async Task TryRetriveFrame(CancellationToken token)
 		{
 			using (Mat frame = new())
 			{
@@ -90,7 +74,7 @@ namespace Basestation_Software.Web.Core.Services
 				string base64 = Convert.ToBase64String(frame.ToBytes());
 				_frameData = $"data:image/gif;base64,{base64}";
 
-				NewFrameListener?.Invoke();
+				FrameNotifier?.Invoke(_frameData);
 				await Task.Delay(16, token);
 			}
 		}
