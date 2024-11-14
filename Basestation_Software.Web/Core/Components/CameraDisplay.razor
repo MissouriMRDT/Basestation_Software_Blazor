@@ -1,4 +1,5 @@
 ﻿@inject CameraService _CameraService
+@inject RoveCommService _RoveCommService
 @implements IDisposable
 
 <link rel="stylesheet" type="text/css" href="CameraDisplay.razor.css?version=0.1">
@@ -22,7 +23,8 @@
     <div class="settings-container">
         <div class="settings-row">
             <button @onclick="RestartCam">restart reciever</button>
-            <button @onclick="ToggleSource">toggle current source</button>
+            <button @onclick="() => ToggleSource(1)">launch current source</button>
+            <button @onclick="() => ToggleSource(0)">shutdown current source</button>
             <button @onclick="TakeScreenshot">take screenshot</button>
         </div>
         @code {
@@ -82,29 +84,30 @@
         _CameraService.InitCapture(_sourceIndex);
     }
 
-    private void ToggleSource()
-    {
-
-    }
-
     private void TakeScreenshot()
     {
+        _ = _RoveCommService.SendAsync<int>(12000, [0], "192.168.4.102");
+    }
 
+    private void ToggleSource(int data)
+    {
+        _ = _RoveCommService.SendAsync<int>(12001, [data], "192.168.4.102");
     }
 
     private void ChangeFramerate(int framerate)
     {
-
+        _ = _RoveCommService.SendAsync<int>(12012, [framerate], "192.168.4.102");
     }
 
     private void ChangeBitrate(int bitrate)
     {
-
+        _ = _RoveCommService.SendAsync<int>(12011, [bitrate], "192.168.4.102");
     }
 
     private void ChangeResolution(int x, int y)
     {
-        
+        _ = _RoveCommService.SendAsync<int>(12010, [x, y], "192.168.4.102");
+
     }
 
     void IDisposable.Dispose()
