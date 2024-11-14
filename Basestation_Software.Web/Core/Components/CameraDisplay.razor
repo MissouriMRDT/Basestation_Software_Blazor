@@ -12,7 +12,7 @@
         <img class="cam-display" src="@_frameData" />
     </div>
     <div class="source-buttons-container">
-        @for (int i = 0; i < 8; i++)
+        @for (int i = 0; i < 10; i++)
         {
             // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
             var _i = i;
@@ -33,6 +33,7 @@
             private int _bitrateInput = 24000;
             private int _resolutionInputX = 320;
             private int _resolutionInputY = 240;
+            private string _ipInput = "";
 
         }
         <div class="settings-row">
@@ -48,6 +49,11 @@
         <div class="settings-row">
             <button @onclick="() => ChangeResolution(_resolutionInputX, _resolutionInputY)">apply resolution</button>
             <input @bind="_resolutionInputX" type="number">x<input @bind="_resolutionInputY" type="number">
+        </div>
+
+        <div class="settings-row">
+            <button @onclick="() => SetIP(_ipInput)">apply resolution</button>
+            <input @bind="_ipInput" type="text">
         </div>
     </div>
 </div>
@@ -76,6 +82,12 @@
         _CameraService.GetCameraReference(_sourceIndex).FrameNotifier += OnNewFrame;
         StateHasChanged();
 
+    }
+
+    private void SetIP(string newIP)
+    {
+        _CameraService.SetIP(_sourceIndex, newIP);
+        RestartCam();
     }
 
     private void RestartCam()
