@@ -37,7 +37,8 @@ public class GPSWaypointService
         }
 
         // Invoke the callback to refresh page data.
-        await SyncWaypointsNotifier!.Invoke();
+        if (SyncWaypointsNotifier is not null)
+            await SyncWaypointsNotifier.Invoke();
     }
 
     /// <summary>

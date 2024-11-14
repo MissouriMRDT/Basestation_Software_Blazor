@@ -1,0 +1,24 @@
+﻿@using ScottPlot
+@using ScottPlot.Blazor
+
+<div class="card full-height">
+    <div class="card-header">
+        <div class="row">
+            <div class="col-6 d-flex align-self-center">
+                <h5>RamanGraph</h5>
+            </div>
+        </div>
+   </div>
+</div>
+
+
+@code {
+
+    BlazorPlot BlazorPlot { get; set; } = new();
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        BlazorPlot.Plot.Add.Signal(Generate.Sin());
+        BlazorPlot.Plot.Add.Signal(Generate.Cos());
+    }
+}
