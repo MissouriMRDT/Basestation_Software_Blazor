@@ -34,8 +34,18 @@
             private int _resolutionInputX = 320;
             private int _resolutionInputY = 240;
             private string _ipInput = "";
+            private int _val = 0;
 
-        }
+            private int _brightness = 0;
+            private int _contrast = 0;
+            private int _saturation = 0;
+            private int _hue = 0;
+            private int _whiteBalance = 0;
+            private int _backlightContrast = 0;
+            private double _exposure = 0d;
+
+            private bool _showHidden = false;
+            }
         <div class="settings-row">
             <button @onclick="() => ChangeFramerate(_framerateInput)">apply framerate</button>
             <input @bind="_framerateInput" type="number">
@@ -54,6 +64,46 @@
         <div class="settings-row">
             <button @onclick="() => SetIP(_ipInput)">set ip</button>
             <input @bind="_ipInput" type="text">
+        </div>
+        <div class ="hidable" style=@(_showHidden ? "" : "display: none;")>
+            <div class="settings-row">
+                <button @onclick="@(() => _RoveCommService.SendAsync<int>("CameraServer", "AdjustBrightness", [_brightness]))"> apply brightness </button>
+                <input type="range" min="0" max="255" @bind="_brightness"/>
+                <input type="number" min="0" max="255" @bind="_brightness"/>
+            </div>
+            <div class="settings-row">
+                <button @onclick="@(() => _RoveCommService.SendAsync<int>("CameraServer", "AdjustContrast", [_contrast]))"> apply constrast</button>
+                <input type="range" min="0" max="255" @bind="_contrast"/>
+                <input type="number" min="0" max="255" @bind="_contrast"/>
+            </div>
+            <div class="settings-row">
+                <button @onclick="@(() => _RoveCommService.SendAsync<int>("CameraServer", "AdjustSaturation", [_saturation]))"> apply saturation</button>
+                <input type="range" min="0" max="255" @bind="_saturation" />
+                <input type="number" min="0" max="255" @bind="_saturation" />
+            </div>
+            <div class="settings-row">
+                <button @onclick="@(() => _RoveCommService.SendAsync<int>("CameraServer", "AdjustHue", [_hue]))"> apply hue</button>
+                <input type="range" min="0" max="255" @bind="_hue" />
+                <input type="number" min="0" max="255" @bind="_hue" />
+            </div>
+            <div class="settings-row">
+                <button @onclick="@(() => _RoveCommService.SendAsync<int>("CameraServer", "AdjustWhiteBalance", [_whiteBalance]))"> apply white balance</button>
+                <input type="range" min="0" max="255" @bind="_whiteBalance" />
+                <input type="number" min="0" max="255" @bind="_whiteBalance" />
+            </div>
+            <div class="settings-row">
+                <button @onclick="@(() => _RoveCommService.SendAsync<int>("CameraServer", "AdjustBacklightContrast", [_backlightContrast]))"> apply backlight contrast</button>
+                <input type="range" min="0" max="255" @bind="_backlightContrast" />
+                <input type="number" min="0" max="255" @bind="_backlightContrast" />
+            </div>
+            <div class="settings-row">
+                <button @onclick="@(() => _RoveCommService.SendAsync<double>("CameraServer", "SetExposure", [_exposure]))"> apply exposure</button>
+                <input type="range" min="0" max="1" step="0.05" @bind="_exposure" />
+                <input type="number" min="0" max="1" step="0.05" @bind="_exposure" />
+            </div>
+        </div>
+        <div class="settings-row">
+            <button @onclick="@(() => _showHidden = !_showHidden)">@(_showHidden ? "less" : "more")</button>
         </div>
     </div>
 </div>
@@ -98,28 +148,27 @@
 
     private void TakeScreenshot()
     {
-        _ = _RoveCommService.SendAsync<int>(12000, [0], "192.168.4.102");
+        _ = _RoveCommService.SendAsync<int>("CameraServer", "TakePhoto", [0]);
     }
 
     private void ToggleSource(int data)
     {
-        _ = _RoveCommService.SendAsync<int>(12001, [data], "192.168.4.102");
+        _ = _RoveCommService.SendAsync<int>("CameraServer", "ToggleStream", [data]);
     }
 
     private void ChangeFramerate(int framerate)
     {
-        _ = _RoveCommService.SendAsync<int>(12012, [framerate], "192.168.4.102");
+        _ = _RoveCommService.SendAsync<int>("CameraServer", "ChangeFramerate", [framerate]);
     }
 
     private void ChangeBitrate(int bitrate)
     {
-        _ = _RoveCommService.SendAsync<int>(12011, [bitrate], "192.168.4.102");
+        _ = _RoveCommService.SendAsync<int>("CameraServer", "ChangeBitrate", [bitrate]);
     }
 
     private void ChangeResolution(int x, int y)
     {
-        _ = _RoveCommService.SendAsync<int>(12010, [x, y], "192.168.4.102");
-
+        _ = _RoveCommService.SendAsync<int>("CameraServer", "ChangeBitrate", [x, y]);
     }
 
     void IDisposable.Dispose()
