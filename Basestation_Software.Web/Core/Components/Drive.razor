@@ -117,6 +117,7 @@
 
 @code
 {
+
     enum Scheme
     {
         Flightstick,
@@ -144,6 +145,7 @@
     private double RightSpeed;
     private short Pan;
     private short Tilt;
+    private bool LastProcessGamepadInputOK = false;
 
     protected override void OnInitialized()
     {
@@ -154,8 +156,19 @@
     /// commands to drive the left and right motors in tank drive.
     private void Update(object? _)
     {
-        if (GamepadSelector_.SelectedGamepad is null) return;
-        //_RoveCommService.Send<byte>("Core", "StateDisplay", new List<byte> { 0 }); // 0: teleop
+        bool ProcessGamepadInputOK = ProcessGamepadInput();
+        if (ProcessGamepadInputOK) {
+            _RoveCommService.Send<byte>("Core", "StateDisplay", new List<byte>() { 0 }); // 0: teleop
+        } else if (LastProcessGamepadInputOK) {
+            _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { 0f, 0f }, false);
+        }
+        LastProcessGamepadInputOK = ProcessGamepadInputOK;
+        InvokeAsync(StateHasChanged);
+    }
+
+    // Process gamepad input and return true if rovecomm packets were sent.
+    private bool ProcessGamepadInput() {
+        if (GamepadSelector_.SelectedGamepad is null) return false;
         switch (SelectedScheme)
         {
             case Scheme.Flightstick:
@@ -195,7 +208,7 @@
                     // 9: 10
                     // 10: 11
                     // 11: 12
-                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 10 || GamepadSelector_.SelectedGamepad.Buttons.Count < 12) return;
+                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 10 || GamepadSelector_.SelectedGamepad.Buttons.Count < 12) return false;
 
                     // Drive controls:
                     if (GamepadSelector_.SelectedGamepad.Buttons[4].Pressed)
@@ -313,7 +326,7 @@
                     // 15: dpad-right: next gimbal
                     // 16: guide
 
-                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return;
+                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
 
                     // Drive controls:
                     double x, y;
@@ -413,7 +426,7 @@
                     // 15: dpad-right: next gimbal
                     // 16: guide
 
-                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return;
+                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
 
                     double left = -GamepadSelector_.SelectedGamepad.Axes[1];
                     double right = -GamepadSelector_.SelectedGamepad.Axes[3];
@@ -425,7 +438,7 @@
                     break;
                 }
         }
-        InvokeAsync(StateHasChanged);
+        return true;
     }
 
     public void GamepadSelectionChanged()
