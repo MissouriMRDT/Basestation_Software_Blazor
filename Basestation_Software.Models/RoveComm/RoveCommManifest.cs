@@ -947,7 +947,7 @@ public static class RoveCommManifest
                     2,
                     RoveCommDataType.UINT8_T
                 ),
-                ["AdjustConstrast"] = new RoveCommPacketDesc
+                ["AdjustContrast"] = new RoveCommPacketDesc
                 (
                     14003,
                     2,
@@ -981,7 +981,7 @@ public static class RoveCommManifest
                 (
                     14010,
                     2,
-                    RoveCommDataType.UINT8_T
+                    RoveCommDataType.DOUBLE
                 )
             },
             telemetry: new Dictionary<string, RoveCommPacketDesc>

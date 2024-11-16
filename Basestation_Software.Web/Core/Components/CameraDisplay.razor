@@ -67,37 +67,37 @@
         </div>
         <div class ="hidable" style=@(_showHidden ? "" : "display: none;")>
             <div class="settings-row">
-                <button @onclick="@(() => _RoveCommService.SendAsync<int>("CameraServer", "AdjustBrightness", [_brightness]))"> apply brightness </button>
+                <button @onclick="@(() => _RoveCommService.SendAsync<byte>("CameraServer", "AdjustBrightness", [(byte)_sourceIndex, (byte)_brightness]))"> apply brightness </button>
                 <input type="range" min="0" max="255" @bind="_brightness"/>
                 <input type="number" min="0" max="255" @bind="_brightness"/>
             </div>
             <div class="settings-row">
-                <button @onclick="@(() => _RoveCommService.SendAsync<int>("CameraServer", "AdjustContrast", [_contrast]))"> apply constrast</button>
+                <button @onclick="@(() => _RoveCommService.SendAsync<byte>("CameraServer", "AdjustContrast", [(byte)_sourceIndex, (byte)_contrast]))"> apply constrast</button>
                 <input type="range" min="0" max="255" @bind="_contrast"/>
                 <input type="number" min="0" max="255" @bind="_contrast"/>
             </div>
             <div class="settings-row">
-                <button @onclick="@(() => _RoveCommService.SendAsync<int>("CameraServer", "AdjustSaturation", [_saturation]))"> apply saturation</button>
+                <button @onclick="@(() => _RoveCommService.SendAsync<byte>("CameraServer", "AdjustSaturation", [(byte)_sourceIndex, (byte)_saturation]))"> apply saturation</button>
                 <input type="range" min="0" max="255" @bind="_saturation" />
                 <input type="number" min="0" max="255" @bind="_saturation" />
             </div>
             <div class="settings-row">
-                <button @onclick="@(() => _RoveCommService.SendAsync<int>("CameraServer", "AdjustHue", [_hue]))"> apply hue</button>
+                <button @onclick="@(() => _RoveCommService.SendAsync<byte>("CameraServer", "AdjustHue", [(byte)_sourceIndex, (byte)_hue]))"> apply hue</button>
                 <input type="range" min="0" max="255" @bind="_hue" />
                 <input type="number" min="0" max="255" @bind="_hue" />
             </div>
             <div class="settings-row">
-                <button @onclick="@(() => _RoveCommService.SendAsync<int>("CameraServer", "AdjustWhiteBalance", [_whiteBalance]))"> apply white balance</button>
+                <button @onclick="@(() => _RoveCommService.SendAsync<byte>("CameraServer", "SetWhiteBalance", [(byte)_sourceIndex, (byte)_whiteBalance]))"> apply white balance</button>
                 <input type="range" min="0" max="255" @bind="_whiteBalance" />
                 <input type="number" min="0" max="255" @bind="_whiteBalance" />
             </div>
             <div class="settings-row">
-                <button @onclick="@(() => _RoveCommService.SendAsync<int>("CameraServer", "AdjustBacklightContrast", [_backlightContrast]))"> apply backlight contrast</button>
+                <button @onclick="@(() => _RoveCommService.SendAsync<byte>("CameraServer", "AdjustBacklightContrast", [(byte)_sourceIndex, (byte)_backlightContrast]))"> apply backlight contrast</button>
                 <input type="range" min="0" max="255" @bind="_backlightContrast" />
                 <input type="number" min="0" max="255" @bind="_backlightContrast" />
             </div>
             <div class="settings-row">
-                <button @onclick="@(() => _RoveCommService.SendAsync<double>("CameraServer", "SetExposure", [_exposure]))"> apply exposure</button>
+                <button @onclick="@(() => _RoveCommService.SendAsync<double>("CameraServer", "SetExposure", [(byte)_sourceIndex, _exposure]))"> apply exposure</button>
                 <input type="range" min="0" max="1" step="0.05" @bind="_exposure" />
                 <input type="number" min="0" max="1" step="0.05" @bind="_exposure" />
             </div>
