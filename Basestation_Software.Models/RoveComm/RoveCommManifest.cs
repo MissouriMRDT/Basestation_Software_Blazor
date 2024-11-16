@@ -924,6 +924,101 @@ public static class RoveCommManifest
 
             }
         ),
+        ["CameraServer"] = new RoveCommBoardDesc
+        (
+            ip: "192.168.4.102",
+            commands: new Dictionary<string, RoveCommPacketDesc>
+            {
+                ["TakePhoto"] = new RoveCommPacketDesc
+                (
+                    14000,
+                    1,
+                    RoveCommDataType.UINT8_T
+                ),
+                ["ToggleStream"] = new RoveCommPacketDesc
+                (
+                    14001,
+                    2,
+                    RoveCommDataType.UINT8_T
+                ),
+                ["AdjustBrightness"] = new RoveCommPacketDesc
+                (
+                    14002,
+                    2,
+                    RoveCommDataType.UINT8_T
+                ),
+                ["AdjustConstrast"] = new RoveCommPacketDesc
+                (
+                    14003,
+                    2,
+                    RoveCommDataType.UINT8_T
+                ),
+                ["AdjustSaturation"] = new RoveCommPacketDesc
+                (
+                    14004,
+                    2,
+                    RoveCommDataType.UINT8_T
+                ),
+                ["AdjustHue"] = new RoveCommPacketDesc
+                (
+                    14005,
+                    2,
+                    RoveCommDataType.UINT8_T
+                ),
+                ["SetWhiteBalance"] = new RoveCommPacketDesc
+                (
+                    14008,
+                    2,
+                    RoveCommDataType.UINT8_T
+                ),
+                ["AdjustBacklightContrast"] = new RoveCommPacketDesc
+                (
+                    14009,
+                    2,
+                    RoveCommDataType.UINT8_T
+                ),
+                ["SetExposure"] = new RoveCommPacketDesc
+                (
+                    14010,
+                    2,
+                    RoveCommDataType.UINT8_T
+                )
+            },
+            telemetry: new Dictionary<string, RoveCommPacketDesc>
+            {
+                // Bitmask values for which cameras are able to stream. LSB is Camera 0, MSB is Camera 7.
+                ["AvailableCameras"] = new RoveCommPacketDesc
+                (
+                    14100,
+                    1,
+                    RoveCommDataType.UINT8_T
+                ),
+                // Which cameras the system is currently streaming on each port
+                ["StreamingCameras"] = new RoveCommPacketDesc
+                (
+                    14101,
+                    4,
+                    RoveCommDataType.UINT8_T
+                ),
+                // Picture has been taken.
+                ["PictureTaken1"] = new RoveCommPacketDesc
+                (
+                    14102,
+                    1,
+                    RoveCommDataType.UINT8_T
+                )
+            },
+            errors: new Dictionary<string, RoveCommPacketDesc>
+            {
+                // Camera has errored and stopped streaming. [0] is ID of camera as an integer (not bitmask).
+                ["CameraUnavailable"] = new RoveCommPacketDesc
+                (
+                    14200,
+                    1,
+                    RoveCommDataType.UINT8_T
+                )
+            }
+        ),
         ["IRSpectrometer"] = new RoveCommBoardDesc
         (
             ip: "192.168.3.104",
