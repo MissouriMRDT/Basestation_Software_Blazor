@@ -2,9 +2,8 @@
 @using System.Diagnostics;
 @using System.ComponentModel;
 
-@implements IDisposable
-
 @inject PingService PingService
+@inject RoveCommService RoveCommService
 
 <style>
     .scrollable {
@@ -30,6 +29,15 @@
         }
         else
         {
+            <Modal @ref="poorConnection_Modal">
+                <Header>
+                    <label><b>Networking Error: Poor Connection</b></label>
+                </Header>
+                <Body>
+                    <label>Pings are failing to reach endpoint. Please check that all networking components are active and that signal strength is sufficient.</label>
+                </Body>
+            </Modal>
+
             <div class="row">
                 <div class="col" style="display:flex; flex-grow:0; flex-basis:content; align-items:center">
                     <label>AutoPing Delay (seconds): </label>
@@ -49,13 +57,25 @@
             </div>
 
             <!-- For Spacing -->
-            <div class="row" style="height:16px"/>
+            <div class="row" style="height:16px" />
+
+            <div class="row">
+                <div class="col" style="display:flex; flex-grow:0; flex-basis:content; align-items:center">
+                    <RadzenCheckBox Name="PoorConnectionWarning_CheckBox" TValue="bool" ValueChanged="@((bool value) => UpdateWarnOfPoorConnection(value))"></RadzenCheckBox>
+                </div>
+                <div class="col">
+                    <label>Warn of Poor Connection</label>
+                </div>
+            </div>
+
+            <!-- For Spacing -->
+            <div class="row" style="height:16px" />
 
             @foreach (var device in devices)
             {
                 <div class="row">
                     <div class="col" style="flex-grow:0; align-content:center">
-                        <RadzenCheckBox TValue="bool" @bind-Value="device.AutoPing"></RadzenCheckBox>
+                        <RadzenCheckBox TValue="bool" @bind-Value="@device.AutoPing"></RadzenCheckBox>
                     </div>
                     <div class="col" style="display:flex; justify-content:flex-start; @device.PingStatusHighlight; min-width:40%">
                         <div class="col" style="margin:4px">
@@ -74,7 +94,7 @@
                     @if (device.RoveCapable)
                     {
                         <div class="col" style="flex-grow:0">
-                            <button>Rove</button>
+                            <button onclick="@(() => RovePingBoard(@device, @device.Name))">Rove</button>
                         </div>
                     } else
                     {
@@ -94,8 +114,6 @@
 @code
 {
     // Declare page member variables.
-    private string? temp = "No Data";
-
     private string goodConnection_hightlight = "background-color:lightgreen";
     private string poorConnection_hightlight = "background-color:lightcoral";
 
@@ -103,18 +121,10 @@
 
     private int autoPingDelay = 5000;
 
-    // TODO: Automate retreival of device data from RoveCommManifest.cs:
-    private List<Device> devices = new List<Device>
-    {
-        new Device(name: "www.google.com", ipAddress: "142.250.190.132"),
-        new Device(name: "BasestationSwitch", ipAddress: "192.168.254.2"),
-        new Device(name: "RoverSwitch", ipAddress: "192.168.254.1"),
-        new Device(name: "Rover900MHzRocket", ipAddress: "10.0.0.3"),
-        new Device(name: "Rover5GHzRocket", ipAddress: "10.0.0.20"),
-        new Device(name: "Basestation5GHzRocket", ipAddress: "10.0.0.20"),
-        new Device(name: "Rover2_4GHzRocket", ipAddress: "10.0.0.11"),
-        new Device(name: "Basestation2_4GHzRocket", ipAddress: "10.0.0.12")
-    };
+    private List<Device> devices = new List<Device> { };
+
+    private Modal poorConnection_Modal = new();
+    private bool warnOfPoorConnection = false;
 
     // Flags.
     private bool _dataLoaded = true; // originally set to false
@@ -127,7 +137,16 @@
         autoPingTimer.AutoReset = true;
         autoPingTimer.Enabled = true;
 
-        // Pull device IP Addresses from RoveComm Manifest
+        // Pull network device IP Addresses from RoveComm Manifest
+        foreach (string netDevice in RoveCommManifest.Devices.Keys)
+        {
+            devices.Add(new Device(
+                name: netDevice,
+                ipAddress: RoveCommManifest.Devices[netDevice].Ip
+            ));
+        }
+
+        // Pull board IP Addresses from RoveComm Manifest
         foreach (string board in RoveCommManifest.Boards.Keys)
         {
             devices.Add(new Device(
@@ -143,11 +162,8 @@
         //await PingIpAddress();
     }
 
-    void IDisposable.Dispose()
-    {
-
-    }
-
+    // Handles individual pinging of components (ICMP)
+    private int failedPings = 0;
     private async Task PingIpAddressAsync(Device device, string ipAddress)
     {
         try
@@ -159,10 +175,12 @@
             if (reply.Status == IPStatus.Success)
             {
                 device.PingStatusHighlight = goodConnection_hightlight;
+                failedPings = 0;
             }
             else
             {
                 device.PingStatusHighlight = poorConnection_hightlight;
+                failedPings += 1;
             }
 
             await InvokeAsync(StateHasChanged);
@@ -173,6 +191,7 @@
         }
     }
 
+    // Handles automatic ICMP pinging of components
     private bool AutoPingProcessRunning = false;
     private async void AutoPing(object? sender, System.Timers.ElapsedEventArgs e)
     {
@@ -182,19 +201,25 @@
             {
                 AutoPingProcessRunning = true;
                 autoPingTimer.Enabled = false;
-                //Console.WriteLine($"{autoPingTimer}");
-                //Console.WriteLine("New AutoPing Instance");
                 foreach (Device device in devices)
                 {
                     if (device.AutoPing == true)
                     {
-                        Console.WriteLine(device.Name);
                         await PingIpAddressAsync(device, device.IpAddress);
+
+                        if (failedPings >= 4) // Display alert modal if 4 or more consecutive pings fail
+                        {
+                            if (warnOfPoorConnection)
+                            {
+                                await InvokeAsync(poorConnection_Modal.Open);
+                            }
+                            failedPings = 0;
+                        }
+
                         await Task.Delay(autoPingDelay);
                         continue;
                     }
                 }
-                //Console.WriteLine("AutoPing Instance Finished");
                 AutoPingProcessRunning = false;
                 autoPingTimer.Enabled = true;
             }
@@ -205,12 +230,19 @@
         }
     }
 
+    // Sets all components to be pinged automatically.
     private void AutoPingAll(bool value)
     {
         foreach (Device device in devices)
         {
             device.AutoPing = value;
         }
+    }
+
+    // Updates whether ping tool should warn user of a poor connection
+    private void UpdateWarnOfPoorConnection(bool value)
+    {
+        warnOfPoorConnection = value;
     }
 
     private void UpdateAutoPingDelay(string delay)
@@ -223,6 +255,27 @@
         {
             autoPingDelay = 5000;
         }
+    }
+
+    private async void RovePingBoard(Device device, string board)
+    {
+        device.PingStatus = "Pinging...";
+        await InvokeAsync(StateHasChanged);
+
+        DateTime start = DateTime.Now;
+        RoveCommService.Ping(board);
+        var response = await RoveCommService.Listen<int>(RoveCommManifest.SystemPackets.PING_REPLY);
+        DateTime end = DateTime.Now;
+        TimeSpan latency = end - start;
+
+        if (response != null)
+        {
+            device.PingStatus = $"Response in {latency.TotalSeconds.ToString()} seconds";
+        } else
+        {
+            device.PingStatus = "NoResponse";
+        }
+        await InvokeAsync(StateHasChanged);
     }
 
     public class Device : INotifyPropertyChanged
