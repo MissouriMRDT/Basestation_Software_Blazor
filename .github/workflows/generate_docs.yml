@@ -9,6 +9,7 @@ on:
   pull_request:
     branches:
       - "development" 
+      - "documentation"
     # Don't apply gitignore rules, this allows us to push the generated docs.
     paths-ignore:
       - ".gitignore"
