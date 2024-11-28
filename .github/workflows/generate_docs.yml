@@ -6,6 +6,11 @@ on:
   # to the development branch.
   push:
     branches: ["development"]
+  pull_request:
+    branches:
+      - "development" 
+    paths:
+      - ".github/workflows/generate_docs.yaml"
     # Don't apply gitignore rules, this allows us to push the generated docs.
     paths-ignore:
       - ".gitignore"
