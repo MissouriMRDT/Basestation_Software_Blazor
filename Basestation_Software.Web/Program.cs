@@ -32,7 +32,6 @@ builder.Services.AddSingleton<MapTileService>();
 builder.Services.AddHttpClient<ConfigService>();
 builder.Services.AddSingleton<ConfigService>();
 builder.Services.AddSingleton<TaskTimerService>();
-builder.Services.AddSingleton<PingService>();
 
 builder.Services.AddSingleton<RoveCommService>();
 builder.Services.AddHostedService((sp) => sp.GetRequiredService<RoveCommService>());
