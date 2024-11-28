@@ -7,6 +7,13 @@
 *.userosscache
 *.sln.docstates
 
+# Documentation
+docs/*
+!docs/*.md
+!docs/Doxygen
+docs/Doxygen/*
+!docs/Doxygen/resources
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
