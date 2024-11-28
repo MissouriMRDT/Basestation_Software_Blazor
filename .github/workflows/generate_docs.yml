@@ -9,7 +9,6 @@ on:
   pull_request:
     branches:
       - "development" 
-      - "documentation"
     # Don't apply gitignore rules, this allows us to push the generated docs.
     paths-ignore:
       - ".gitignore"
@@ -33,7 +32,7 @@ jobs:
   run-doxygen:
     # Only run this step if the action was triggered automatically and the pull request merged on the development branch.
     # Or, it was triggered manually on the development branch.
-    if: ${{ github.event_name == 'push' || ( github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/development' ) }}
+    if: ${{ github.event_name == 'push' || ( github.event_name == 'workflow_dispatch' && (github.ref == 'refs/heads/development' || github.ref == 'refs/heads/documentation') ) }}
 
     environment:
       name: github-pages
