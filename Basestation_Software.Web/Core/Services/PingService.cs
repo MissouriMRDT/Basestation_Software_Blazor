@@ -7,11 +7,11 @@ namespace Basestation_Software.Web.Core.Services;
 
 public class PingService
 {
-    public async Task<PingReply> PingAsync(string ipAddress)
+    public async Task<PingReply> PingAsync(string ipAddress, int timeout)
     {
         using (var ping = new Ping())
         {
-            var reply = await ping.SendPingAsync(ipAddress, 1000); // 1 second timeout
+            var reply = await ping.SendPingAsync(ipAddress, timeout);
             ping.Dispose();
             return reply;
         }

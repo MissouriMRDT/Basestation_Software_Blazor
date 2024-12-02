@@ -38,6 +38,7 @@
                 </Body>
             </Modal>
 
+            <!-- Ping Delay Field -->
             <div class="row">
                 <div class="col" style="display:flex; flex-grow:0; flex-basis:content; align-items:center">
                     <label>AutoPing Delay (seconds): </label>
@@ -47,6 +48,17 @@
                 </div>
             </div>
 
+            <!-- Ping Timeout Field -->
+            <div class="row">
+                <div class="col" style="display:flex; flex-grow:0; flex-basis:content; align-items:center">
+                    <label>Ping Timeout (seconds): </label>
+                </div>
+                <div class="col" style="">
+                    <RadzenTextBox style="min-width:15%" Value="1" ValueChanged="@((string value) => UpdatePingTimeout(value))"></RadzenTextBox>
+                </div>
+            </div>
+
+            <!-- Autoping All Checkbox -->
             <div class="row">
                 <div class="col" style="display:flex; flex-grow:0; flex-basis:content; align-items:center">
                     <RadzenCheckBox Name="AutoPingAll_CheckBox" TValue="bool" ValueChanged="@((bool value) => AutoPingAll(value))"></RadzenCheckBox>
@@ -120,6 +132,7 @@
     private System.Timers.Timer? autoPingTimer;
 
     private int autoPingDelay = 5000;
+    private int pingTimeout = 1000;
 
     private List<Device> devices = new List<Device> { };
 
@@ -168,7 +181,7 @@
     {
         try
         {
-            PingReply reply = await PingService.PingAsync(ipAddress);
+            PingReply reply = await PingService.PingAsync(ipAddress, pingTimeout);
             device.PingStatus = reply.Status.ToString();
 
             // Set PingStatusHighlight
@@ -254,6 +267,18 @@
         catch
         {
             autoPingDelay = 5000;
+        }
+    }
+
+    private void UpdatePingTimeout(string timeout)
+    {
+        try
+        {
+            pingTimeout = int.Parse(timeout) * 1000;
+        }
+        catch
+        {
+            pingTimeout = 1000;
         }
     }
 
