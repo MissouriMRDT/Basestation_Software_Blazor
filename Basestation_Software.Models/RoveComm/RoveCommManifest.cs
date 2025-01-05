@@ -12,15 +12,15 @@ public static class RoveCommConsts
 
 public enum RoveCommDataType
 {
-    INT8_T = 0,
-    UINT8_T = 1,
-    INT16_T = 2,
+    INT8_T   = 0,
+    UINT8_T  = 1,
+    INT16_T  = 2,
     UINT16_T = 3,
-    INT32_T = 4,
+    INT32_T  = 4,
     UINT32_T = 5,
-    FLOAT = 6,
-    DOUBLE = 7,
-    CHAR = 8,
+    FLOAT    = 6,
+    DOUBLE   = 7,
+    CHAR     = 8,
 }
 
 public class RoveCommBoardDesc
@@ -36,19 +36,9 @@ public class RoveCommBoardDesc
                              IReadOnlyDictionary<string, RoveCommPacketDesc>? errors = null)
     {
         IP = ip;
-        Commands = commands ?? new Dictionary<string, RoveCommPacketDesc>();
+        Commands  = commands  ?? new Dictionary<string, RoveCommPacketDesc>();
         Telemetry = telemetry ?? new Dictionary<string, RoveCommPacketDesc>();
-        Errors = errors ?? new Dictionary<string, RoveCommPacketDesc>();
-    }
-}
-
-public class RoveCommDeviceDesc
-{
-    public string Ip { get; init; }
-
-    public RoveCommDeviceDesc(string ip)
-    {
-        Ip = ip;
+        Errors    = errors    ?? new Dictionary<string, RoveCommPacketDesc>();
     }
 }
 
@@ -63,7 +53,7 @@ public class RoveCommPacketDesc
         DataID = dataId;
         DataCount = dataCount;
         DataType = dataType;
-    }
+    }   
 }
 
 public static class RoveCommManifest
@@ -77,18 +67,6 @@ public static class RoveCommManifest
         public static readonly int INVALID_VERSION = 5;
         public static readonly int NO_DATA = 6;
     }
-
-    public static readonly IReadOnlyDictionary<string, RoveCommDeviceDesc> Devices = new Dictionary<string, RoveCommDeviceDesc>
-    {
-        ["BasestationSwitch"] = new RoveCommDeviceDesc("192.168.254.2"),
-        ["RoverSwitch"] = new RoveCommDeviceDesc("192.168.254.1"),
-        ["Rover900MHzRocket"] = new RoveCommDeviceDesc("10.0.0.3"),
-        ["Basestation900MHzRocket"] = new RoveCommDeviceDesc("10.0.0.4"),
-        ["Rover5GHzRocket"] = new RoveCommDeviceDesc("10.0.0.19"),
-        ["Basestation5GHzRocket"] = new RoveCommDeviceDesc("10.0.0.20"),
-        ["Rover2_4GHzRocket"] = new RoveCommDeviceDesc("10.0.0.11"),
-        ["Basestation2_4GHzRocket"] = new RoveCommDeviceDesc("10.0.0.12"),
-    };
 
     public static readonly IReadOnlyDictionary<string, RoveCommBoardDesc> Boards = new Dictionary<string, RoveCommBoardDesc>
     {
@@ -783,18 +761,25 @@ public static class RoveCommManifest
                     2,
                     RoveCommDataType.DOUBLE
                 ),
-                // [Lat, Lon]
+                // [Lat, Lon, MarkerID, MarkerRadius (meters)]
                 ["AddMarkerLeg"] = new RoveCommPacketDesc
                 (
                     11003,
-                    2,
+                    4,
                     RoveCommDataType.DOUBLE
                 ),
-                // [Lat, Lon]
+                // [Lat, Lon, ObjectRadius, (meters)]
                 ["AddObjectLeg"] = new RoveCommPacketDesc
                 (
                     11004,
-                    2,
+                    3,
+                    RoveCommDataType.DOUBLE
+                ),
+                // [Lat, Lon, ObstacleRadius, (meters)]
+                ["AddObstacle"] = new RoveCommPacketDesc
+                (
+                    11008,
+                    3,
                     RoveCommDataType.DOUBLE
                 ),
                 // 
@@ -943,6 +928,110 @@ public static class RoveCommManifest
             errors: new Dictionary<string, RoveCommPacketDesc>
             {
 
+            }
+        ),
+        ["CameraServer"] = new RoveCommBoardDesc
+        (
+            ip: "192.168.4.102",
+            commands: new Dictionary<string, RoveCommPacketDesc>
+            {
+                // Take a picture with the current camera. [0] is the camera to take a picture with.
+                ["TakePhoto"] = new RoveCommPacketDesc
+                (
+                    14000,
+                    1,
+                    RoveCommDataType.UINT8_T
+                ),
+                // Stop the current camera stream. [0] is the camera to stop streaming. [1] is the action (0 = Shutdown, 1 = Startup, 2 = Restart).
+                ["ToggleStream"] = new RoveCommPacketDesc
+                (
+                    14001,
+                    2,
+                    RoveCommDataType.UINT8_T
+                ),
+                // Adjust brightness level (0-255). [0] is the camera ID, [1] is the brightness level.
+                ["AdjustBrightness"] = new RoveCommPacketDesc
+                (
+                    14002,
+                    2,
+                    RoveCommDataType.UINT8_T
+                ),
+                // Adjust contrast level (0-255). [0] is the camera ID, [1] is the contrast level.
+                ["AdjustContrast"] = new RoveCommPacketDesc
+                (
+                    14003,
+                    2,
+                    RoveCommDataType.UINT8_T
+                ),
+                // Adjust saturation level (0-255). [0] is the camera ID, [1] is the saturation level.
+                ["AdjustSaturation"] = new RoveCommPacketDesc
+                (
+                    14004,
+                    2,
+                    RoveCommDataType.UINT8_T
+                ),
+                // Adjust hue level (0-255). [0] is the camera ID, [1] is the hue level.
+                ["AdjustHue"] = new RoveCommPacketDesc
+                (
+                    14005,
+                    2,
+                    RoveCommDataType.UINT8_T
+                ),
+                // Set white balance temperature. [0] is the camera ID, [1] is the white balance level.
+                ["SetWhiteBalance"] = new RoveCommPacketDesc
+                (
+                    14008,
+                    2,
+                    RoveCommDataType.UINT8_T
+                ),
+                // Adjust backlight contrast level (0-255). [0] is the camera ID, [1] is the backlight contrast level.
+                ["AdjustBacklightContrast"] = new RoveCommPacketDesc
+                (
+                    14009,
+                    2,
+                    RoveCommDataType.UINT8_T
+                ),
+                // Set exposure level. [0] is the camera ID, [1] is the exposure level.
+                ["SetExposure"] = new RoveCommPacketDesc
+                (
+                    14010,
+                    2,
+                    RoveCommDataType.INT32_T
+                )
+            },
+            telemetry: new Dictionary<string, RoveCommPacketDesc>
+            {
+                // Bitmask values for which cameras are able to stream. LSB is Camera 0, MSB is Camera 7.
+                ["AvailableCameras"] = new RoveCommPacketDesc
+                (
+                    14100,
+                    1,
+                    RoveCommDataType.UINT8_T
+                ),
+                // Which cameras the system is currently streaming on each port
+                ["StreamingCameras"] = new RoveCommPacketDesc
+                (
+                    14101,
+                    4,
+                    RoveCommDataType.UINT8_T
+                ),
+                // Picture has been taken.
+                ["PictureTaken1"] = new RoveCommPacketDesc
+                (
+                    14102,
+                    1,
+                    RoveCommDataType.UINT8_T
+                )
+            },
+            errors: new Dictionary<string, RoveCommPacketDesc>
+            {
+                // Camera has errored and stopped streaming. [0] is ID of camera as an integer (not bitmask).
+                ["CameraUnavailable"] = new RoveCommPacketDesc
+                (
+                    14200,
+                    1,
+                    RoveCommDataType.UINT8_T
+                )
             }
         ),
         ["IRSpectrometer"] = new RoveCommBoardDesc
