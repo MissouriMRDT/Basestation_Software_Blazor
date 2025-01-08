@@ -1,6 +1,3 @@
-using System.Net;
-using System.Text.RegularExpressions;
-
 namespace Basestation_Software.Models.Geospatial;
 
 public class GPSWaypointInput
@@ -13,5 +10,6 @@ public class GPSWaypointInput
     public string Timestamp { get; set; } = DateTime.Now.ToString();
     public string WaypointColor { get; set; } = "rgb(0, 0, 0)";
     public double SearchRadius { get; set; } = 0;
+    public int TagID { get; set; } = -1;
     public string Type { get; set; } = "Navigation";
 }
