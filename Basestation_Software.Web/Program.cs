@@ -1,6 +1,5 @@
 using Basestation_Software.Web.Core;
 using Basestation_Software.Web.Core.Services;
-using Basestation_Software.Web.Core.Services.RoveComm;
 using Blazored.Toast;
 using Radzen;
 
@@ -33,10 +32,7 @@ builder.Services.AddHttpClient<ConfigService>();
 builder.Services.AddSingleton<ConfigService>();
 builder.Services.AddSingleton<TaskTimerService>();
 builder.Services.AddSingleton<PingService>();
-
-builder.Services.AddSingleton<RoveCommService>();
-builder.Services.AddHostedService((sp) => sp.GetRequiredService<RoveCommService>());
-
+builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
 
 var app = builder.Build();
