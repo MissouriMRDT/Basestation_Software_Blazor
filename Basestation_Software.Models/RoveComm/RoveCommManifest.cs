@@ -42,6 +42,15 @@ public class RoveCommBoardDesc
     }
 }
 
+public class RoveCommDeviceDesc
+{
+    public string Ip { get; init; }
+
+    public RoveCommDeviceDesc(string ip)
+    {
+        Ip = ip;
+    }
+}
 
 public class RoveCommPacketDesc
 {
@@ -68,6 +77,18 @@ public static class RoveCommManifest
         public static readonly int INVALID_VERSION = 5;
         public static readonly int NO_DATA = 6;
     }
+
+    public static readonly IReadOnlyDictionary<string, RoveCommDeviceDesc> Devices = new Dictionary<string, RoveCommDeviceDesc>
+    {
+        ["BasestationSwitch"] = new RoveCommDeviceDesc("192.168.254.2"),
+        ["RoverSwitch"] = new RoveCommDeviceDesc("192.168.254.1"),
+        ["Rover900MHzRocket"] = new RoveCommDeviceDesc("10.0.0.3"),
+        ["Basestation900MHzRocket"] = new RoveCommDeviceDesc("10.0.0.4"),
+        ["Rover5GHzRocket"] = new RoveCommDeviceDesc("10.0.0.19"),
+        ["Basestation5GHzRocket"] = new RoveCommDeviceDesc("10.0.0.20"),
+        ["Rover2_4GHzRocket"] = new RoveCommDeviceDesc("10.0.0.11"),
+        ["Basestation2_4GHzRocket"] = new RoveCommDeviceDesc("10.0.0.12"),
+    };
 
     public static readonly IReadOnlyDictionary<string, RoveCommBoardDesc> Boards = new Dictionary<string, RoveCommBoardDesc>
     {

@@ -7,6 +7,11 @@ using Radzen;
 #pragma warning disable IDE0211 // Convert to 'Program.Main' style program
 var builder = WebApplication.CreateBuilder(args);
 
+// Configure logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
@@ -27,6 +32,7 @@ builder.Services.AddSingleton<MapTileService>();
 builder.Services.AddHttpClient<ConfigService>();
 builder.Services.AddSingleton<ConfigService>();
 builder.Services.AddSingleton<TaskTimerService>();
+builder.Services.AddSingleton<PingService>();
 
 builder.Services.AddSingleton<RoveCommService>();
 builder.Services.AddHostedService((sp) => sp.GetRequiredService<RoveCommService>());
