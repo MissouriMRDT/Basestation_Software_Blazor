@@ -16,7 +16,8 @@
     </div>
 
     <div class="button-header">
-        <p>Selected: @(_selectedWaypoint != null ? _selectedWaypoint.Name : "None!")</p>
+        <p><b>Selected:</b> @(_selectedWaypoint != null ? _selectedWaypoint.Name : "None!")</p>
+        <div class="color-preview" style="background-color: @_selectedWaypoint?.WaypointColor"></div>
     </div>
 
     <div class="button-container">
