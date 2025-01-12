@@ -6,22 +6,31 @@
     </div>
     <div class="card-body">
 
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.Center">
+            <RadzenText>Max Speed</RadzenText>
+            <RadzenText style="width: 40px">@(_maxSpeed / 10f)%</RadzenText>
+            <RadzenSlider TValue="int" Value=@_maxSpeed Change="@(v => _maxSpeed = v)" Min="0" Max="1000" />
+            <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="SendSpeed">Submit</RadzenButton>
+        </RadzenStack>
         <div class="row-container">
-            <p>Max Speed</p>
-            <p style="width: 6%">@(_maxSpeed / 10f)%</p>
-            <RadzenSlider TValue="int" Value=@_maxSpeed Change="@(v => _maxSpeed = v)" Min="0" Max="1000" style="width:30%;" />
-            <button @onclick="SendSpeed">Submit</button>
+            <RadzenButton ButtonStyle="ButtonStyle.Warning" 
+            Icon=@(_watchdogPanelCollapsed ? "arrow_right" : "arrow_drop_down") 
+            Size="ButtonSize.ExtraSmall" 
+            Click="() => _watchdogPanelCollapsed = !_watchdogPanelCollapsed">
+            </RadzenButton>
+            <hr style="width:100%" />
         </div>
-        <div class="row-container">
-            <button @onclick="() => SetWatchdogMode(0)">Teleop Watchdog</button>
-            <button @onclick="() => SetWatchdogMode(1)">Autonomy Watchdog</button>
-        </div>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.Center" Visible=@(!_watchdogPanelCollapsed)>
+            <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="() => SetWatchdogMode(0)">Teleop Watchdog</RadzenButton>
+            <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="() => SetWatchdogMode(1)">Autonomy Watchdog</RadzenButton>
+        </RadzenStack>
 
     </div>
 </div>
 
 @code {
     private int _maxSpeed = 0;
+    private bool _watchdogPanelCollapsed = true;
 
     private void SendSpeed()
     {

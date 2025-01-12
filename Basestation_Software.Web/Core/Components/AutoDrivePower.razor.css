@@ -6,11 +6,3 @@
     margin-block: 1%;
 }
 
-.row-container * {
-    margin-inline: 2%;
-}
-
-p {
-    vertical-align: middle;
-    margin-block: auto;
-}
