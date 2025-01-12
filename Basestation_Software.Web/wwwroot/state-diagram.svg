@@ -158,7 +158,7 @@
    stroke-linecap="round"
    fill="#ffffff"
    fill-rule="evenodd"
-   id="path3" />
+   id="pathApproachingMarker" />
      <g
    id="g4">
       <text
@@ -230,7 +230,7 @@
    stroke-linecap="round"
    fill="#ffffff"
    fill-rule="evenodd"
-   id="path5" />
+   id="pathApproachingObject" />
      <g
    id="g6">
       <text
@@ -302,7 +302,7 @@
    stroke-linecap="round"
    fill="#ffffff"
    fill-rule="evenodd"
-   id="path7" />
+   id="pathAvoidance" />
      <g
    id="g8">
       <text
@@ -366,7 +366,7 @@
    stroke-linecap="round"
    fill="#ffffff"
    fill-rule="evenodd"
-   id="path9" />
+   id="pathIdle" />
      <g
    id="g10">
       <text
@@ -430,7 +430,7 @@
    stroke-linecap="round"
    fill="#ffffff"
    fill-rule="evenodd"
-   id="path11" />
+   id="pathNavigating" />
      <g
    id="g12">
       <text
@@ -494,7 +494,7 @@
    stroke-linecap="round"
    fill="#ffffff"
    fill-rule="evenodd"
-   id="path13" />
+   id="pathReversing" />
      <g
    id="g14">
       <text
@@ -558,7 +558,7 @@
    stroke-linecap="round"
    fill="#ffffff"
    fill-rule="evenodd"
-   id="path15" />
+   id="pathSearchPattern" />
      <g
    id="g16">
       <text
@@ -622,7 +622,7 @@
    stroke-linecap="round"
    fill="#ffffff"
    fill-rule="evenodd"
-   id="path17" />
+   id="pathStuck" />
      <g
    id="g18">
       <text
@@ -686,7 +686,7 @@
    stroke-linecap="round"
    fill="#ffffff"
    fill-rule="evenodd"
-   id="path19" />
+   id="pathVerifyingMarker" />
      <g
    id="g20">
       <text
@@ -758,7 +758,7 @@
    stroke-linecap="round"
    fill="#ffffff"
    fill-rule="evenodd"
-   id="path21" />
+   id="pathVerifyingObject" />
      <g
    id="g22">
       <text
@@ -830,7 +830,7 @@
    stroke-linecap="round"
    fill="#ffffff"
    fill-rule="evenodd"
-   id="path23" />
+   id="pathVerifyingPosition" />
      <g
    id="g24">
       <text
