@@ -1,0 +1,86 @@
+@implements IDisposable
+@inject GPSWaypointState _GPSWaypointState
+@inject RoveCommService _RoveCommService
+
+<style>
+    .scrollable {
+        max-height: 50vh; 
+        overflow-y: auto;
+        display: block;
+    }
+</style>
+
+<div class="card full-height">
+    <div class="card-header">
+        <h3>Autonomy Controls</h3>
+    </div>
+
+    <div class="button-header">
+        <p><b>Selected:</b> @(_selectedWaypoint != null ? _selectedWaypoint.Name : "None!")</p>
+        <div class="color-preview" style="background-color: @_selectedWaypoint?.WaypointColor"></div>
+    </div>
+
+    <div class="button-container">
+        <button @onclick=StartAutonomy>Start Autonomy</button>
+        <button @onclick=StopAutonomy>Stop Autonomy</button>
+        <button @onclick=ClearWaypoints>Add Position Leg</button>
+        <button @onclick=AddPositionLeg>Add Marker Leg</button>
+        <button @onclick=AddObjectLeg>Add Object Leg</button>
+        <button @onclick=ClearWaypoints>Clear Waypoints</button>
+    </div>
+
+</div>
+
+@code
+{
+    private GPSWaypointInput? _selectedWaypoint = null;
+
+    void StartAutonomy()
+    {
+        _ = _RoveCommService.SendAsync<int>("Autonomy", "StartAutonomy", [0]);
+    }
+
+    void StopAutonomy()
+    {
+        _ = _RoveCommService.SendAsync<int>("Autonomy", "StopAutonomy", [0]);
+    }
+
+    void ClearWaypoints()
+    {
+        _ = _RoveCommService.SendAsync<int>("Autonomy", "ClearWaypoints", [0]);
+    }
+
+    void AddPositionLeg()
+    {
+        if (_selectedWaypoint != null) 
+            _ = _RoveCommService.SendAsync<string>("Autonomy", "AddPositionLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude]);
+    }
+
+    void AddMarkerLeg()
+    {
+        if (_selectedWaypoint != null)
+            _ = _RoveCommService.SendAsync<string>("Autonomy", "AddMarkerLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude]);
+    }
+
+    void AddObjectLeg()
+    {
+        if (_selectedWaypoint != null) 
+            _ = _RoveCommService.SendAsync<string>("Autonomy", "AddObjectLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude]);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _GPSWaypointState.SubscribeToWaypointChanged(OnWaypointChanged);
+    }
+
+    private void OnWaypointChanged(List<GPSWaypointInput> waypoints)
+    {
+        _selectedWaypoint = waypoints[0];
+        StateHasChanged();
+    }
+
+    void IDisposable.Dispose()
+    {
+
+    }
+}

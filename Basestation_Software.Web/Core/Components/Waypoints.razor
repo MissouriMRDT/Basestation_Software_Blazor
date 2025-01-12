@@ -1,5 +1,6 @@
 @implements IDisposable
 @inject GPSWaypointService _GPSWaypointService
+@inject GPSWaypointState _GPSWaypointState
 
 <div class="card h-100">
     <div class="card-header">
@@ -549,6 +550,7 @@
         {
             // Add the waypoint input to the selected list.
             _selectedWaypoints.Add(args.Data);
+            _GPSWaypointState.SelectedWaypoints = (List<GPSWaypointInput>) _selectedWaypoints;
         }
     }
 

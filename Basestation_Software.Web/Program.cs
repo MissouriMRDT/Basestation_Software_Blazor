@@ -1,5 +1,7 @@
 using Basestation_Software.Web.Core;
 using Basestation_Software.Web.Core.Services;
+using Basestation_Software.Web.Core.Services.RoveComm;
+using Basestation_Software.Web.Core.Services.States;
 using Blazored.Toast;
 using Radzen;
 
@@ -26,6 +28,7 @@ builder.Services.AddRadzenComponents();
 builder.Services.AddScoped<CookieService>();
 builder.Services.AddHttpClient<GPSWaypointService>();
 builder.Services.AddSingleton<GPSWaypointService>();
+builder.Services.AddScoped<GPSWaypointState>();
 builder.Services.AddHttpClient<MapTileService>();
 builder.Services.AddSingleton<MapTileService>();
 builder.Services.AddHttpClient<ConfigService>();
