@@ -8,7 +8,7 @@
 
         <div class="row-container">
             <p>Max Speed</p>
-            <p style="width: 8%">@(_maxSpeed / 10f)%</p>
+            <p style="width: 6%">@(_maxSpeed / 10f)%</p>
             <RadzenSlider TValue="int" Value=@_maxSpeed Change="@(v => _maxSpeed = v)" Min="0" Max="1000" style="width:30%;" />
             <button @onclick="SendSpeed">Submit</button>
         </div>

@@ -2,10 +2,12 @@
     display: flex;
     align-content: center;
     align-items: center;
-    gap: normal;
-    justify-content: space-evenly;
-
+    justify-content: center;
     margin-block: 1%;
+}
+
+.row-container * {
+    margin-inline: 2%;
 }
 
 p {
