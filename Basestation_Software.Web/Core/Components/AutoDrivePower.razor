@@ -8,18 +8,28 @@
 
         <div class="row-container">
             <p>Max Speed</p>
-            <p>0%</p>
-            <RadzenSlider TValue="int" Min="0" Max="1000" style="width:30%;"/>
-            <button>Submit</button>
+            <p style="width: 8%">@(_maxSpeed / 10f)%</p>
+            <RadzenSlider TValue="int" Value=@_maxSpeed Change="@(v => _maxSpeed = v)" Min="0" Max="1000" style="width:30%;" />
+            <button @onclick="SendSpeed">Submit</button>
         </div>
         <div class="row-container">
-            <button>Teleop Watchdog</button>
-            <button>Autonomy Watchdog</button>
+            <button @onclick="() => SetWatchdogMode(0)">Teleop Watchdog</button>
+            <button @onclick="() => SetWatchdogMode(1)">Autonomy Watchdog</button>
         </div>
 
     </div>
 </div>
 
 @code {
+    private int _maxSpeed = 0;
 
+    private void SendSpeed()
+    {
+        _ = _RoveCommService.SendAsync<float>("Autonomy", "SetMaxSpeed", [_maxSpeed / 1000f]);
+    }
+
+    private void SetWatchdogMode(byte mode)
+    {
+        _ = _RoveCommService.SendAsync<byte>("Autonomy", "SetWatchdogMode", [mode]);
+    }
 }
