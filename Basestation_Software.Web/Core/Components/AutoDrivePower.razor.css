@@ -1,0 +1,14 @@
+﻿.row-container {
+    display: flex;
+    align-content: center;
+    align-items: center;
+    gap: normal;
+    justify-content: space-evenly;
+
+    margin-block: 1%;
+}
+
+p {
+    vertical-align: middle;
+    margin-block: auto;
+}

@@ -1,0 +1,25 @@
+﻿@inject RoveCommService _RoveCommService
+
+<div class="card full-height">
+    <div class="card-header">
+        <h3>Autonomy Drive Power</h3>
+    </div>
+    <div class="card-body">
+
+        <div class="row-container">
+            <p>Max Speed</p>
+            <p>0%</p>
+            <RadzenSlider TValue="int" Min="0" Max="1000" style="width:30%;"/>
+            <button>Submit</button>
+        </div>
+        <div class="row-container">
+            <button>Teleop Watchdog</button>
+            <button>Autonomy Watchdog</button>
+        </div>
+
+    </div>
+</div>
+
+@code {
+
+}
