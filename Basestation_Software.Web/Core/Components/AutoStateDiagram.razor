@@ -1,6 +1,5 @@
-﻿@inject RoveCommService _RoveCommService
-@* @using Blazor.Diagrams.Components
-@using Blazor.Diagrams
+﻿@using System.Xml.Linq
+@inject RoveCommService _RoveCommService
 
 <!-- Setting up style and scripts for the diagram -->
 <html>
@@ -22,102 +21,103 @@
         <h3>Autonomy State Diagram</h3>
     </div>
     <div class="card-body">
-        <b> hi</b>
-        <!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=5,IE=9" ><![endif]-->
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>AutonomyStateDiagram</title>
-            <meta charset="utf-8" />
-        </head>
-        <body>
-            <div class="mxgraph" style="max-width:100%;border:1px solid transparent;" data-mxgraph="{&quot;highlight&quot;:&quot;#0000ff&quot;,&quot;nav&quot;:true,&quot;resize&quot;:true,&quot;toolbar&quot;:&quot;zoom layers tags lightbox&quot;,&quot;edit&quot;:&quot;_blank&quot;,&quot;xml&quot;:&quot;&lt;mxfile host=\&quot;app.diagrams.net\&quot; agent=\&quot;Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36\&quot; version=\&quot;24.8.6\&quot;&gt;\n  &lt;diagram id=\&quot;C5RBs43oDa-KdzZeNtuy\&quot; name=\&quot;Page-1\&quot;&gt;\n    &lt;mxGraphModel dx=\&quot;1313\&quot; dy=\&quot;754\&quot; grid=\&quot;1\&quot; gridSize=\&quot;10\&quot; guides=\&quot;1\&quot; tooltips=\&quot;1\&quot; connect=\&quot;1\&quot; arrows=\&quot;1\&quot; fold=\&quot;1\&quot; page=\&quot;1\&quot; pageScale=\&quot;1\&quot; pageWidth=\&quot;1169\&quot; pageHeight=\&quot;827\&quot; background=\&quot;#ffffff\&quot; math=\&quot;0\&quot; shadow=\&quot;0\&quot;&gt;\n      &lt;root&gt;\n        &lt;mxCell id=\&quot;WIyWlLk6GJQsqaUBKTNV-0\&quot; /&gt;\n        &lt;mxCell id=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-0\&quot; /&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-17\&quot; style=\&quot;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot; target=\&quot;fkTWrpe8VRmAe4qJjBuM-1\&quot;&gt;\n          &lt;mxGeometry relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;557\&quot; y=\&quot;70\&quot; as=\&quot;sourcePoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-0\&quot; value=\&quot;\&quot; style=\&quot;rounded=1;whiteSpace=wrap;html=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;527\&quot; y=\&quot;10\&quot; width=\&quot;120\&quot; height=\&quot;60\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-21\&quot; style=\&quot;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot; source=\&quot;fkTWrpe8VRmAe4qJjBuM-1\&quot;&gt;\n          &lt;mxGeometry relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;617\&quot; y=\&quot;70\&quot; as=\&quot;targetPoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-22\&quot; style=\&quot;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot; source=\&quot;fkTWrpe8VRmAe4qJjBuM-1\&quot; target=\&quot;fkTWrpe8VRmAe4qJjBuM-4\&quot;&gt;\n          &lt;mxGeometry relative=\&quot;1\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-1\&quot; value=\&quot;\&quot; style=\&quot;rounded=1;whiteSpace=wrap;html=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;527\&quot; y=\&quot;140\&quot; width=\&quot;120\&quot; height=\&quot;60\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-2\&quot; value=\&quot;\&quot; style=\&quot;rounded=1;whiteSpace=wrap;html=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;936\&quot; y=\&quot;180\&quot; width=\&quot;120\&quot; height=\&quot;60\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-23\&quot; style=\&quot;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot; source=\&quot;fkTWrpe8VRmAe4qJjBuM-3\&quot; target=\&quot;fkTWrpe8VRmAe4qJjBuM-12\&quot;&gt;\n          &lt;mxGeometry relative=\&quot;1\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-3\&quot; value=\&quot;\&quot; style=\&quot;rounded=1;whiteSpace=wrap;html=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;149\&quot; y=\&quot;140\&quot; width=\&quot;120\&quot; height=\&quot;60\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-24\&quot; style=\&quot;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot; source=\&quot;fkTWrpe8VRmAe4qJjBuM-4\&quot; target=\&quot;fkTWrpe8VRmAe4qJjBuM-5\&quot;&gt;\n          &lt;mxGeometry relative=\&quot;1\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-4\&quot; value=\&quot;\&quot; style=\&quot;rhombus;whiteSpace=wrap;html=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;547\&quot; y=\&quot;260\&quot; width=\&quot;80\&quot; height=\&quot;80\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-25\&quot; style=\&quot;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot; source=\&quot;fkTWrpe8VRmAe4qJjBuM-5\&quot; target=\&quot;fkTWrpe8VRmAe4qJjBuM-6\&quot;&gt;\n          &lt;mxGeometry relative=\&quot;1\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-5\&quot; value=\&quot;\&quot; style=\&quot;rounded=1;whiteSpace=wrap;html=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;527\&quot; y=\&quot;430\&quot; width=\&quot;120\&quot; height=\&quot;60\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-6\&quot; value=\&quot;\&quot; style=\&quot;rhombus;whiteSpace=wrap;html=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;547\&quot; y=\&quot;570\&quot; width=\&quot;80\&quot; height=\&quot;80\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-7\&quot; value=\&quot;\&quot; style=\&quot;rhombus;whiteSpace=wrap;html=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;310\&quot; y=\&quot;225\&quot; width=\&quot;80\&quot; height=\&quot;80\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-8\&quot; value=\&quot;\&quot; style=\&quot;rounded=1;whiteSpace=wrap;html=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;831\&quot; y=\&quot;350\&quot; width=\&quot;120\&quot; height=\&quot;60\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-9\&quot; value=\&quot;\&quot; style=\&quot;rounded=1;whiteSpace=wrap;html=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;745\&quot; y=\&quot;500\&quot; width=\&quot;120\&quot; height=\&quot;60\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-10\&quot; value=\&quot;\&quot; style=\&quot;rounded=1;whiteSpace=wrap;html=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;674\&quot; y=\&quot;700\&quot; width=\&quot;120\&quot; height=\&quot;60\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-11\&quot; value=\&quot;\&quot; style=\&quot;rounded=1;whiteSpace=wrap;html=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;372\&quot; y=\&quot;700\&quot; width=\&quot;120\&quot; height=\&quot;60\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-26\&quot; style=\&quot;edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot; source=\&quot;fkTWrpe8VRmAe4qJjBuM-12\&quot; target=\&quot;fkTWrpe8VRmAe4qJjBuM-13\&quot;&gt;\n          &lt;mxGeometry relative=\&quot;1\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-12\&quot; value=\&quot;\&quot; style=\&quot;rounded=1;whiteSpace=wrap;html=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;149\&quot; y=\&quot;430\&quot; width=\&quot;120\&quot; height=\&quot;60\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-13\&quot; value=\&quot;\&quot; style=\&quot;rhombus;whiteSpace=wrap;html=1;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;169\&quot; y=\&quot;560\&quot; width=\&quot;80\&quot; height=\&quot;80\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-38\&quot; value=\&quot;\&quot; style=\&quot;endArrow=none;html=1;rounded=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry width=\&quot;50\&quot; height=\&quot;50\&quot; relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;734\&quot; y=\&quot;209.5\&quot; as=\&quot;sourcePoint\&quot; /&gt;\n            &lt;mxPoint x=\&quot;814\&quot; y=\&quot;209.5\&quot; as=\&quot;targetPoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-39\&quot; value=\&quot;\&quot; style=\&quot;endArrow=none;html=1;rounded=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot; source=\&quot;fkTWrpe8VRmAe4qJjBuM-4\&quot;&gt;\n          &lt;mxGeometry width=\&quot;50\&quot; height=\&quot;50\&quot; relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;634\&quot; y=\&quot;300\&quot; as=\&quot;sourcePoint\&quot; /&gt;\n            &lt;mxPoint x=\&quot;874\&quot; y=\&quot;300\&quot; as=\&quot;targetPoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-40\&quot; value=\&quot;\&quot; style=\&quot;endArrow=none;html=1;rounded=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry width=\&quot;50\&quot; height=\&quot;50\&quot; relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;714\&quot; y=\&quot;470\&quot; as=\&quot;sourcePoint\&quot; /&gt;\n            &lt;mxPoint x=\&quot;714\&quot; y=\&quot;700\&quot; as=\&quot;targetPoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-41\&quot; value=\&quot;\&quot; style=\&quot;endArrow=none;html=1;rounded=0;entryX=0.417;entryY=-0.001;entryDx=0;entryDy=0;entryPerimeter=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry width=\&quot;50\&quot; height=\&quot;50\&quot; relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;733\&quot; y=\&quot;40\&quot; as=\&quot;sourcePoint\&quot; /&gt;\n            &lt;mxPoint x=\&quot;733.0399999999995\&quot; y=\&quot;699.94\&quot; as=\&quot;targetPoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-42\&quot; value=\&quot;\&quot; style=\&quot;endArrow=none;html=1;rounded=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry width=\&quot;50\&quot; height=\&quot;50\&quot; relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;834\&quot; y=\&quot;560\&quot; as=\&quot;sourcePoint\&quot; /&gt;\n            &lt;mxPoint x=\&quot;834\&quot; y=\&quot;740\&quot; as=\&quot;targetPoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-43\&quot; value=\&quot;&amp;lt;font style=&amp;quot;font-size: 16px;&amp;quot;&amp;gt;Stuck&amp;lt;/font&amp;gt;\&quot; style=\&quot;text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;168\&quot; y=\&quot;145\&quot; width=\&quot;81\&quot; height=\&quot;50\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-44\&quot; value=\&quot;&amp;lt;font style=&amp;quot;font-size: 16px;&amp;quot;&amp;gt;Idle&amp;lt;/font&amp;gt;\&quot; style=\&quot;text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;555\&quot; y=\&quot;25\&quot; width=\&quot;60\&quot; height=\&quot;30\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-45\&quot; value=\&quot;&amp;lt;font style=&amp;quot;font-size: 16px;&amp;quot;&amp;gt;Search Patterm&amp;lt;/font&amp;gt;\&quot; style=\&quot;text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;527\&quot; y=\&quot;445\&quot; width=\&quot;123\&quot; height=\&quot;30\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-46\&quot; value=\&quot;&amp;lt;font style=&amp;quot;font-size: 16px;&amp;quot;&amp;gt;Navigating&amp;lt;/font&amp;gt;\&quot; style=\&quot;text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;555\&quot; y=\&quot;155\&quot; width=\&quot;60\&quot; height=\&quot;30\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-47\&quot; value=\&quot;&amp;lt;font style=&amp;quot;font-size: 16px;&amp;quot;&amp;gt;Verifying GPS&amp;lt;/font&amp;gt;\&quot; style=\&quot;text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;942\&quot; y=\&quot;195\&quot; width=\&quot;110\&quot; height=\&quot;30\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-48\&quot; value=\&quot;&amp;lt;font style=&amp;quot;font-size: 16px;&amp;quot;&amp;gt;Reversing&amp;lt;/font&amp;gt;\&quot; style=\&quot;text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;174\&quot; y=\&quot;445\&quot; width=\&quot;60\&quot; height=\&quot;30\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-49\&quot; value=\&quot;&amp;lt;font style=&amp;quot;font-size: 16px;&amp;quot;&amp;gt;Approaching Marker&amp;lt;/font&amp;gt;\&quot; style=\&quot;text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;402\&quot; y=\&quot;715\&quot; width=\&quot;60\&quot; height=\&quot;30\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-50\&quot; value=\&quot;&amp;lt;font style=&amp;quot;font-size: 16px;&amp;quot;&amp;gt;Approaching Object&amp;lt;/font&amp;gt;\&quot; style=\&quot;text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;704\&quot; y=\&quot;717\&quot; width=\&quot;60\&quot; height=\&quot;30\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-51\&quot; value=\&quot;&amp;lt;font style=&amp;quot;font-size: 16px;&amp;quot;&amp;gt;Verfiying Object&amp;lt;/font&amp;gt;\&quot; style=\&quot;text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;746\&quot; y=\&quot;518\&quot; width=\&quot;120\&quot; height=\&quot;30\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-52\&quot; value=\&quot;&amp;lt;font style=&amp;quot;font-size: 16px;&amp;quot;&amp;gt;Verifying Marker&amp;lt;/font&amp;gt;\&quot; style=\&quot;text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;822\&quot; y=\&quot;365\&quot; width=\&quot;140\&quot; height=\&quot;30\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-54\&quot; value=\&quot;\&quot; style=\&quot;endArrow=classic;html=1;rounded=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry width=\&quot;50\&quot; height=\&quot;50\&quot; relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;210\&quot; y=\&quot;746\&quot; as=\&quot;sourcePoint\&quot; /&gt;\n            &lt;mxPoint x=\&quot;369\&quot; y=\&quot;746.37\&quot; as=\&quot;targetPoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-55\&quot; value=\&quot;\&quot; style=\&quot;endArrow=classic;html=1;rounded=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry width=\&quot;50\&quot; height=\&quot;50\&quot; relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;510\&quot; y=\&quot;742\&quot; as=\&quot;sourcePoint\&quot; /&gt;\n            &lt;mxPoint x=\&quot;670\&quot; y=\&quot;742\&quot; as=\&quot;targetPoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-56\&quot; value=\&quot;\&quot; style=\&quot;endArrow=classic;html=1;rounded=0;entryX=-0.067;entryY=0.308;entryDx=0;entryDy=0;entryPerimeter=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry width=\&quot;50\&quot; height=\&quot;50\&quot; relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;348\&quot; y=\&quot;718\&quot; as=\&quot;sourcePoint\&quot; /&gt;\n            &lt;mxPoint x=\&quot;371.9599999999998\&quot; y=\&quot;718.48\&quot; as=\&quot;targetPoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-57\&quot; value=\&quot;\&quot; style=\&quot;endArrow=none;html=1;rounded=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry width=\&quot;50\&quot; height=\&quot;50\&quot; relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;350\&quot; y=\&quot;720\&quot; as=\&quot;sourcePoint\&quot; /&gt;\n            &lt;mxPoint x=\&quot;350\&quot; y=\&quot;305\&quot; as=\&quot;targetPoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-58\&quot; value=\&quot;\&quot; style=\&quot;endArrow=none;html=1;rounded=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry width=\&quot;50\&quot; height=\&quot;50\&quot; relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;209.37\&quot; y=\&quot;750\&quot; as=\&quot;sourcePoint\&quot; /&gt;\n            &lt;mxPoint x=\&quot;209.37\&quot; y=\&quot;640\&quot; as=\&quot;targetPoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-59\&quot; value=\&quot;\&quot; style=\&quot;endArrow=classic;html=1;rounded=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry width=\&quot;50\&quot; height=\&quot;50\&quot; relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;234\&quot; y=\&quot;360\&quot; as=\&quot;sourcePoint\&quot; /&gt;\n            &lt;mxPoint x=\&quot;234\&quot; y=\&quot;430\&quot; as=\&quot;targetPoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-60\&quot; value=\&quot;\&quot; style=\&quot;endArrow=none;html=1;rounded=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry width=\&quot;50\&quot; height=\&quot;50\&quot; relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;235\&quot; y=\&quot;361\&quot; as=\&quot;sourcePoint\&quot; /&gt;\n            &lt;mxPoint x=\&quot;350\&quot; y=\&quot;361\&quot; as=\&quot;targetPoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-61\&quot; value=\&quot;\&quot; style=\&quot;endArrow=classic;html=1;rounded=0;exitX=0.25;exitY=0;exitDx=0;exitDy=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot; source=\&quot;fkTWrpe8VRmAe4qJjBuM-12\&quot;&gt;\n          &lt;mxGeometry width=\&quot;50\&quot; height=\&quot;50\&quot; relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;180\&quot; y=\&quot;410\&quot; as=\&quot;sourcePoint\&quot; /&gt;\n            &lt;mxPoint x=\&quot;180\&quot; y=\&quot;200\&quot; as=\&quot;targetPoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-62\&quot; value=\&quot;&amp;lt;span style=&amp;quot;background-color: rgb(255, 255, 255);&amp;quot;&amp;gt;Stuck&amp;lt;/span&amp;gt;\&quot; style=\&quot;text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;148\&quot; y=\&quot;285\&quot; width=\&quot;60\&quot; height=\&quot;30\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-63\&quot; value=\&quot;&amp;lt;span style=&amp;quot;background-color: rgb(255, 255, 255);&amp;quot;&amp;gt;Reverse&amp;lt;/span&amp;gt;\&quot; style=\&quot;text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;185\&quot; y=\&quot;327\&quot; width=\&quot;60\&quot; height=\&quot;30\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-64\&quot; value=\&quot;&amp;lt;span style=&amp;quot;background-color: rgb(255, 255, 255);&amp;quot;&amp;gt;Reversing&amp;lt;/span&amp;gt;\&quot; style=\&quot;text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;211\&quot; y=\&quot;392\&quot; width=\&quot;60\&quot; height=\&quot;30\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-65\&quot; value=\&quot;\&quot; style=\&quot;endArrow=classic;html=1;rounded=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry width=\&quot;50\&quot; height=\&quot;50\&quot; relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;240\&quot; y=\&quot;264\&quot; as=\&quot;sourcePoint\&quot; /&gt;\n            &lt;mxPoint x=\&quot;309\&quot; y=\&quot;264.38\&quot; as=\&quot;targetPoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-66\&quot; value=\&quot;\&quot; style=\&quot;endArrow=none;html=1;rounded=0;entryX=0.901;entryY=1.13;entryDx=0;entryDy=0;entryPerimeter=0;\&quot; edge=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot; target=\&quot;fkTWrpe8VRmAe4qJjBuM-43\&quot;&gt;\n          &lt;mxGeometry width=\&quot;50\&quot; height=\&quot;50\&quot; relative=\&quot;1\&quot; as=\&quot;geometry\&quot;&gt;\n            &lt;mxPoint x=\&quot;240\&quot; y=\&quot;265\&quot; as=\&quot;sourcePoint\&quot; /&gt;\n            &lt;mxPoint x=\&quot;240\&quot; y=\&quot;215\&quot; as=\&quot;targetPoint\&quot; /&gt;\n          &lt;/mxGeometry&gt;\n        &lt;/mxCell&gt;\n        &lt;mxCell id=\&quot;fkTWrpe8VRmAe4qJjBuM-67\&quot; value=\&quot;&amp;lt;span style=&amp;quot;background-color: rgb(255, 255, 255);&amp;quot;&amp;gt;Unstuck&amp;lt;/span&amp;gt;\&quot; style=\&quot;text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;\&quot; vertex=\&quot;1\&quot; parent=\&quot;WIyWlLk6GJQsqaUBKTNV-1\&quot;&gt;\n          &lt;mxGeometry x=\&quot;213\&quot; y=\&quot;230\&quot; width=\&quot;60\&quot; height=\&quot;30\&quot; as=\&quot;geometry\&quot; /&gt;\n        &lt;/mxCell&gt;\n      &lt;/root&gt;\n    &lt;/mxGraphModel&gt;\n  &lt;/diagram&gt;\n&lt;/mxfile&gt;\n&quot;}"></div>
-            <script type="text/javascript" src="https://viewer.diagrams.net/js/viewer-static.min.js"></script>
-        </body>
-    </html>
-        <div class="diagram-container">
-            <CascadingValue Value="Diagram" IsFixed="true">
-                <DiagramCanvas></DiagramCanvas>
-            </CascadingValue>
 
-        </div>
-
-        
-        @*insert the state diagram here
+        <svg style="width:100%; height:800px" preserveAspectRatio="xMidYMax meet">
+            @AsMarkupString(diagramRoot)
+        </svg>
 
     </div>
 </div>
-*@
 
 @code {
 
-    byte currState = 0;
+    private byte _currState = 0;
+    XElement? diagramRoot;
+    XElement? idleBox;
+
+    // Helper function to get displayable XML of an XElement
+    private MarkupString AsMarkupString(XElement el)
+    {
+        return (MarkupString)Regex.Replace(el.ToString(), "svg:", String.Empty);
+    }
 
     protected override async Task OnInitializedAsync()
     {
-    _RoveCommService.On<byte>("Autonomy", "CurrentState", async (packet) =>
-    {
-        currState = packet.Data[0];
-        switch (currState)
+        // Load auto diagram as XElement
+        string diagramFilePath = "wwwroot/state-diagram.svg";
+        diagramRoot = XElement.Load(diagramFilePath);
+
+        // idleBox = (
+        //     from el in diagramRoot.Descendants()
+        //     where el.Attribute("id")?.Value == "path9"
+        //     select el
+        //     ).FirstOrDefault();
+
+        // idleBox?.SetAttributeValue("fill", "#00ff00");
+
+        _RoveCommService.On<byte>("Autonomy", "CurrentState", async (packet) =>
         {
-            case 0:
-                {
-                    //Idle
-                    break;
-                }
-            case 1:
-                {
-                    //Navigating
-                    break;
-                }
-            case 2:
-                {
-                    //Search Pattern
-                    break;
-                }
-            case 3:
-                {
-                    //Approaching Marker
-                    break;
-                }
-            case 4:
-                {
-                    //Approaching Object
-                    break;
-                }
-            case 5:
-                {
-                    //Verifying GPS
-                    break;
-                }
-            case 6:
-                {
-                    //Verifying Marker
-                    break;
-                }
-            case 7:
-                {
-                    //Verifying Object
-                    break;
-                }
-            case 8:
-                {
-                    //Avoidance
-                    break;
-                }
-            case 9:
-                {
-                    //Reversing
-                    break;
-                }
-            case 10:
-                {
-                    //Stuck
-                    break;
-                }
-        }
-        await InvokeAsync(StateHasChanged);
-    });
+            _currState = packet.Data[0];
+            switch (_currState)
+            {
+                case 0:
+                    {
+                        //Idle
+                        break;
+                    }
+                case 1:
+                    {
+                        //Navigating
+                        break;
+                    }
+                case 2:
+                    {
+                        //Search Pattern
+                        break;
+                    }
+                case 3:
+                    {
+                        //Approaching Marker
+                        break;
+                    }
+                case 4:
+                    {
+                        //Approaching Object
+                        break;
+                    }
+                case 5:
+                    {
+                        //Verifying GPS
+                        break;
+                    }
+                case 6:
+                    {
+                        //Verifying Marker
+                        break;
+                    }
+                case 7:
+                    {
+                        //Verifying Object
+                        break;
+                    }
+                case 8:
+                    {
+                        //Avoidance
+                        break;
+                    }
+                case 9:
+                    {
+                        //Reversing
+                        break;
+                    }
+                case 10:
+                    {
+                        //Stuck
+                        break;
+                    }
+            }
+            await InvokeAsync(StateHasChanged);
+        });
     }
 
 
