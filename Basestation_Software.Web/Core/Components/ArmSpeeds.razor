@@ -1,0 +1,22 @@
+@inject RoveCommService _RoveCommService
+@inject ArmSpeedState _ArmSpeedState
+
+<div class="card full-height">
+    <div class="card-header">
+        <h3>Arm Speeds</h3>
+    </div>
+    <div class="card-body">
+        @foreach(string joint in _ArmSpeedState.ArmSpeeds.Keys)
+        {
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center">
+                <RadzenText TextAlign="TextAlign.Right" Style="width: 80px">@joint</RadzenText>
+                <RadzenSlider TValue="int" Min="0" Max="1000" Style="width:30%" @bind-value=@_ArmSpeedState.ArmSpeeds[joint]> </RadzenSlider>
+                <RadzenNumeric TValue="int" Min="0" Max="1000" @bind-value=@_ArmSpeedState.ArmSpeeds[joint] ></RadzenNumeric>
+            </RadzenStack>
+        }
+    </div>
+</div>
+
+@code {
+    
+}
