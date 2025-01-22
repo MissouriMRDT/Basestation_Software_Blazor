@@ -1,6 +1,5 @@
 ﻿@implements IDisposable
 @inject Toolbelt.Blazor.Gamepad.GamepadList _GamepadList
-@inject IJSRuntime _IJSRuntime
 
 <button @onclick=@(async _ => Gamepads = await _GamepadList.GetGamepadsAsync())>Update</button>
 <select @onchange="ChangeHandler">
@@ -23,10 +22,6 @@
     private IReadOnlyList<Toolbelt.Blazor.Gamepad.Gamepad> Gamepads = new List<Toolbelt.Blazor.Gamepad.Gamepad>();
     private Dictionary<int, bool> LastPressed = new Dictionary<int, bool>();
     public Toolbelt.Blazor.Gamepad.Gamepad? SelectedGamepad { get; private set; }
-
-    protected override void OnInitialized()
-    {
-    }
 
     // Returns true if the button is pressed now and wasn't the last time this was called.
     public bool SoftwareDebounce(int buttonIndex)
