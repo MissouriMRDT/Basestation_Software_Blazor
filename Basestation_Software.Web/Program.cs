@@ -1,12 +1,17 @@
 using Basestation_Software.Web.Core;
 using Basestation_Software.Web.Core.Services;
-using Basestation_Software.Web.Core.Services.RoveComm;
+using Basestation_Software.Web.Core.Services.States;
 using Blazored.Toast;
 using Radzen;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
 
 #pragma warning disable IDE0211 // Convert to 'Program.Main' style program
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure logging
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -24,15 +29,14 @@ builder.Services.AddGamepadList();
 builder.Services.AddScoped<CookieService>();
 builder.Services.AddHttpClient<GPSWaypointService>();
 builder.Services.AddSingleton<GPSWaypointService>();
+builder.Services.AddScoped<GPSWaypointState>();
 builder.Services.AddHttpClient<MapTileService>();
 builder.Services.AddSingleton<MapTileService>();
 builder.Services.AddHttpClient<ConfigService>();
 builder.Services.AddSingleton<ConfigService>();
 builder.Services.AddSingleton<TaskTimerService>();
-
-builder.Services.AddSingleton<RoveCommService>();
-builder.Services.AddHostedService((sp) => sp.GetRequiredService<RoveCommService>());
-
+builder.Services.AddSingleton<PingService>();
+builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
 
 var app = builder.Build();

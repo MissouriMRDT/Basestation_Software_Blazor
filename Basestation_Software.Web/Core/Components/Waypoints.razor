@@ -1,5 +1,6 @@
 @implements IDisposable
 @inject GPSWaypointService _GPSWaypointService
+@inject GPSWaypointState _GPSWaypointState
 
 <div class="card h-100">
     <div class="card-header">
@@ -8,8 +9,12 @@
                 <h3>Waypoints</h3>
                 <div class="vr">&nbsp;</div>
                     <RadzenButton ButtonStyle="ButtonStyle.Dark" Text="New Waypoint" Click="@InsertRow" />
+                    
             </div>
             <div class ="col-6 d-flex justify-content-end">
+                <RadzenCheckBox TValue="bool" @bind-Value="@_showTagIDs" Name="TagIDVisToggle"></RadzenCheckBox>
+                <RadzenLabel Text="Show Tag IDs" Component="TagIdVisToggle" />
+
                 @if (_waypointsToUpdate.Count > 0 || _waypointsToInsert.Count > 0)
                 {
                     <div class="vr">&nbsp;</div>
@@ -82,6 +87,14 @@
                             <RadzenNumeric Name="SearchRadius" @bind-Value="waypoint.SearchRadius" class="form-control form-control-sm" style="z-index: 0;" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
+                    <RadzenDataGridColumn Property="TagID" Title="Tag ID" Visible=@_showTagIDs>
+                        <Template Context="waypoint">
+                            @waypoint.TagID
+                        </Template>
+                        <EditTemplate Context="waypoint">
+                            <RadzenNumeric Name="TagID" @bind-Value="waypoint.TagID" class="form-control form-control-sm" style="z-index: 0;" />
+                        </EditTemplate>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn Property="WaypointColor" Title="Color">
                         <Template Context="waypoint">
                         </Template>
@@ -117,6 +130,7 @@
     private List<GPSWaypointInput> _waypointsToUpdate = new List<GPSWaypointInput>();
     // Flags.
     private bool _dataLoaded = false;
+    private bool _showTagIDs = true;
 
     protected override void OnInitialized()
     {
@@ -192,6 +206,7 @@
                 Timestamp = DateTime.Parse(waypoint.Timestamp),
                 WaypointColor = ConvertRgbStringToColor(waypoint.WaypointColor).ToArgb(),
                 SearchRadius = waypoint.SearchRadius,
+                TagID = waypoint.TagID,
                 Type = (WaypointType)Enum.Parse(typeof(WaypointType), waypoint.Type)
             };
 
@@ -220,6 +235,7 @@
                 Timestamp = waypoint.Timestamp.ToString() ?? DateTime.MinValue.ToString(),
                 WaypointColor = colorString,
                 SearchRadius = waypoint.SearchRadius ?? 0,
+                TagID = waypoint.TagID ?? -1,
                 Type = waypoint.Type.ToString() ?? WaypointType.Navigation.ToString()
             };
 
@@ -534,6 +550,7 @@
         {
             // Add the waypoint input to the selected list.
             _selectedWaypoints.Add(args.Data);
+            _GPSWaypointState.SelectedWaypoints = (List<GPSWaypointInput>) _selectedWaypoints;
         }
     }
 
