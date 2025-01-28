@@ -1,0 +1,129 @@
+﻿@using Models.Arm
+
+<div class="card full-height">
+    <div class="card-header">
+        <h3>Arm Angular</h3>
+    </div>
+    <div class="card-body">
+        <div style="display: grid; grid-template-columns: auto auto auto auto">
+            @foreach (string joint in Joints.JointNames)
+            {
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center">
+                    <RadzenText TextAlign="TextAlign.Right" Style="width: 80px">@joint</RadzenText>
+                    <RadzenNumeric TValue="int" Min="0" Max="1000"></RadzenNumeric>
+                </RadzenStack>
+            }
+        </div>
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center" Style="margin-block: 1rem">
+            <RadzenButton ButtonStyle="ButtonStyle.Secondary">Get Position</RadzenButton>
+            <RadzenButton ButtonStyle="ButtonStyle.Secondary">Set Position</RadzenButton>
+            <RadzenButton ButtonStyle="ButtonStyle.Secondary">Toggle Auto Telem</RadzenButton>
+
+        </RadzenStack>
+
+        <RadzenDataGrid 
+        @ref="_presetsDataGrid"
+        AllowColumnResize="true" 
+        AllowAlternatingRows="true" 
+        AllowSorting="false"
+        SelectionMode="DataGridSelectionMode.Single"
+        AllowRowSelectOnRowClick="true"
+        Data="@presets"
+        Density="Density.Compact"
+        TItem="string"
+        CellRender="@OnCellRender"
+        RowClick="@OnPresetClick"
+        RowDoubleClick="@OnPresetDoubleClick"
+        Style="margin-inline: 10%">
+
+            <Columns>
+                <RadzenDataGridColumn 
+                Filterable="false" 
+                Title="Preset" 
+                Frozen="true" 
+                Width="80px"
+                TextAlign="TextAlign.Center" >
+                    <Template Context="preset">
+                        <RadzenText Style="-moz-user-select: none;">@preset</RadzenText>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn 
+                Filterable="false"
+                Title="Actions"
+                Frozen="true"
+                Width="20px"
+                TextAlign="TextAlign.Center">
+
+                    <Template Context="preset">
+                        <button class="btn btn-sm btn-danger" title="Delete Preset" @onclick="() => DeletePreset(preset)"><i class="bi bi-inline-text bi-trash" /></button>
+                    </Template>
+
+                </RadzenDataGridColumn>
+
+            </Columns>
+
+        </RadzenDataGrid>
+
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center" Style="margin-block: 1rem">
+            <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="() => AddPreset(_presetNameInput)">Save Preset</RadzenButton>
+            <RadzenTextBox @bind-Value=_presetNameInput></RadzenTextBox>
+
+        </RadzenStack>
+
+    </div>
+</div>
+
+@code 
+{
+    // TODO make arm preset class
+    List<string> presets = new(["Resting Arm", "Preset 2", "idk"]);
+    private string? _selectedPreset = null;
+    private string _presetNameInput = "";
+    private RadzenDataGrid<string>? _presetsDataGrid;
+
+    /// <summary>
+    /// Runs when a preset row is clicked.
+    /// </summary>
+    /// <param name="args">The event args with info about the click and the row.</param>
+    private void OnPresetClick(DataGridRowMouseEventArgs<string> args)
+    {
+        _selectedPreset = args.Data;
+        _presetNameInput = args.Data;
+        StateHasChanged();
+
+    }
+
+    // load preset on double-click
+    private void OnPresetDoubleClick(DataGridRowMouseEventArgs<string> args)
+    {
+
+    }
+
+    private void OnCellRender(DataGridCellRenderEventArgs<string> args)
+    {
+        if (args.Data == _selectedPreset)
+            args.Attributes.Add("style", $"background-color: #9a0000c0 !important");
+    }
+
+    private void AddPreset(string preset)
+    {
+        // catch & replace duplicate names
+        if (presets.Contains(preset))
+        {
+            presets[presets.FindIndex(s => s.Contains(preset))] = preset;
+        }
+        else
+        {
+            presets.Add(preset);
+        }
+        _presetsDataGrid?.Reload();
+    }
+
+    private void DeletePreset(string preset)
+    {
+        presets.Remove(preset);
+        _presetsDataGrid?.Reload();
+
+    }
+}
