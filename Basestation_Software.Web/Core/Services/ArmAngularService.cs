@@ -40,7 +40,7 @@ public class ArmAngularService
     public async Task AddPreset(ArmPreset preset)
     {
         // Add the preset to the database with the API.
-        await _HttpClient.PutAsJsonAsync($"http://localhost:5000/api/Preset", preset);
+        await _HttpClient.PutAsJsonAsync($"http://localhost:5000/api/ArmPreset", preset);
         // Refresh data.
         await RefreshPresets();
     }
@@ -53,7 +53,7 @@ public class ArmAngularService
     public async Task DeletePreset(ArmPreset preset)
     {
         // Delete the preset from the database.
-        await _HttpClient.DeleteAsync($"http://localhost:5000/api/Preset/{preset.ID}");
+        await _HttpClient.DeleteAsync($"http://localhost:5000/api/ArmPreset/{preset.ID}");
         // Refresh data.
         await RefreshPresets();
     }
