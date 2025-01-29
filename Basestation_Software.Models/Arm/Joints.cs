@@ -8,13 +8,16 @@ namespace Basestation_Software.Models.Arm;
 
 public class JointValues
 {
-    public int X { get; set; } = 0;
-    public int Y1 { get; set; } = 0;
-    public int Y2 { get; set; } = 0;
-    public int Z { get; set; } = 0;
-    public int Pitch { get; set; } = 0;
-    public int R1 { get; set; } = 0;
-    public int R2 { get; set; } = 0;
+    public Dictionary<string, int> Values { get; set; } = new()
+    {
+        {"X", 0 },
+        {"Y1", 0 },
+        {"Y2", 0 },
+        {"Z", 0 },
+        {"Pitch", 0 },
+        {"R1", 0 },
+        {"R2", 0 },
+    };
 }
 
 public enum JointNames

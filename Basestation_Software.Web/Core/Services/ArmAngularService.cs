@@ -25,7 +25,7 @@ public class ArmAngularService
     /// <returns></returns>
     public async Task RefreshPresets()
     {
-        List<ArmPreset>? presets = await _HttpClient.GetFromJsonAsync<List<ArmPreset>>("http://localhost:5000/api/ArmPreset");
+        List<ArmPreset>? presets = await _HttpClient.GetFromJsonAsync<List<ArmPreset>?>("http://localhost:5000/api/ArmPreset");
         if (presets is not null)
         {
             _presets = presets;
@@ -53,6 +53,7 @@ public class ArmAngularService
     public async Task DeletePreset(ArmPreset preset)
     {
         // Delete the preset from the database.
+        Console.WriteLine("ID: " + preset.ID);
         await _HttpClient.DeleteAsync($"http://localhost:5000/api/ArmPreset/{preset.ID}");
         // Refresh data.
         await RefreshPresets();

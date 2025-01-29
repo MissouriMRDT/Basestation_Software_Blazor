@@ -28,7 +28,7 @@ public class ArmPresetController : ControllerBase
     [HttpPut]
     public async Task<IActionResult> AddPreset(ArmPreset preset)
     {
-        ArmPreset? dbPreset = await _armPresetRepository.AddPreset(preset);
+        ArmPresetEntity? dbPreset = await _armPresetRepository.AddPreset(preset);
         if (dbPreset is not null)
         {
             return Ok();
@@ -47,7 +47,7 @@ public class ArmPresetController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeletePreset(int id)
     {
-        ArmPreset? dbPreset = await _armPresetRepository.DeletePreset(id);
+        ArmPresetEntity? dbPreset = await _armPresetRepository.DeletePreset(id);
         if (dbPreset is not null)
         {
             return Ok();

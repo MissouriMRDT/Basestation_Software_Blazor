@@ -17,11 +17,14 @@ namespace Basestation_Software.Api.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.6");
 
-            modelBuilder.Entity("Basestation_Software.Models.Arm.ArmPreset", b =>
+            modelBuilder.Entity("Basestation_Software.Models.Arm.ArmPresetEntity", b =>
                 {
                     b.Property<int?>("ID")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("JointData")
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
                         .HasColumnType("TEXT");
@@ -106,7 +109,7 @@ namespace Basestation_Software.Api.Migrations
                             Longitude = -110.792207,
                             Name = "MDRS",
                             SearchRadius = 5.0,
-                            Timestamp = new DateTime(2025, 1, 28, 21, 42, 18, 804, DateTimeKind.Local).AddTicks(8927),
+                            Timestamp = new DateTime(2025, 1, 29, 12, 4, 59, 594, DateTimeKind.Local).AddTicks(6352),
                             Type = 0,
                             WaypointColor = -16744448
                         },
@@ -118,7 +121,7 @@ namespace Basestation_Software.Api.Migrations
                             Longitude = -91.778441000000001,
                             Name = "SDELC",
                             SearchRadius = 5.0,
-                            Timestamp = new DateTime(2025, 1, 28, 21, 42, 18, 804, DateTimeKind.Local).AddTicks(9092),
+                            Timestamp = new DateTime(2025, 1, 29, 12, 4, 59, 594, DateTimeKind.Local).AddTicks(6532),
                             Type = 0,
                             WaypointColor = -65536
                         });

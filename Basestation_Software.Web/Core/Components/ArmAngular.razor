@@ -11,7 +11,7 @@
             {
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center">
                     <RadzenText TextAlign="TextAlign.Right" Style="width: 80px">@joint</RadzenText>
-                    <RadzenNumeric TValue="int" Min="0" Max="1000"></RadzenNumeric>
+                    <RadzenNumeric TValue="int" Min="0" Max="1000" @bind-value=@_activeJointValues.Values[joint]></RadzenNumeric>
                 </RadzenStack>
             }
         </div>
@@ -35,7 +35,7 @@
         CellRender="@OnCellRender"
         RowClick="@OnPresetClick"
         RowDoubleClick="@OnPresetDoubleClick"
-        Style="margin-inline: 10%">
+        Style="margin-inline: 10%; height: 23vh; overflow-y: auto;">
 
             <Columns>
                 <RadzenDataGridColumn 
@@ -78,12 +78,12 @@
 {
     private List<ArmPreset>? _cachedPresets;
     private ArmPreset? _selectedPreset = null;
+    private JointValues _activeJointValues = new();
     private string _presetNameInput = "";
     private RadzenDataGrid<ArmPreset>? _presetsDataGrid;
 
     protected override async Task OnInitializedAsync()
     {
-
         await _ArmAngularService.RefreshPresets();
         await SyncCache();
         _presetsDataGrid?.Reload();
@@ -93,7 +93,6 @@
     {
         _cachedPresets = _ArmAngularService.GetPresets();
         await InvokeAsync(StateHasChanged);
-
     }
 
     /// <summary>
@@ -110,7 +109,7 @@
     // load preset on double-click
     private void OnPresetDoubleClick(DataGridRowMouseEventArgs<ArmPreset> args)
     {
-
+        _activeJointValues.Values = new(args.Data.Joints.Values);
     }
 
     private void OnCellRender(DataGridCellRenderEventArgs<ArmPreset> args)
@@ -121,9 +120,12 @@
 
     private async Task AddPreset(string presetName)
     {
-        ArmPreset newPreset = new();
-        newPreset.Name = presetName;
-        // newPreset.Joints = new();
+        ArmPreset newPreset = new() 
+        {
+            Name = presetName,
+            Joints = new(),
+        };
+        newPreset.Joints.Values = new(_activeJointValues.Values);
         await _ArmAngularService.AddPreset(newPreset);
         await SyncCache();
         _presetsDataGrid?.Reload();

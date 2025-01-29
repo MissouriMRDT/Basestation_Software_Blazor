@@ -17,7 +17,8 @@ namespace Basestation_Software.Api.Migrations
                 {
                     ID = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: true)
+                    Name = table.Column<string>(type: "TEXT", nullable: true),
+                    JointData = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -26,22 +27,22 @@ namespace Basestation_Software.Api.Migrations
 
             migrationBuilder.InsertData(
                 table: "ArmPresets",
-                columns: new[] { "ID", "Name" },
-                values: new object[] { 1, "Default" });
+                columns: new[] { "ID", "JointData", "Name" },
+                values: new object[] { 1, null, "Default" });
 
             migrationBuilder.UpdateData(
                 table: "Waypoints",
                 keyColumn: "ID",
                 keyValue: 1,
                 column: "Timestamp",
-                value: new DateTime(2025, 1, 28, 21, 42, 18, 804, DateTimeKind.Local).AddTicks(8927));
+                value: new DateTime(2025, 1, 29, 12, 4, 59, 594, DateTimeKind.Local).AddTicks(6352));
 
             migrationBuilder.UpdateData(
                 table: "Waypoints",
                 keyColumn: "ID",
                 keyValue: 2,
                 column: "Timestamp",
-                value: new DateTime(2025, 1, 28, 21, 42, 18, 804, DateTimeKind.Local).AddTicks(9092));
+                value: new DateTime(2025, 1, 29, 12, 4, 59, 594, DateTimeKind.Local).AddTicks(6532));
         }
 
         /// <inheritdoc />

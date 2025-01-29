@@ -38,7 +38,7 @@ public class REDDatabase : DbContext
     public DbSet<ConfigEntity> Configs { get; set; }
     public DbSet<GPSWaypoint> Waypoints { get; set; }
     public DbSet<MapTile> MapTiles { get; set; }
-    public DbSet<ArmPreset> ArmPresets { get; set; }
+    public DbSet<ArmPresetEntity> ArmPresets { get; set; }
 
     public void Configure(EntityTypeBuilder<ConfigEntity> modelBuilder)
     {
@@ -52,7 +52,7 @@ public class REDDatabase : DbContext
     /// <summary>
     /// Configure the primary key for the arm preset table.
     /// </summary>
-    public void Configure(EntityTypeBuilder<ArmPreset> modelBuilder)
+    public void Configure(EntityTypeBuilder<ArmPresetEntity> modelBuilder)
     {
         modelBuilder.HasKey(x => x.ID);
         modelBuilder.Property(x => x.ID)
@@ -144,8 +144,8 @@ public class REDDatabase : DbContext
             }
         );
 
-        modelBuilder.Entity<ArmPreset>().HasData(
-            new ArmPreset
+        modelBuilder.Entity<ArmPresetEntity>().HasData(
+            new
             {
                 ID = 1,
                 Name = "Default",
