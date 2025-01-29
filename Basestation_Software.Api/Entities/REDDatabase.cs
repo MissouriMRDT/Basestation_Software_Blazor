@@ -1,5 +1,6 @@
 using Basestation_Software.Models.Geospatial;
 using Basestation_Software.Models.Config;
+using Basestation_Software.Models.Arm;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Xml.Linq;
@@ -37,6 +38,7 @@ public class REDDatabase : DbContext
     public DbSet<ConfigEntity> Configs { get; set; }
     public DbSet<GPSWaypoint> Waypoints { get; set; }
     public DbSet<MapTile> MapTiles { get; set; }
+    public DbSet<ArmPreset> ArmPresets { get; set; }
 
     public void Configure(EntityTypeBuilder<ConfigEntity> modelBuilder)
     {
@@ -44,6 +46,19 @@ public class REDDatabase : DbContext
         modelBuilder.Property(x => x.ID)
             .HasColumnName(@"ID")
             .IsRequired()
+            ;
+    }
+
+    /// <summary>
+    /// Configure the primary key for the arm preset table.
+    /// </summary>
+    public void Configure(EntityTypeBuilder<ArmPreset> modelBuilder)
+    {
+        modelBuilder.HasKey(x => x.ID);
+        modelBuilder.Property(x => x.ID)
+            .HasColumnName(@"ID")
+            .IsRequired()
+            .ValueGeneratedOnAdd()
             ;
     }
 
@@ -128,5 +143,14 @@ public class REDDatabase : DbContext
                 Data = System.Text.Json.JsonSerializer.Serialize(new Config { Name = "Default" })
             }
         );
+
+        modelBuilder.Entity<ArmPreset>().HasData(
+            new ArmPreset
+            {
+                ID = 1,
+                Name = "Default",
+            }
+        );
+
     }
 }

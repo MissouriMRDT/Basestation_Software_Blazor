@@ -1,4 +1,5 @@
 ﻿@using Models.Arm
+@inject ArmAngularService _ArmAngularService
 
 <div class="card full-height">
     <div class="card-header">
@@ -6,7 +7,7 @@
     </div>
     <div class="card-body">
         <div style="display: grid; grid-template-columns: auto auto auto auto">
-            @foreach (string joint in Joints.JointNames)
+            @foreach (string joint in JointNames.GetNames<JointNames>())
             {
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center">
                     <RadzenText TextAlign="TextAlign.Right" Style="width: 80px">@joint</RadzenText>
@@ -26,11 +27,11 @@
         AllowColumnResize="true" 
         AllowAlternatingRows="true" 
         AllowSorting="false"
+        TItem="ArmPreset"
         SelectionMode="DataGridSelectionMode.Single"
         AllowRowSelectOnRowClick="true"
-        Data="@presets"
+        Data="@_cachedPresets"
         Density="Density.Compact"
-        TItem="string"
         CellRender="@OnCellRender"
         RowClick="@OnPresetClick"
         RowDoubleClick="@OnPresetDoubleClick"
@@ -44,7 +45,7 @@
                 Width="80px"
                 TextAlign="TextAlign.Center" >
                     <Template Context="preset">
-                        <RadzenText Style="-moz-user-select: none;">@preset</RadzenText>
+                        <RadzenText Style="-moz-user-select: none;">@preset.Name</RadzenText>
                     </Template>
                 </RadzenDataGridColumn>
 
@@ -64,7 +65,6 @@
             </Columns>
 
         </RadzenDataGrid>
-
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center" Style="margin-block: 1rem">
             <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="() => AddPreset(_presetNameInput)">Save Preset</RadzenButton>
             <RadzenTextBox @bind-Value=_presetNameInput></RadzenTextBox>
@@ -76,54 +76,67 @@
 
 @code 
 {
-    // TODO make arm preset class
-    List<string> presets = new(["Resting Arm", "Preset 2", "idk"]);
-    private string? _selectedPreset = null;
+    private List<ArmPreset>? _cachedPresets;
+    private ArmPreset? _selectedPreset = null;
     private string _presetNameInput = "";
-    private RadzenDataGrid<string>? _presetsDataGrid;
+    private RadzenDataGrid<ArmPreset>? _presetsDataGrid;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        await _ArmAngularService.RefreshPresets();
+        await SyncCache();
+        _presetsDataGrid?.Reload();
+    }
+
+    private async Task SyncCache()
+    {
+        _cachedPresets = _ArmAngularService.GetPresets();
+        await InvokeAsync(StateHasChanged);
+
+    }
 
     /// <summary>
     /// Runs when a preset row is clicked.
     /// </summary>
     /// <param name="args">The event args with info about the click and the row.</param>
-    private void OnPresetClick(DataGridRowMouseEventArgs<string> args)
+    private void OnPresetClick(DataGridRowMouseEventArgs<ArmPreset> args)
     {
         _selectedPreset = args.Data;
-        _presetNameInput = args.Data;
+        _presetNameInput = args.Data.Name;
         StateHasChanged();
-
     }
 
     // load preset on double-click
-    private void OnPresetDoubleClick(DataGridRowMouseEventArgs<string> args)
+    private void OnPresetDoubleClick(DataGridRowMouseEventArgs<ArmPreset> args)
     {
 
     }
 
-    private void OnCellRender(DataGridCellRenderEventArgs<string> args)
+    private void OnCellRender(DataGridCellRenderEventArgs<ArmPreset> args)
     {
         if (args.Data == _selectedPreset)
             args.Attributes.Add("style", $"background-color: #9a0000c0 !important");
     }
 
-    private void AddPreset(string preset)
+    private async Task AddPreset(string presetName)
     {
-        // catch & replace duplicate names
-        if (presets.Contains(preset))
-        {
-            presets[presets.FindIndex(s => s.Contains(preset))] = preset;
-        }
-        else
-        {
-            presets.Add(preset);
-        }
+        ArmPreset newPreset = new();
+        newPreset.Name = presetName;
+        // newPreset.Joints = new();
+        await _ArmAngularService.AddPreset(newPreset);
+        await SyncCache();
         _presetsDataGrid?.Reload();
+
     }
 
-    private void DeletePreset(string preset)
+    private async void DeletePreset(ArmPreset preset)
     {
-        presets.Remove(preset);
+        Console.WriteLine("Delete");
+        await _ArmAngularService.DeletePreset(preset);
+        await SyncCache();
         _presetsDataGrid?.Reload();
+
 
     }
 }
