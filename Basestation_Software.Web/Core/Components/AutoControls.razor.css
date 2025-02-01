@@ -1,12 +1,12 @@
 ﻿.button-container {
     display: flex;
-    margin-block: 1%;
+    width: auto;
+    gap: 1%;
 
 }
 
 button {
-    margin-inline: 1%;
-    width: 100%;
+    width: auto;
 }
 
 .button-header {
