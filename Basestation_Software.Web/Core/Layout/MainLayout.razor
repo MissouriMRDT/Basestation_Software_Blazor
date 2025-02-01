@@ -8,6 +8,7 @@
 @inject ConfigService _ConfigService
 @inject NavigationManager UriHelper
 @inject CookieService _CookieService
+@inject RoveCommService _RoveCommService
 
 <PageTitle>MRDT Basestation</PageTitle>
 
@@ -44,6 +45,9 @@
             @NavLinks
         </div>
         <div class="nav ms-auto me-e justify-content-end">
+            <button class="btn btn-sm btn-primary" title="RoveComm Resubscribe All" style="margin-right: 3rem" @onclick="_RoveCommService.SubscribeAll">
+                <img src="/images/rovecomm-sil.png"/>
+            </button>
             <select id="configSelect" @onchange=@((ChangeEventArgs __e) => {if (Guid.TryParse(__e?.Value as string, out Guid guid)) Navigate(guid);})>
                 @SelectOptions
             </select>
