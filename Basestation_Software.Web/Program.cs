@@ -36,6 +36,7 @@ builder.Services.AddHttpClient<ConfigService>();
 builder.Services.AddSingleton<ConfigService>();
 builder.Services.AddSingleton<TaskTimerService>();
 builder.Services.AddSingleton<PingService>();
+builder.Services.AddSingleton<CameraService>();
 builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
 
