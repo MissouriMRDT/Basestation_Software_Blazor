@@ -156,7 +156,7 @@
     {
         _ = _RoveCommService.SendAsync<float>(
         "Arm",
-        "SetIndividualTargetAngles",
+        "SetJointTargetAngle",
         [(int)Enum.Parse(typeof(JointNames), joint), _activeJointValues.Values[joint]]);
     }
 
