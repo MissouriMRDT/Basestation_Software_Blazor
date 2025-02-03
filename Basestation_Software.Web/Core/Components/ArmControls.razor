@@ -142,7 +142,7 @@
                     for (int i = 0; i < jointInputs.Length; i++)
                     {
                         jointInputs[i] = (jointInputs[i] < DeadZone) ? 0d : 
-                            jointInputs[i] * _ArmSpeedState.ArmSpeeds.Values.ToArray()[i] * (isJointInverted[i] ? -1f : 1f);
+                            jointInputs[i] * _ArmSpeedState.ArmSpeeds.Values.ToArray()[i] * (isJointInverted[i] ? -1f : 1f) * _ArmSpeedState.ArmSpeeds["Master"];
                     }
 
                     if (UpdateIndividualJoints)
@@ -185,7 +185,7 @@
                     for (int i = 0; i < jointInputs.Length; i++)
                     {
                         jointInputs[i] = (jointInputs[i] < DeadZone) ? 0d :
-                            jointInputs[i] * (isJointInverted[i] ? -1f : 1f);
+                            jointInputs[i] * (isJointInverted[i] ? -1f : 1f) * _ArmSpeedState.ArmSpeeds["Master"];
                     }
 
                     if (UpdateIndividualJoints)
