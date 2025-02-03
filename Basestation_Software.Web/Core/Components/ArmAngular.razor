@@ -11,7 +11,7 @@
             @foreach (string joint in JointNames.GetNames<JointNames>())
             {
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.1rem" JustifyContent="JustifyContent.Center" Style="flex: 0 1 160px; border-radius: 10px; background-color: lightgray; margin: 0.2rem; padding: 0.3rem;">
-                    <RadzenText TextAlign="TextAlign.Center" Style="width: 80px; margin-inline: 0.4rem; margin-bottom:0;">@joint</RadzenText>
+                    <p style="width: 80px; margin-inline: 0.4rem; margin-bottom:0; text-align: right">@joint</p>
                     <RadzenNumeric TValue="float" Min="-360" Max="360" @bind-value=@_activeJointValues.Values[joint]></RadzenNumeric>
                     <button class="btn btn-sm btn-secondary" @onclick="() => SetSingle(joint)" title="Set Joint"><i class="bi bi-inline-text bi-arrow-up-right" /></button>
                     <button class="btn btn-sm btn-secondary" title="Get Joint"><i class="bi bi-inline-text bi-arrow-down-right" /></button>
@@ -48,7 +48,7 @@
                 Width="80px"
                 TextAlign="TextAlign.Center" >
                     <Template Context="preset">
-                        <RadzenText Style="-moz-user-select: none;">@preset.Name</RadzenText>
+                        <p style="-moz-user-select: none;">@preset.Name</p>
                     </Template>
                 </RadzenDataGridColumn>
 

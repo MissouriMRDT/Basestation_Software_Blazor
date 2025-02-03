@@ -3,6 +3,26 @@
 @inject RoveCommService _RoveCommService
 @inject ArmSpeedState _ArmSpeedState
 
+<style>
+    p {
+        width: 110px; 
+        text-align: right; 
+        margin-bottom: 0;
+    }
+
+    .jointBox {
+        display: flex;
+        gap: 0.6rem;
+        justify-items: center;
+        flex: 0 1 160px;
+        border-radius: 10px;
+        background-color: lightgray;
+        margin: 0.2rem;
+        padding: 0.3rem;
+    }
+
+</style>
+
 <div class="card full-height">
     <div class="card-header" style="display: flex">
         <h3>Arm Controls</h3>
@@ -16,21 +36,21 @@
         <GamepadSelector @ref=GamepadSelector_ ChangedCallback=GamepadSelectionChanged />
     </div>
     <div class="card-body">
-        <div style="display:flex; gap:0.6rem">
+        <div style="display:flex; gap:0.6rem;">
             <RadzenCheckBox TValue="bool" Value="true" bind-Value=@UpdateIndividualJoints />
-            <RadzenText>Control Joints Individually</RadzenText>
+            <p style="width: auto">Control Joints Individually</p>
         </div>
-        <div style="display:flex; gap:0.6rem; align-items: center">
-            <RadzenText style="width:80px">Dead Zone: </RadzenText>
+        <div style="display:flex; gap:0.6rem; align-items: center; margin-block: 0.1rem 0.5rem">
+            <p>Dead Zone: </p>
             <RadzenSlider @bind-Value=@DeadZone TValue="double" Min="0" Max="(decimal)0.5" Step="0.001" />
             <RadzenNumeric TValue="double" Min="0" Max="(decimal)0.5" Step="0.001" @bind-Value=@DeadZone></RadzenNumeric>
         </div>
 
-        <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-block: 0.5rem">
+        <div style="display: flex; flex-wrap: wrap; justify-content: center;">
             @foreach (JointNames joint in JointNames.GetValues(typeof(JointNames)))
             {
-                <div style="display:flex; gap:0.6rem; justify-content: center; flex: 0 1 160px; border-radius: 10px; background-color: lightgray; margin: 0.2rem; padding: 0.3rem;">
-                    <RadzenText TextAlign="TextAlign.Right" Style="width: 80px">Invert @joint</RadzenText>
+                <div class="jointBox">
+                    <p>Invert @joint</p>
                     <RadzenCheckBox TValue="bool" @bind-value=@isJointInverted[(int)joint - 1]/>
                 </div>
             }
