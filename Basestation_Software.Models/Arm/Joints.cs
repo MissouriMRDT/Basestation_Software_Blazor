@@ -11,22 +11,20 @@ public class JointValues
     public Dictionary<string, int> Values { get; set; } = new()
     {
         {"X", 0 },
-        {"Y1", 0 },
-        {"Y2", 0 },
-        {"Z", 0 },
+        {"J2", 0 },
+        {"J3", 0 },
+        {"J4", 0 },
         {"Pitch", 0 },
-        {"R1", 0 },
-        {"R2", 0 },
+        {"Roll", 0 },
     };
 }
 
 public enum JointNames
 {
     X,
-    Y1,
-    Y2,
-    Z,
+    J2,
+    J3,
+    J4,
     Pitch,
-    R1,
-    R2
+    Roll
 }
