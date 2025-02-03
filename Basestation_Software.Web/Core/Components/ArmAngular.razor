@@ -14,14 +14,13 @@
                     <p style="width: 80px; margin-inline: 0.4rem; margin-bottom:0; text-align: right">@joint</p>
                     <RadzenNumeric TValue="float" Min="-360" Max="360" @bind-value=@_activeJointValues.Values[joint]></RadzenNumeric>
                     <button class="btn btn-sm btn-secondary" @onclick="() => SetSingle(joint)" title="Set Joint"><i class="bi bi-inline-text bi-arrow-up-right" /></button>
-                    <button class="btn btn-sm btn-secondary" title="Get Joint"><i class="bi bi-inline-text bi-arrow-down-right" /></button>
+                    <button class="btn btn-sm btn-secondary" @onclick="() => GetSingle(joint)" title="Get Joint"><i class="bi bi-inline-text bi-arrow-down-right" /></button>
                 </RadzenStack>
             }
         </div>
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center" Style="margin-block: 1rem">
-            <RadzenButton ButtonStyle="ButtonStyle.Secondary">Get All</RadzenButton>
-            <RadzenButton ButtonStyle="ButtonStyle.Secondary">Set All</RadzenButton>
-            <RadzenButton ButtonStyle="ButtonStyle.Secondary">Toggle Auto Telem</RadzenButton>
+            <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="@GetAll">Get All</RadzenButton>
+            <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="@SetAll">Set All</RadzenButton>
 
         </RadzenStack>
 
@@ -84,9 +83,14 @@
     private JointValues _activeJointValues = new();
     private string _presetNameInput = "";
     private RadzenDataGrid<ArmPreset>? _presetsDataGrid;
+    private List<float> lastTelemetry = [0, 0, 0, 0, 0, 0];
 
     protected override async Task OnInitializedAsync()
     {
+        _RoveCommService.On<float>("Arm", "Positions", async (packet) =>
+        {
+            lastTelemetry = packet.Data;
+        });
         await _ArmAngularService.RefreshPresets();
         await SyncCache();
         _presetsDataGrid?.Reload();
@@ -162,11 +166,14 @@
 
     private void GetAll()
     {
-        // To implement
+        for (int i = 0; i < _activeJointValues.Values.Count; i++)
+        {
+            _activeJointValues.Values[Enum.GetName(typeof(JointNames), i+1)] = lastTelemetry[i];
+        }
     }
 
-    private void GetSingle()
+    private void GetSingle(string joint)
     {
-        // To implement
+        _activeJointValues.Values[joint] = lastTelemetry[(int)Enum.Parse(typeof(JointNames), joint)];
     }
 }
