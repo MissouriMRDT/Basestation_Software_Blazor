@@ -1,4 +1,5 @@
-﻿@implements IDisposable
+﻿@using Basestation_Software.Models.Arm
+@implements IDisposable
 @inject RoveCommService _RoveCommService
 @inject ArmSpeedState _ArmSpeedState
 
@@ -25,6 +26,16 @@
             <RadzenNumeric TValue="double" Min="0" Max="(decimal)0.5" Step="0.001" @bind-Value=@DeadZone></RadzenNumeric>
         </div>
 
+        <div style="display: flex; flex-wrap: wrap; justify-content: center; margin-block: 0.5rem">
+            @foreach (JointNames joint in JointNames.GetValues(typeof(JointNames)))
+            {
+                <div style="display:flex; gap:0.6rem; justify-content: center; flex: 0 1 160px; border-radius: 10px; background-color: lightgray; margin: 0.2rem; padding: 0.3rem;">
+                    <RadzenText TextAlign="TextAlign.Right" Style="width: 80px">Invert @joint</RadzenText>
+                    <RadzenCheckBox TValue="bool" @bind-value=@isJointInverted[(int)joint - 1]/>
+                </div>
+            }
+        </div>
+
     </div>
 </div>
 
@@ -45,6 +56,7 @@
     private bool LastProcessGamepadInputOK = false;
     private double DeadZone = 0.05;
     bool UpdateIndividualJoints = true;
+    List<bool> isJointInverted = [false, false, false, false, false, false];
 
 
     public void GamepadSelectionChanged()
@@ -110,7 +122,8 @@
                     // sanitize based on dead zone and apply multipliers
                     for (int i = 0; i < jointInputs.Length; i++)
                     {
-                        jointInputs[i] = (jointInputs[i] < DeadZone) ? 0f: jointInputs[i] * _ArmSpeedState.ArmSpeeds.Values.ToArray()[i];
+                        jointInputs[i] = (jointInputs[i] < DeadZone) ? 0f : 
+                            jointInputs[i] * _ArmSpeedState.ArmSpeeds.Values.ToArray()[i] * (isJointInverted[i] ? -1f : 1f);
                     }
 
                     if (UpdateIndividualJoints)
