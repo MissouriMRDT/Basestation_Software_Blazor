@@ -8,7 +8,7 @@ namespace Basestation_Software.Models.Arm;
 
 public class JointValues
 {
-    public Dictionary<string, int> Values { get; set; } = new()
+    public Dictionary<string, float> Values { get; set; } = new()
     {
         {"X", 0 },
         {"J2", 0 },
@@ -21,10 +21,10 @@ public class JointValues
 
 public enum JointNames
 {
-    X,
-    J2,
-    J3,
-    J4,
-    Pitch,
-    Roll
+    X = 1,
+    J2 = 2,
+    J3 = 3,
+    J4 = 4,
+    Pitch = 5,
+    Roll = 6
 }

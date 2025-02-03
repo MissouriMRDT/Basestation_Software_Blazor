@@ -1,23 +1,26 @@
 ﻿@using Models.Arm
 @inject ArmAngularService _ArmAngularService
+@inject RoveCommService _RoveCommService
 
 <div class="card full-height">
     <div class="card-header">
         <h3>Arm Angular</h3>
     </div>
     <div class="card-body">
-        <div style="display: flex; flex-wrap: wrap;">
+        <div style="display: flex; flex-wrap: wrap; justify-content: center;">
             @foreach (string joint in JointNames.GetNames<JointNames>())
             {
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.Center" Style="flex: 0 1 160px;">
-                    <RadzenText TextAlign="TextAlign.Right" Style="width: 80px">@joint</RadzenText>
-                    <RadzenNumeric TValue="int" Min="0" Max="1000" @bind-value=@_activeJointValues.Values[joint]></RadzenNumeric>
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.1rem" JustifyContent="JustifyContent.Center" Style="flex: 0 1 160px; border-radius: 10px; background-color: lightgray; margin: 0.2rem; padding: 0.3rem;">
+                    <RadzenText TextAlign="TextAlign.Center" Style="width: 80px; margin-inline: 0.4rem; margin-bottom:0;">@joint</RadzenText>
+                    <RadzenNumeric TValue="float" Min="-360" Max="360" @bind-value=@_activeJointValues.Values[joint]></RadzenNumeric>
+                    <button class="btn btn-sm btn-secondary" @onclick="() => SetSingle(joint)" title="Set Joint"><i class="bi bi-inline-text bi-arrow-up-right" /></button>
+                    <button class="btn btn-sm btn-secondary" title="Get Joint"><i class="bi bi-inline-text bi-arrow-down-right" /></button>
                 </RadzenStack>
             }
         </div>
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center" Style="margin-block: 1rem">
-            <RadzenButton ButtonStyle="ButtonStyle.Secondary">Get Position</RadzenButton>
-            <RadzenButton ButtonStyle="ButtonStyle.Secondary">Set Position</RadzenButton>
+            <RadzenButton ButtonStyle="ButtonStyle.Secondary">Get All</RadzenButton>
+            <RadzenButton ButtonStyle="ButtonStyle.Secondary">Set All</RadzenButton>
             <RadzenButton ButtonStyle="ButtonStyle.Secondary">Toggle Auto Telem</RadzenButton>
 
         </RadzenStack>
@@ -139,6 +142,31 @@
         await SyncCache();
         _presetsDataGrid?.Reload();
 
+    }
 
+    private void SetAll()
+    {
+        _ = _RoveCommService.SendAsync<float>(
+            "Arm", 
+            "SetIndividualTargetAngles", 
+            _activeJointValues.Values.Values.ToList());
+    }
+
+    private void SetSingle(string joint)
+    {
+        _ = _RoveCommService.SendAsync<float>(
+        "Arm",
+        "SetIndividualTargetAngles",
+        [(int)Enum.Parse(typeof(JointNames), joint), _activeJointValues.Values[joint]]);
+    }
+
+    private void GetAll()
+    {
+        // To implement
+    }
+
+    private void GetSingle()
+    {
+        // To implement
     }
 }
