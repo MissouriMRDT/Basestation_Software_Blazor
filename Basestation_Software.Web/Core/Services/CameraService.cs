@@ -21,8 +21,10 @@ namespace Basestation_Software.Web.Core.Services
 
 		public CameraService()
 		{
-			// set up controllers array
-			for (int i = 0; i < _sources.Length; i++)
+            Console.WriteLine("Camera Service Constructor");
+
+            // set up controllers array
+            for (int i = 0; i < _sources.Length; i++)
 			{
 				_controllers[i] = new SingleCameraController(_sources[i]);
 			}
