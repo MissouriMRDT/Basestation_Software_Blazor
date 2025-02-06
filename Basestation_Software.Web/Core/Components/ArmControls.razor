@@ -66,6 +66,11 @@
                             <option value="@bind">@bind</option>
                         }
                     </select>
+                    <div style="display: flex; width:100%">
+                        <meter min="-1.0" max="0.1" style="transform:rotate(180deg)" value="@inputMeterValues[(int)joint-1]" />
+                        <meter min="0.0" max="1.0" value="@inputMeterValues[(int)joint-1]" />
+                    </div>
+
                 </div>
             }
         </div>
@@ -108,6 +113,8 @@
     // in order of joint enum
     // List<int> jointInputBinds = [0, 1, 2, 3, 4, 5];
     List<Bind> jointInputBinds = [Bind.LSX, Bind.LSY, Bind.RSX, Bind.RSY, Bind.DpadX, Bind.Triggers];
+    List<double> inputMeterValues = [0, 0, 0, 0, 0, 0];
+    double[] lastUpdateInputs = [0, 0, 0, 0, 0, 0];
 
 
     public void GamepadSelectionChanged()
@@ -154,22 +161,23 @@
     gamepad.Axes[3],
     gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
     gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
-    gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
-    gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
+    gamepad.Buttons[5].Value - gamepad.Buttons[6].Value,
+    gamepad.Buttons[11].Value - gamepad.Buttons[12].Value,
     gamepad.Buttons[6].Value - gamepad.Buttons[7].Value,
-    gamepad.Buttons[8].Value - gamepad.Buttons[9].Value,
-    gamepad.Buttons[10].Value - gamepad.Buttons[11].Value
+    gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
+    gamepad.Buttons[12].Value - gamepad.Buttons[13].Value
         ];
 
         return gamepadInputs;
     }
 
     // Process gamepad input and return true if rovecomm packets were sent.
+    // Process gamepad input and return true if rovecomm packets were sent.
     private bool ProcessGamepadInput()
     {
         double[] jointInputs = [0, 0, 0, 0, 0, 0];
         if (GamepadSelector_.SelectedGamepad is null) return false;
-        switch(SelectedScheme)
+        switch (SelectedScheme)
         {
             case Scheme.XboxDecipercents:
                 {
@@ -185,7 +193,7 @@
                     // sanitize based on dead zone and apply multipliers
                     for (int i = 0; i < jointInputs.Length; i++)
                     {
-                        jointInputs[i] = (jointInputs[i] < DeadZone) ? 0d : 
+                        jointInputs[i] = (Math.Abs(jointInputs[i]) < DeadZone) ? 0d :
                             jointInputs[i] * _ArmSpeedState.ArmSpeeds.Values.ToArray()[i] * (isJointInverted[i] ? -1f : 1f) * _ArmSpeedState.ArmSpeeds["Master"];
                     }
 
@@ -193,12 +201,17 @@
                     {
                         for (int i = 0; i < jointInputs.Length; i++)
                         {
-                            _ = _RoveCommService.SendAsync<float>("Arm", "SetJointSpeed", [(float)i+1, (float)jointInputs[i]]);
+                            Console.WriteLine("A " + (jointInputs[i] == 0d));
+                            Console.WriteLine("B " + (lastUpdateInputs[i] == 0d));
+
+                            if (!(jointInputs[i] == 0d && lastUpdateInputs[i] == 0d)) _ = _RoveCommService.SendAsync<short>("Arm", "SetJointSpeed", [(short)(i + 1), Convert.ToInt16(jointInputs[i])]);
                         }
                     }
                     else
                     {
-                        _ = _RoveCommService.SendAsync<float>("Arm", "SetIndividualSpeeds", Array.ConvertAll(jointInputs, j => (float) j).ToList());
+
+                        Console.WriteLine("Fighting");
+                        _ = _RoveCommService.SendAsync<float>("Arm", "SetIndividualSpeeds", Array.ConvertAll(jointInputs, j => (float)j).ToList());
                     }
 
                     if (GamepadSelector_.SelectedGamepad.Buttons[0].Pressed)
@@ -210,7 +223,7 @@
                         _ = _RoveCommService.SendAsync<float>("Arm", "Laser", [0]);
                     }
 
-                    _ = _RoveCommService.SendAsync<int>("Arm", "SetGripperSpeed", [((int) (GamepadSelector_.SelectedGamepad.Buttons[4].Value - GamepadSelector_.SelectedGamepad.Buttons[5].Value) * _ArmSpeedState.ArmSpeeds["Gripper"] * _ArmSpeedState.ArmSpeeds["Master"])]);
+                    _ = _RoveCommService.SendAsync<int>("Arm", "SetGripperSpeed", [((int)(GamepadSelector_.SelectedGamepad.Buttons[4].Value - GamepadSelector_.SelectedGamepad.Buttons[5].Value) * _ArmSpeedState.ArmSpeeds["Gripper"] * _ArmSpeedState.ArmSpeeds["Master"])]);
 
 
                     break;
@@ -227,7 +240,7 @@
                     // Right Stick X (Axis2): J3
                     jointInputs[2] = GamepadSelector_.SelectedGamepad.Axes[2];
                     // Right Stick Y (Axis3): J4
-                    jointInputs[3] = GamepadSelector_.SelectedGamepad.Axes[2];
+                    jointInputs[3] = GamepadSelector_.SelectedGamepad.Axes[3];
                     // Left Trigger (Button6): -Pitch
                     jointInputs[4] -= GamepadSelector_.SelectedGamepad.Buttons[6].Value;
                     // Right Trigger (Button7): +Pitch
@@ -235,12 +248,12 @@
                     // A (Button0): +Roll
                     jointInputs[5] += GamepadSelector_.SelectedGamepad.Buttons[0].Value;
                     // B (Button1): -Roll
-                    jointInputs[5] -= GamepadSelector_.SelectedGamepad.Buttons[6].Value;
+                    jointInputs[5] -= GamepadSelector_.SelectedGamepad.Buttons[1].Value;
 
                     // sanitize based on dead zone and apply multipliers
                     for (int i = 0; i < jointInputs.Length; i++)
                     {
-                        jointInputs[i] = (jointInputs[i] < DeadZone) ? 0d :
+                        jointInputs[i] = (Math.Abs(jointInputs[i]) < DeadZone) ? 0d :
                             jointInputs[i] * (isJointInverted[i] ? -1f : 1f) * _ArmSpeedState.ArmSpeeds["Master"];
                     }
 
@@ -248,7 +261,7 @@
                     {
                         for (int i = 0; i < jointInputs.Length; i++)
                         {
-                            if (jointInputs[i] != 0d) _ = _RoveCommService.SendAsync<float>("Arm", "IncrementJointTargetAngle", [(float)i + 1, (float)jointInputs[i]]);
+                            if (jointInputs[i] != 0d) _ = _RoveCommService.SendAsync<float>("Arm", "IncrementJointTargetAngle", [(float)(i + 1), (float)jointInputs[i]]);
                         }
                     }
                     else
@@ -261,6 +274,7 @@
             default: return false;
         }
 
+        lastUpdateInputs = new List<double>(jointInputs).ToArray();
         return true;
     }
 

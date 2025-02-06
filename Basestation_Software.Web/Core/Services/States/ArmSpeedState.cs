@@ -18,12 +18,13 @@ public class ArmSpeedState
     private Dictionary<string, int> _armSpeeds = new Dictionary<string, int>()
     {
         {"X", 1000},
-        {"Y1", 1000},
-        {"Y2", 1000},
-        {"Z", 1000},
+        {"J1", 1000},
+        {"J2", 1000},
+        {"J3", 1000},
+        {"J4", 500},
         {"Pitch", 500},
-        {"R", 500},
-        {"Gripper", 1000},
+        {"Roll", 1000},
+        {"Gipper", 1000},
         {"Master", 1}
     };
 
