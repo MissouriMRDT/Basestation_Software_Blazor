@@ -149,16 +149,16 @@
     {
         double[] gamepadInputs = [
         gamepad.Axes[0],
-        gamepad.Axes[1],
-        gamepad.Axes[2],
-        gamepad.Axes[3],
-        gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
-        gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
-        gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
-        gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
-        gamepad.Buttons[6].Value - gamepad.Buttons[7].Value,
-        gamepad.Buttons[8].Value - gamepad.Buttons[9].Value,
-        gamepad.Buttons[10].Value - gamepad.Buttons[11].Value
+    gamepad.Axes[1],
+    gamepad.Axes[2],
+    gamepad.Axes[3],
+    gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
+    gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
+    gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
+    gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
+    gamepad.Buttons[6].Value - gamepad.Buttons[7].Value,
+    gamepad.Buttons[8].Value - gamepad.Buttons[9].Value,
+    gamepad.Buttons[10].Value - gamepad.Buttons[11].Value
         ];
 
         return gamepadInputs;
@@ -209,7 +209,9 @@
                     {
                         _ = _RoveCommService.SendAsync<float>("Arm", "Laser", [0]);
                     }
-                    
+
+                    _ = _RoveCommService.SendAsync<int>("Arm", "SetGripperSpeed", [((int) (GamepadSelector_.SelectedGamepad.Buttons[4].Value - GamepadSelector_.SelectedGamepad.Buttons[5].Value) * _ArmSpeedState.ArmSpeeds["Gripper"] * _ArmSpeedState.ArmSpeeds["Master"])]);
+
 
                     break;
                 }
