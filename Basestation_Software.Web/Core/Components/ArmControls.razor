@@ -5,20 +5,27 @@
 
 <style>
     p {
-        width: 110px; 
-        text-align: right; 
-        margin-bottom: 0;
+    width: 110px; 
+    text-align: right; 
+    margin-bottom: 0;
     }
 
     .jointBox {
-        display: flex;
-        gap: 0.6rem;
-        justify-items: center;
-        flex: 0 1 160px;
-        border-radius: 10px;
-        background-color: lightgray;
-        margin: 0.2rem;
-        padding: 0.3rem;
+    display: flex;
+    column-gap: 0.6rem;
+    row-gap: 0.1rem;
+    justify-items: center;
+    flex: 0 1 160px;
+    flex-wrap:wrap;
+    border-radius: 10px;
+    background-color: lightgray;
+    margin: 0.2rem;
+    padding: 0.3rem;
+    }
+
+    .break {
+    flex-basis: 100%;
+    height: 0;
     }
 
 </style>
@@ -52,6 +59,13 @@
                 <div class="jointBox">
                     <p>Invert @joint</p>
                     <RadzenCheckBox TValue="bool" @bind-value=@isJointInverted[(int)joint - 1]/>
+                    <div class="break"></div>
+                    <select name="JointBind" @bind=@jointInputBinds[(int)joint-1] style="width:100%;">
+                        @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
+                        {
+                            <option value="@bind">@bind</option>
+                        }
+                    </select>
                 </div>
             }
         </div>
@@ -67,6 +81,21 @@
         XboxTargetAngles,
     }
 
+    // Gamepade inputs are put in a list for rebinding. 
+    enum Bind
+    {
+        LSX = 0,
+        LSY,
+        RSX,
+        RSY,
+        AB,
+        XY,
+        Bumpers,
+        Triggers,
+        DpadX,
+        DpadY
+    }
+
     // Member variables
     private GamepadSelector GamepadSelector_;
     private Scheme SelectedScheme;
@@ -76,6 +105,9 @@
     private double DeadZone = 0.05;
     bool UpdateIndividualJoints = true;
     List<bool> isJointInverted = [false, false, false, false, false, false];
+    // in order of joint enum
+    // List<int> jointInputBinds = [0, 1, 2, 3, 4, 5];
+    List<Bind> jointInputBinds = [Bind.LSX, Bind.LSY, Bind.RSX, Bind.RSY, Bind.DpadX, Bind.Triggers];
 
 
     public void GamepadSelectionChanged()
@@ -108,6 +140,29 @@
         LastProcessGamepadInputOK = ProcessGamepadInputOK;
         InvokeAsync(StateHasChanged);
     }
+    /// <summary>
+    /// Returns an array of input values in range [-1, 1] for possible joint control setups on an xinput gamepad. Value indexes are based on the Bind enum
+    /// </summary>
+    /// <param name="gamepad"></param>
+    /// <returns></returns>
+    private double[] GetBindableGamepadInputs(Toolbelt.Blazor.Gamepad.Gamepad gamepad)
+    {
+        double[] gamepadInputs = [
+        gamepad.Axes[0],
+        gamepad.Axes[1],
+        gamepad.Axes[2],
+        gamepad.Axes[3],
+        gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
+        gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
+        gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
+        gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
+        gamepad.Buttons[6].Value - gamepad.Buttons[7].Value,
+        gamepad.Buttons[8].Value - gamepad.Buttons[9].Value,
+        gamepad.Buttons[10].Value - gamepad.Buttons[11].Value
+        ];
+
+        return gamepadInputs;
+    }
 
     // Process gamepad input and return true if rovecomm packets were sent.
     private bool ProcessGamepadInput()
@@ -121,22 +176,11 @@
                     // Controller check
                     if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
 
-                    // Left Stick X (Axis0): X
-                    jointInputs[0] = GamepadSelector_.SelectedGamepad.Axes[0];
-                    // Left Stick Y (Axis1): J2
-                    jointInputs[1] = GamepadSelector_.SelectedGamepad.Axes[1];
-                    // Right Stick X (Axis2): J3
-                    jointInputs[2] = GamepadSelector_.SelectedGamepad.Axes[2];
-                    // Right Stick Y (Axis3): J4
-                    jointInputs[3] = GamepadSelector_.SelectedGamepad.Axes[2];
-                    // Left Trigger (Button6): -Pitch
-                    jointInputs[4] -= GamepadSelector_.SelectedGamepad.Buttons[6].Value;
-                    // Right Trigger (Button7): +Pitch
-                    jointInputs[4] += GamepadSelector_.SelectedGamepad.Buttons[7].Value;
-                    // A (Button0): +Roll
-                    jointInputs[5] += GamepadSelector_.SelectedGamepad.Buttons[0].Value;
-                    // B (Button1): -Roll
-                    jointInputs[5] -= GamepadSelector_.SelectedGamepad.Buttons[6].Value;
+                    double[] inputValues = GetBindableGamepadInputs(GamepadSelector_.SelectedGamepad);
+                    for (int i = 0; i < jointInputs.Length; i++)
+                    {
+                        jointInputs[i] = inputValues[(int)jointInputBinds[i]];
+                    }
 
                     // sanitize based on dead zone and apply multipliers
                     for (int i = 0; i < jointInputs.Length; i++)
@@ -149,13 +193,23 @@
                     {
                         for (int i = 0; i < jointInputs.Length; i++)
                         {
-                           if (jointInputs[i] != 0d) _ = _RoveCommService.SendAsync<float>("Arm", "SetJointSpeed", [(float)i+1, (float)jointInputs[i]]);
+                            _ = _RoveCommService.SendAsync<float>("Arm", "SetJointSpeed", [(float)i+1, (float)jointInputs[i]]);
                         }
                     }
                     else
                     {
                         _ = _RoveCommService.SendAsync<float>("Arm", "SetIndividualSpeeds", Array.ConvertAll(jointInputs, j => (float) j).ToList());
                     }
+
+                    if (GamepadSelector_.SelectedGamepad.Buttons[0].Pressed)
+                    {
+                        _ = _RoveCommService.SendAsync<float>("Arm", "Laser", [1]);
+                    }
+                    if (GamepadSelector_.SelectedGamepad.Buttons[1].Pressed)
+                    {
+                        _ = _RoveCommService.SendAsync<float>("Arm", "Laser", [0]);
+                    }
+                    
 
                     break;
                 }
