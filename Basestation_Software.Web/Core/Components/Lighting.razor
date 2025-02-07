@@ -1,31 +1,44 @@
 ﻿@inject RoveCommService _RoveCommService
 
+<style>
+    .pair {
+    display: flex;
+    gap: 0.3rem;
+    }
+
+    p {
+    align-self: center;
+    }
+</style>
+
 <div class="card full-height">
     <div class="card-header">
         <h3>Lighting</h3>
     </div>
     <div class="card-body">
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center">
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.Center">
-                <p style="width: 80px; text-align: right">R</p>
-                <RadzenNumeric TValue="int" Min="0" Max="255" @bind-value=@colorComponents[0]></RadzenNumeric>
-            </RadzenStack>
+        <div style="display:flex; justify-content:center; gap: 0.75rem">
+            <div class="pair">
+                <p style="width: 20px; text-align: right">R</p>
+                <input type="number" Min="0" Max="255" Width="50%" @bind-value=@colorComponents[0]></input>
+            </div>
 
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.Center">
-                <p style="width: 80px; text-align: right">G</p>
-                <RadzenNumeric TValue="int" Min="0" Max="255" @bind-value=@colorComponents[1]></RadzenNumeric>
-            </RadzenStack>        
+            <div class="pair">
+                <p style="width: 20px; text-align: right">G</p>
+                <input type="number" Min="0" Max="255" @bind-value=@colorComponents[1]></input>
+            </div>        
 
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.Center">
-                <p style="width: 80px; text-align: right">B</p>
-                <RadzenNumeric TValue="int" Min="0" Max="255" @bind-value=@colorComponents[2]></RadzenNumeric>
-            </RadzenStack>
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.Center">
-                <p style="width: 80px; text-align: right">A</p>
-                <RadzenNumeric TValue="int" Min="0" Max="255" @bind-value=@brightness></RadzenNumeric>
-            </RadzenStack>
-        </RadzenStack>
-        <button class="btn btn-primary" onclick="Send">Send</button>
+            <div class="pair">
+                <p style="width: 20px; text-align: right">B</p>
+                <input type="number" Min="0" Max="255" @bind-value=@colorComponents[2]></input>
+            </div>
+
+            <div class="pair">
+                <p style="width: 20px; text-align: right">A</p>
+                <input type="number" Min="0" Max="255" @bind-value=@brightness></input>
+            </div>
+            <button class="btn btn-primary" style="justify-self:center;" @onclick="Send">Send</button>
+
+        </div>
     </div>
 </div>
 
@@ -33,7 +46,7 @@
     private List<int> colorComponents = [0, 0, 0];
     private int brightness = 0;
 
-    private void Send()
+    public void Send()
     {
         _ = Task.Run(() => _RoveCommService.SendAsync<int>("Core", "LEDRGB", colorComponents));
         _ = Task.Run(() => _RoveCommService.SendAsync<int>("Core", "Brightness", [brightness]));
