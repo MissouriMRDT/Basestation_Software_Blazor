@@ -108,16 +108,16 @@
     private double[] GetBindableGamepadInputs(Toolbelt.Blazor.Gamepad.Gamepad gamepad)
     {
         double[] gamepadInputs = [
-        gamepad.Axes[0],
-    gamepad.Axes[1],
-    gamepad.Axes[2],
-    gamepad.Axes[3],
-    gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
-    gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
-    gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
-    gamepad.Buttons[6].Value - gamepad.Buttons[7].Value,
-    gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
-    gamepad.Buttons[12].Value - gamepad.Buttons[13].Value
+            gamepad.Axes[0],
+            gamepad.Axes[1],
+            gamepad.Axes[2],
+            gamepad.Axes[3],
+            gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
+            gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
+            gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
+            gamepad.Buttons[6].Value - gamepad.Buttons[7].Value,
+            gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
+            gamepad.Buttons[12].Value - gamepad.Buttons[13].Value
         ];
 
         return gamepadInputs;

@@ -12,7 +12,7 @@
         <img class="cam-display" src="@_frameData" />
     </div>
     <div class="source-buttons-container">
-        @for (int i = 0; i < 10; i++)
+        @for (int i = 0; i < CameraService._sources.Length; i++)
         {
             // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
             var _i = i;
@@ -22,88 +22,10 @@
 
     <div class="settings-container">
         <div class="settings-row">
-            <button @onclick="RestartCam">restart reciever</button>
-            <button @onclick="() => ToggleSource(1)">launch current source</button>
-            <button @onclick="() => ToggleSource(0)">shutdown current source</button>
-            <button @onclick="TakeScreenshot">take screenshot</button>
-        </div>
-        @code {
-            // settings input variables
-            private int _framerateInput = 30;
-            private int _bitrateInput = 24000;
-            private int _resolutionInputX = 320;
-            private int _resolutionInputY = 240;
-            private string _ipInput = "";
-            private int _val = 0;
-
-            private int _brightness = 0;
-            private int _contrast = 0;
-            private int _saturation = 0;
-            private int _hue = 0;
-            private int _whiteBalance = 0;
-            private int _backlightContrast = 0;
-            private double _exposure = 0d;
-
-            private bool _showHidden = false;
-            }
-        <div class="settings-row">
-            <button @onclick="() => ChangeFramerate(_framerateInput)">apply framerate</button>
-            <input @bind="_framerateInput" type="number">
-        </div>
-
-        <div class="settings-row">
-            <button @onclick="() => ChangeBitrate(_bitrateInput)">apply bitrate</button>
-            <input @bind="_bitrateInput" type="number">
-        </div>
-
-        <div class="settings-row">
-            <button @onclick="() => ChangeResolution(_resolutionInputX, _resolutionInputY)">apply resolution</button>
-            <input @bind="_resolutionInputX" type="number">x<input @bind="_resolutionInputY" type="number">
-        </div>
-
-        <div class="settings-row">
-            <button @onclick="() => SetIP(_ipInput)">set ip</button>
-            <input @bind="_ipInput" type="text">
-        </div>
-        <div class ="hidable" style=@(_showHidden ? "" : "display: none;")>
-            <div class="settings-row">
-                <button @onclick="@(() => _RoveCommService.SendAsync<byte>("CameraServer", "AdjustBrightness", [(byte)_sourceIndex, (byte)_brightness]))"> apply brightness </button>
-                <input type="range" min="0" max="255" @bind="_brightness"/>
-                <input type="number" min="0" max="255" @bind="_brightness"/>
-            </div>
-            <div class="settings-row">
-                <button @onclick="@(() => _RoveCommService.SendAsync<byte>("CameraServer", "AdjustContrast", [(byte)_sourceIndex, (byte)_contrast]))"> apply constrast</button>
-                <input type="range" min="0" max="255" @bind="_contrast"/>
-                <input type="number" min="0" max="255" @bind="_contrast"/>
-            </div>
-            <div class="settings-row">
-                <button @onclick="@(() => _RoveCommService.SendAsync<byte>("CameraServer", "AdjustSaturation", [(byte)_sourceIndex, (byte)_saturation]))"> apply saturation</button>
-                <input type="range" min="0" max="255" @bind="_saturation" />
-                <input type="number" min="0" max="255" @bind="_saturation" />
-            </div>
-            <div class="settings-row">
-                <button @onclick="@(() => _RoveCommService.SendAsync<byte>("CameraServer", "AdjustHue", [(byte)_sourceIndex, (byte)_hue]))"> apply hue</button>
-                <input type="range" min="0" max="255" @bind="_hue" />
-                <input type="number" min="0" max="255" @bind="_hue" />
-            </div>
-            <div class="settings-row">
-                <button @onclick="@(() => _RoveCommService.SendAsync<byte>("CameraServer", "SetWhiteBalance", [(byte)_sourceIndex, (byte)_whiteBalance]))"> apply white balance</button>
-                <input type="range" min="0" max="255" @bind="_whiteBalance" />
-                <input type="number" min="0" max="255" @bind="_whiteBalance" />
-            </div>
-            <div class="settings-row">
-                <button @onclick="@(() => _RoveCommService.SendAsync<byte>("CameraServer", "AdjustBacklightContrast", [(byte)_sourceIndex, (byte)_backlightContrast]))"> apply backlight contrast</button>
-                <input type="range" min="0" max="255" @bind="_backlightContrast" />
-                <input type="number" min="0" max="255" @bind="_backlightContrast" />
-            </div>
-            <div class="settings-row">
-                <button @onclick="@(() => _RoveCommService.SendAsync<double>("CameraServer", "SetExposure", [(byte)_sourceIndex, _exposure]))"> apply exposure</button>
-                <input type="range" min="0" max="1" step="0.05" @bind="_exposure" />
-                <input type="number" min="0" max="1" step="0.05" @bind="_exposure" />
-            </div>
-        </div>
-        <div class="settings-row">
-            <button @onclick="@(() => _showHidden = !_showHidden)">@(_showHidden ? "less" : "more")</button>
+            <button class="btn btn-primary" @onclick="RestartCam">restart reciever</button>
+            <button class="btn btn-primary" @onclick="() => ToggleSource(1)">launch current source</button>
+            <button class="btn btn-primary" @onclick="() => ToggleSource(0)">shutdown current source</button>
+            <button class="btn btn-primary" @onclick="TakeScreenshot">take screenshot</button>
         </div>
     </div>
 </div>
