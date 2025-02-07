@@ -67,8 +67,7 @@
                         }
                     </select>
                     <div style="display: flex; width:100%">
-                        <meter min="-1.0" max="0.1" style="transform:rotate(180deg)" value="@inputMeterValues[(int)joint-1]" />
-                        <meter min="0.0" max="1.0" value="@inputMeterValues[(int)joint-1]" />
+                        <meter min="-1.0" max="1.0" value="@inputMeterValues[(int)joint-1]" style="width: 100%" />
                     </div>
 
                 </div>
@@ -99,6 +98,29 @@
         Triggers,
         DpadX,
         DpadY
+    }
+
+    /// <summary>
+    /// Returns an array of input values in range [-1, 1] for possible joint control setups on an xinput gamepad. Value indexes are based on the Bind enum
+    /// </summary>
+    /// <param name="gamepad"></param>
+    /// <returns></returns>
+    private double[] GetBindableGamepadInputs(Toolbelt.Blazor.Gamepad.Gamepad gamepad)
+    {
+        double[] gamepadInputs = [
+        gamepad.Axes[0],
+    gamepad.Axes[1],
+    gamepad.Axes[2],
+    gamepad.Axes[3],
+    gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
+    gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
+    gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
+    gamepad.Buttons[6].Value - gamepad.Buttons[7].Value,
+    gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
+    gamepad.Buttons[12].Value - gamepad.Buttons[13].Value
+        ];
+
+        return gamepadInputs;
     }
 
     // Member variables
@@ -147,29 +169,6 @@
         LastProcessGamepadInputOK = ProcessGamepadInputOK;
         InvokeAsync(StateHasChanged);
     }
-    /// <summary>
-    /// Returns an array of input values in range [-1, 1] for possible joint control setups on an xinput gamepad. Value indexes are based on the Bind enum
-    /// </summary>
-    /// <param name="gamepad"></param>
-    /// <returns></returns>
-    private double[] GetBindableGamepadInputs(Toolbelt.Blazor.Gamepad.Gamepad gamepad)
-    {
-        double[] gamepadInputs = [
-        gamepad.Axes[0],
-    gamepad.Axes[1],
-    gamepad.Axes[2],
-    gamepad.Axes[3],
-    gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
-    gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
-    gamepad.Buttons[5].Value - gamepad.Buttons[6].Value,
-    gamepad.Buttons[11].Value - gamepad.Buttons[12].Value,
-    gamepad.Buttons[6].Value - gamepad.Buttons[7].Value,
-    gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
-    gamepad.Buttons[12].Value - gamepad.Buttons[13].Value
-        ];
-
-        return gamepadInputs;
-    }
 
     // Process gamepad input and return true if rovecomm packets were sent.
     // Process gamepad input and return true if rovecomm packets were sent.
@@ -185,9 +184,11 @@
                     if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
 
                     double[] inputValues = GetBindableGamepadInputs(GamepadSelector_.SelectedGamepad);
+                    inputMeterValues = [0, 0, 0, 0, 0, 0];
                     for (int i = 0; i < jointInputs.Length; i++)
                     {
                         jointInputs[i] = inputValues[(int)jointInputBinds[i]];
+                        inputMeterValues[i] = inputValues[(int)jointInputBinds[i]];
                     }
 
                     // sanitize based on dead zone and apply multipliers
@@ -201,8 +202,7 @@
                     {
                         for (int i = 0; i < jointInputs.Length; i++)
                         {
-                            Console.WriteLine("A " + (jointInputs[i] == 0d));
-                            Console.WriteLine("B " + (lastUpdateInputs[i] == 0d));
+                            Console.WriteLine(GamepadSelector_.SelectedGamepad.Buttons[14].Value - GamepadSelector_.SelectedGamepad.Buttons[15].Value);
 
                             if (!(jointInputs[i] == 0d && lastUpdateInputs[i] == 0d)) _ = _RoveCommService.SendAsync<short>("Arm", "SetJointSpeed", [(short)(i + 1), Convert.ToInt16(jointInputs[i])]);
                         }

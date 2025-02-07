@@ -24,7 +24,7 @@ public class ArmSpeedState
         {"J4", 500},
         {"Pitch", 500},
         {"Roll", 1000},
-        {"Gipper", 1000},
+        {"Gripper", 1000},
         {"Master", 1}
     };
 
