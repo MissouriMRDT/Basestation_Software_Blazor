@@ -23,7 +23,7 @@
     <div class="settings-container">
         <div class="settings-row">
             <button class="btn btn-primary" @onclick="RestartCam">restart reciever</button>
-            <button class="btn btn-primary" @onclick="() => ToggleSource(1)">launch current source</button>
+            <button class="btn btn-primary" @onclick="() => ToggleSource(1)">restart current source</button>
             <button class="btn btn-primary" @onclick="() => ToggleSource(0)">shutdown current source</button>
             <button class="btn btn-primary" @onclick="TakeScreenshot">take screenshot</button>
         </div>
@@ -70,27 +70,13 @@
 
     private void TakeScreenshot()
     {
-        _ = _RoveCommService.SendAsync<int>("CameraServer", "TakePhoto", [0]);
+        _ = _RoveCommService.SendAsync<int>("Camera" + (_sourceIndex < 4 ? "1" : "2"), "TakePicture", [_sourceIndex % 4, 1]);
     }
 
     private void ToggleSource(int data)
     {
-        _ = _RoveCommService.SendAsync<int>("CameraServer", "ToggleStream", [data]);
-    }
-
-    private void ChangeFramerate(int framerate)
-    {
-        _ = _RoveCommService.SendAsync<int>("CameraServer", "ChangeFramerate", [framerate]);
-    }
-
-    private void ChangeBitrate(int bitrate)
-    {
-        _ = _RoveCommService.SendAsync<int>("CameraServer", "ChangeBitrate", [bitrate]);
-    }
-
-    private void ChangeResolution(int x, int y)
-    {
-        _ = _RoveCommService.SendAsync<int>("CameraServer", "ChangeBitrate", [x, y]);
+        string boardNum = (_sourceIndex < 4 ? "1" : "2");
+        _ = _RoveCommService.SendAsync<int>("Camera" + boardNum, "ToggleStream" + boardNum, [_sourceIndex % 4, data]);
     }
 
     void IDisposable.Dispose()
