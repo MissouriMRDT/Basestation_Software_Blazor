@@ -233,22 +233,14 @@
                     // Controller check
                     if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
 
-                    // Left Stick X (Axis0): X
-                    jointInputs[0] = GamepadSelector_.SelectedGamepad.Axes[0];
-                    // Left Stick Y (Axis1): J2
-                    jointInputs[1] = GamepadSelector_.SelectedGamepad.Axes[1];
-                    // Right Stick X (Axis2): J3
-                    jointInputs[2] = GamepadSelector_.SelectedGamepad.Axes[2];
-                    // Right Stick Y (Axis3): J4
-                    jointInputs[3] = GamepadSelector_.SelectedGamepad.Axes[3];
-                    // Left Trigger (Button6): -Pitch
-                    jointInputs[4] -= GamepadSelector_.SelectedGamepad.Buttons[6].Value;
-                    // Right Trigger (Button7): +Pitch
-                    jointInputs[4] += GamepadSelector_.SelectedGamepad.Buttons[7].Value;
-                    // A (Button0): +Roll
-                    jointInputs[5] += GamepadSelector_.SelectedGamepad.Buttons[0].Value;
-                    // B (Button1): -Roll
-                    jointInputs[5] -= GamepadSelector_.SelectedGamepad.Buttons[1].Value;
+
+                    double[] inputValues = GetBindableGamepadInputs(GamepadSelector_.SelectedGamepad);
+                    inputMeterValues = [0, 0, 0, 0, 0, 0];
+                    for (int i = 0; i < jointInputs.Length; i++)
+                    {
+                        jointInputs[i] = inputValues[(int)jointInputBinds[i]];
+                        inputMeterValues[i] = inputValues[(int)jointInputBinds[i]];
+                    }
 
                     // sanitize based on dead zone and apply multipliers
                     for (int i = 0; i < jointInputs.Length; i++)
