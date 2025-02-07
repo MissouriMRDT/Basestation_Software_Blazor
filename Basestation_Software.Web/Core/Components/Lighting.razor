@@ -1,0 +1,41 @@
+﻿@inject RoveCommService _RoveCommService
+
+<div class="card full-height">
+    <div class="card-header">
+        <h3>Lighting</h3>
+    </div>
+    <div class="card-body">
+        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center">
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.Center">
+                <p style="width: 80px; text-align: right">R</p>
+                <RadzenNumeric TValue="int" Min="0" Max="255" @bind-value=@colorComponents[0]></RadzenNumeric>
+            </RadzenStack>
+
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.Center">
+                <p style="width: 80px; text-align: right">G</p>
+                <RadzenNumeric TValue="int" Min="0" Max="255" @bind-value=@colorComponents[1]></RadzenNumeric>
+            </RadzenStack>        
+
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.Center">
+                <p style="width: 80px; text-align: right">B</p>
+                <RadzenNumeric TValue="int" Min="0" Max="255" @bind-value=@colorComponents[2]></RadzenNumeric>
+            </RadzenStack>
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.Center">
+                <p style="width: 80px; text-align: right">A</p>
+                <RadzenNumeric TValue="int" Min="0" Max="255" @bind-value=@brightness></RadzenNumeric>
+            </RadzenStack>
+        </RadzenStack>
+        <button class="btn btn-primary" onclick="Send">Send</button>
+    </div>
+</div>
+
+@code {
+    private List<int> colorComponents = [0, 0, 0];
+    private int brightness = 0;
+
+    private void Send()
+    {
+        _ = Task.Run(() => _RoveCommService.SendAsync<int>("Core", "LEDRGB", colorComponents));
+        _ = Task.Run(() => _RoveCommService.SendAsync<int>("Core", "Brightness", [brightness]));
+    }
+}
