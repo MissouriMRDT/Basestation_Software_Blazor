@@ -37,18 +37,19 @@
                 <input type="number" Min="0" Max="255" @bind-value=@brightness></input>
             </div>
             <button class="btn btn-primary" style="justify-self:center;" @onclick="Send">Send</button>
-
+			<div style="width: 50px; height: 50px; background-color: rgb(@colorComponents[0], @colorComponents[1], @colorComponents[2])"></div>
         </div>
     </div>
 </div>
 
 @code {
-    private List<int> colorComponents = [0, 0, 0];
-    private int brightness = 0;
+    private List<short> colorComponents = [0, 0, 0];
+    private short brightness = 0;
 
-    public void Send()
+    private void Send()
     {
-        _ = Task.Run(() => _RoveCommService.SendAsync<int>("Core", "LEDRGB", colorComponents));
-        _ = Task.Run(() => _RoveCommService.SendAsync<int>("Core", "Brightness", [brightness]));
+		Console.WriteLine("ACK! LIGHTS!");
+        _ = _RoveCommService.SendAsync<short>("Core", "LEDRGB", colorComponents);
+        _ = _RoveCommService.SendAsync<short>("Core", "Brightness", [brightness]);
     }
 }

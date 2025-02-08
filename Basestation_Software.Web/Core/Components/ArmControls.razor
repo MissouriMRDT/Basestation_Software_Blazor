@@ -145,7 +145,7 @@
     public const int UPDATE_INTERVAL = 100;
     private Timer UpdateTimer;
     private bool LastProcessGamepadInputOK = false;
-    private double DeadZone = 0.05;
+    private double DeadZone = 0.5;
     bool UpdateIndividualJoints = true;
     List<bool> isJointInverted = [false, false, false, false, false, false];
     // in order of joint enum
@@ -223,7 +223,7 @@
                     {
                         for (int i = 0; i < jointInputs.Length; i++)
                         {
-                            if (!(jointInputs[i] == 0d && lastUpdateInputs[i] == 0d)) _ = _RoveCommService.SendAsync<short>("Arm", "SetJointSpeed", [(short)(i), Convert.ToInt16(jointInputs[i])]);
+                            if (!(jointInputs[i] == 0d && lastUpdateInputs[i] == 0d)) _ = _RoveCommService.SendAsync<short>("Arm", "SetJointSpeed", [(short)(i + 1), Convert.ToInt16(jointInputs[i])]);
                             // We just stopped inputting, send a bunch of stop packets to account for packet loss
                             // Needs to be worked on embedded-side
                             if (jointInputs[i] == 0d && lastUpdateInputs[i] != 0d)
@@ -231,7 +231,7 @@
                                 for (int j = 0; j < 20; j++)
                                 {
                                     Console.WriteLine("STOP!");
-                                    _ = Task.Run(() => _RoveCommService.SendAsync<short>("Arm", "SetJointSpeed", [(short)(i + 1), 0]));
+                                    _ = Task.Run(() => _RoveCommService.SendAsync<short>("Arm", "SetJointSpeed", [(short)(i), 0]));
                                 }
                             }
                         }
@@ -291,7 +291,7 @@
                         _ = _RoveCommService.SendAsync<float>("Arm", "IncrementIndividualTargetAngles", Array.ConvertAll(jointInputs, j => (float)j).ToList());
                     }
 
-                    _ = _RoveCommService.SendAsync<short>("Arm", "SetGripperSpeed", [(short)(inputValues[(int)gripperBind] * _ArmSpeedState.ArmSpeeds["Gripper"] * _ArmSpeedState.ArmSpeeds["Master"] * (isGripperInverted ? -1 : 1))]);
+                    _ = Task.Run(() => _RoveCommService.SendAsync<short>("Arm", "SetGripperSpeed", [(short)(inputValues[(int)gripperBind] * _ArmSpeedState.ArmSpeeds["Gripper"] * _ArmSpeedState.ArmSpeeds["Master"] * (isGripperInverted ? -1 : 1))]));
                     gripperMeterValue = inputValues[(int)gripperBind];
 
                     break;

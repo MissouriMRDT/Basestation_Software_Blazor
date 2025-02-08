@@ -8,8 +8,8 @@
     <div class="card-header">
         <h3>Camera Display</h3>
     </div>
-    <div class="cam-container">
-        <img class="cam-display" src="@_frameData" />
+    <div class="cam-container" style="transform:rotate(@(rot)deg)">
+        <img class="cam-display" src="@_frameData"/>
     </div>
 
     <div class="source-buttons-container" style="margin-block 0.5%">
@@ -34,6 +34,7 @@
             <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 1)">restart source</button>
             <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 0)">shutdown source</button>
             <button class="btn btn-primary" @onclick="TakeScreenshot">take screenshot</button>
+			<button class="btn btn-primary" @onclick="Rotate">Rotate</button>
         </div>
     </div>
 </div>
@@ -43,7 +44,13 @@
     private int _sourceIndex = 0;
     private string? _frameData;
     private int[] streamingCams = [0, 0, 0, 1, 0, 0, 0, 0];
+	private int rot = 0;
 
+	private void Rotate()
+	{
+		Console.WriteLine("ROT");
+		rot += 90;
+	}
     protected override async Task OnInitializedAsync()
     {
         await InvokeAsync(StateHasChanged);

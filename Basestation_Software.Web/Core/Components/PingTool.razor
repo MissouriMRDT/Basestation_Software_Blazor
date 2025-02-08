@@ -41,10 +41,10 @@
             <!-- Ping Delay Field -->
             <div class="row">
                 <div class="col" style="display:flex; flex-grow:0; flex-basis:content; align-items:center">
-                    <label>AutoPing Delay (seconds): </label>
+                    <label>AutoPing Delay (ms): </label>
                 </div>
                 <div class="col" style="">
-                    <RadzenTextBox style="min-width:15%" Value="5" ValueChanged="@((string value) => UpdateAutoPingDelay(value))"></RadzenTextBox>
+                    <RadzenTextBox style="min-width:15%" Value="50" ValueChanged="@((string value) => UpdateAutoPingDelay(value))"></RadzenTextBox>
                 </div>
             </div>
 
@@ -131,7 +131,7 @@
 
     private System.Timers.Timer? autoPingTimer;
 
-    private int autoPingDelay = 5000;
+    private int autoPingDelay = 50;
     private int pingTimeout = 1000;
 
     private List<Device> devices = new List<Device> { };
@@ -145,7 +145,7 @@
     protected override void OnInitialized()
     {
         // Create some timers.
-        autoPingTimer = new System.Timers.Timer(5000);
+        autoPingTimer = new System.Timers.Timer(50);
         autoPingTimer.Elapsed += AutoPing;
         autoPingTimer.AutoReset = true;
         autoPingTimer.Enabled = true;
@@ -182,7 +182,7 @@
         try
         {
             PingReply reply = await PingService.PingAsync(ipAddress, pingTimeout);
-            device.PingStatus = reply.Status.ToString();
+            device.PingStatus = reply.RoundtripTime.ToString();
 
             // Set PingStatusHighlight
             if (reply.Status == IPStatus.Success)
@@ -262,7 +262,7 @@
     {
         try
         {
-            autoPingDelay = int.Parse(delay) * 1000;
+            autoPingDelay = int.Parse(delay);
         }
         catch
         {
