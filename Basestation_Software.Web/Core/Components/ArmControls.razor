@@ -142,7 +142,7 @@
     // Member variables
     private GamepadSelector GamepadSelector_;
     private Scheme SelectedScheme;
-    public const int UPDATE_INTERVAL = 100;
+    public const int UPDATE_INTERVAL = 200;
     private Timer UpdateTimer;
     private bool LastProcessGamepadInputOK = false;
     private double DeadZone = 0.5;
@@ -276,7 +276,7 @@
                     for (int i = 0; i < jointInputs.Length; i++)
                     {
                         jointInputs[i] = (Math.Abs(jointInputs[i]) < DeadZone) ? 0d :
-                            jointInputs[i] * (isJointInverted[i] ? -1f : 1f) * _ArmSpeedState.ArmSpeeds["Master"];
+                            jointInputs[i] * (isJointInverted[i] ? -1f : 1f) * (_ArmSpeedState.ArmSpeeds.Values.ToArray()[i] / 200f) * _ArmSpeedState.ArmSpeeds["Master"];
                     }
 
                     if (UpdateIndividualJoints)
