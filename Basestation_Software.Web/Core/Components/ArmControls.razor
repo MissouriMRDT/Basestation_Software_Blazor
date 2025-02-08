@@ -223,7 +223,7 @@
                     {
                         for (int i = 0; i < jointInputs.Length; i++)
                         {
-                            if (!(jointInputs[i] == 0d && lastUpdateInputs[i] == 0d)) _ = _RoveCommService.SendAsync<short>("Arm", "SetJointSpeed", [(short)(i + 1), Convert.ToInt16(jointInputs[i])]);
+                            if (!(jointInputs[i] == 0d && lastUpdateInputs[i] == 0d)) _ = _RoveCommService.SendAsync<short>("Arm", "SetJointSpeed", [(short)(i), Convert.ToInt16(jointInputs[i])]);
                             // We just stopped inputting, send a bunch of stop packets to account for packet loss
                             // Needs to be worked on embedded-side
                             if (jointInputs[i] == 0d && lastUpdateInputs[i] != 0d)
@@ -283,7 +283,7 @@
                     {
                         for (int i = 0; i < jointInputs.Length; i++)
                         {
-                            if (jointInputs[i] != 0d) _ = _RoveCommService.SendAsync<float>("Arm", "IncrementJointTargetAngle", [(float)(i + 1), (float)jointInputs[i]]);
+                            if (jointInputs[i] != 0d) _ = _RoveCommService.SendAsync<float>("Arm", "IncrementJointTargetAngle", [(float)(i), (float)jointInputs[i]]);
                         }
                     }
                     else
