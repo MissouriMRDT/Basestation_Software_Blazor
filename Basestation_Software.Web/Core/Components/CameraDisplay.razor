@@ -11,7 +11,8 @@
     <div class="cam-container">
         <img class="cam-display" src="@_frameData" />
     </div>
-    <div class="source-buttons-container">
+
+    <div class="source-buttons-container" style="margin-block 0.5%">
         @for (int i = 0; i < CameraService._sources.Length; i++)
         {
             // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
@@ -20,11 +21,18 @@
         }
     </div>
 
+    <div class="source-buttons-container" style="margin-block: 1%">
+        @for (int i = 0; i < CameraService._sources.Length; i++)
+        {
+            <button class="power" style="background-image: url(images/@( streamingCams[i] == 1 ? "on.png" : "off.png"));"></button>
+        }
+    </div>
+
     <div class="settings-container">
         <div class="settings-row">
             <button class="btn btn-primary" @onclick="RestartCam">restart reciever</button>
-            <button class="btn btn-primary" @onclick="() => ToggleSource(1)">restart current source</button>
-            <button class="btn btn-primary" @onclick="() => ToggleSource(0)">shutdown current source</button>
+            <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 1)">restart source</button>
+            <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 0)">shutdown source</button>
             <button class="btn btn-primary" @onclick="TakeScreenshot">take screenshot</button>
         </div>
     </div>
@@ -34,6 +42,7 @@
     private bool _prerendered = false;
     private int _sourceIndex = 0;
     private string? _frameData;
+    private int[] streamingCams = [0, 0, 0, 1, 0, 0, 0, 0];
 
     protected override async Task OnInitializedAsync()
     {
@@ -73,7 +82,7 @@
         _ = _RoveCommService.SendAsync<int>("Camera" + (_sourceIndex < 4 ? "1" : "2"), "TakePicture", [_sourceIndex % 4, 1]);
     }
 
-    private void ToggleSource(int data)
+    private void ToggleSource(int source, int data)
     {
         string boardNum = (_sourceIndex < 4 ? "1" : "2");
         _ = _RoveCommService.SendAsync<int>("Camera" + boardNum, "ToggleStream" + boardNum, [_sourceIndex % 4, data]);
