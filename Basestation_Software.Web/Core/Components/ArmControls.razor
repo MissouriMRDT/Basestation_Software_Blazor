@@ -43,10 +43,17 @@
         <GamepadSelector @ref=GamepadSelector_ ChangedCallback=GamepadSelectionChanged />
     </div>
     <div class="card-body">
-        <div style="display:flex; gap:0.6rem;">
-            <RadzenCheckBox TValue="bool" Value="true" bind-Value=@UpdateIndividualJoints />
-            <p style="width: auto">Control Joints Individually</p>
+        <div style="display: flex; justify-content: space-between;">
+            <div style="display:flex; gap:0.6rem;">
+                <RadzenCheckBox TValue="bool" Value="true" bind-Value=@UpdateIndividualJoints />
+                <p style="width: auto; text-align: left">Control Joints Individually</p>
+            </div>
+            <div style="display:flex; gap: 0.6rem">
+                <p>Poll Interval (ms):</p>
+                <RadzenTextBox Change="UpdateInterval" Value="50" Style="width: 25%"></RadzenTextBox>
+            </div>
         </div>
+
         <div style="display:flex; gap:0.6rem; align-items: center; margin-block: 0.1rem 0.5rem">
             <p>Dead Zone: </p>
             <RadzenSlider @bind-Value=@DeadZone TValue="double" Min="0" Max="(decimal)0.5" Step="0.001" />
@@ -116,6 +123,15 @@
         DpadY
     }
 
+    private void UpdateInterval(string args)
+    {
+        Console.WriteLine(args);
+        if (GamepadSelector_.SelectedGamepad == null)
+            UpdateTimer.Change(-1, -1);
+        else
+            UpdateTimer.Change(0, int.Parse(args));
+    }
+
     /// <summary>
     /// Returns an array of input values in range [-1, 1] for possible joint control setups on an xinput gamepad. Value indexes are based on the Bind enum
     /// </summary>
@@ -142,7 +158,7 @@
     // Member variables
     private GamepadSelector GamepadSelector_;
     private Scheme SelectedScheme;
-    public const int UPDATE_INTERVAL = 200;
+    public const int UPDATE_INTERVAL = 50;
     private Timer UpdateTimer;
     private bool LastProcessGamepadInputOK = false;
     private double DeadZone = 0.5;
@@ -150,9 +166,9 @@
     List<bool> isJointInverted = [false, false, false, false, false, false];
     // in order of joint enum
     // List<int> jointInputBinds = [0, 1, 2, 3, 4, 5];
-    List<Bind> jointInputBinds = [Bind.LSX, Bind.LSY, Bind.RSX, Bind.RSY, Bind.DpadX, Bind.Triggers];
+    List<Bind> jointInputBinds = [Bind.RSX, Bind.RSY, Bind.LSY, Bind.LSX, Bind.Triggers, Bind.Bumpers];
     // TODO add gripper to joint enumeration
-    Bind gripperBind = Bind.Bumpers;
+    Bind gripperBind = Bind.DpadX;
     bool isGripperInverted = false;
 
     List<double> inputMeterValues = [0, 0, 0, 0, 0, 0];
