@@ -2,7 +2,7 @@ namespace Basestation_Software.Web.Core.Services.States;
 
 public class ArmSpeedState
 {
-    public delegate void ArmSpeedChangedCallback(Dictionary<string, int> waypoints);
+    public delegate void ArmSpeedChangedCallback(Dictionary<string, float> waypoints);
     private event ArmSpeedChangedCallback? ArmSpeedChangedNotifier;
 
     public void SubscribeToArmSpeedChanged(ArmSpeedChangedCallback callback)
@@ -15,19 +15,19 @@ public class ArmSpeedState
         ArmSpeedChangedNotifier -= callback;
     }
 
-    private Dictionary<string, int> _armSpeeds = new Dictionary<string, int>()
+    private Dictionary<string, float> _armSpeeds = new Dictionary<string, float>()
     {
-        {"X", 1000},
-        {"J2", 1000},
-        {"J3", 1000},
-        {"J4", 500},
-        {"Pitch", 500},
-        {"Roll", 1000},
-        {"Gripper", 1000},
-        {"Master", 1}
+        {"X", 1f},
+        {"J2", 1f},
+        {"J3", 1f},
+        {"J4", 0.5f},
+        {"Pitch", 0.5f},
+        {"Roll", 1f},
+        {"Gripper", 1f},
+        {"Master", 1f}
     };
 
-    public Dictionary<string, int> ArmSpeeds
+    public Dictionary<string, float> ArmSpeeds
     {
         get { return _armSpeeds; }
         set 
