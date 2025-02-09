@@ -1,5 +1,12 @@
 ﻿@inject RoveCommService _RoveCommService
 @using Basestation_Software.Models.RamanGraph
+@using System;
+@using System.Linq;
+@using System.Numerics;
+@using MathNet.Numerics.LinearAlgebra;
+@using MathNet.Numerics.LinearAlgebra.Double;
+@using MathNet.Numerics.LinearAlgebra.Solvers;
+
 
 <div class="card h-100">
    <div class="card-header">
@@ -16,7 +23,9 @@
 
 
 @code {
+    //Declaring ramanGraph which will plot, and placeholder array for baseline correction
     DataItem[] ramanGraph = new DataItem[2048];
+    MathNet.Numerics.LinearAlgebra.Vector<double> initial_reading = MathNet.Numerics.LinearAlgebra.Vector<double>.Build.Dense(2048);
 
 
     private async Task RequestRamanData()
@@ -33,33 +42,91 @@
         //Receiving RoveComm packets if they are sent in
         _RoveCommService.On<ushort>("Instruments", "RamanReading_Part1", async (packet) =>
         {
-            for (int i = 0; i < 500; i++) ramanGraph[i].Intensity = packet.Data[i];
+            for (int i = 0; i < 500; i++) initial_reading[i] = packet.Data[i];
             await InvokeAsync(StateHasChanged);
         });
 
         await Task.CompletedTask;
         _RoveCommService.On<ushort>("Instruments", "RamanReading_Part2", async (packet) =>
         {
-            for (int i = 0; i < 500; i++) ramanGraph[i + 500].Intensity = packet.Data[i];
+            for (int i = 0; i < 500; i++) initial_reading[i + 500] = packet.Data[i];
             await InvokeAsync(StateHasChanged);
         });
 
         _RoveCommService.On<ushort>("Instruments", "RamanReading_Part3", async (packet) =>
         {
-            for (int i = 0; i < 500; i++) ramanGraph[i + 1000].Intensity = packet.Data[i];
+            for (int i = 0; i < 500; i++) initial_reading[i + 1000] = packet.Data[i];
             await InvokeAsync(StateHasChanged);
         });
 
         _RoveCommService.On<ushort>("Instruments", "RamanReading_Part4", async (packet) =>
         {
-            for (int i = 0; i < 500; i++) ramanGraph[i + 1500].Intensity = packet.Data[i];
+            for (int i = 0; i < 500; i++) initial_reading[i + 1500] = packet.Data[i];
             await InvokeAsync(StateHasChanged);
         });
 
         _RoveCommService.On<ushort>("Instruments", "RamanReading_Part5", async (packet) =>
         {
-            for (int i = 0; i < 48; i++) ramanGraph[i + 2000].Intensity = packet.Data[i];
+            for (int i = 0; i < 48; i++) initial_reading[i + 2000] = packet.Data[i];
             await InvokeAsync(StateHasChanged);
         });
-    }     
+        BaselineAls(initial_reading, 10000, 0.01, ref ramanGraph);
+    }
+
+    //Functions for baseline correction
+    /*
+     Pasted from StackOverflow for the values of lam and p:
+     We found that generally 0.001 ≤ p ≤ 0.1 is a good choice (for a signal with positive peaks) and 10^2 ≤ λ ≤ 10^9
+     */
+    public static void BaselineAls(MathNet.Numerics.LinearAlgebra.Vector<double> y, double lam, double p, ref DataItem[] r)
+    {
+        var D = CreateDifferenceMatrix(2048);
+        var w = MathNet.Numerics.LinearAlgebra.Vector<double>.Build.Dense(2048, 1.0);
+        MathNet.Numerics.LinearAlgebra.Vector<double> z;
+
+        for (int i = 0; i < 2048; i++)
+        {
+            var W = CreateDiagonalMatrix(w);
+            var Z = W + lam * D * D.Transpose();
+            z = Z.Solve(w.PointwiseMultiply(y));
+
+            double pointGreater = 1, pointLesser = 1;
+            if (y[i] <= z[i])
+                pointGreater = 0;
+            if (y[i] >= z[i])
+                pointLesser = 0;
+
+            w[i] = p * (pointGreater) + (1 - p) * (pointLesser);
+        }
+
+        for(int i = 0; i < 2048; i++)
+        {
+            r[i].Intensity = w[i];
+        }
+    }
+
+    //I'll be so real, I don't know what this does but I think it is required
+    private static SparseMatrix CreateDifferenceMatrix(int size)
+    {
+        var D = SparseMatrix.Create(size - 2, size, 0);
+        for (int i = 0; i < size - 2; i++)
+        {
+            D[i, i] = -2;
+            D[i, i + 1] = 1;
+            D[i, i + 2] = 1;
+        }
+        return D;
+    }
+
+    //I also don't know what this does, but again, I believe it is needed for baseline correction
+    private static SparseMatrix CreateDiagonalMatrix(MathNet.Numerics.LinearAlgebra.Vector<double> vector)
+    {
+        var size = vector.Count;
+        var diagMatrix = SparseMatrix.Create(size, size, 0);
+        for (int i = 0; i < size; i++)
+        {
+            diagMatrix[i, i] = vector[i];
+        }
+        return diagMatrix;
+    }
 }
