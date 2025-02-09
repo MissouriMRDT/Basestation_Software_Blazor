@@ -20,8 +20,8 @@ public class ArmSpeedState
         {"X", 1f},
         {"J2", 1f},
         {"J3", 1f},
-        {"J4", 0.5f},
-        {"Pitch", 0.5f},
+        {"J4", 1f},
+        {"Pitch", 1f},
         {"Roll", 1f},
         {"Gripper", 1f},
         {"Master", 1f}
