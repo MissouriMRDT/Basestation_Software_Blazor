@@ -10,6 +10,7 @@ public class ConfigRepository : IConfigRepository
 {
     // Declare member variables.
     private readonly REDDatabase _REDDatabase;
+    private static readonly Guid _defaultGuid = new("00000000-0000-0000-0000-000000000001");
 
     /// <summary>
     /// Constructor
@@ -41,6 +42,8 @@ public class ConfigRepository : IConfigRepository
     /// <param name="id">The id of the configuration to remove.</param>
     public async Task<ConfigEntity?> DeleteConfig(Guid id)
     {
+        if (id.Equals(_defaultGuid)) return null;
+
         // Find the first waypoint with the same ID.
         ConfigEntity? result = await _REDDatabase.Configs.FindAsync(id);
         // Check if it was found.
@@ -61,11 +64,13 @@ public class ConfigRepository : IConfigRepository
     {
         // Deserialize config entries and sort out null values.
 #pragma warning disable CS8619 // Nullability of reference types in value doesn't match target type.
-        return (await _REDDatabase.Configs.ToListAsync()).ToDictionary(
+        Dictionary<Guid, Config> dict = (await _REDDatabase.Configs.ToListAsync()).ToDictionary(
             x => x.ID,
             x => JsonSerializer.Deserialize<Config>(x.Data)
         ).Where(x => x.Value is not null).ToDictionary(x => x.Key, x => x.Value);
 #pragma warning restore CS8619 // Nullability of reference types in value doesn't match target type.
+        dict[_defaultGuid] = Config.Default();
+        return dict;
     }
 
     /// <summary>
@@ -75,6 +80,8 @@ public class ConfigRepository : IConfigRepository
     /// <returns>A Config object, null if not found.</returns>
     public async Task<Config?> GetConfig(Guid id)
     {
+        if (id.Equals(_defaultGuid)) return Config.Default();
+
         ConfigEntity? result = await _REDDatabase.Configs.FindAsync(id);
         return result is not null ? JsonSerializer.Deserialize<Config>(result.Data) : null;
     }
@@ -87,6 +94,8 @@ public class ConfigRepository : IConfigRepository
     /// <returns>The object stored in the database.</returns>
     public async Task<ConfigEntity?> UpdateConfig(Guid id, Config config)
     {
+        if (id.Equals(_defaultGuid)) return null;
+
         ConfigEntity? result = await _REDDatabase.Configs.FindAsync(id);
         if (result is null)
         {
