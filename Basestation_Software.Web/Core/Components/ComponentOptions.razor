@@ -77,8 +77,8 @@
     public EventCallback OnSaved { get; set; }
 
     // State
-    public bool Visible = false;
-    public int X, Y, Width, Height;
+    private bool Visible = false;
+    private int X, Y, Width, Height;
     private string Type_, PlaceSelf, ID;
 
     protected override void OnInitialized()
@@ -114,8 +114,30 @@
         if (ComponentType is not null)
         {
             Components[ComponentIndex].Type = Type_;
-            if (ComponentType.GetMember("ID").Length > 0) Components[ComponentIndex].ID = ID;
-            else Components[ComponentIndex].ID = null;
+            if (ComponentType.GetMember("ID").Length > 0) {
+                // Component requires an ID.
+                if (ID.Length > 0) {
+                    // An appropriate ID was specified.
+                    Components[ComponentIndex].ID = ID;
+                }
+                else {
+                    // No ID was specified, generate one. Missing a required ID usually breaks the page.
+                    var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+                    var stringChars = new char[20];
+                    var random = new Random();
+
+                    for (int j = 0; j < stringChars.Length; j++)
+                    {
+                        stringChars[j] = chars[random.Next(chars.Length)];
+                    }
+                    Components[ComponentIndex].ID = new String(stringChars);
+                }
+            }
+            else 
+            {
+                // Component does not accept an ID.
+                Components[ComponentIndex].ID = null;
+            }
         }
         Components[ComponentIndex].PlaceSelf = PlaceSelf;
         Visible = false;

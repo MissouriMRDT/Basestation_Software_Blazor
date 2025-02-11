@@ -218,8 +218,24 @@
             builder.CloseComponent(); // </ComponentOptions>
 
             builder.OpenComponent(i + 6, componentType); // <componentType>
-            if (component.ID is not null && componentType.GetProperty("ID") is not null) // Needed for RoverMap, GPS and maybe others
+            if (componentType.GetMember("ID").Length > 0)
+            {
+                // Component requires an ID.
+                if (component.ID.Length == 0)
+                {
+                    // No ID was specified, generate one. Missing a required ID usually breaks the page.
+                    var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+                    var stringChars = new char[20];
+                    var random = new Random();
+
+                    for (int j = 0; j < stringChars.Length; j++)
+                    {
+                        stringChars[j] = chars[random.Next(chars.Length)];
+                    }
+                    component.ID = new String(stringChars);
+                }
                 builder.AddComponentParameter(i + 7, "ID", component.ID);
+            }
             builder.CloseComponent(); // </componentType>
             builder.CloseElement(); // </div>
 
