@@ -61,8 +61,13 @@ public class SingleCameraController
 	{
 		while (!token.IsCancellationRequested)
 		{
-			// _capture?.Grab();
-			await Task.Delay(1, token);
+            try
+            {
+                _capture?.Grab();
+            }
+            catch (Exception e) { }
+
+            await Task.Delay(1, token);
 		}
 	}
 
@@ -70,16 +75,22 @@ public class SingleCameraController
 	{
 		using (Mat frame = new())
 		{
-			_capture?.Retrieve(frame);
-            if (frame != null)
+            try
             {
-                string base64 = Convert.ToBase64String(frame.ToBytes());
-                _frameData = $"data:image/gif;base64,{base64}";
+                _capture?.Retrieve(frame);
+                if (frame != null)
+                {
+                    string base64 = Convert.ToBase64String(frame.ToBytes());
+                    _frameData = $"data:image/gif;base64,{base64}";
 
-                FrameNotifier?.Invoke(_frameData);
+                    FrameNotifier?.Invoke(_frameData);
+                }
+
             }
+            catch (Exception e) { }
 
-			await Task.Delay(33, token);
+            await Task.Delay(33, token);
+            frame?.Dispose();
 		}
 	}
 
