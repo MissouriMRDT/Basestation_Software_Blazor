@@ -30,7 +30,7 @@
             <div class="box">
                 <p>Humidity</p>
                 <p style="font-size: 2rem">@_humidity%</p>
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<float>("ScienceActuation", "Humidity", [1f]))>Request</button>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "RequestHumidity", [1]))>Request</button>
             </div>
         </div>
     </div>
@@ -46,6 +46,7 @@
             _temperature = packet.Data[0];
             await InvokeAsync(StateHasChanged);
         });
+
         _RoveCommService.On<float>("ScienceActuation", "Humidity", async (packet) =>
         {
             _humidity = packet.Data[0];
