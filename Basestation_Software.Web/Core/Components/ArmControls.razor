@@ -43,8 +43,11 @@
         <GamepadSelector @ref=GamepadSelector_ ChangedCallback=GamepadSelectionChanged />
     </div>
     <div class="card-body">
-        <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0, 1])) >Calibrate X</button>
-        <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [1, 1]))>Calibrate Roll</button> 
+        <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [1, 0])) >Calibrate X</button>
+        <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0, 1]))>Calibrate Roll</button>
+        <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<ushort>("Arm", "SoftLimitOverride", limitOverrides))>Send Soft Overrides</button>
+        <button class="btn btn-primary" @onclick=@(() =>Console.WriteLine(String.Join(", ", limitOverrides)))>Print Soft Overrides</button>
+
         <div style="display: flex; justify-content: space-between;">
             <div style="display:flex; gap:0.6rem;">
                 <RadzenCheckBox TValue="bool" Value="true" bind-Value=@UpdateIndividualJoints />
@@ -98,7 +101,19 @@
 
             </div>
         </div>
-
+        <div style="display: grid; grid-template-columns: auto auto">
+            @for (int i = 0; i < limitOverrides.Count; i++)
+            {
+                var _i = i;
+                <div style="display: flex; justify-items: center; align-items: center">
+                    <p>@limitNames[i]</p>
+                    <RadzenCheckBox TValue="bool" Change=@((args) => 
+                    {
+                        limitOverrides[_i] = ((ushort) ((bool)(args) == false ? 0 : 1));
+                    }) />
+                </div>
+            }
+        </div>
     </div>
 </div>
 
@@ -172,6 +187,10 @@
     // TODO add gripper to joint enumeration
     Bind gripperBind = Bind.DpadX;
     bool isGripperInverted = false;
+
+    private string[] limitNames = ["X+", "X-", "J2+", "J2-", "J3+", "J3-", "J4+", "J4-", "P+", "P-"];
+    // 0 off, 1 on
+    private List<ushort> limitOverrides = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
     List<double> inputMeterValues = [0, 0, 0, 0, 0, 0];
     double gripperMeterValue = 0;
