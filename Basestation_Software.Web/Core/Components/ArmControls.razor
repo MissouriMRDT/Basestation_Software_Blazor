@@ -43,6 +43,8 @@
         <GamepadSelector @ref=GamepadSelector_ ChangedCallback=GamepadSelectionChanged />
     </div>
     <div class="card-body">
+        <button style="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0, 1])) >calibrate X</button>
+        <button style="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [1, 1]))>calibrate Roll</button> 
         <div style="display: flex; justify-content: space-between;">
             <div style="display:flex; gap:0.6rem;">
                 <RadzenCheckBox TValue="bool" Value="true" bind-Value=@UpdateIndividualJoints />
