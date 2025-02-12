@@ -1,0 +1,52 @@
+﻿@implements IDisposable
+
+@inject RoveCommService _RoveCommService
+@inject IJSRuntime _IJSRuntime
+
+<div class="card h-100">
+    <div class="card-header">
+        <h5 class="mr-auto">3D Rover</h5>
+    </div>
+    <div class="card-body" style="padding: 0">
+        @if (!_dataLoaded)
+        {
+            <div class="row">
+                <div class="spinner-border " role="status"></div>
+                <div class="col">
+                    <h3>Loading...</h3>
+                </div>
+            </div>
+        }
+        <div id="rover-view-@ID" style="width: 100%; height:100%" hidden="@(!_dataLoaded)"></div>
+    </div>
+</div>
+
+@code
+{
+
+    [Parameter]
+    public string ID { get; set; } = "";
+
+    private string jsInteropName = "";
+    private bool _dataLoaded = false;
+
+    protected override void OnInitialized()
+    {
+        jsInteropName = $"window.roverViews.{ID}";
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await _IJSRuntime.InvokeVoidAsync("createRoverView", [ID, DotNetObjectReference.Create(this)]);
+            _dataLoaded = true;
+            await InvokeAsync(StateHasChanged);
+            // component will resize once unhidden
+        }
+        // await _IJSRuntime.InvokeVoidAsync($"{jsInteropName}.onWindowResize");
+    }
+
+    void IDisposable.Dispose() { }
+
+}
