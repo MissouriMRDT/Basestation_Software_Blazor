@@ -18,7 +18,7 @@
     flex: 0 1 160px;
     flex-wrap:wrap;
     border-radius: 10px;
-    background-color: lightgray;
+    background-color: var(--bs-secondary-bg);
     margin: 0.2rem;
     padding: 0.3rem;
     }
@@ -43,8 +43,8 @@
         <GamepadSelector @ref=GamepadSelector_ ChangedCallback=GamepadSelectionChanged />
     </div>
     <div class="card-body">
-        <button style="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0, 1])) >calibrate X</button>
-        <button style="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [1, 1]))>calibrate Roll</button> 
+        <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0, 1])) >Calibrate X</button>
+        <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [1, 1]))>Calibrate Roll</button> 
         <div style="display: flex; justify-content: space-between;">
             <div style="display:flex; gap:0.6rem;">
                 <RadzenCheckBox TValue="bool" Value="true" bind-Value=@UpdateIndividualJoints />
