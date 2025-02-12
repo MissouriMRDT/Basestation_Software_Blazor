@@ -115,6 +115,36 @@
                 </div>
 
             </div>
+            <div class="controlBox">
+                <p>Invert Gimbal Pan</p>
+                <RadzenCheckBox TValue="bool" />
+                <div class="break"></div>
+                <select @bind=GimbalPanBind name="ControlBind" style="width:100%;">
+                    @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
+                    {
+                        <option value="@bind">@bind</option>
+                    }
+                </select>
+                <div style="display: flex; width:100%">
+                    <meter value="@meterValues[4]" min="-1.0" max="1.0" style="width: 100%" />
+                </div>
+
+            </div>
+            <div class="controlBox">
+                <p>Invert Gimbal Tilt</p>
+                <RadzenCheckBox TValue="bool" />
+                <div class="break"></div>
+                <select @bind=GimbalTiltBind name="ControlBind" style="width:100%;">
+                    @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
+                    {
+                        <option value="@bind">@bind</option>
+                    }
+                </select>
+                <div style="display: flex; width:100%">
+                    <meter value="@meterValues[5]" min="-1.0" max="1.0" style="width: 100%" />
+                </div>
+
+            </div>
         </div>
 
     </div>
@@ -183,10 +213,12 @@
     private bool LastProcessGamepadInputOK = false;
     private double DeadZone = 0.5;
     Bind ScoopAxisBind = Bind.LSY;
-    Bind SensorAxisBind = Bind.RSY;
+    Bind SensorAxisBind = Bind.LSX;
     Bind AugerBind = Bind.Bumpers;
     Bind MicroscopeBind = Bind.Triggers;
-    double[] meterValues = [0d, 0d, 0d, 0d];
+    Bind GimbalPanBind = Bind.RSX;
+    Bind GimbalTiltBind = Bind.RSY;
+    double[] meterValues = [0d, 0d, 0d, 0d, 0d, 0d];
 
     public void GamepadSelectionChanged()
     {
@@ -227,7 +259,14 @@
 
                     double[] inputValues = GetBindableGamepadInputs(GamepadSelector_.SelectedGamepad);
 
-                    float[] bindedInputs = [(float)inputValues[(int)ScoopAxisBind], (float)inputValues[(int)SensorAxisBind], (float)inputValues[(int)AugerBind], (float)inputValues[(int)MicroscopeBind]];
+                    float[] bindedInputs = [
+                        (float)inputValues[(int)ScoopAxisBind], 
+                        (float)inputValues[(int)SensorAxisBind], 
+                        (float)inputValues[(int)AugerBind], 
+                        (float)inputValues[(int)MicroscopeBind], 
+                        (float)inputValues[(int)GimbalPanBind],
+                        (float)inputValues[(int)GimbalTiltBind]
+                    ];
 
                     // sanitize inputs
                     for (int i = 0; i < bindedInputs.Length; i++)
@@ -241,6 +280,8 @@
                     if (bindedInputs[1] != 0) _ = _RoveCommService.SendAsync("ScienceActuation", "SensorAxis_IncrementPosition", [bindedInputs[1]]);
                     _ = _RoveCommService.SendAsync("ScienceActuation", "Auger", [(short) (bindedInputs[2] * 1000f)]);
                     _ = _RoveCommService.SendAsync("ScienceActuation", "Microscope", [(byte) ((bindedInputs[3] + 1f) * 180)]);
+
+                    if (bindedInputs[4] != 0 || bindedInputs[5] != 0) _ = _RoveCommService.SendAsync("ScienceActuation", "Microscope", [(short)(bindedInputs[4]), (short)(bindedInputs[5])]);
 
 
                     break;
