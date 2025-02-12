@@ -46,7 +46,7 @@ class roverMap {
             contextmenuWidth: 140,
             contextmenuItems: [{
                 text: "Add Waypoint",
-                callback: this.addWaypoint
+                callback: this.addWaypoint.bind(this)
             }]
         }).addLayer(L.tileLayer(urlTemplate, {
             attribution: "Basestation_Software.Api",
@@ -56,8 +56,8 @@ class roverMap {
             metric: true,
             imperial: false
         }));
-        this.lMap.on('zoomend', this.onZoomLevelChange);
-        this.lMap.on('moveend', this.onZoomLevelChange);
+        this.lMap.on('zoomend', this.onZoomLevelChange.bind(this));
+        this.lMap.on('moveend', this.onZoomLevelChange.bind(this));
         this.waypointLayerGroup = L.layerGroup([]).addTo(this.lMap);
     }
     // Call component.OnZoomLevel.
@@ -88,4 +88,114 @@ function createRoverMap(id, dotNetComponent, urlTemplate, initialLat, initialLon
     // Create global roverMaps collection if it doesn't exist.
     if (window.roverMaps === undefined) { window.roverMaps = {}; }
     window.roverMaps[id] = new roverMap(id, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel);
+}
+
+class Rover3DView {
+    id = null;
+    dotNetComponent = null;
+    scene = null;
+    camera = null;
+    renderer = null;
+    roverMesh = null;
+    clock = null;
+    resizeObserver = null;
+    darkModeObserver = null;
+
+    constructor(id, dotNetComponent) {
+        this.id = id;
+        this.dotNetComponent = dotNetComponent;
+
+        const container = document.getElementById(`rover-view-${this.id}`);
+
+        this.scene = new THREE.Scene();
+        this.scene.castShadow = true;
+        this.scene.receiveShadow = true;
+        const loader = new THREE.STLLoader();
+
+
+        //const group = new THREE.Group();
+        //this.scene.add(group);
+        loader.load("models/Rover.stl", (roverGeometry) => {
+
+            const material = new THREE.MeshPhongMaterial({ color: 0x9a0000, specular: 0x111111, shininess: 200 });
+            this.roverMesh = new THREE.Mesh(roverGeometry, material);
+            this.roverMesh.position.set(0, 0, 0);
+            this.roverMesh.scale.set(1, 1, 1);
+            this.roverMesh.castShadow = true;
+
+            roverGeometry.center();
+            this.scene.add(this.roverMesh);
+        });
+
+        const groundPlane = new THREE.Mesh(
+            new THREE.PlaneGeometry(20, 20),
+            new THREE.MeshBasicMaterial({ color: 0xc1c1c1, side: THREE.DoubleSide })
+        );
+        groundPlane.rotation.x = -Math.PI / 2;
+        groundPlane.position.y = -3;
+        groundPlane.receiveShadow = true;
+        this.scene.add(groundPlane);
+
+        this.scene.add(new THREE.AmbientLight(0xfcf9cf));
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        directionalLight.position.y = 3;
+        directionalLight.castShadow = true;
+        this.scene.add(directionalLight);
+
+        const helper = new THREE.CameraHelper(directionalLight.shadow.camera);
+        this.scene.add(helper);
+        //const light = new THREE.PointLight(0xffffff, 1, 100);
+        //light.position.set(15, 15, 15);
+        //this.scene.add(light);
+
+        this.camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        this.camera.position.z = 3;
+
+        this.renderer = new THREE.WebGLRenderer();
+        this.renderer.setSize(container.clientWidth, container.clientHeight);
+        this.renderer.shadowMap.enabled = true;
+        //this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+        container.appendChild(this.renderer.domElement);
+
+        //window.addEventListener("resize", this.onWindowResize.bind(this));
+        this.resizeObserver = new ResizeObserver(this.onWindowResize.bind(this));
+        this.resizeObserver.observe(container);
+        //this.darkModeObserver = new MutationObserver((mutationList) => {
+        //    for (const mutation of mutationList) {
+        //        if (mutation.type === "attributes" && mutation.attributeName === "data-bs-theme") {
+        //            console.log("changed theme!");
+        //        }
+        //    }
+        //});
+        //this.darkModeObserver.observe(document.querySelector("html"), { attributes: true, childLists: false });
+
+        const controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        controls.minDistance = 0.5;
+        controls.maxDistance = 5;
+        controls.enablePan = false;
+
+        console.log("created 3D view:", this);
+
+        this.clock = new THREE.Clock();
+        this.animationLoop();
+    }
+
+    onWindowResize() {
+        const container = document.getElementById(`rover-view-${this.id}`);
+        this.camera.aspect = container.clientWidth / container.clientHeight;
+        this.camera.updateProjectionMatrix();
+        this.renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    animationLoop() {
+        requestAnimationFrame(this.animationLoop.bind(this));
+        const dt = this.clock.getDelta();
+        this.renderer.render(this.scene, this.camera);
+    }
+}
+
+function createRoverView(id, dotNetComponent) {
+    // lazy load view array
+    if (window.roverViews === undefined) { window.roverViews = {}; }
+    window.roverViews[id] = new Rover3DView(id, dotNetComponent);
 }
