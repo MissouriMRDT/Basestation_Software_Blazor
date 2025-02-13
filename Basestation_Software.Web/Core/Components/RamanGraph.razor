@@ -1,23 +1,52 @@
 ﻿@inject RoveCommService _RoveCommService
 @using Basestation_Software.Models.RamanGraph
+@using System;
+@using System.Linq;
+@using System.Numerics;
+
+<style>
+    .rz-line-series.rz-series-0 path {
+    display: @(_showLines ? "auto" : "none");
+    }
+</style>
 
 <div class="card h-100">
-   <div class="card-header">
-       <h5>Raman Spectroscopy Graph</h5>
-   </div>
-   <div class="card-body w-100">
-       <RadzenChart>
-          <RadzenLineSeries Data="@ramanGraph" CategoryProperty="Raman_Shift" ValueProperty="Intensity" />
-            <RadzenValueAxis Min="0" Max="65535" Step="10000" />
-       </RadzenChart>
-   <button @onclick=RequestRamanData> Request Raman Spectroscopy Data </button>
-   </div>
+    <div class="card-header">
+        <h5>Raman Spectroscopy Graph</h5>
+    </div>
+    <div class="card-body w-100">
+        <RadzenChart>
+            <RadzenLineSeries Data="@ramanGraph" CategoryProperty="Raman_Shift" ValueProperty="Intensity">
+                <RadzenMarkers Visible="@showMarkers" MarkerType="MarkerType.Circle" StrokeWidth="0" Size="@_dotSize"/>
+                <RadzenSeriesDataLabels Visible="@showDataLabels" />
+            </RadzenLineSeries>
+
+            <RadzenValueAxis Min="0">
+                <RadzenAxisTitle Text="Intensity" />
+            </RadzenValueAxis>
+        </RadzenChart>
+        <button class="btn btn-primary" @onclick=RequestRamanData> Request Raman Spectroscopy Data </button>
+        <div class="d-flex">
+            <p>Dot Size: </p>
+            <RadzenNumeric TValue="float" @bind-Value="@_dotSize"/>
+        </div>
+        <div class="d-flex">
+            <p>Show Lines: </p>
+            <RadzenCheckBox TValue="bool" @bind-Value="@_showLines"/>
+        </div>
+    </div>
 </div> 
 
 
 @code {
-    DataItem[] ramanGraph = new DataItem[2048];
 
+    private int _maxY = 2000;
+    bool showMarkers = true;
+    bool showDataLabels = false;
+    private float _dotSize = 2f;
+    private bool _showLines = false;
+
+    List<DataItem> ramanGraph = new();
 
     private async Task RequestRamanData()
     {
@@ -28,8 +57,11 @@
     {
         // Initialize ramanGraph
         for (int i = 0; i < 2048; i++)
-            ramanGraph[i] = new DataItem { Raman_Shift = i, Intensity = 0 };
-
+        {
+            Console.WriteLine(i);
+            ramanGraph.Add(new DataItem { Raman_Shift = i, Intensity = 1d});
+        }
+            
         //Receiving RoveComm packets if they are sent in
         _RoveCommService.On<ushort>("Instruments", "RamanReading_Part1", async (packet) =>
         {
@@ -61,5 +93,5 @@
             for (int i = 0; i < 48; i++) ramanGraph[i + 2000].Intensity = packet.Data[i];
             await InvokeAsync(StateHasChanged);
         });
-    }     
+    }
 }
