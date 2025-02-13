@@ -1,0 +1,8 @@
+﻿.container {
+    background-color: grey;
+    display: flex;
+}
+
+button {
+    width: 100%;
+}
