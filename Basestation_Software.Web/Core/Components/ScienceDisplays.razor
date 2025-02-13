@@ -7,50 +7,24 @@
 		<h3>Science Displays</h3>
 	</div>
 
-	@*Setting all the images*@
-	<img id="Gypsum" src="graphs/Gypsum.png" hidden />
-	<img id="Dolomite" src="graphs/Dolomite.png" hidden />
-	<img id="Calcite" src="graphs/Calcite.png" hidden />
-	<img id="Talc" src="graphs/Talc.png" hidden />
-	<img id="Glycine" src="graphs/Glycine.png" hidden />
-	<img id="L-alanine" src="graphs/L-alanine.png" hidden />
-	<img id="D-alanine" src="graphs/D-alanine.png" hidden />
+	<img style="width: 100%;" src=@("graphs/" + _graphFiles[_selectedGraphIndex]) />
 
 
 	@*Setting all the buttons*@
-	<div class="container">
-		<button id="Gypsum" onclick="toggle(this.id);">Gypsum</button>
-		<button id="Calcite" onclick="toggle(this.id);">Calcite</button>
-		<button id="Talc" onclick="toggle(this.id);">Talc</button>
-		<button id="Dolomite" onclick="toggle(this.id);">Dolomite</button>
-		<button id="Glycine" onclick="toggle(this.id);">Glycine</button>
-		<button id="L-alanine" onclick="toggle(this.id);">L-alanine</button>
-		<button id="D-alanine" onclick="toggle(this.id);">D-alanine</button>
-	</div>
-	
-
-	@*Script to hide or show image*@
-	<script>
-		function toggle(id)
+	<div style="display:flex; flex-wrap: wrap; justify-content:center;">
+		@for (int i = 0; i < _graphFiles.Length; i++)
 		{
-		  let element = document.getElementById(id);
-		  let hidden = element.getAttribute("hidden");
-
-		  if (hidden) {
-			 element.removeAttribute("hidden");
-			 img.innerText = "Hide image";
-		  } else {
-			 element.setAttribute("hidden", "hidden");
-			 img.innerText = "Show image";
-		  }
+			int _i = i;
+			<button @onclick=@(() => _selectedGraphIndex = _i)>@_graphFiles[_i].Split(".")[0]</button>
 		}
-	</script>
+	</div>
 
 </div>
 
 
 @code {
-
+	private string[] _graphFiles = ["Gypsum.png", "Dolomite.png", "Calcite.png", "Talc.png", "Glycine.png", "L-alanine.png", "D-alanine.png"];
+	private int _selectedGraphIndex = 0; 
 	void IDisposable.Dispose()
 	{
 
