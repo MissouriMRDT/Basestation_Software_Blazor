@@ -1,0 +1,56 @@
+﻿@inject RoveCommService _RoveCommService
+
+<style>
+    .box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-radius: 5%;
+    padding: 0.75rem;
+    justify-content: center;
+    background-color: var(--bs-secondary-bg);
+    }
+
+    .box > p {
+    text-align: center;
+    }
+</style>
+
+<div class="card h-100">
+    <div class="card-header">
+        <h3>Science Enviromental</h3>
+    </div>
+    <div class="card-body align-content-center">
+        <div class="d-flex justify-content-around" style="margin: auto">
+            <div class="box">
+                <p>Temperature</p>
+                <p style="font-size: 2rem">@_temperature&deg</p>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Instruments", "RequestTemperature", [1]))>Request</button>
+            </div>            
+            <div class="box">
+                <p>Humidity</p>
+                <p style="font-size: 2rem">@_humidity%</p>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "RequestHumidity", [1]))>Request</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private sbyte _temperature = -1;
+    private float _humidity = -1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _RoveCommService.On<sbyte>("Instruments", "Temperature", async (packet) => {
+            _temperature = packet.Data[0];
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<float>("ScienceActuation", "Humidity", async (packet) =>
+        {
+            _humidity = packet.Data[0];
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+}
