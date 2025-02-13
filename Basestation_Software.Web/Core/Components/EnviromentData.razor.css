@@ -1,0 +1,5 @@
+﻿/* TODO: Use CSS to make component look better, especially buttons. 
+    May also require changing HTML in EnviromentData.razor */
+button {
+    width: 50%;
+}
