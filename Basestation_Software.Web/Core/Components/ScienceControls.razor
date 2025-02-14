@@ -226,6 +226,7 @@
     Bind GimbalPanBind = Bind.RSX;
     Bind GimbalTiltBind = Bind.RSY;
     double[] meterValues = [0d, 0d, 0d, 0d, 0d, 0d];
+    private float _microscopeTilt = 0;
 
     public void GamepadSelectionChanged()
     {
@@ -268,11 +269,11 @@
 
                     float[] bindedInputs = [
                         (float)inputValues[(int)ScoopAxisBind], 
-                        (float)inputValues[(int)SensorAxisBind], 
-                        (float)inputValues[(int)AugerBind], 
-                        (float)inputValues[(int)MicroscopeBind], 
-                        (float)inputValues[(int)GimbalPanBind],
-                        (float)inputValues[(int)GimbalTiltBind]
+                (float)inputValues[(int)SensorAxisBind], 
+                (float)inputValues[(int)AugerBind], 
+                (float)inputValues[(int)MicroscopeBind], 
+                (float)inputValues[(int)GimbalPanBind],
+                (float)inputValues[(int)GimbalTiltBind]
                     ];
 
                     // sanitize inputs
@@ -286,7 +287,8 @@
                     if (bindedInputs[0] != 0) _ = _RoveCommService.SendAsync("ScienceActuation", "ScoopAxis_IncrementPosition", [bindedInputs[0]]);
                     if (bindedInputs[1] != 0) _ = _RoveCommService.SendAsync("ScienceActuation", "SensorAxis_IncrementPosition", [bindedInputs[1]]);
                     _ = _RoveCommService.SendAsync("ScienceActuation", "Auger", [(short) (bindedInputs[2] * 1000f)]);
-                    _ = _RoveCommService.SendAsync("ScienceActuation", "Microscope", [(byte) ((bindedInputs[3] + 1f) * 180)]);
+                    _microscopeTilt = Math.Clamp(0, _microscopeTilt + bindedInputs[3] * 2.5f, 180);
+                    _ = _RoveCommService.SendAsync("ScienceActuation", "Microscope", [(byte) (_microscopeTilt)]);
 
                     if (bindedInputs[4] != 0 || bindedInputs[5] != 0) _ = _RoveCommService.SendAsync("ScienceActuation", "Microscope", [(short)(bindedInputs[4]), (short)(bindedInputs[5])]);
 
