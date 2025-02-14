@@ -29,3 +29,13 @@
     border:1px solid black;
     transition:.25s;
 }
+
+.btn:hover {
+    transform: scale(1.03);
+    transition: 100ms;
+}
+
+.btn:active {
+    transform: scale(0.98);
+    transition: 50ms;
+}
