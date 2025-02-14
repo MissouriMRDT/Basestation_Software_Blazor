@@ -45,9 +45,13 @@
             <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "CalibrateEncoder", [0b0000100]))>Calibrate ScoopAxis</button>
             <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "CalibrateEncoder", [0b0000010]))>Calibrate SensorAxis</button>
             <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "CalibrateEncoder", [0b0000001]))>Calibrate Proboscis</button>
-
-
         </div>
+
+        <div class="d-flex justify-content-evenly">
+            <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "WatchdogOverride", [1]))>Watchdog On</button>
+            <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "WatchdogOverride", [0]))>Watchdog Off</button>
+        </div>
+
         <div style="display: flex; justify-content: space-between;">
             <div style="display:flex; gap: 0.6rem">
                 <p>Poll Interval (ms):</p>
