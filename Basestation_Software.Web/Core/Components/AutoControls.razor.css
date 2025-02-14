@@ -1,11 +1,4 @@
-﻿.button-container {
-    display: flex;
-    width: auto;
-    gap: 1%;
-
-}
-
-button {
+﻿button {
     width: auto;
 }
 
