@@ -1,6 +1,7 @@
 @implements IDisposable
 @inject GPSWaypointState _GPSWaypointState
 @inject RoveCommService _RoveCommService
+@inject OpService _OpService
 
 <style>
     .scrollable {
@@ -39,11 +40,13 @@
     void StartAutonomy()
     {
         _ = _RoveCommService.SendAsync<byte>("Autonomy", "StartAutonomy", [0]);
+        _OpService.SetAutonomy();
     }
 
     void StopAutonomy()
     {
         _ = _RoveCommService.SendAsync<byte>("Autonomy", "DisableAutonomy", [0]);
+        _OpService.SetTeleop();
     }
 
     void ClearWaypoints()

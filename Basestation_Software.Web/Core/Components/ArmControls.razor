@@ -2,6 +2,7 @@
 @implements IDisposable
 @inject RoveCommService _RoveCommService
 @inject ArmSpeedState _ArmSpeedState
+@inject OpService _OpService
 
 <style>
     p {
@@ -265,7 +266,7 @@
         if (ProcessGamepadInputOK)
         {
             // set teleop if controller being used
-            _RoveCommService.Send<byte>("Core", "StateDisplay", new List<byte>() { 0 });
+            _OpService.SetTeleop();
         }
         else if (LastProcessGamepadInputOK)
         {

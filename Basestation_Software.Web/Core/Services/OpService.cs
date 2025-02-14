@@ -1,10 +1,19 @@
 ﻿using System.Drawing;
+using RoveComm;
 
-namespace Basestation_Software.Web.Core.Services.States;
+namespace Basestation_Software.Web.Core.Services;
 
 // State to determine if in teleop, autonomy
-public class OpState
+public class OpService
 {
+
+    private readonly RoveCommService _roveCommService;
+
+    public OpService(RoveCommService roveCommService)
+    {
+        _roveCommService = roveCommService;
+    }
+
     public delegate void OpStateChangedCallback(Color? col);
     private event OpStateChangedCallback? OpStateChangedNotifier;
 
@@ -28,6 +37,25 @@ public class OpState
             _opColor = value;
             OpStateChangedNotifier?.Invoke(_opColor);
         }
+    }
+
+    public void SetTeleop()
+    {
+        OpColor = Color.Blue;
+        _roveCommService.Send<byte>("Core", "StateDisplay", [0]);
+
+    }
+
+    public void SetAutonomy()
+    {
+        OpColor = Color.Red;
+        _roveCommService.Send<byte>("Core", "StateDisplay", [1]);
+    }
+
+    public void SetReachedGoal()
+    {
+        OpColor = Color.Green;
+        _roveCommService.Send<byte>("Core", "StateDisplay", [2]);
     }
 
 }
