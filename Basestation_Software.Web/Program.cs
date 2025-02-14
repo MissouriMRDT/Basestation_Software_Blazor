@@ -42,6 +42,7 @@ builder.Services.AddSingleton<ArmAngularService>();
 builder.Services.AddSingleton<CameraService>();
 builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
+builder.Services.AddSingleton<OpState>();
 
 var app = builder.Build();
 

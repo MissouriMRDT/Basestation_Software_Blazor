@@ -1,0 +1,23 @@
+﻿@inject OpState _OpState;
+<div class="card h-100">
+    <div class="card-header">
+        <h3>Operator State</h3>
+    </div>
+    <div class="card-body" style="background-color: @_colorString">
+
+    </div>
+</div>
+
+@code {
+    // valid css color
+    private string _colorString;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _OpState.SubscribeToStateChanged((Color? c) => {
+            _colorString = String.Format("rgb({0}, {1}, {2})", c?.R, c?.G, c?.B);
+            InvokeAsync(StateHasChanged);
+            Console.WriteLine(_colorString);
+        });
+    }
+}

@@ -1,4 +1,5 @@
 ﻿@inject RoveCommService _RoveCommService
+@inject OpState _OpState;
 
 <style>
     .pair {
@@ -37,7 +38,7 @@
                 <input type="number" Min="0" Max="255" @bind-value=@brightness></input>
             </div>
             <button class="btn btn-primary" style="justify-self:center;" @onclick="Send">Send</button>
-			<div style="width: 50px; height: 50px; background-color: rgb(@colorComponents[0], @colorComponents[1], @colorComponents[2])"></div>
+            <div style="width: 50px; height: 50px; background-color: rgb(@colorComponents[0], @colorComponents[1], @colorComponents[2])"></div>
         </div>
     </div>
 </div>
@@ -48,8 +49,8 @@
 
     private void Send()
     {
-		Console.WriteLine("ACK! LIGHTS!");
         _ = _RoveCommService.SendAsync<short>("Core", "LEDRGB", colorComponents);
         _ = _RoveCommService.SendAsync<short>("Core", "Brightness", [brightness]);
+        _OpState.OpColor = Color.FromArgb(colorComponents[0], colorComponents[1], colorComponents[2]);
     }
 }
