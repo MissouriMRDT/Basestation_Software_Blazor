@@ -4,9 +4,9 @@
 
 <style>
     .scrollable {
-        max-height: 50vh; 
-        overflow-y: auto;
-        display: block;
+    max-height: 50vh; 
+    overflow-y: auto;
+    display: block;
     }
 </style>
 
@@ -23,9 +23,10 @@
     <div class="button-container">
         <button @onclick=StartAutonomy>Start Autonomy</button>
         <button @onclick=StopAutonomy>Stop Autonomy</button>
-        <button @onclick=ClearWaypoints>Add Position Leg</button>
-        <button @onclick=AddPositionLeg>Add Marker Leg</button>
+        <button @onclick=AddPositionLeg>Add Position Leg</button>
+        <button @onclick=AddMarkerLeg>Add Marker Leg</button>
         <button @onclick=AddObjectLeg>Add Object Leg</button>
+        <button @onclick=AddObstacle>Add Obstacle</button>
         <button @onclick=ClearWaypoints>Clear Waypoints</button>
     </div>
 
@@ -37,35 +38,41 @@
 
     void StartAutonomy()
     {
-        _ = _RoveCommService.SendAsync<int>("Autonomy", "StartAutonomy", [0]);
+        _ = _RoveCommService.SendAsync<byte>("Autonomy", "StartAutonomy", [0]);
     }
 
     void StopAutonomy()
     {
-        _ = _RoveCommService.SendAsync<int>("Autonomy", "StopAutonomy", [0]);
+        _ = _RoveCommService.SendAsync<byte>("Autonomy", "DisableAutonomy", [0]);
     }
 
     void ClearWaypoints()
     {
-        _ = _RoveCommService.SendAsync<int>("Autonomy", "ClearWaypoints", [0]);
+        _ = _RoveCommService.SendAsync<byte>("Autonomy", "ClearWaypoints", [0]);
     }
 
     void AddPositionLeg()
     {
         if (_selectedWaypoint != null) 
-            _ = _RoveCommService.SendAsync<string>("Autonomy", "AddPositionLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude]);
+            _ = _RoveCommService.SendAsync<double>("Autonomy", "AddPositionLeg", [Double.Parse(_selectedWaypoint.Latitude), Double.Parse(_selectedWaypoint.Longitude)]);
     }
 
     void AddMarkerLeg()
     {
         if (_selectedWaypoint != null)
-            _ = _RoveCommService.SendAsync<string>("Autonomy", "AddMarkerLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude]);
+            _ = _RoveCommService.SendAsync<double>("Autonomy", "AddMarkerLeg", [Double.Parse(_selectedWaypoint.Latitude), Double.Parse(_selectedWaypoint.Longitude), _selectedWaypoint.TagID, _selectedWaypoint.SearchRadius]);
     }
 
     void AddObjectLeg()
     {
         if (_selectedWaypoint != null) 
-            _ = _RoveCommService.SendAsync<string>("Autonomy", "AddObjectLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude]);
+            _ = _RoveCommService.SendAsync<double>("Autonomy", "AddObjectLeg", [Double.Parse(_selectedWaypoint.Latitude), Double.Parse(_selectedWaypoint.Longitude), _selectedWaypoint.SearchRadius]);
+    }
+
+    void AddObstacle()
+    {
+        if (_selectedWaypoint != null)
+            _ = _RoveCommService.SendAsync<double>("Autonomy", "AddObstacle", [Double.Parse(_selectedWaypoint.Latitude), Double.Parse(_selectedWaypoint.Longitude), _selectedWaypoint.SearchRadius]);
     }
 
     protected override async Task OnInitializedAsync()
