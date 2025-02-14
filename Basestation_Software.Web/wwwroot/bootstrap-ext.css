@@ -1,5 +1,5 @@
 .card-header {
-    background-color: #9a0000; 
+    background-color: #9a0020;
     color: white;
 }
 
@@ -38,4 +38,25 @@
 .btn:active {
     transform: scale(0.98);
     transition: 50ms;
+}
+
+.btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #c8002c;
+    --bs-btn-border-color: #9c0020;
+    /* Why do i have to do this????? all other vars work as expected...*/
+    background-color: var(--bs-btn-bg);
+    border-color: var(--bs-btn-border-color);
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #de0032;
+    --bs-btn-hover-border-color: #de0032;
+    --bs-btn-focus-shadow-rgb: 253, 72, 49;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #9a0020;
+    --bs-btn-active-border-color: #9a0020;
+    --bs-btn-active-shadow: inset 0 3px 5px rgba(0, 0, 0, 0.125);
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: #ca4444;
+    --bs-btn-disabled-border-color: #ca4444;
+    --bs-primary-border-subtle: #c8002c;
 }
