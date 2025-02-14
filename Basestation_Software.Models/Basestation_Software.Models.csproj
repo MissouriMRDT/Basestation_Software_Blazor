@@ -7,10 +7,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="Timers\app.css" />
-  </ItemGroup>
-
+	<ItemGroup>
+		<Folder Include="Properties\" />
+	</ItemGroup>
   <ItemGroup>
     <Content Include="Timers\app.css">
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>

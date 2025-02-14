@@ -1,0 +1,153 @@
+﻿@implements IDisposable
+@inject ConfigService ConfigService_
+@using Models.Config;
+
+<style>
+    .component-options {
+    position: absolute;
+    top: 10vh;
+    left: 10vh;
+    right: 10vh;
+    z-index: 2000;
+    display: grid;
+    grid-auto-rows: max-content;
+    grid-template-columns: 1fr 9fr;
+    font-size: 2vh;
+    background-color: var(--bs-secondary-bg);
+    color: var(--bs-body-color);
+    border: 2px solid var(--bs-border-color);
+    place-items: center left;
+    }
+
+    .component-options > * {
+    font-size: 2vh;
+    margin: 5px;
+    }
+
+    .component-options input {
+    border: 2px solid var(--bs-border-color);
+    place-self: stretch; color: var(--bs-body-color);
+    }
+
+    .component-options button {
+    border: none;
+    place-self: stretch;
+    }
+
+    .component-options-open {
+    position: absolute;
+    left: 0;
+    right: 0;
+    width: 30px;
+    height: 30px;
+    background: none;
+    border: none;
+    z-index:20;
+    }
+</style>
+
+<div style="position: absolute">
+    <button @onclick=Open class="component-options-open" title="Component Options"><i class="bi bi-inline-text bi-pencil"></i></button>
+</div>
+@if (Visible)
+{
+    <div class="component-options">
+        <p>X</p><InputNumber @bind-Value=X></InputNumber>
+        <p>Y</p><InputNumber @bind-Value=Y></InputNumber>
+        <p>Width</p><InputNumber @bind-Value=Width></InputNumber>
+        <p>Height</p><InputNumber @bind-Value=Height></InputNumber>
+        <p>Type</p>
+        <select @bind="@Type_">
+            @foreach (var typename in Assembly.GetExecutingAssembly().GetTypes().Where(type => type.Namespace == "Basestation_Software.Web.Core.Components" && type.BaseType?.Name == "ComponentBase").Select(type => type.Name))
+            {
+                <option value="@typename">@typename</option>
+            }
+        </select>
+        <p>PlaceSelf</p><InputText @bind-Value=PlaceSelf></InputText>
+        <p>ID</p><InputText @bind-Value=ID></InputText>
+        <button @onclick=Delete class="btn btn-danger" title="Delete Component"><i class="bi bi-inline-text bi-trash" /></button>
+        <button @onclick=Save class="btn btn-success" title="Save"><i class="bi bi-inline-text bi-floppy" /></button>
+    </div>
+}
+
+@code
+{
+    // Component parameters
+    [Parameter]
+    public List<Component> Components { get; set; }
+    [Parameter]
+    public int ComponentIndex { get; set; }
+    [Parameter]
+    public EventCallback OnSaved { get; set; }
+
+    // State
+    private bool Visible = false;
+    private int X, Y, Width, Height;
+    private string Type_, PlaceSelf, ID;
+
+    protected override void OnInitialized()
+    {
+    }
+
+    private void Open() {
+        X = (int)Components[ComponentIndex].X;
+        Y = (int)Components[ComponentIndex].Y;
+        Width = (int)Components[ComponentIndex].Width;
+        Height = (int)Components[ComponentIndex].Height;
+        Type_ = Components[ComponentIndex].Type;
+        PlaceSelf = Components[ComponentIndex].PlaceSelf;
+        ID = Components[ComponentIndex].ID ?? "";
+        Visible = true;
+    }
+
+    private async Task Delete()
+    {
+        Components.RemoveAt(ComponentIndex);
+        Visible = false;
+        await OnSaved.InvokeAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task Save()
+    {
+        if (X >= 0) Components[ComponentIndex].X = (uint)X;
+        if (Y >= 0) Components[ComponentIndex].Y = (uint)Y;
+        if (Width >= 0) Components[ComponentIndex].Width = (uint)Width;
+        if (Height >= 0) Components[ComponentIndex].Height = (uint)Height;
+        System.Type? ComponentType = Type.GetType("Basestation_Software.Web.Core.Components." + Type_);
+        if (ComponentType is not null)
+        {
+            Components[ComponentIndex].Type = Type_;
+            if (ComponentType.GetMember("ID").Length > 0) {
+                // Component requires an ID.
+                if (ID.Length > 0) {
+                    // An appropriate ID was specified.
+                    Components[ComponentIndex].ID = ID;
+                }
+                else {
+                    // No ID was specified, generate one. Missing a required ID usually breaks the page.
+                    var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+                    var stringChars = new char[20];
+                    var random = new Random();
+
+                    for (int j = 0; j < stringChars.Length; j++)
+                    {
+                        stringChars[j] = chars[random.Next(chars.Length)];
+                    }
+                    Components[ComponentIndex].ID = new String(stringChars);
+                }
+            }
+            else 
+            {
+                // Component does not accept an ID.
+                Components[ComponentIndex].ID = null;
+            }
+        }
+        Components[ComponentIndex].PlaceSelf = PlaceSelf;
+        Visible = false;
+        await OnSaved.InvokeAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    void IDisposable.Dispose() { }
+}
