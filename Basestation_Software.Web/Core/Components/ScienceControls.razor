@@ -290,8 +290,7 @@
                     _microscopeTilt = Math.Clamp(0, _microscopeTilt + bindedInputs[3] * 2.5f, 180);
                     _ = _RoveCommService.SendAsync("ScienceActuation", "Microscope", [(byte) (_microscopeTilt)]);
 
-                    if (bindedInputs[4] != 0 || bindedInputs[5] != 0) _ = _RoveCommService.SendAsync("ScienceActuation", "Microscope", [(short)(bindedInputs[4]), (short)(bindedInputs[5])]);
-
+                    if (bindedInputs[4] != 0 || bindedInputs[5] != 0) _ = _RoveCommService.SendAsync("ScienceActuation", "AugerGimbalIncrement", [(short)(bindedInputs[4]), (short)(bindedInputs[5])]);
 
                     break;
                 }
