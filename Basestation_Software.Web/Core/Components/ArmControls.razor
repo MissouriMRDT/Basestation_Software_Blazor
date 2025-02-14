@@ -106,6 +106,38 @@
                 </div>
 
             </div>
+
+            <div class="jointBox">
+                <p>Invert Laser</p>
+                <RadzenCheckBox TValue="bool" @bind-value=@isLaserInverted />
+                <div class="break"></div>
+                <select name="JointBind" @bind=@laserBind style="width:100%;">
+                    @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
+                    {
+                        <option value="@bind">@bind</option>
+                    }
+                </select>
+                <div style="display: flex; width:100%">
+                    <meter min="-1.0" max="1.0" value="@laserMeterValue" style="width: 100%" />
+                </div>
+
+            </div>
+
+            <div class="jointBox">
+                <p>Invert Solenoid</p>
+                <RadzenCheckBox TValue="bool" @bind-value=@isSolInverted />
+                <div class="break"></div>
+                <select name="JointBind" @bind=@solBind style="width:100%;">
+                    @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
+                    {
+                        <option value="@bind">@bind</option>
+                    }
+                </select>
+                <div style="display: flex; width:100%">
+                    <meter min="-1.0" max="1.0" value="@solMeterValue" style="width: 100%" />
+                </div>
+
+            </div>
         </div>
         <div class="jointBox" style="flex-direction: column">
             <div style="display: grid; grid-template-columns: auto auto; align-items: center; justify-items: center;">
@@ -195,7 +227,12 @@
     List<Bind> jointInputBinds = [Bind.RSX, Bind.RSY, Bind.LSY, Bind.LSX, Bind.Triggers, Bind.Bumpers];
     // TODO add gripper to joint enumeration
     Bind gripperBind = Bind.DpadX;
+    Bind laserBind = Bind.AB;
+    Bind solBind = Bind.XY;
     bool isGripperInverted = false;
+    bool isLaserInverted = false;
+    bool isSolInverted = false;
+
 
     private string[] limitNames = ["X+", "X-", "J2+", "J2-", "J3+", "J3-", "J4+", "J4-", "P+", "P-"];
     // 0 off, 1 on
@@ -203,6 +240,8 @@
 
     List<double> inputMeterValues = [0, 0, 0, 0, 0, 0];
     double gripperMeterValue = 0;
+    double laserMeterValue = 0;
+    double solMeterValue = 0;
     double[] lastUpdateInputs = [0, 0, 0, 0, 0, 0];
 
 
@@ -237,7 +276,6 @@
         InvokeAsync(StateHasChanged);
     }
 
-    // Process gamepad input and return true if rovecomm packets were sent.
     // Process gamepad input and return true if rovecomm packets were sent.
     private bool ProcessGamepadInput()
     {
@@ -340,6 +378,11 @@
 
                     _ = Task.Run(() => _RoveCommService.SendAsync<short>("Arm", "SetGripperSpeed", [(short)(inputValues[(int)gripperBind] * _ArmSpeedState.ArmSpeeds["Gripper"] * 1000f * _ArmSpeedState.ArmSpeeds["Master"] * (isGripperInverted ? -1 : 1))]));
                     gripperMeterValue = inputValues[(int)gripperBind];
+                    laserMeterValue = inputValues[(int)laserBind];
+                    solMeterValue = inputValues[(int)solBind];
+
+                    if (inputValues[(int)laserBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Laser", [(byte)((inputValues[(int)laserBind] * (isLaserInverted ? -1 : 1)) < 0 ? 0 : 1)]);
+                    if (inputValues[(int)solBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [(byte)((inputValues[(int)solBind] * (isSolInverted ? -1 : 1)) < 0 ? 0 : 1)]);
 
                     break;
                 }
