@@ -12,6 +12,13 @@ public class OpService
     public OpService(RoveCommService roveCommService)
     {
         _roveCommService = roveCommService;
+
+        _roveCommService.On<byte>("Autonomy", "ReachedGoal", async (packet) =>
+        {
+            SetReachedGoal();
+            await Task.Delay(2000);
+            SetAutonomy();
+        });
     }
 
     public delegate void OpStateChangedCallback(Color? col);
