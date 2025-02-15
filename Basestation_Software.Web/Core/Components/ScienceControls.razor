@@ -41,15 +41,21 @@
         <GamepadSelector @ref=GamepadSelector_ ChangedCallback=GamepadSelectionChanged />
     </div>
     <div class="card-body">
-        <div class="d-flex justify-content-evenly">
-            <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "CalibrateEncoder", [0b0000100]))>Calibrate ScoopAxis</button>
-            <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "CalibrateEncoder", [0b0000010]))>Calibrate SensorAxis</button>
-            <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "CalibrateEncoder", [0b0000001]))>Calibrate Proboscis</button>
+        <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
+            <p style="width:auto; text-align: center"><b>Calibration</b></p>
+            <div class="btn-group d-flex justify-items-center" role="group">
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "CalibrateEncoder", [0b0000100]))>ScoopAxis</button>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "CalibrateEncoder", [0b0000010]))>SensorAxis</button>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "CalibrateEncoder", [0b0000001]))>Proboscis</button>
+            </div>
         </div>
 
-        <div class="d-flex justify-content-evenly">
-            <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "WatchdogOverride", [1]))>Watchdog On</button>
-            <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "WatchdogOverride", [0]))>Watchdog Off</button>
+        <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
+            <p style="width:auto; text-align: center"><b>Watchdog Override</b></p>
+            <div class="btn-group d-flex justify-items-center" role="group">
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "WatchdogOverride", [1]))>On</button>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "WatchdogOverride", [0]))>Off</button>
+            </div>
         </div>
 
         <div style="display: flex; justify-content: space-between;">
@@ -70,7 +76,7 @@
                 <p>Invert ScoopAxis</p>
                 <RadzenCheckBox TValue="bool" />
                 <div class="break"></div>
-                <select @bind=ScoopAxisBind name="ControlBind" style="width:100%;">
+                <select class="form-select-sm w-100" @bind=ScoopAxisBind name="ControlBind">
                     @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
                     {
                         <option value="@bind">@bind</option>
@@ -85,7 +91,7 @@
                 <p>Invert SensorAxis</p>
                 <RadzenCheckBox TValue="bool" />
                 <div class="break"></div>
-                <select @bind=SensorAxisBind name="ControlBind" style="width:100%;">
+                <select class="form-select-sm w-100" @bind=SensorAxisBind name="ControlBind">
                     @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
                     {
                         <option value="@bind">@bind</option>
@@ -100,7 +106,7 @@
                 <p>Invert Auger</p>
                 <RadzenCheckBox TValue="bool" />
                 <div class="break"></div>
-                <select @bind=AugerBind name="ControlBind" style="width:100%;">
+                <select class="form-select-sm w-100" @bind=AugerBind name="ControlBind">
                     @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
                     {
                         <option value="@bind">@bind</option>
@@ -115,7 +121,7 @@
                 <p>Invert Microscope</p>
                 <RadzenCheckBox TValue="bool" />
                 <div class="break"></div>
-                <select @bind=MicroscopeBind name="ControlBind" style="width:100%;">
+                <select class="form-select-sm w-100" @bind=MicroscopeBind name="ControlBind">
                     @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
                     {
                         <option value="@bind">@bind</option>
@@ -130,7 +136,7 @@
                 <p>Invert Gimbal Pan</p>
                 <RadzenCheckBox TValue="bool" />
                 <div class="break"></div>
-                <select @bind=GimbalPanBind name="ControlBind" style="width:100%;">
+                <select class="form-select-sm w-100" @bind=GimbalPanBind name="ControlBind">
                     @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
                     {
                         <option value="@bind">@bind</option>
@@ -145,7 +151,7 @@
                 <p>Invert Gimbal Tilt</p>
                 <RadzenCheckBox TValue="bool" />
                 <div class="break"></div>
-                <select @bind=GimbalTiltBind name="ControlBind" style="width:100%;">
+                <select class="form-select-sm w-100" @bind=GimbalTiltBind name="ControlBind">
                     @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
                     {
                         <option value="@bind">@bind</option>

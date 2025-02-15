@@ -32,7 +32,7 @@
 
 .btn:hover {
     transform: scale(1.03);
-    box-shadow: inset 0px -5px rgba(100%, 100%, 100%, 0.25);
+    box-shadow: inset 0px -4px rgba(100%, 100%, 100%, 0.25);
     transition: 100ms;
 }
 

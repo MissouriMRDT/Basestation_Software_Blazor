@@ -79,7 +79,7 @@
                     <p>Invert @joint</p>
                     <RadzenCheckBox TValue="bool" @bind-value=@isJointInverted[(int)joint - 1]/>
                     <div class="break"></div>
-                    <select name="JointBind" @bind=@jointInputBinds[(int)joint-1] style="width:100%;">
+                    <select class="form-select-sm w-100" name="JointBind" @bind=@jointInputBinds[(int)joint-1]>
                         @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
                         {
                             <option value="@bind">@bind</option>
@@ -96,7 +96,7 @@
                 <p>Invert Gripper</p>
                 <RadzenCheckBox TValue="bool" @bind-value=@isGripperInverted />
                 <div class="break"></div>
-                <select name="JointBind" @bind=@gripperBind style="width:100%;">
+                <select class="form-select-sm w-100" name="JointBind" @bind=@gripperBind>
                     @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
                     {
                         <option value="@bind">@bind</option>
@@ -112,7 +112,7 @@
                 <p>Invert Laser</p>
                 <RadzenCheckBox TValue="bool" @bind-value=@isLaserInverted />
                 <div class="break"></div>
-                <select name="JointBind" @bind=@laserBind style="width:100%;">
+                <select class="form-select-sm w-100" name="JointBind" @bind=@laserBind>
                     @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
                     {
                         <option value="@bind">@bind</option>
@@ -128,7 +128,7 @@
                 <p>Invert Solenoid</p>
                 <RadzenCheckBox TValue="bool" @bind-value=@isSolInverted />
                 <div class="break"></div>
-                <select name="JointBind" @bind=@solBind style="width:100%;">
+                <select class="form-select-sm w-100" name="JointBind" @bind=@solBind>
                     @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
                     {
                         <option value="@bind">@bind</option>
