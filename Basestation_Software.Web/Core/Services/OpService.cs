@@ -16,7 +16,7 @@ public class OpService
         _roveCommService.On<byte>("Autonomy", "ReachedGoal", async (packet) =>
         {
             SetReachedGoal();
-            await Task.Delay(2000);
+            await Task.Delay(5000);
             SetAutonomy();
         });
     }

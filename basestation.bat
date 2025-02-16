@@ -1,2 +1,5 @@
-start "BASESTATION_API" "%~dp0Basestation_Software.Api\run.bat"
-start "BASESTATION_WEB" "%~dp0Basestation_Software.Web\run.bat"
+winget install Microsoft.DotNet.DesktopRuntime.9
+winget install Microsoft.DotNet.AspNetCore.9
+start "Server" dotnet run --project Basestation_Software.Api
+start "Client" dotnet run --project Basestation_Software.Web
+start "" http://localhost:8080
