@@ -44,46 +44,49 @@
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
             <p style="width:auto; text-align: center"><b>Calibration</b></p>
             <div class="btn-group d-flex justify-items-center" role="group">
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "CalibrateEncoder", [1]))>AugerAxis</button>
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Raman", "CalibrateEncoder", [1]))>InstrumentsAxis</button>
+                <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "CalibrateEncoder", [1]))>AugerAxis</button>
+                <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Raman", "CalibrateEncoder", [1]))>InstrumentsAxis</button>
+            </div>
+        </div>
+        <div class="d-flex justify-content-evenly">
+            <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
+                <p style="width:auto; text-align: center"><b>UV LED</b></p>
+                <div class="btn-group d-flex justify-items-center" role="group">
+                    <button class="btn btn-success" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "UVLED", [1]))>On</button>
+                    <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "UVLED", [0]))>Off</button>
+                </div>
+            </div>
+
+            <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
+                <p style="width:auto; text-align: center"><b>Laser</b></p>
+                <div class="btn-group d-flex justify-items-center" role="group">
+                    <button class="btn btn-success" @onclick=@(() => _RoveCommService.SendAsync<byte>("Raman", "Laser", [1]))>On</button>
+                    <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Raman", "Laser", [0]))>Off</button>
+                </div>
+            </div>
+
+            <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
+                <p style="width:auto; text-align: center"><b>Watchdog</b></p>
+                <div class="btn-group d-flex justify-items-center" role="group">
+                    <button class="btn btn-success" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "WatchdogOverride", [1]))>On</button>
+                    <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "WatchdogOverride", [0]))>Off</button>
+                </div>
             </div>
         </div>
 
-        <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
-            <p style="width:auto; text-align: center"><b>UV LED</b></p>
-            <div class="btn-group d-flex justify-items-center" role="group">
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "UVLED", [1]))>On</button>
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "UVLED", [0]))>Off</button>
+        <div class="d-flex justify-content-center gap-2">
+            <div class="d-flex g-2 my-2 align-items-center bg-body-secondary rounded p-2 gap-1">
+                <div style="display:flex; gap: 0.6rem">
+                    <p style="width: auto">Poll Interval (ms):</p>
+                    <RadzenTextBox Change="UpdateInterval" Value="50" Style="width: 25%"></RadzenTextBox>
+                </div>
             </div>
-        </div>
 
-        <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
-            <p style="width:auto; text-align: center"><b>Laser</b></p>
-            <div class="btn-group d-flex justify-items-center" role="group">
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Raman", "Laser", [1]))>On</button>
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Raman", "Laser", [0]))>Off</button>
+            <div class="d-flex g-2 my-2 align-items-center bg-body-secondary rounded p-2 gap-1">
+                <p>Dead Zone: </p>
+                <RadzenSlider @bind-Value=@DeadZone TValue="double" Min="0" Max="(decimal)0.5" Step="0.001" />
+                <RadzenNumeric TValue="double" Min="0" Max="(decimal)0.5" Step="0.001" @bind-Value=@DeadZone></RadzenNumeric>
             </div>
-        </div>
-
-        <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
-            <p style="width:auto; text-align: center"><b>Watchdog Override</b></p>
-            <div class="btn-group d-flex justify-items-center" role="group">
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "WatchdogOverride", [1]))>On</button>
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "WatchdogOverride", [0]))>Off</button>
-            </div>
-        </div>
-
-        <div style="display: flex; justify-content: space-between;">
-            <div style="display:flex; gap: 0.6rem">
-                <p>Poll Interval (ms):</p>
-                <RadzenTextBox Change="UpdateInterval" Value="50" Style="width: 25%"></RadzenTextBox>
-            </div>
-        </div>
-
-        <div style="display:flex; gap:0.6rem; align-items: center; margin-block: 0.1rem 0.5rem">
-            <p>Dead Zone: </p>
-            <RadzenSlider @bind-Value=@DeadZone TValue="double" Min="0" Max="(decimal)0.5" Step="0.001" />
-            <RadzenNumeric TValue="double" Min="0" Max="(decimal)0.5" Step="0.001" @bind-Value=@DeadZone></RadzenNumeric>
         </div>
 
         <div style="display: flex; flex-wrap: wrap; justify-content: center;">
