@@ -46,7 +46,7 @@ class roverMap {
             contextmenuWidth: 140,
             contextmenuItems: [{
                 text: "Add Waypoint",
-                callback: this.addWaypoint
+                callback: this.addWaypoint.bind(this)
             }]
         }).addLayer(L.tileLayer(urlTemplate, {
             attribution: "Basestation_Software.Api",
@@ -56,8 +56,8 @@ class roverMap {
             metric: true,
             imperial: false
         }));
-        this.lMap.on('zoomend', this.onZoomLevelChange);
-        this.lMap.on('moveend', this.onZoomLevelChange);
+        this.lMap.on('zoomend', this.onZoomLevelChange.bind(this));
+        this.lMap.on('moveend', this.onZoomLevelChange.bind(this));
         this.waypointLayerGroup = L.layerGroup([]).addTo(this.lMap);
     }
     // Call component.OnZoomLevel.
