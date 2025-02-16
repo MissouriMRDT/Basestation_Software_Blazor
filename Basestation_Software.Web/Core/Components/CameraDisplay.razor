@@ -48,7 +48,6 @@
 
 	private void Rotate()
 	{
-		Console.WriteLine("ROT");
 		rot += 90;
 	}
     protected override async Task OnInitializedAsync()
@@ -86,13 +85,13 @@
 
     private void TakeScreenshot()
     {
-        _ = _RoveCommService.SendAsync<int>("Camera" + (_sourceIndex < 4 ? "1" : "2"), "TakePicture", [_sourceIndex % 4, 1]);
+        _ = _RoveCommService.SendAsync<byte>("Camera" + (_sourceIndex < 4 ? "1" : "2"), "TakePicture", [(byte)(_sourceIndex % 4), 1]);
     }
 
     private void ToggleSource(int source, int data)
     {
         string boardNum = (_sourceIndex < 4 ? "1" : "2");
-        _ = _RoveCommService.SendAsync<int>("Camera" + boardNum, "ToggleStream" + boardNum, [_sourceIndex % 4, data]);
+        _ = _RoveCommService.SendAsync<byte>("Camera" + boardNum, "ToggleStream" + boardNum, [(byte)(_sourceIndex % 4), (byte)data]);
     }
 
     void IDisposable.Dispose()
