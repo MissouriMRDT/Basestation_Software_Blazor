@@ -309,8 +309,8 @@
                     }
 
                     // send rovecomm packets
-                    if (bindedInputs[0] != 0) _ = _RoveCommService.SendAsync("Auger", "AugerAxis_IncrementPosition", [bindedInputs[0]]);
-                    if (bindedInputs[1] != 0) _ = _RoveCommService.SendAsync("Raman", "InstrumentsAxis_IncrementPosition", [bindedInputs[1]]);
+                    _ = _RoveCommService.SendAsync("Auger", "AugerAxis_OpenLoop", [(int)(bindedInputs[0] * 1000f)]);
+                    _ = _RoveCommService.SendAsync("Raman", "InstrumentsAxis_OpenLoop", [(int)(bindedInputs[1] * 100f)]);
                     _ = _RoveCommService.SendAsync("Auger", "Auger", [(short)(bindedInputs[2] * 1000f)]);
                     _microscopeTilt = Math.Clamp(0, _microscopeTilt + bindedInputs[3] * 2.5f, 180);
                     // _ = _RoveCommService.SendAsync("Raman", "Microscope", [(byte)(_microscopeTilt)]);
