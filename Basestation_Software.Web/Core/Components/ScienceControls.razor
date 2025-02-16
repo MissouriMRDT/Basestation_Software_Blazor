@@ -44,17 +44,32 @@
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
             <p style="width:auto; text-align: center"><b>Calibration</b></p>
             <div class="btn-group d-flex justify-items-center" role="group">
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "CalibrateEncoder", [0b0000100]))>ScoopAxis</button>
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "CalibrateEncoder", [0b0000010]))>SensorAxis</button>
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "CalibrateEncoder", [0b0000001]))>Proboscis</button>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "CalibrateEncoder", [1]))>AugerAxis</button>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Raman", "CalibrateEncoder", [1]))>InstrumentsAxis</button>
+            </div>
+        </div>
+
+        <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
+            <p style="width:auto; text-align: center"><b>UV LED</b></p>
+            <div class="btn-group d-flex justify-items-center" role="group">
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "UVLED", [1]))>On</button>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "UVLED", [0]))>Off</button>
+            </div>
+        </div>
+
+        <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
+            <p style="width:auto; text-align: center"><b>Laser</b></p>
+            <div class="btn-group d-flex justify-items-center" role="group">
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Raman", "Laser", [1]))>On</button>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Raman", "Laser", [0]))>Off</button>
             </div>
         </div>
 
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
             <p style="width:auto; text-align: center"><b>Watchdog Override</b></p>
             <div class="btn-group d-flex justify-items-center" role="group">
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "WatchdogOverride", [1]))>On</button>
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("ScienceActuation", "WatchdogOverride", [0]))>Off</button>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "WatchdogOverride", [1]))>On</button>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "WatchdogOverride", [0]))>Off</button>
             </div>
         </div>
 
@@ -73,10 +88,10 @@
 
         <div style="display: flex; flex-wrap: wrap; justify-content: center;">
             <div class="controlBox">
-                <p>Invert ScoopAxis</p>
+                <p>Invert AugerAxis</p>
                 <RadzenCheckBox TValue="bool" />
                 <div class="break"></div>
-                <select class="form-select-sm w-100" @bind=ScoopAxisBind name="ControlBind">
+                <select class="form-select-sm w-100" @bind=AugerAxisBind name="ControlBind">
                     @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
                     {
                         <option value="@bind">@bind</option>
@@ -88,10 +103,10 @@
 
             </div>
             <div class="controlBox">
-                <p>Invert SensorAxis</p>
+                <p>Invert InstrumentsAxis</p>
                 <RadzenCheckBox TValue="bool" />
                 <div class="break"></div>
-                <select class="form-select-sm w-100" @bind=SensorAxisBind name="ControlBind">
+                <select class="form-select-sm w-100" @bind=InstrumentsAxisBind name="ControlBind">
                     @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
                     {
                         <option value="@bind">@bind</option>
@@ -229,8 +244,8 @@
     private Timer UpdateTimer;
     private bool LastProcessGamepadInputOK = false;
     private double DeadZone = 0.5;
-    Bind ScoopAxisBind = Bind.LSY;
-    Bind SensorAxisBind = Bind.LSX;
+    Bind AugerAxisBind = Bind.LSY;
+    Bind InstrumentsAxisBind = Bind.LSX;
     Bind AugerBind = Bind.Bumpers;
     Bind MicroscopeBind = Bind.Triggers;
     Bind GimbalPanBind = Bind.RSX;
@@ -278,8 +293,8 @@
                     double[] inputValues = GetBindableGamepadInputs(GamepadSelector_.SelectedGamepad);
 
                     float[] bindedInputs = [
-                        (float)inputValues[(int)ScoopAxisBind], 
-                (float)inputValues[(int)SensorAxisBind], 
+                        (float)inputValues[(int)AugerAxisBind], 
+            (float)inputValues[(int)InstrumentsAxisBind],
                 (float)inputValues[(int)AugerBind], 
                 (float)inputValues[(int)MicroscopeBind], 
                 (float)inputValues[(int)GimbalPanBind],
@@ -294,13 +309,13 @@
                     }
 
                     // send rovecomm packets
-                    if (bindedInputs[0] != 0) _ = _RoveCommService.SendAsync("ScienceActuation", "ScoopAxis_IncrementPosition", [bindedInputs[0]]);
-                    if (bindedInputs[1] != 0) _ = _RoveCommService.SendAsync("ScienceActuation", "SensorAxis_IncrementPosition", [bindedInputs[1]]);
-                    _ = _RoveCommService.SendAsync("ScienceActuation", "Auger", [(short) (bindedInputs[2] * 1000f)]);
+                    if (bindedInputs[0] != 0) _ = _RoveCommService.SendAsync("Auger", "AugerAxis_IncrementPosition", [bindedInputs[0]]);
+                    if (bindedInputs[1] != 0) _ = _RoveCommService.SendAsync("Raman", "InstrumentsAxis_IncrementPosition", [bindedInputs[1]]);
+                    _ = _RoveCommService.SendAsync("Auger", "Auger", [(short)(bindedInputs[2] * 1000f)]);
                     _microscopeTilt = Math.Clamp(0, _microscopeTilt + bindedInputs[3] * 2.5f, 180);
-                    _ = _RoveCommService.SendAsync("ScienceActuation", "Microscope", [(byte) (_microscopeTilt)]);
+                    // _ = _RoveCommService.SendAsync("Raman", "Microscope", [(byte)(_microscopeTilt)]);
 
-                    if (bindedInputs[4] != 0 || bindedInputs[5] != 0) _ = _RoveCommService.SendAsync("ScienceActuation", "AugerGimbalIncrement", [(short)(bindedInputs[4]), (short)(bindedInputs[5])]);
+                    if (bindedInputs[4] != 0 || bindedInputs[5] != 0) _ = _RoveCommService.SendAsync("Auger", "AugerGimbalIncrement", [(short)(bindedInputs[4]), (short)(bindedInputs[5])]);
 
                     break;
                 }
