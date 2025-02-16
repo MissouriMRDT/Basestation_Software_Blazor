@@ -3,36 +3,36 @@
 @inject RoveCommService _RoveCommService
 @inject OpService _OpService
 
-<style>
-    .scrollable {
-    max-height: 50vh; 
-    overflow-y: auto;
-    display: block;
-    }
-</style>
-
-<div class="card full-height">
+<div class="card h-100">
     <div class="card-header">
         <h3>Autonomy Controls</h3>
     </div>
-
-    <div class="button-header">
-        <div style="background-color: var(--bs-secondary-bg);" class="d-inline-flex justify-content-center p-2 rounded gap-2">
-            <p><b>Selected:</b> @(_selectedWaypoint != null ? _selectedWaypoint.Name : "None!")</p>
-            <div class="color-preview" style="background-color: @_selectedWaypoint?.WaypointColor"></div>
+    <div class="card-body align-content-center h-100">
+        <div class="button-header">
+            <div class="d-inline-flex bg-body-secondary justify-content-center p-2 rounded gap-2">
+                <p><b>Selected:</b> @(_selectedWaypoint != null ? _selectedWaypoint.Name : "None!")</p>
+                <div class="color-preview" style="background-color: @_selectedWaypoint?.WaypointColor"></div>
+            </div>
         </div>
-    </div>
 
-    <div class="btn-group btn-group-sm" style="white-space: normal" role="group">
-        <button class="btn btn-primary" @onclick=StartAutonomy>Start Autonomy</button>
-        <button class="btn btn-primary" @onclick=StopAutonomy>Stop Autonomy</button>
-        <button class="btn btn-primary" @onclick=AddPositionLeg>Add Position Leg</button>
-        <button class="btn btn-primary" @onclick=AddMarkerLeg>Add Marker Leg</button>
-        <button class="btn btn-primary" @onclick=AddObjectLeg>Add Object Leg</button>
-        <button class="btn btn-primary" @onclick=AddObstacle>Add Obstacle</button>
-        <button class="btn btn-primary" @onclick=ClearWaypoints>Clear Waypoints</button>
-    </div>
+        <div class="text-center">
+            <div class="btn-group btn-group-sm justify-content-center mb-2 gap-1" role="group">
+                <button class="btn btn-secondary" @onclick=AddPositionLeg>Add Position Leg</button>
+                <button class="btn btn-secondary" @onclick=AddMarkerLeg>Add Marker Leg</button>
+                <button class="btn btn-secondary" @onclick=AddObjectLeg>Add Object Leg</button>
+                <button class="btn btn-secondary" @onclick=AddObstacle>Add Obstacle</button>
+                <button class="btn btn-secondary" @onclick=ClearWaypoints>Clear Waypoints</button>
+            </div>
+        </div>
 
+        <div class="text-center">
+            <div class="btn-group btn-group-sm justify-content-center" role="group">
+                <button title="Start Autonomy" class="btn btn-success" @onclick=StartAutonomy><i class="bi bi-caret-right-fill h1 d-block m-0"></i></button>
+                <button title="Stop Autonomy" class="btn btn-primary" @onclick=StopAutonomy><i class="bi bi-pause-fill h1 d-block m-0"></i></button>
+            </div>
+        </div>
+
+    </div>
 </div>
 
 @code
