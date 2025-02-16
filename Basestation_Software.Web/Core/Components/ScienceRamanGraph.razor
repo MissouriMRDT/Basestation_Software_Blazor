@@ -26,6 +26,7 @@
             </RadzenValueAxis>
         </RadzenChart>
         <button class="btn btn-primary" @onclick=RequestRamanData> Request Raman Spectroscopy Data </button>
+        <button class="btn btn-primary btn-sm" @onclick=Export> <i class="bi bi-filetype-csv"></i> </button>
         <div class="d-flex">
             <p>Dot Size: </p>
             <RadzenNumeric TValue="float" @bind-Value="@_dotSize"/>
@@ -51,6 +52,11 @@
     private async Task RequestRamanData()
     {
         await _RoveCommService.SendAsync<uint>("Raman", "RequestRamanReading", [0], reliable: false);
+    }
+
+    private void Export()
+    {
+        File.WriteAllLines("RamanExport_" + ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds() + ".csv", ramanGraph.Select(x => string.Join(",", x.Intensity))); 
     }
 
     protected override async Task OnInitializedAsync()
