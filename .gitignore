@@ -7,6 +7,9 @@
 *.userosscache
 *.sln.docstates
 
+Basestation_Software.Web/wwwroot/js/*
+Basestation_Software.Web/Core/JS/node_modules/*
+
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
@@ -22,10 +25,6 @@ bin/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
-
-
-# Uncomment if you have tasks that create the project's static files in wwwroot
-#wwwroot/
 
 # Visual Studio cache/options directory
 .vs/

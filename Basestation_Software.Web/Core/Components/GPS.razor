@@ -255,10 +255,12 @@
     private float AccelX = 0, AccelY = 0, AccelZ = 0;
 
     // Declare page member variables.
-    private string jsInteropName;
+    private string jsInteropName = "";
 
     protected override void OnInitialized()
-    {     
+    {
+        jsInteropName = $"roverAttitudes.{ID}";
+
         _RoveCommService.On<double>("Nav", "GPSLatLonAlt", async (RoveCommPacket<double> packet) =>
         {
             Lat = packet.Data[0];
@@ -331,10 +333,11 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // if (firstRender) // Initialize attitude indicator.
-        //     await _IJSRuntime.InvokeVoidAsync($"createRoverAttitude", [ID, DotNetObjectReference.Create(this)]);
-        // else
-        //     await _IJSRuntime.InvokeVoidAsync($"{jsInteropName}.update", [Pitch, Roll]);
+        var jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-attitude.js");
+        if (firstRender) // Initialize attitude indicator.
+            await jsModule.InvokeVoidAsync("createRoverAttitude", [ID, DotNetObjectReference.Create(this)]);
+        else
+            await jsModule.InvokeVoidAsync($"{jsInteropName}.update", [Pitch, Roll]);
     }
 
     void IDisposable.Dispose() { }

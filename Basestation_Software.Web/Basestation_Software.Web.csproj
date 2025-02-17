@@ -38,4 +38,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="npm install" WorkingDirectory="Core/JS/" />
+    <Exec Command="npm run build" WorkingDirectory="Core/JS/" />
+  </Target>
+
 </Project>

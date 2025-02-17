@@ -32,14 +32,15 @@
 
     protected override void OnInitialized()
     {
-        jsInteropName = $"window.roverViews.{ID}";
+        jsInteropName = $"roverViews.{ID}";
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await _IJSRuntime.InvokeVoidAsync("createRoverView", [ID, DotNetObjectReference.Create(this)]);
+            var jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-3d-view.js");
+            await jsModule.InvokeVoidAsync("createRoverView", [ID, DotNetObjectReference.Create(this)]);
             _dataLoaded = true;
             await InvokeAsync(StateHasChanged);
             // component will resize once unhidden
