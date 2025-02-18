@@ -1,4 +1,4 @@
-﻿@implements IDisposable
+﻿@implements IAsyncDisposable
 
 @inject RoveCommService _RoveCommService
 @inject IJSRuntime _IJSRuntime
@@ -62,6 +62,18 @@
         }
     }
 
-    void IDisposable.Dispose() { }
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        try
+        {
+            if (jsModule is not null)
+            {
+                await jsModule.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
 
 }
