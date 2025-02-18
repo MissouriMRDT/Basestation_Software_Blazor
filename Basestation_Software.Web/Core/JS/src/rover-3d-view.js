@@ -27,11 +27,7 @@ export class Rover3DView {
         this.scene.receiveShadow = true;
         const loader = new STLLoader();
 
-
-        //const group = new THREE.Group();
-        //this.scene.add(group);
         loader.load("models/Rover.stl", (roverGeometry) => {
-
             const material = new THREE.MeshPhongMaterial({ color: 0x9a0000, specular: 0x111111, shininess: 200 });
             this.roverMesh = new THREE.Mesh(roverGeometry, material);
             this.roverMesh.position.set(0, 0, 0);
@@ -44,32 +40,29 @@ export class Rover3DView {
 
         const groundPlane = new THREE.Mesh(
             new THREE.PlaneGeometry(20, 20),
-            new THREE.MeshBasicMaterial({ color: 0xc1c1c1, side: THREE.DoubleSide })
+            new THREE.MeshPhongMaterial({ color: 0xa1a1a1, side: THREE.DoubleSide })
         );
         groundPlane.rotation.x = -Math.PI / 2;
-        groundPlane.position.y = -3;
+        groundPlane.position.y = -5;
         groundPlane.receiveShadow = true;
         this.scene.add(groundPlane);
 
         this.scene.add(new THREE.AmbientLight(0xfcf9cf));
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
         directionalLight.position.y = 3;
         directionalLight.castShadow = true;
         this.scene.add(directionalLight);
 
         //const helper = new THREE.CameraHelper(directionalLight.shadow.camera);
         //this.scene.add(helper);
-        //const light = new THREE.PointLight(0xffffff, 1, 100);
-        //light.position.set(15, 15, 15);
-        //this.scene.add(light);
 
         this.camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
         this.camera.position.z = 6;
 
-        this.renderer = new THREE.WebGLRenderer();
+        this.renderer = new THREE.WebGLRenderer({ alpha: true });
         this.renderer.setSize(container.clientWidth, container.clientHeight);
         this.renderer.shadowMap.enabled = true;
-        //this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
+        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap
         container.appendChild(this.renderer.domElement);
 
         //window.addEventListener("resize", this.onWindowResize.bind(this));
@@ -89,8 +82,6 @@ export class Rover3DView {
         controls.maxDistance = 5;
         controls.enablePan = false;
 
-        console.log("created 3D view:", this);
-
         this.clock = new THREE.Clock();
         this.animationLoop();
     }
@@ -106,6 +97,10 @@ export class Rover3DView {
         requestAnimationFrame(this.animationLoop.bind(this));
         const dt = this.clock.getDelta();
         this.renderer.render(this.scene, this.camera);
+    }
+
+    updateAngles(pitch, yaw, roll) {
+        this.roverMesh?.rotation.set(pitch, yaw, roll);
     }
 }
 

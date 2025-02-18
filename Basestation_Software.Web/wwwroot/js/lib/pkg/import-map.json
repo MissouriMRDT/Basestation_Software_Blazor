@@ -1,0 +1,10 @@
+{
+  "imports": {
+    "leaflet": "./leaflet.js",
+    "leaflet-contextmenu": "./leaflet-contextmenu.js",
+    "leaflet-contextmenu/dist/leaflet.contextmenu.css": "./leaflet-contextmenu/dist/leaflet.contextmenu.css",
+    "leaflet/dist/leaflet.css": "./leaflet/dist/leaflet.css",
+    "three": "./three.js",
+    "three-stdlib": "./three-stdlib.js"
+  }
+}

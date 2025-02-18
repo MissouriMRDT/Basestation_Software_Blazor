@@ -7,7 +7,7 @@
 *.userosscache
 *.sln.docstates
 
-Basestation_Software.Web/wwwroot/js/*
+# Basestation_Software.Web/wwwroot/js/*
 Basestation_Software.Web/Core/JS/node_modules/*
 
 # User-specific files (MonoDevelop/Xamarin Studio)

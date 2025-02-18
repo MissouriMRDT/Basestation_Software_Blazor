@@ -254,13 +254,8 @@
     private float Pitch = 0, Yaw = 0, Roll = 0;
     private float AccelX = 0, AccelY = 0, AccelZ = 0;
 
-    // Declare page member variables.
-    private string jsInteropName = "";
-
     protected override void OnInitialized()
     {
-        jsInteropName = $"roverAttitudes.{ID}";
-
         _RoveCommService.On<double>("Nav", "GPSLatLonAlt", async (packet) =>
         {
             Lat = packet.Data[0];
