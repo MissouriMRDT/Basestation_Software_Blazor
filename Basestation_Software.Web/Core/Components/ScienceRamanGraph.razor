@@ -28,6 +28,10 @@
         <button class="btn btn-primary" @onclick=RequestRamanData> Request Raman Spectroscopy Data </button>
         <button class="btn btn-primary btn-sm" @onclick=Export> <i class="bi bi-filetype-csv"></i> </button>
         <div class="d-flex">
+            <p>Integration Time:</p>
+            <input type="number" @bind=_integrationTime/>
+        </div>
+        <div class="d-flex">
             <p>Dot Size: </p>
             <RadzenNumeric TValue="float" @bind-Value="@_dotSize"/>
         </div>
@@ -46,12 +50,13 @@
     bool showDataLabels = false;
     private float _dotSize = 2f;
     private bool _showLines = false;
+    private uint _integrationTime;
 
     List<DataItem> ramanGraph = new();
 
     private async Task RequestRamanData()
     {
-        await _RoveCommService.SendAsync<uint>("Raman", "RequestRamanReading", [0], reliable: false);
+        await _RoveCommService.SendAsync<uint>("Raman", "RequestRamanReading", [_integrationTime], reliable: false);
     }
 
     private void Export()
