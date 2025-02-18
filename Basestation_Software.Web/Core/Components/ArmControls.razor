@@ -413,7 +413,19 @@
                             jointInputs[i] * (isJointInverted[i] ? -1f : 1f) * (_ArmSpeedState.ArmSpeeds.Values.ToArray()[i]) * _ArmSpeedState.ArmSpeeds["Master"] * (UPDATE_INTERVAL / 10f);
                     }
 
-                    _ = _RoveCommService.Send<float>("Arm", "IncrementIKPosition", Array.ConvertAll(jointInputs, j => (float)j).ToList());
+                    if (!GamepadSelector_.SelectedGamepad.Buttons[9].Pressed)
+                    {
+                        _ = _RoveCommService.Send<float>("Arm", "IncrementIKPosition", Array.ConvertAll(jointInputs, j => (float)j).ToList());
+                    }
+                    else
+                    {
+                        _ = _RoveCommService.Send<float>("Arm", "IncrementLockModePosition", Array.ConvertAll(jointInputs, j => (float)j).Skip(3).ToList());
+                    }
+
+                    _ = Task.Run(() => _RoveCommService.SendAsync<short>("Arm", "SetGripperSpeed", [(short)(inputValues[(int)gripperBind] * _ArmSpeedState.ArmSpeeds["Gripper"] * 1000f * _ArmSpeedState.ArmSpeeds["Master"] * (isGripperInverted ? -1 : 1))]));
+                    gripperMeterValue = inputValues[(int)gripperBind];
+                    laserMeterValue = inputValues[(int)laserBind];
+                    solMeterValue = inputValues[(int)solBind];
 
                     if (inputValues[(int)laserBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Laser", [(byte)((inputValues[(int)laserBind] * (isLaserInverted ? -1 : 1)) < 0 ? 0 : 1)]);
                     if (inputValues[(int)solBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [(byte)((inputValues[(int)solBind] * (isSolInverted ? -1 : 1)) < 0 ? 0 : 1)]);
