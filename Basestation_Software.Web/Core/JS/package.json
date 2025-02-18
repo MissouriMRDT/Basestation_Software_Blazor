@@ -5,7 +5,8 @@
   "author": "MissouriMRDT",
   "license": "MIT",
   "scripts": {
-    "build": "snowpack build"
+    "build": "snowpack build",
+    "dev": "snowpack build --watch"
   },
   "dependencies": {
     "leaflet": "^1.9.4",

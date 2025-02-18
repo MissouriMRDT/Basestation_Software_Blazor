@@ -39,8 +39,8 @@
   </PropertyGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="npm install" WorkingDirectory="Core/JS/" />
-    <Exec Command="npm run build" WorkingDirectory="Core/JS/" />
+    <Exec Condition="$(Configuration) == 'Debug'" Command="npm install &amp;&amp; npm run build" WorkingDirectory="Core/JS/" />
+    <Exec Condition="$(Configuration) == 'Release'" Command="npm install &amp;&amp; npm run build" WorkingDirectory="Core/JS/" />
   </Target>
 
 </Project>
