@@ -44,13 +44,13 @@
 </div>
 
 @code {
-    private List<short> colorComponents = [0, 0, 0];
-    private short brightness = 0;
+    private List<byte> colorComponents = [0, 0, 0];
+    private byte brightness = 0;
 
     private void Send()
     {
-        _ = _RoveCommService.SendAsync<short>("Core", "LEDRGB", colorComponents);
-        _ = _RoveCommService.SendAsync<short>("Core", "Brightness", [brightness]);
+        _ = _RoveCommService.SendAsync<byte>("Core", "LEDRGB", colorComponents);
+        _ = _RoveCommService.SendAsync<byte>("Core", "Brightness", [brightness]);
         _OpState.OpColor = Color.FromArgb(colorComponents[0], colorComponents[1], colorComponents[2]);
     }
 }
