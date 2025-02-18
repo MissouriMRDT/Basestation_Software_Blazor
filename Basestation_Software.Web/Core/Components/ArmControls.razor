@@ -1,4 +1,5 @@
-﻿@using Basestation_Software.Models.Arm
+﻿@* TODO Big post-sar refactor *@
+@using Basestation_Software.Models.Arm
 @implements IDisposable
 @inject RoveCommService _RoveCommService
 @inject ArmSpeedState _ArmSpeedState
@@ -76,7 +77,7 @@
             @foreach (JointNames joint in JointNames.GetValues(typeof(JointNames)))
             {
                 <div class="jointBox">
-                    <p>Invert @joint</p>
+                    <p>Invert @((SelectedScheme != Scheme.InverseKinematics) ? @joint : IKNames[(int)joint-1])</p>
                     <RadzenCheckBox TValue="bool" @bind-value=@isJointInverted[(int)joint - 1]/>
                     <div class="break"></div>
                     <select class="form-select-sm w-100" name="JointBind" @bind=@jointInputBinds[(int)joint-1]>
@@ -165,6 +166,7 @@
     {
         XboxDecipercents,
         XboxTargetAngles,
+        InverseKinematics
     }
 
     // Gamepade inputs are put in a list for rebinding. 
@@ -233,7 +235,8 @@
     bool isGripperInverted = false;
     bool isLaserInverted = false;
     bool isSolInverted = false;
-
+    // very convenient we have 6 axis to control in IK and manual
+    private string[] IKNames = ["X", "Y", "Z", "J4", "P", "R"];
 
     private string[] limitNames = ["X+", "X-", "J2+", "J2-", "J3+", "J3-", "J4+", "J4-", "P+", "P-"];
     // 0 off, 1 on
@@ -341,6 +344,8 @@
                     _ = _RoveCommService.SendAsync<short>("Arm", "SetGripperSpeed", [(short)(inputValues[(int)gripperBind] * _ArmSpeedState.ArmSpeeds["Gripper"] * 200f * _ArmSpeedState.ArmSpeeds["Master"] * (isGripperInverted ? -1 : 1))]);
                     gripperMeterValue = inputValues[(int)gripperBind];
 
+                    if (inputValues[(int)laserBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Laser", [(byte)((inputValues[(int)laserBind] * (isLaserInverted ? -1 : 1)) < 0 ? 0 : 1)]);
+                    if (inputValues[(int)solBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [(byte)((inputValues[(int)solBind] * (isSolInverted ? -1 : 1)) < 0 ? 0 : 1)]);
 
                     break;
                 }
@@ -381,6 +386,34 @@
                     gripperMeterValue = inputValues[(int)gripperBind];
                     laserMeterValue = inputValues[(int)laserBind];
                     solMeterValue = inputValues[(int)solBind];
+
+                    if (inputValues[(int)laserBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Laser", [(byte)((inputValues[(int)laserBind] * (isLaserInverted ? -1 : 1)) < 0 ? 0 : 1)]);
+                    if (inputValues[(int)solBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [(byte)((inputValues[(int)solBind] * (isSolInverted ? -1 : 1)) < 0 ? 0 : 1)]);
+
+                    break;
+                }
+            case Scheme.InverseKinematics:
+                {
+                    // Controller check
+                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
+
+
+                    double[] inputValues = GetBindableGamepadInputs(GamepadSelector_.SelectedGamepad);
+                    inputMeterValues = [0, 0, 0, 0, 0, 0];
+                    for (int i = 0; i < jointInputs.Length; i++)
+                    {
+                        jointInputs[i] = inputValues[(int)jointInputBinds[i]];
+                        inputMeterValues[i] = inputValues[(int)jointInputBinds[i]];
+                    }
+
+                    // sanitize based on dead zone and apply multipliers
+                    for (int i = 0; i < jointInputs.Length; i++)
+                    {
+                        jointInputs[i] = (Math.Abs(jointInputs[i]) < DeadZone) ? 0d :
+                            jointInputs[i] * (isJointInverted[i] ? -1f : 1f) * (_ArmSpeedState.ArmSpeeds.Values.ToArray()[i]) * _ArmSpeedState.ArmSpeeds["Master"] * (UPDATE_INTERVAL / 10f);
+                    }
+
+                    _ = _RoveCommService.Send<float>("Arm", "IncrementIKPosition", Array.ConvertAll(jointInputs, j => (float)j).ToList());
 
                     if (inputValues[(int)laserBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Laser", [(byte)((inputValues[(int)laserBind] * (isLaserInverted ? -1 : 1)) < 0 ? 0 : 1)]);
                     if (inputValues[(int)solBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [(byte)((inputValues[(int)solBind] * (isSolInverted ? -1 : 1)) < 0 ? 0 : 1)]);
