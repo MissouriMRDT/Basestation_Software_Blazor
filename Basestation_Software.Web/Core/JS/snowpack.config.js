@@ -5,7 +5,8 @@
 
     buildOptions: {
         out: "../../wwwroot/js/",
-        clean: false,
+        clean: true,
+        metaUrlPath: 'lib',
     },
 
     mount: {
@@ -13,7 +14,7 @@
     },
 
     optimize: {
-        minify: true,
+        minify: true, // this is false so that js can be debugged easily
         bundle: false,
         treeshake: true,
         splitting: true,
