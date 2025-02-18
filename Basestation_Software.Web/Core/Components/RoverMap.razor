@@ -1,4 +1,4 @@
-@implements IDisposable
+@implements IAsyncDisposable
 @inject MapTileService _MapTileService
 @inject GPSWaypointService _GPSWaypointService
 @inject NavigationManager _NavigationManager
@@ -192,5 +192,17 @@
         return (int)Math.Floor((1.0 - Math.Log(Math.Tan(latRad) + 1.0 / Math.Cos(latRad)) / Math.PI) / 2.0 * Math.Pow(2.0, zoom));
     }
 
-    void IDisposable.Dispose() { }
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        try
+        {
+            if (jsModule is not null)
+            {
+                await jsModule.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
 }

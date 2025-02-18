@@ -64,3 +64,8 @@ export function createRoverMap(id, dotNetComponent, urlTemplate, initialLat, ini
     roverMaps[id] = new RoverMap(id, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel);
     console.log("Created RoverMap:", id);
 }
+
+export function deleteRoverMap(id) {
+    delete roverMaps[id];
+    console.log("Deleted RoverMap:", id);
+}
