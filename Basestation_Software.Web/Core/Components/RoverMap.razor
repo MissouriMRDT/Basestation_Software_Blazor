@@ -75,11 +75,11 @@
             Uri baseUri = new Uri(_NavigationManager.BaseUri);
             await jsModule.InvokeVoidAsync("createRoverMap", [
                 ID,
-        DotNetObjectReference.Create(this),
-        $"{baseUri.Scheme}://{baseUri.Host}:5000/api/MapTiles/{{z}}/{{y}}/{{x}}.png",
-        InitialLat,
-        InitialLong,
-        InitialZoomLevel
+                DotNetObjectReference.Create(this),
+                $"{baseUri.Scheme}://{baseUri.Host}:5000/api/MapTiles/{{z}}/{{y}}/{{x}}.png",
+                InitialLat,
+                InitialLong,
+                InitialZoomLevel
             ]);
 
             // Plot waypoints and keep them updated.
@@ -101,9 +101,9 @@
         {
             return jsModule!.InvokeVoidAsync($"{jsInteropName}.addWaypointMarker", [
                 waypoint.Latitude.GetValueOrDefault(0),
-            waypoint.Longitude.GetValueOrDefault(0),
-            waypoint.SearchRadius.GetValueOrDefault(0),
-            ColorTranslator.ToHtml(Color.FromArgb(waypoint.WaypointColor.GetValueOrDefault(0)))
+                waypoint.Longitude.GetValueOrDefault(0),
+                waypoint.SearchRadius.GetValueOrDefault(0),
+                ColorTranslator.ToHtml(Color.FromArgb(waypoint.WaypointColor.GetValueOrDefault(0)))
             ]).AsTask();
         }));
     }
@@ -141,16 +141,16 @@
 
     for (int y = (tileY - 3); y < (tileY + 3); y++)
     {
-    for (int x = (tileX - 3); x < (tileX + 3); x++)
-    {
-    MapTile? mapTile = await _MapTileService.GetMapTile(x, y, zoom);
-    if (mapTile is null)
-    {
-        string url = $"http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={zoom}";
-        tasks.Add(DownloadAndSaveTile(client, url, x, y, zoom));
-        _cachingMapTiles = true;
-    }
-    }
+        for (int x = (tileX - 3); x < (tileX + 3); x++)
+        {
+            MapTile? mapTile = await _MapTileService.GetMapTile(x, y, zoom);
+            if (mapTile is null)
+            {
+                string url = $"http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={zoom}";
+                tasks.Add(DownloadAndSaveTile(client, url, x, y, zoom));
+                _cachingMapTiles = true;
+            }
+        }
     }
 
     await Task.WhenAll(tasks);
