@@ -4,6 +4,7 @@ import "leaflet-contextmenu";
 
 // Snowpack will automatically inject CSS files
 import "leaflet/dist/leaflet.css";
+import "leaflet-contextmenu/dist/leaflet.contextmenu.css";
 
 export const roverMaps = {};
 

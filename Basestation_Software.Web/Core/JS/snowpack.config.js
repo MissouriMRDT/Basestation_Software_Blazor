@@ -5,7 +5,7 @@
 
     buildOptions: {
         out: "../../wwwroot/js/",
-        clean: true,
+        clean: false,
     },
 
     mount: {
@@ -19,8 +19,4 @@
         splitting: true,
         target: "es2020",
     },
-
-    //alias: {
-    //    "three-examples": "three/examples/jsm"
-    //},
 }

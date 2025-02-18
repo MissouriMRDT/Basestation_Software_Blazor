@@ -52,19 +52,19 @@ export class Rover3DView {
         this.scene.add(groundPlane);
 
         this.scene.add(new THREE.AmbientLight(0xfcf9cf));
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
         directionalLight.position.y = 3;
         directionalLight.castShadow = true;
         this.scene.add(directionalLight);
 
-        const helper = new THREE.CameraHelper(directionalLight.shadow.camera);
-        this.scene.add(helper);
+        //const helper = new THREE.CameraHelper(directionalLight.shadow.camera);
+        //this.scene.add(helper);
         //const light = new THREE.PointLight(0xffffff, 1, 100);
         //light.position.set(15, 15, 15);
         //this.scene.add(light);
 
         this.camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
-        this.camera.position.z = 5;
+        this.camera.position.z = 6;
 
         this.renderer = new THREE.WebGLRenderer();
         this.renderer.setSize(container.clientWidth, container.clientHeight);
