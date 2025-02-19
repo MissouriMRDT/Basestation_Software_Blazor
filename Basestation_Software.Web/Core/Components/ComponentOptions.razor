@@ -35,9 +35,6 @@
     }
 
     .component-options-open {
-    position: absolute;
-    left: 0;
-    right: 0;
     width: 30px;
     height: 30px;
     background: none;
@@ -46,8 +43,9 @@
     }
 </style>
 
-<div style="position: absolute">
+<div style="display: flex; position: absolute;">
     <button @onclick=Open class="component-options-open" title="Component Options"><i class="bi bi-inline-text bi-pencil"></i></button>
+
 </div>
 @if (Visible)
 {

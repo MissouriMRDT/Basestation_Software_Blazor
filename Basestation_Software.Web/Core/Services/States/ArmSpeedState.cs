@@ -17,14 +17,14 @@ public class ArmSpeedState
 
     private Dictionary<string, float> _armSpeeds = new Dictionary<string, float>()
     {
-        {"X", 1f},
+        {"X", 0.03f},
         {"J2", 1f},
         {"J3", 1f},
         {"J4", 1f},
         {"Pitch", 1f},
         {"Roll", 1f},
-        {"Gripper", 1f},
-        {"Master", 1f}
+        {"Gripper", 5f},
+        {"Master", 0.1f}
     };
 
     public Dictionary<string, float> ArmSpeeds
