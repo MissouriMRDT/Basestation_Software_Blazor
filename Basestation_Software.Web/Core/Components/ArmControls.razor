@@ -434,7 +434,7 @@
 
                     if (!GamepadSelector_.SelectedGamepad.Buttons[9].Pressed)
                     {
-                        _ = _RoveCommService.Send<float>("Arm", "IncrementIKPosition", Array.ConvertAll(jointInputs, j => (float)j).ToList());
+                        if (jointInputs.Sum() != 0) _ = _RoveCommService.Send<float>("Arm", "IncrementIKPosition", Array.ConvertAll(jointInputs, j => (float)j).ToList());
                     }
                     else
                     {
