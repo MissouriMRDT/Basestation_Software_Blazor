@@ -8,33 +8,35 @@
     <div class="card-header">
         <h3>Camera Display</h3>
     </div>
-    <div class="cam-container" style="transform:rotate(@(rot)deg)">
-        <img class="cam-display" src="@_frameData"/>
-    </div>
+    <div class="card-body">
+        <div class="cam-container" style="transform:rotate(@(rot)deg)">
+            <img class="cam-display" src="@_frameData" />
+        </div>
 
-    <div class="source-buttons-container" style="margin-block 0.5%">
-        @for (int i = 0; i < CameraService._sources.Length; i++)
-        {
-            // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
-            var _i = i;
-            <button class="@("btn btn-secondary " + ((_sourceIndex == _i) ? "active" : ""))" @onclick="() => SetSource(_i)">@(_i + 1)</button>
-        }
-    </div>
+        <div class="source-buttons-container" style="margin-block 0.5%">
+            @for (int i = 0; i < CameraService._sources.Length; i++)
+            {
+                // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
+                var _i = i;
+                <button class="@("btn btn-secondary " + ((_sourceIndex == _i) ? "active" : ""))" @onclick="() => SetSource(_i)">@(_i + 1)</button>
+            }
+        </div>
 
-    <div class="source-buttons-container" style="margin-block: 1%">
-        @for (int i = 0; i < CameraService._sources.Length; i++)
-        {
-            <button class="power" style="background-image: url(images/@( streamingCams[i] == 1 ? "on.png" : "off.png"));"></button>
-        }
-    </div>
+        <div class="source-buttons-container" style="margin-block: 1%">
+            @for (int i = 0; i < CameraService._sources.Length; i++)
+            {
+                <button class="power" style="background-image: url(images/@( streamingCams[i] == 1 ? "on.png" : "off.png"));"></button>
+            }
+        </div>
 
-    <div class="settings-container">
-        <div class="settings-row">
-            <button class="btn btn-primary" @onclick="RestartCam">restart reciever</button>
-            <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 1)">restart source</button>
-            <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 0)">shutdown source</button>
-            <button class="btn btn-primary" @onclick="TakeScreenshot">take screenshot</button>
-			<button class="btn btn-primary" @onclick="Rotate">Rotate</button>
+        <div class="settings-container">
+            <div class="settings-row">
+                <button class="btn btn-primary" @onclick="RestartCam">restart reciever</button>
+                <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 1)">restart source</button>
+                <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 0)">shutdown source</button>
+                <button class="btn btn-primary" @onclick="TakeScreenshot">take screenshot</button>
+                <button class="btn btn-primary" @onclick="Rotate">Rotate</button>
+            </div>
         </div>
     </div>
 </div>
