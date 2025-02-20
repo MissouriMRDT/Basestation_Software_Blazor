@@ -3,49 +3,73 @@
 
 <style>
     .packet-tester {
-    display: grid;
-    padding: 0;
-    grid-template-columns: 1fr 1fr 1fr 17fr;
-    grid-template-rows: auto min-content min-content min-content min-content;
-    grid-template-areas:
-    "code code code code"
-    "start stop line info"
-    "ip-label ip-label ip-checkbox ip"
-    "port-label port-label port port"
-    "tcp-label tcp-label tcp .";
-    place-items: stretch stretch;
+        display: grid;
+        padding: 0;
+        grid-template-columns: 45px 45px 30px calc(100% - 120px);
+        grid-template-rows: auto min-content min-content min-content min-content;
+        grid-template-areas:
+            "code code code code"
+            "start stop line info"
+            "ip-label ip-label ip-checkbox ip"
+            "port-label port-label port port"
+            "tcp-label tcp-label tcp .";
+        place-items: stretch stretch;
+    }
+
+    .packet-tester-help {
+        position: fixed;
+        z-index: 2;
+        right: 10vh;
+        top: 10vh;
+        padding: 0;
+        border: none;
+        font-family: 'Courier New';
+        background-color: transparent;
+        color: #fff;
+    }
+
+    .packet-tester > pre {
+        position: fixed;
+        z-index: 1;
+        top: 10vh;
+        left: 10vh;
+        right: 10vh;
+        background-color: #000;
+        color: #fff;
+        white-space: pre-wrap;
     }
 
     .packet-tester > input[type=checkbox] {
-    place-self: center center;
+        place-self: center center;
     }
 
     .packet-tester > input:not([type=checkbox]) {
-    color: var(--bs-body-color);
-    border: 2px solid var(--bs-border-color);
+        color: var(--bs-body-color);
+        border: 2px solid var(--bs-border-color);
     }
 
     .packet-tester > input[disabled] {
-    color: var(--bs-gray);
+        color: var(--bs-gray);
     }
 
     .packet-tester > p {
-    margin: 0;
-    place-self: center left;
+        margin: 0;
+        place-self: center left;
     }
 </style>
 
 <div class="card h-100">
     <div class="card-header">
         <h3>Packet Tester</h3>
-        <button style="position: absolute;right: 5px;top: 5px;" class="btn btn-sm btn-info" @onclick=@(_ => Help ^= true)><i class="bi bi-inline-text bi-question-circle"></i></button>
+        <button style="position: absolute; right: 5px; top: 5px" class="btn btn-sm btn-info" @onclick=@(_ => Help ^= true)><i class="bi bi-inline-text bi-question-circle"></i></button>
     </div>
     <div class="card-body packet-tester">
-        <InputTextArea style="grid-area: code" @bind-Value="TextAreaValue" autocomplete="off" autocorrect="off" wrap="off" autocapitalize="off" />
         @if (Help)
         {
-            <pre style="grid-area: code; z-index: 1; background-color: #000; color: #fff">PostDelay BoardName CommandName [Data ...]&#10;PostDelay BoardName CommandName [Data ...]&#10;...&#10;&#10;Any number of Data elements may be specified.&#10;Data may be a single value or a minimum (inclusive) and maximum (exclusive) value separated by &quot;/&quot;.&#10;PostDelay is the number of milliseconds until the next line is sent.</pre>
+            <button class="packet-tester-help" style="cursor: default" @onclick=@(_ => Help = false)>[X]</button>
+            <pre @onclick=@(_ => Help = false)>PostDelay BoardName CommandName [Data ...]&#10;PostDelay BoardName CommandName [Data ...]&#10;...&#10;&#10;Any number of Data elements may be specified.&#10;Data may be a single value or a minimum (inclusive) and maximum (exclusive) value separated by &quot;/&quot;.&#10;PostDelay is the number of milliseconds until the next line is sent.</pre>
         }
+        <InputTextArea style="grid-area: code; resize: none" @bind-Value="TextAreaValue" autocomplete="off" autocorrect="off" wrap="off" autocapitalize="off" />
         @if (Running)
         {
             <button style="grid-area: start" class="btn btn-sm btn-warning" @onclick=Pause><i class="bi bi-inline-text bi-pause" /></button>
@@ -53,7 +77,7 @@
             <button style="grid-area: start" class="btn btn-sm btn-success" @onclick=Start><i class="bi bi-inline-text bi-play" /></button>
         }
         <button style="grid-area: stop" class="btn btn-sm btn-danger" @onclick=Stop><i class="bi bi-inline-text bi-stop" /></button>
-        <p style="grid-area: line">Ln: @Line</p>
+        <p style="grid-area: line">L@(Line)</p>
         <p style="grid-area: info">@Info</p>
         <p style="grid-area: ip-label">Override IP:</p>
         <input style="grid-area: ip-checkbox" type="checkbox" @bind="OverrideIP" />
@@ -66,7 +90,6 @@
 </div>
 
 @code {
-
     private bool Help = false;
     private bool Running = false;
     private string TextAreaValue = "";
