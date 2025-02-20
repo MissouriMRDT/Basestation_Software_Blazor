@@ -15,12 +15,15 @@
             @foreach (string joint in JointNames.GetNames<JointNames>())
             {
                 string _joint = joint;
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.1rem" JustifyContent="JustifyContent.Center" Style="flex: 0 1 160px; border-radius: 10px; background-color: var(--bs-secondary-bg); margin: 0.2rem; padding: 0.3rem;">
-                    <p style="width: 80px; margin-inline: 0.4rem; margin-bottom:0; text-align: right">@(_isIKMode ? IKNames[(int)Enum.Parse(typeof(JointNames), _joint)-1] : joint)</p>
-                    <RadzenNumeric TValue="float" Min="-360" Max="360" @bind-value=@_activeJointValues.Values[joint]></RadzenNumeric>
-                    <button class="btn btn-sm btn-secondary" @onclick="() => SetSingle(joint)" title="Set Joint"><i class="bi bi-inline-text bi-arrow-up-right" /></button>
-                    <button class="btn btn-sm btn-secondary" @onclick="() => GetSingle(joint)" title="Get Joint"><i class="bi bi-inline-text bi-arrow-down-right" /></button>
-                </RadzenStack>
+                <div class="d-flex flex-column" style="flex: 0 1 160px; border-radius: 10px; background-color: var(--bs-secondary-bg); margin: 0.2rem; padding: 0.3rem;">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.1rem" JustifyContent="JustifyContent.Center" Style="">
+                        <p style="width: 80px; margin-inline: 0.4rem; margin-bottom:0; text-align: right">@(_isIKMode ? IKNames[(int)Enum.Parse(typeof(JointNames), _joint) - 1] : joint)</p>
+                        <RadzenNumeric TValue="float" Min="-360" Max="360" @bind-value=@_activeJointValues.Values[joint]></RadzenNumeric>
+                        <button class="btn btn-sm btn-secondary" @onclick="() => SetSingle(joint)" title="Set Joint"><i class="bi bi-inline-text bi-arrow-up-right" /></button>
+                        <button class="btn btn-sm btn-secondary" @onclick="() => GetSingle(joint)" title="Get Joint"><i class="bi bi-inline-text bi-arrow-down-right" /></button>
+                    </RadzenStack>
+                    <label class="form-label text-center">@(telemStrings[(int)Enum.Parse(typeof(JointNames), _joint) - 1])</label>
+                </div>
             }
         </div>
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center" Style="margin-block: 1rem">
@@ -72,6 +75,7 @@
             </Columns>
 
         </RadzenDataGrid>
+
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center" Style="margin-block: 1rem">
             <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="() => AddPreset(_presetNameInput)">Save Preset</RadzenButton>
             <RadzenTextBox @bind-Value=_presetNameInput></RadzenTextBox>
@@ -91,12 +95,21 @@
     private List<float> lastTelemetry = [0, 0, 0, 0, 0, 0];
     private bool _isIKMode = false;
     private string[] IKNames = ["X", "Y", "Z", "J4", "P", "R"];
+    private string[] telemStrings = ["-", "-", "-", "-", "-", "-"];
 
     protected override async Task OnInitializedAsync()
     {
         _RoveCommService.On<float>("Arm", "Positions", async (packet) =>
         {
             lastTelemetry = packet.Data;
+            telemStrings[0] = packet.Data[0].ToString();
+            telemStrings[1] = packet.Data[1].ToString();
+            telemStrings[2] = packet.Data[2].ToString();
+            telemStrings[3] = "-";
+            telemStrings[4] = packet.Data[3].ToString();
+            telemStrings[5] = packet.Data[4].ToString();
+
+            await InvokeAsync(StateHasChanged);
         });
         await _ArmAngularService.RefreshPresets();
         await SyncCache();
