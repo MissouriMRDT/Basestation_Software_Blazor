@@ -11,6 +11,10 @@
             <label class="form-label">IK Mode</label>
             <InputCheckbox @bind-Value=_isIKMode></InputCheckbox>
         </div>
+        <div class="d-flex">
+            <label class="form-label">Keyframe Increment Lerping</label>
+            <InputCheckbox @bind-Value=_enableKeyframeLerping></InputCheckbox>
+        </div>
         <div style="display: flex; flex-wrap: wrap; justify-content: center;">
             @foreach (string joint in JointNames.GetNames<JointNames>())
             {
@@ -63,11 +67,13 @@
                 Filterable="false"
                 Title="Actions"
                 Frozen="true"
-                Width="20px"
+                Width="50px"
                 TextAlign="TextAlign.Center">
 
                     <Template Context="preset">
                         <button class="btn btn-sm btn-danger" title="Delete Preset" @onclick="() => DeletePreset(preset)"><i class="bi bi-inline-text bi-trash" /></button>
+                        <button class="btn btn-sm btn-success" title="Add Keyframe" @onclick="() => AddKeyframe(preset)"><i class="bi bi-inline-text bi-plus" /></button>
+
                     </Template>
 
                 </RadzenDataGridColumn>
@@ -81,6 +87,20 @@
             <RadzenTextBox @bind-Value=_presetNameInput></RadzenTextBox>
 
         </RadzenStack>
+
+        <meter min="0" max="5000" value="@_keyframeStatusMeter"></meter>
+        <ol>
+            @for (int i = 0; i < _keyframes.Count; i++)
+            {
+                int _i = i;
+                <li style=@(_i == _currentKeyframeIndex ? "font-weight: bold" : "font-weight: auto")>@_keyframes[_i].Name</li>
+            }
+        </ol>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" @onclick="@(() => PlayKeyframes())">Play</button>
+            <button class="btn btn-primary" @onclick="@(() => {_keyframes = new(); InvokeAsync(StateHasChanged);})">Clear</button>
+
+        </div>
 
     </div>
 </div>
@@ -96,6 +116,10 @@
     private bool _isIKMode = false;
     private string[] IKNames = ["X", "Y", "Z", "J4", "P", "R"];
     private string[] telemStrings = ["-", "-", "-", "-", "-", "-"];
+    private List<ArmPreset> _keyframes = new();
+    private int _currentKeyframeIndex = 0;
+    private int _keyframeStatusMeter = 0;
+    private bool _enableKeyframeLerping = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -120,6 +144,41 @@
     {
         _cachedPresets = _ArmAngularService.GetPresets();
         await InvokeAsync(StateHasChanged);
+    }
+
+    private void AddKeyframe(ArmPreset preset)
+    {
+        _keyframes.Add(preset);
+    }
+
+    private async Task PlayKeyframes()
+    {
+        for (int i = 0; i < _keyframes.Count; i++)
+        {
+            _currentKeyframeIndex = i;
+            ArmPreset k = _keyframes[i];
+            _keyframeStatusMeter = 0;
+            Console.WriteLine(k.Name);
+            if (k.Joints != null) _ = _RoveCommService.SendAsync<float>(
+            "Arm",
+            "SetIKPosition",
+            k.Joints.Values.Values.ToList());
+            await InvokeAsync(StateHasChanged);
+            for (int j = 0; j < 100; j++)
+            {
+                _keyframeStatusMeter += 50;
+                if (_enableKeyframeLerping)
+                {
+
+                }
+                _ = InvokeAsync(StateHasChanged);
+                await Task.Delay(50);
+            }
+            await _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [1]);
+            await Task.Delay(1000);
+            await _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [0]);
+            await Task.Delay(1000);
+        }
     }
 
     /// <summary>
