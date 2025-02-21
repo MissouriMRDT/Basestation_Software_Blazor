@@ -258,7 +258,7 @@
     {
         for (int i = 0; i < _activeJointValues.Values.Count; i++)
         {
-            _activeJointValues.Values[Enum.GetName(typeof(JointNames), i)] = lastTelemetry[i];
+            _activeJointValues.Values[Enum.GetName(typeof(JointNames), i+1)] = lastTelemetry[i];
         }
     }
 
