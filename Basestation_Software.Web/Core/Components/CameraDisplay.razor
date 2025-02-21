@@ -10,7 +10,7 @@
     </div>
     <div class="card-body">
         <div class="cam-container" style="transform:rotate(@(rot)deg)">
-            <img class="cam-display" src="@_frameData" />
+            <img class="cam-display" src=@("data:image/gif;base64," + _frameData)  />
         </div>
 
         <div class="source-buttons-container" style="margin-block 0.5%">
@@ -29,14 +29,13 @@
             }
         </div>
 
-        <div class="settings-container">
-            <div class="settings-row">
-                <button class="btn btn-primary" @onclick="RestartCam">restart reciever</button>
-                <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 1)">restart source</button>
-                <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 0)">shutdown source</button>
-                <button class="btn btn-primary" @onclick="TakeScreenshot">take screenshot</button>
-                <button class="btn btn-primary" @onclick="Rotate">Rotate</button>
-            </div>
+        <div class="d-flex">
+            <button class="btn btn-primary" @onclick="RestartCam">restart reciever</button>
+            <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 1)">restart source</button>
+            <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 0)">shutdown source</button>
+            <button class="btn btn-primary" @onclick="TakeScreenshot">take screenshot</button>
+            <button class="btn btn-primary" @onclick="SaveImage">save image</button>
+            <button class="btn btn-primary" @onclick="Rotate">rotate</button>
         </div>
     </div>
 </div>
@@ -45,16 +44,18 @@
     private bool _prerendered = false;
     private int _sourceIndex = 0;
     private string? _frameData;
+    private string _defualtFrameData = "images/loading.jpg";
     private int[] streamingCams = [0, 0, 0, 1, 0, 0, 0, 0];
-	private int rot = 0;
+    private int rot = 0;
 
-	private void Rotate()
-	{
-		rot += 90;
-	}
+    private void Rotate()
+    {
+        rot += 90;
+    }
     protected override async Task OnInitializedAsync()
     {
         await InvokeAsync(StateHasChanged);
+        _frameData = _defualtFrameData;
         _CameraService.GetCameraReference(_sourceIndex).FrameNotifier += OnNewFrame;
     }
 
@@ -69,6 +70,7 @@
         _CameraService.GetCameraReference(_sourceIndex).FrameNotifier -= OnNewFrame;
         _sourceIndex = newSourceIndex;
         _CameraService.GetCameraReference(_sourceIndex).FrameNotifier += OnNewFrame;
+        _frameData = _defualtFrameData;
         StateHasChanged();
 
     }
@@ -88,6 +90,17 @@
     private void TakeScreenshot()
     {
         _ = _RoveCommService.SendAsync<byte>("Camera" + (_sourceIndex < 4 ? "1" : "2"), "TakePicture", [(byte)(_sourceIndex % 4), 1]);
+    }
+
+    private void SaveImage()
+    {
+        Console.WriteLine("Write File");
+        File.WriteAllBytes("CameraScreenshot_" + ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds() + ".png", Convert.FromBase64String(_frameData));
+    }
+
+    private void TakePano()
+    {
+        
     }
 
     private void ToggleSource(int source, int data)

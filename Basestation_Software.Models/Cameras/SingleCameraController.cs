@@ -81,7 +81,7 @@ public class SingleCameraController
                 if (frame != null)
                 {
                     string base64 = Convert.ToBase64String(frame.ToBytes());
-                    _frameData = $"data:image/gif;base64,{base64}";
+                    _frameData = base64;
 
                     FrameNotifier?.Invoke(_frameData);
                 }

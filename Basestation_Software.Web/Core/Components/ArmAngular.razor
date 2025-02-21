@@ -161,23 +161,19 @@
             Console.WriteLine(k.Name);
             if (k.Joints != null) _ = _RoveCommService.SendAsync<float>(
             "Arm",
-            "SetIKPosition",
+            "SetJointTargetAngle",
             k.Joints.Values.Values.ToList());
             await InvokeAsync(StateHasChanged);
             for (int j = 0; j < 100; j++)
             {
                 _keyframeStatusMeter += 50;
-                if (_enableKeyframeLerping)
-                {
-
-                }
                 _ = InvokeAsync(StateHasChanged);
                 await Task.Delay(50);
             }
             await _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [1]);
-            await Task.Delay(1000);
+            await Task.Delay(100);
             await _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [0]);
-            await Task.Delay(1000);
+            await Task.Delay(100);
         }
     }
 
