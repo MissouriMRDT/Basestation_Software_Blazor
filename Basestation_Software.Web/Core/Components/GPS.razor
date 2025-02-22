@@ -331,10 +331,10 @@
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender) // Initialize attitude indicator.
-            await _IJSRuntime.InvokeVoidAsync($"createRoverAttitude", [ID, DotNetObjectReference.Create(this)]);
-        else
-            await _IJSRuntime.InvokeVoidAsync($"{jsInteropName}.update", [Pitch, Roll]);
+        // if (firstRender) // Initialize attitude indicator.
+        //     await _IJSRuntime.InvokeVoidAsync($"createRoverAttitude", [ID, DotNetObjectReference.Create(this)]);
+        // else
+        //     await _IJSRuntime.InvokeVoidAsync($"{jsInteropName}.update", [Pitch, Roll]);
     }
 
     void IDisposable.Dispose() { }

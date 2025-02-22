@@ -59,6 +59,8 @@ class roverMap {
         this.lMap.on('zoomend', this.onZoomLevelChange.bind(this));
         this.lMap.on('moveend', this.onZoomLevelChange.bind(this));
         this.waypointLayerGroup = L.layerGroup([]).addTo(this.lMap);
+        this.roverIcon = L.marker([37.951897, -91.777587]).addTo(this.waypointLayerGroup);
+
     }
     // Call component.OnZoomLevel.
     onZoomLevelChange() {
@@ -78,6 +80,11 @@ class roverMap {
             L.circle([lat, lng], { radius: radius, color: color }).addTo(this.waypointLayerGroup);
         }
     }
+
+    addRoverIcon(lat, lng) {
+        this.roverIcon.setLatLng([lat, lng]);
+    }
+
     // Clear waypoint markers.
     clearWaypointMarkers() {
         this.waypointLayerGroup.clearLayers();
