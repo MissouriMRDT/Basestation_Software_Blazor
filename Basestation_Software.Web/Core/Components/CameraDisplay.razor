@@ -29,12 +29,13 @@
             }
         </div>
 
-        <div class="d-flex">
+        <div class="d-flex" style="text-transform: capitalize">
             <button class="btn btn-primary" @onclick="RestartCam">restart reciever</button>
             <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 1)">restart source</button>
             <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 0)">shutdown source</button>
             <button class="btn btn-primary" @onclick="TakeScreenshot">take screenshot</button>
             <button class="btn btn-primary" @onclick="SaveImage">save image</button>
+            <button class="btn btn-primary" @onclick="TakePano">take pano</button>
             <button class="btn btn-primary" @onclick="Rotate">rotate</button>
         </div>
     </div>
@@ -95,11 +96,30 @@
     private void SaveImage()
     {
         Console.WriteLine("Write File");
-        File.WriteAllBytes("CameraScreenshot_" + ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds() + ".png", Convert.FromBase64String(_frameData));
+        try 
+        {
+            File.WriteAllBytes("CameraScreenshot_" + ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds() + ".png", Convert.FromBase64String(_frameData));
+
+        }
+        catch(Exception e)
+        {
+            Console.WriteLine("Wrong Format!");
+        }
     }
 
-    private void TakePano()
+    private async Task TakePano()
     {
+        _ = _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [-180, 0]);
+        await Task.Delay(4000);
+        SaveImage();
+        for (int i = 0; i < 4; i++)
+        {
+            _ = _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [90, 0]);
+            await Task.Delay(2000);
+            SaveImage();
+            TakeScreenshot();
+            await Task.Delay(1000);
+        }
         
     }
 
