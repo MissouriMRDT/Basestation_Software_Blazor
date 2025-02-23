@@ -21,7 +21,7 @@
                 <RadzenSeriesDataLabels Visible="@showDataLabels" />
             </RadzenLineSeries>
 
-            <RadzenValueAxis Min="0">
+            <RadzenValueAxis Min="0" Max="@_maxY">
                 <RadzenAxisTitle Text="Intensity" />
             </RadzenValueAxis>
         </RadzenChart>
@@ -45,7 +45,7 @@
 
 @code {
 
-    private int _maxY = 2000;
+    private int _maxY = 1000;
     bool showMarkers = true;
     bool showDataLabels = false;
     private float _dotSize = 2f;

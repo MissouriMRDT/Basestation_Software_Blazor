@@ -48,8 +48,8 @@ public class OpService
 
     public void SetTeleop()
     {
-        OpColor = Color.Blue;
-        _roveCommService.Send<byte>("Core", "StateDisplay", [0]);
+        // OpColor = Color.Blue;
+        // _roveCommService.Send<byte>("Core", "StateDisplay", [0]);
 
     }
 

@@ -128,10 +128,11 @@
             lastTelemetry = packet.Data;
             telemStrings[0] = packet.Data[0].ToString();
             telemStrings[1] = packet.Data[1].ToString();
+			
             telemStrings[2] = packet.Data[2].ToString();
-            telemStrings[3] = "-";
-            telemStrings[4] = packet.Data[3].ToString();
-            telemStrings[5] = packet.Data[4].ToString();
+			telemStrings[3] = packet.Data[3].ToString();
+			telemStrings[4] = packet.Data[4].ToString();
+            telemStrings[5] = "-";
 
             await InvokeAsync(StateHasChanged);
         });
@@ -161,12 +162,16 @@
             Console.WriteLine(k.Name);
             if (k.Joints != null) _ = _RoveCommService.SendAsync<float>(
             "Arm",
-            "SetJointTargetAngle",
-            k.Joints.Values.Values.ToList());
+            "SetIKPosition",
+            [k.Joints.Values["X"], 0f, 0f, 0f, k.Joints.Values["Pitch"], 0f]);
             await InvokeAsync(StateHasChanged);
             for (int j = 0; j < 100; j++)
             {
                 _keyframeStatusMeter += 50;
+                if (_enableKeyframeLerping)
+                {
+
+                }
                 _ = InvokeAsync(StateHasChanged);
                 await Task.Delay(50);
             }
@@ -225,21 +230,22 @@
 
     private void SetAll()
     {
-        if (!_isIKMode)
-        {
-            _ = _RoveCommService.SendAsync<float>(
-            "Arm",
-            "SetIndividualTargetAngles",
-            _activeJointValues.Values.Values.ToList());
-        }
-        else
-        {
-            _ = _RoveCommService.SendAsync<float>(
-            "Arm",
-            "SetIKPosition",
-            _activeJointValues.Values.Values.ToList());
-        }
-
+		SetSingle("X");
+		SetSingle("Pitch");
+        // if (!_isIKMode)
+        // {
+        //     _ = _RoveCommService.SendAsync<float>(
+        //     "Arm",
+        //     "SetIndividualTargetAngles",
+        //     _activeJointValues.Values.Values.ToList());
+        // }
+        // else
+        // {
+        //     _ = _RoveCommService.SendAsync<float>(
+        //     "Arm",
+        //     "SetIKPosition",
+        //     _activeJointValues.Values.Values.ToList());
+        // }
     }
 
     private void SetSingle(string joint)
@@ -247,7 +253,7 @@
         _ = _RoveCommService.SendAsync<float>(
         "Arm",
         "SetJointTargetAngle",
-        [(int)Enum.Parse(typeof(JointNames), joint), _activeJointValues.Values[joint]]);
+        [(int)Enum.Parse(typeof(JointNames), joint)-1, _activeJointValues.Values[joint]]);
     }
 
     private void GetAll()
