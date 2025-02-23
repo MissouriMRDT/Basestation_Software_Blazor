@@ -46,7 +46,7 @@
 
 <div class="card h-100">
     <div class="card-header">
-        <h3 class="mr-auto">PMS</h3>
+        <h3>PMS</h3>
     </div>
     <div class="card-body pms w-100">
         <p style="grid-area: motors; background-color: @(BusStatus[0] == BusState.Enabled ? "yellow" : "grey")">Motors<button @onclick="() => toggleBus(0)">@(BusStatus[0] == BusState.Enabled ? "Disable" : (BusStatus[0] == BusState.Disabled ? "Enable" : "Pending..."))</button></p>
