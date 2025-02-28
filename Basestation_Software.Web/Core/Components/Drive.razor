@@ -124,6 +124,7 @@
         Flightstick,
         Xboxpower,
         Xboxtank,
+        XboxtankPTFix,
     }
 
     // Constants
@@ -471,6 +472,89 @@
                     LeftSpeed = Utils.ClampMap(left, -1.0, 1.0, -DriveSpeed, DriveSpeed);
                     RightSpeed = Utils.ClampMap(right, -1.0, 1.0, -DriveSpeed, DriveSpeed);
                     _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed }, false);
+                    break;
+                }
+
+            case Scheme.XboxtankPTFix:
+                {
+                    // Axes:
+                    // 0: left-x: unused
+                    // 1: left-y [-1, 1]: left drive [DriveSpeed, -DriveSpeed]
+                    // 2: right-x: unused
+                    // 3: right-y [-1, 1]: left drive [DriveSpeed, -DriveSpeed]
+                    // Buttons:
+                    // 0: a
+                    // 1: b
+                    // 2: x
+                    // 3: y
+                    // 4: left bumper
+                    // 5: right bumper
+                    // 6: left trigger
+                    // 7: right trigger
+                    // 8: view
+                    // 9: menu
+                    // 10: left joystick
+                    // 11: right joystick
+                    // 12: dpad-up: bump forward
+                    // 13: dpad-down: bump backward
+                    // 14: dpad-left: previous gimbal
+                    // 15: dpad-right: next gimbal
+                    // 16: guide
+
+                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
+
+                    // Gimbal controls:
+                    if (GamepadSelector_.SoftwareDebounce(15)) SelectedGimbal = (SelectedGimbal + 1) % 6; // Next
+                    if (GamepadSelector_.SoftwareDebounce(14)) SelectedGimbal = (SelectedGimbal + 5) % 6; // Previous
+
+                    double x = GamepadSelector_.SelectedGamepad.Buttons[4].Value - GamepadSelector_.SelectedGamepad.Buttons[5].Value;
+                    double y = -GamepadSelector_.SelectedGamepad.Buttons[6].Value + GamepadSelector_.SelectedGamepad.Buttons[7].Value;
+                    // Clamp deadzone.
+                    Pan = (short)Utils.ClampMap(Math.Abs(x) > DeadZone ? x : 0, -1.0, 1.0, -5, 5);
+                    Tilt = (short)Utils.ClampMap(Math.Abs(y) > DeadZone ? y : 0, -1.0, 1.0, -5, 5);
+                    if (Math.Abs(Pan) > 0 && Math.Abs(Tilt) > 0)
+                    {
+                        switch (SelectedGimbal)
+                        {
+                            // TODO: invert pan and tilt as required
+                            case 0:
+                                _RoveCommService.Send<short>("Core", "LeftDriveGimbalIncrement", new List<short>() { Tilt });
+                                break;
+                            case 1:
+                                _RoveCommService.Send<short>("Core", "RightDriveGimbalIncrement", new List<short>() { Tilt });
+                                break;
+                            case 2:
+                                _RoveCommService.Send<short>("Core", "LeftMainGimbalIncrement", new List<short>() { Pan, Tilt });
+                                break;
+                            case 3:
+                                _RoveCommService.Send<short>("Core", "RightMainGimbalIncrement", new List<short>() { Pan, Tilt });
+                                break;
+                            case 4:
+                                _RoveCommService.Send<short>("Core", "BackDriveGimbalIncrement", new List<short>() { Tilt });
+                                break;
+                            case 5:
+                                // _RoveCommService.Send<short>("Core", "AugerGimbalIncrement", new List<short>() { Pan, Tilt });
+                                break;
+                        }
+                    }
+
+                    double left = -GamepadSelector_.SelectedGamepad.Axes[1];
+                    double right = -GamepadSelector_.SelectedGamepad.Axes[3];
+                    left = left > -DeadZone && left < DeadZone ? 0 : left;
+                    right = right > -DeadZone && right < DeadZone ? 0 : right;
+                    LeftSpeed = Utils.ClampMap(left, -1.0, 1.0, -DriveSpeed, DriveSpeed);
+                    RightSpeed = Utils.ClampMap(right, -1.0, 1.0, -DriveSpeed, DriveSpeed);
+                    double LeftMidSpeed = (LeftSpeed * RightSpeed > 0) ? LeftSpeed : 0d;
+                    double RightMidSpeed = (LeftSpeed * RightSpeed > 0) ? RightSpeed : 0d;
+                    _RoveCommService.Send<float>("Core", "DriveIndividual", 
+                    [
+                        (float) LeftSpeed, 
+                        (float) LeftMidSpeed, 
+                        (float) LeftMidSpeed, 
+                        (float) RightSpeed,
+                        (float) RightMidSpeed, 
+                        (float) RightSpeed
+                    ]);
                     break;
                 }
         }
