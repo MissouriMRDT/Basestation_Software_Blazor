@@ -7,8 +7,8 @@
     <div class="card-body">
 
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.Center">
-            <RadzenText>Max Speed</RadzenText>
-            <RadzenText style="width: 40px">@(_maxSpeed / 10f)%</RadzenText>
+            <p style="margin: 0">Max Speed</p>
+            <p style="width: 60px; margin: 0">@(_maxSpeed / 10f)%</p>
             <RadzenSlider TValue="int" Value=@_maxSpeed Change="@(v => _maxSpeed = v)" Min="0" Max="1000" />
             <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="SendSpeed">Submit</RadzenButton>
         </RadzenStack>
