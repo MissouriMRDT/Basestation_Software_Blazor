@@ -1,0 +1,37 @@
+﻿@inject RoveCommService _RoveCommService
+
+<div class="card h-100">
+    <div class="card-header">
+        <h3>Science Enviromental Graph</h3>
+    </div>
+    <div class="card-body">
+        <p>Component Content Here</p>
+    </div>
+</div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        // Set up callback functions
+        _RoveCommService.On<float>("Auger", "Temperature", OnTemperatureTelemetry);
+        _RoveCommService.On<float>("Auger", "Humidity", OnHumidityTelemetry);
+    }
+
+    // Called whenever a new temperature value is recieved
+    private async Task OnTemperatureTelemetry<T>(RoveCommPacket<T> packet)
+    {
+        // Write temperature data to console
+        Console.WriteLine(packet.Data);
+        await InvokeAsync(StateHasChanged);
+
+    }
+
+    // Called whenever a new humidity value is recieved
+    private async Task OnHumidityTelemetry<T>(RoveCommPacket<T> packet)
+    {
+        // Write humidity data to console
+        Console.WriteLine(packet.Data);
+        await InvokeAsync(StateHasChanged);
+
+    }
+}

@@ -25,28 +25,29 @@
             <div class="box">
                 <p>Temperature</p>
                 <p style="font-size: 2rem">@_temperature&deg</p>
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Instruments", "RequestTemperature", [1]))>Request</button>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "RequestTemperature", [1]))>Request</button>
             </div>            
             <div class="box">
                 <p>Humidity</p>
                 <p style="font-size: 2rem">@_humidity%</p>
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<float>("ScienceActuation", "Humidity", [1f]))>Request</button>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "Humidity", [1]))>Request</button>
             </div>
         </div>
     </div>
 </div>
 
 @code {
-    private sbyte _temperature = -1;
+    private float _temperature = -1;
     private float _humidity = -1;
 
     protected override async Task OnInitializedAsync()
     {
-        _RoveCommService.On<sbyte>("Instruments", "Temperature", async (packet) => {
+        _RoveCommService.On<float>("Auger", "Temperature", async (packet) =>
+        {
             _temperature = packet.Data[0];
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.On<float>("ScienceActuation", "Humidity", async (packet) =>
+        _RoveCommService.On<float>("Auger", "Humidity", async (packet) =>
         {
             _humidity = packet.Data[0];
             await InvokeAsync(StateHasChanged);
