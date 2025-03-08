@@ -68,6 +68,10 @@
                 }
             </InputSelect>
             <GamepadSelector @ref=GamepadSelector_ ChangedCallback=GamepadSelectionChanged />
+            <div class="d-flex">
+                <p>Invert controls</p>
+                <InputCheckbox @bind-Value=_invertControls></InputCheckbox>
+            </div>
         </div>
     </div>
     <div class="card-body drive w-100">
@@ -79,6 +83,7 @@
         <p style="grid-area: right-backward-start / right-backward-start / right-forward-end / right-forward-end; z-index: 10">@($"{RightSpeed:+0.00000;-0.00000;+0.00000}")</p>
         <RadzenSlider Style="grid-area: drivespeed-label; width: 100%" @bind-Value=@DriveSpeed TValue="double" Min="0" Max="1" Step="0.001" /><p style="grid-area: drivespeed">Speed: @($"{DriveSpeed * 100:000.0}")%</p>
         <RadzenSlider Style="grid-area: deadzone-label; width: 100%" @bind-Value=@DeadZone TValue="double" Min="0" Max="(decimal)0.5" Step="0.001" /><p style="grid-area: deadzone">Dead Zone: @($"{DeadZone:0.000}")</p>
+
         <svg class="gimbal-frame" viewBox="0 0 60 60">
             <style>
                 .background {
@@ -148,6 +153,7 @@
     private short Pan;
     private short Tilt;
     private bool LastProcessGamepadInputOK = false;
+    private bool _invertControls = false;
 
     protected override void OnInitialized()
     {
@@ -469,8 +475,8 @@
                     double right = -GamepadSelector_.SelectedGamepad.Axes[3];
                     left = left > -DeadZone && left < DeadZone ? 0 : left;
                     right = right > -DeadZone && right < DeadZone ? 0 : right;
-                    LeftSpeed = Utils.ClampMap(left, -1.0, 1.0, -DriveSpeed, DriveSpeed);
-                    RightSpeed = Utils.ClampMap(right, -1.0, 1.0, -DriveSpeed, DriveSpeed);
+                    LeftSpeed = Utils.ClampMap(left, -1.0, 1.0, -DriveSpeed, DriveSpeed) * (_invertControls ? -1 : 1);
+                    RightSpeed = Utils.ClampMap(right, -1.0, 1.0, -DriveSpeed, DriveSpeed) * (_invertControls ? -1 : 1);
                     _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed }, false);
                     break;
                 }
@@ -542,8 +548,8 @@
                     double right = -GamepadSelector_.SelectedGamepad.Axes[3];
                     left = left > -DeadZone && left < DeadZone ? 0 : left;
                     right = right > -DeadZone && right < DeadZone ? 0 : right;
-                    LeftSpeed = Utils.ClampMap(left, -1.0, 1.0, -DriveSpeed, DriveSpeed);
-                    RightSpeed = Utils.ClampMap(right, -1.0, 1.0, -DriveSpeed, DriveSpeed);
+                    LeftSpeed = Utils.ClampMap(left, -1.0, 1.0, -DriveSpeed, DriveSpeed) * (_invertControls ? -1 : 1);
+                    RightSpeed = Utils.ClampMap(right, -1.0, 1.0, -DriveSpeed, DriveSpeed) * (_invertControls ? -1 : 1);
                     double LeftMidSpeed = (LeftSpeed * RightSpeed > 0) ? LeftSpeed : 0d;
                     double RightMidSpeed = (LeftSpeed * RightSpeed > 0) ? RightSpeed : 0d;
                     _RoveCommService.Send<float>("Core", "DriveIndividual", 
