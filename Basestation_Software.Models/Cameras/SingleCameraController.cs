@@ -32,7 +32,7 @@ public class SingleCameraController
     [DllImport("user32.dll")]
     public static extern bool PrintWindow(IntPtr hWnd, IntPtr hdcBlt, int nFlags);
 
-    const string _ffplayArgs = "-flags low_delay  -fflags nobuffer -analyzeduration 0 -max_delay 0 -noborder ";
+    const string _ffplayArgs = "-flags low_delay  -fflags nobuffer -analyzeduration 0 -max_delay 0 -noborder";
 
     public struct Rect
     {
@@ -59,7 +59,7 @@ public class SingleCameraController
             StartInfo =
             {
                 FileName = "ffplay",
-                Arguments = _ffplayArgs + "udp://127.0.0.1:1181",
+                Arguments = _ffplayArgs + " " + source,
                 CreateNoWindow = true, 
                 RedirectStandardError = false,
                 RedirectStandardOutput = false,
