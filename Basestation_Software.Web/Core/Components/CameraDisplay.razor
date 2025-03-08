@@ -22,21 +22,21 @@
             }
         </div>
 
-        <div class="source-buttons-container" style="margin-block: 1%">
-            @for (int i = 0; i < CameraService._sources.Length; i++)
-            {
-                <button class="power" style="background-image: url(images/@( streamingCams[i] == 1 ? "on.png" : "off.png"));"></button>
-            }
-        </div>
+        @* <div class="source-buttons-container" style="margin-block: 1%"> *@
+        @*     @for (int i = 0; i < CameraService._sources.Length; i++) *@
+        @*     { *@
+        @*         <button class="power" style="background-image: url(images/@( streamingCams[i] == 1 ? "on.png" : "off.png"));"></button> *@
+        @*     } *@
+        @* </div> *@
 
-        <div class="d-flex" style="text-transform: capitalize">
-            <button class="btn btn-primary" @onclick="RestartCam">restart reciever</button>
-            <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 1)">restart source</button>
-            <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 0)">shutdown source</button>
-            <button class="btn btn-primary" @onclick="TakeScreenshot">take screenshot</button>
-            <button class="btn btn-primary" @onclick="SaveImage">save image</button>
-            <button class="btn btn-primary" @onclick="TakePano">take pano</button>
-            <button class="btn btn-primary" @onclick="Rotate">rotate</button>
+        <div style="display: grid; grid-template-columns: auto auto auto auto; gap: 0.4rem">
+            <button class="btn btn-primary" @onclick="RestartCam">Restart Reciever</button>
+            <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 1)">Restart Source</button>
+            <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 0)">Shutdown Source</button>
+            <button class="btn btn-primary" @onclick="TakeScreenshot">Take Screenshot</button>
+            <button class="btn btn-primary" @onclick="SaveImage">Save Image</button>
+            <button class="btn btn-primary" @onclick="TakePano">Take Pano</button>
+            <button class="btn btn-primary" @onclick="Rotate">Rotate</button>
         </div>
     </div>
 </div>
