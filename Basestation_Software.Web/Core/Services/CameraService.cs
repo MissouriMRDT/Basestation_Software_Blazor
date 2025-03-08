@@ -4,7 +4,7 @@ namespace Basestation_Software.Web.Core.Services
 {
 	public class CameraService
 	{
-		private static string[] _sources = [
+        private static string[] _sources = [
             "udp://239.0.0.1:50000?overrun_nonfatal=1&fifo_size=50000000",
             "udp://239.0.0.2:50000?overrun_nonfatal=1&fifo_size=50000000",
             "udp://239.0.0.3:50000?overrun_nonfatal=1&fifo_size=50000000",
@@ -24,7 +24,7 @@ namespace Basestation_Software.Web.Core.Services
             Console.WriteLine("Camera Service Constructor");
 
             // set up controllers array
-            for (int i = 0; i < _sources.Length; i++)
+            for (int i = 0; i < 1; i++)
 			{
 				_controllers[i] = new SingleCameraController(_sources[i]);
 			}
