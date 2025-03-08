@@ -86,7 +86,7 @@ public class SingleCameraController
         }
 
         // move and resize ffplay window
-        MoveWindow(_ffplayProcess.MainWindowHandle, 0, 0, 320, 280, true);
+        MoveWindow(_ffplayProcess.MainWindowHandle, 0, 0, 480, 320, true);
 
         Rect WindowRect = new Rect();
         GetWindowRect(_ffplayProcess.MainWindowHandle, ref WindowRect);
