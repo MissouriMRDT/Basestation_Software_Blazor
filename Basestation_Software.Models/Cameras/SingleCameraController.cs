@@ -118,7 +118,7 @@ public class SingleCameraController
             {
                 bmp.Save(ms, ImageFormat.Png);
                 _frameData = Convert.ToBase64String(ms.ToArray());
-                FrameNotifier?.Invoke("data:image/gif;base64," + _frameData);
+                FrameNotifier?.Invoke(_frameData);
             }
 
             await Task.Delay(33);
