@@ -5,14 +5,14 @@
     <div class="card-header">
         <div class="row">
             <div class="col-6 d-flex align-self-center">
-                <h5>Waypoints</h5>
-                <div class="border border-start-0 border-top-0 border-bottom-0 border-1">&nbsp;</div>
-                    <RadzenButton ButtonStyle="ButtonStyle.Dark" Text="New Waypoint" Click="@InsertRow" style="margin-left: 10px"  />
+                <h3>Waypoints</h3>
+                <div class="vr">&nbsp;</div>
+                    <RadzenButton ButtonStyle="ButtonStyle.Dark" Text="New Waypoint" Click="@InsertRow" />
             </div>
             <div class ="col-6 d-flex justify-content-end">
                 @if (_waypointsToUpdate.Count > 0 || _waypointsToInsert.Count > 0)
                 {
-                    <div class="border border-start-0 border-top-0 border-bottom-0 border-1">&nbsp;</div>
+                    <div class="vr">&nbsp;</div>
                     <RadzenButton ButtonStyle="ButtonStyle.Primary" Text="Save All" Click="@SaveAllEdits" style="margin-left: 10px; margin-right: 10px" />
                     <RadzenButton ButtonStyle="ButtonStyle.Danger" Text="Cancel All" Click="@CancelAllEdits" style="margin-right: 10px"  />
                 }

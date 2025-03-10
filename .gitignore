@@ -263,3 +263,5 @@ paket-files/
 # Python Tools for Visual Studio (PTVS)
 __pycache__/
 *.pyc
+/.vs/ProjectEvaluation/basestation_software.metadata.v7.bin
+/.vs/ProjectEvaluation/basestation_software.projects.v7.bin

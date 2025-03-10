@@ -1,10 +1,9 @@
-namespace Basestation_Software.Models.Timers
+namespace Basestation_Software.Models.Timers;
+
+public enum TaskType
 {
-    public enum TaskType
-    {
-        Autonomy,
-        Science,
-        ExtremeDelivery,
-        EquipmentServicing
-    }
+    Autonomy,
+    Science,
+    ExtremeDelivery,
+    EquipmentServicing
 }
