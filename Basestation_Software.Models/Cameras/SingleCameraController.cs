@@ -1,8 +1,7 @@
-﻿using System.Diagnostics;
+﻿using FFMpegCore.Pipes;
+using FFMpegCore;
+using FFMpegCore.Enums;
 using System.Drawing;
-using System.Drawing.Imaging;
-using System.IO;
-using System.Runtime.InteropServices;
 
 namespace Basestation_Software.Models.Cameras;
 
@@ -16,31 +15,7 @@ public class SingleCameraController
     public delegate Task FrameCallback(string frameData);
     public event FrameCallback? FrameNotifier;
 
-    private Process? _ffplayProcess = null;
-    private int _width = 0;
-    private int _height = 0;
-
-    [DllImport("user32.dll", SetLastError = true)]
-    private static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
-
-    [DllImport("user32.dll")]
-    private static extern IntPtr SetParent(IntPtr hWndChild, IntPtr hWndNewParent);
-
-    [DllImport("user32.dll")]
-    public static extern bool GetWindowRect(IntPtr hwnd, ref Rect rectangle);
-
-    [DllImport("user32.dll")]
-    public static extern bool PrintWindow(IntPtr hWnd, IntPtr hdcBlt, int nFlags);
-
     const string _ffplayArgs = "-flags low_delay  -fflags nobuffer -analyzeduration 0 -max_delay 0 -noborder";
-
-    public struct Rect
-    {
-        public int Left { get; set; }
-        public int Top { get; set; }
-        public int Right { get; set; }
-        public int Bottom { get; set; }
-    }
 
     public SingleCameraController(string source)
 	{
@@ -51,78 +26,46 @@ public class SingleCameraController
 
 	public async Task InitCapture(string source)
 	{
+        Console.WriteLine("InitCapture");
         _tokenSource = new();
 
-        // start ffplay 
-        _ffplayProcess = new Process
+        using  (MemoryStream ms = new())
         {
-            StartInfo =
+            await FFMpegArguments
+            .FromUrlInput(new Uri("udp://127.0.0.1:1181"))
+            .OutputToPipe(new StreamPipeSink(ms), options => options
+                .ForceFormat("rawvideo"))
+            // runs on stream data recieved
+            .NotifyOnProgress(o =>
             {
-                FileName = "ffplay",
-                Arguments = _ffplayArgs + " " + source,
-                CreateNoWindow = true, 
-                RedirectStandardError = false,
-                RedirectStandardOutput = false,
-                UseShellExecute = false,
-                WorkingDirectory = AppDomain.CurrentDomain.BaseDirectory,
-                WindowStyle = ProcessWindowStyle.Hidden,
-            }
-        };
+                try
+                {
+                    if (ms.Length > 0)
+                    {
+                        ms.Position = 0;
+                        using (var bitmap = new Bitmap(ms))
+                        {
+                            // Save the bitmap
+                            bitmap.Save("test.png", System.Drawing.Imaging.ImageFormat.Bmp);
+                        }
+                        _frameData = Convert.ToBase64String(ms.ToArray());
+                        FrameNotifier?.Invoke(_frameData);
+                        ms.SetLength(0);
+                        Console.WriteLine("MS Position: " + ms.Position);
+                        Console.WriteLine("MS Length: " + ms.Length);
+                        Console.WriteLine("Frame\n\n\n");
 
-        //_ffplayProcess.EnableRaisingEvents = true;
-        //_ffplayProcess.Exited += (o, e) => Debug.WriteLine("Exited", "ffplay");
-
-        Console.WriteLine("ffplay started");
-        _ffplayProcess.Start();
-
-        // wait for process to start
-        while (_ffplayProcess.MainWindowHandle == IntPtr.Zero)
-        {
-            // Discard cached information about the process
-            // because MainWindowHandle might be cached.
-            _ffplayProcess.Refresh();
-
-            await Task.Delay(10);
+                    }
+                }
+                catch (Exception e) {
+                    Console.WriteLine("MS Position: " + ms.Position);
+                    Console.WriteLine("MS Length: " + ms.Length);
+                    Console.WriteLine(e);
+                }
+            })
+            .ProcessAsynchronously();
         }
 
-        // move and resize ffplay window
-        MoveWindow(_ffplayProcess.MainWindowHandle, 0, 0, 480, 320, true);
-
-        Rect WindowRect = new Rect();
-        GetWindowRect(_ffplayProcess.MainWindowHandle, ref WindowRect);
-
-        _width = WindowRect.Right - WindowRect.Left;
-        _height = WindowRect.Bottom - WindowRect.Top;
-        await DoGetFrames();
-    }
-
-    // main frame-grabbing loop
-    private async Task DoGetFrames()
-    {
-        Console.WriteLine("DoGetFrames");
-        while (!_tokenSource.IsCancellationRequested)
-        {
-            Bitmap bmp = new(_width, _height, PixelFormat.Format32bppArgb);
-            Graphics gfxBmp = Graphics.FromImage(bmp);
-            IntPtr hdcBitmap = gfxBmp.GetHdc();
-            SetParent(_ffplayProcess.MainWindowHandle, hdcBitmap);
-
-            PrintWindow(_ffplayProcess.MainWindowHandle, hdcBitmap, 0);
-
-            gfxBmp.ReleaseHdc(hdcBitmap);
-            gfxBmp.Dispose();
-
-            // bmp is usable image here
-            //bmp.Save("helpme.png", ImageFormat.Png);
-            using (MemoryStream ms = new())
-            {
-                bmp.Save(ms, ImageFormat.Png);
-                _frameData = Convert.ToBase64String(ms.ToArray());
-                FrameNotifier?.Invoke(_frameData);
-            }
-
-            await Task.Delay(33);
-        }
     }
 
     /// <summary>
@@ -130,7 +73,6 @@ public class SingleCameraController
     /// </summary>
     public void Dispose()
 	{
-        _ffplayProcess?.Dispose();
 		_tokenSource?.Cancel();
 	}
 }
