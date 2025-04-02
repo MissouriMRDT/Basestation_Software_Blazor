@@ -26,21 +26,8 @@
 </div>
 
 @code {
-    private List<uint> _fpsValues = new(new uint[11]);
-    // i will add enums to rovecomm soon :(
-    private string[] _threadNames = [
-        "Main Process",
-    "Main Cam",
-    "Left Cam",
-    "Right Cam",
-    "Ground Cam",
-    "Main Detector",
-    "Left Detector",
-    "Right Detector",
-    "State Machine",
-    "RoveComm UDP",
-    "RoveComm TCP"
-    ];
+    private uint[]_fpsValues = new uint[11];
+    private string[] _threadNames = Enum.GetNames(typeof(RoveComm.Boards.Autonomy.AUTONOMYTHREADS));
 
     protected override async Task OnInitializedAsync()
     {
