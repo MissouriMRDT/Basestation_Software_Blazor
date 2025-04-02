@@ -1,19 +1,26 @@
 ﻿@inject RoveCommService _RoveCommService
 
+<style>
+    p {
+    margin-bottom: 0;
+    }
+</style>
+
 <div class="card h-100">
     <div class="card-header">
         <h3>Autonomy Monitor</h3>
     </div>
     <div class="card-body">
         <div style="display: grid; grid-template-columns: auto auto;" class="gap-2">
-        @for (int i = 0; i < _threadNames.Length; i++)
-        {
-            var _i = i;
-            <div class="d-flex rounded p-2 justify-content-center align-content-center bg-body-secondary mb-2 gap-1">
-                <p>@_threadNames[_i] FPS:</p>
-                <p>@_fpsValues[_i]</p>
-            </div>
-        }
+            @for (int i = 0; i < _threadNames.Length; i++)
+            {
+                var _i = i;
+                <div class="d-flex flex-column rounded p-2 bg-body-secondary justify-content-center align-content-center text-center">
+                    <p>@_threadNames[_i]</p>
+                    <p class="font-monospace fs-3"><b>@_fpsValues[_i] FPS</b></p>
+                    <hr style="border-color: color-mix(in oklab, green @(Math.Min(_fpsValues[_i], 60)/60f * 100)%, red) !important" class="border border-4 opacity-50 rounded-2" />
+                </div>
+            }
         </div>
     </div>
 </div>
@@ -22,23 +29,29 @@
     private List<uint> _fpsValues = new(new uint[11]);
     // i will add enums to rovecomm soon :(
     private string[] _threadNames = [
-        "MainProcess",
-        "MainCam",
-        "LeftCam",
-        "RightCam",
-        "GroundCam",
-        "MainDetector",
-        "LeftDetector",
-        "RightDetector",
-        "StateMachine",
-        "RoveCommUDP",
-        "RoveCommTCP"
+        "Main Process",
+    "Main Cam",
+    "Left Cam",
+    "Right Cam",
+    "Ground Cam",
+    "Main Detector",
+    "Left Detector",
+    "Right Detector",
+    "State Machine",
+    "RoveComm UDP",
+    "RoveComm TCP"
     ];
+
     protected override async Task OnInitializedAsync()
     {
         _RoveCommService.On<uint>("Autonomy", "ThreadFPS", async (packet) =>
         {
             _fpsValues[(int)packet.Data[0]] = packet.Data[1];
+            // low fps warning
+            if (packet.Data[1] < 10)
+            {
+                _ToastService.ShowWarning(string.Format("Autonomy Thread \"{0}\" is running at {1} FPS!", _threadNames[(int)packet.Data[0]], packet.Data[1]));
+            }
             await InvokeAsync(StateHasChanged);
         });
     }
