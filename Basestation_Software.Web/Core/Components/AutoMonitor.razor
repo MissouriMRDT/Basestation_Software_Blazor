@@ -1,0 +1,45 @@
+﻿@inject RoveCommService _RoveCommService
+
+<div class="card h-100">
+    <div class="card-header">
+        <h3>Autonomy Monitor</h3>
+    </div>
+    <div class="card-body">
+        <div style="display: grid; grid-template-columns: auto auto;" class="gap-2">
+        @for (int i = 0; i < _threadNames.Length; i++)
+        {
+            var _i = i;
+            <div class="d-flex rounded p-2 justify-content-center align-content-center bg-body-secondary mb-2 gap-1">
+                <p>@_threadNames[_i] FPS:</p>
+                <p>@_fpsValues[_i]</p>
+            </div>
+        }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<uint> _fpsValues = new(new uint[11]);
+    // i will add enums to rovecomm soon :(
+    private string[] _threadNames = [
+        "MainProcess",
+        "MainCam",
+        "LeftCam",
+        "RightCam",
+        "GroundCam",
+        "MainDetector",
+        "LeftDetector",
+        "RightDetector",
+        "StateMachine",
+        "RoveCommUDP",
+        "RoveCommTCP"
+    ];
+    protected override async Task OnInitializedAsync()
+    {
+        _RoveCommService.On<uint>("Autonomy", "ThreadFPS", async (packet) =>
+        {
+            _fpsValues[(int)packet.Data[0]] = packet.Data[1];
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+}
