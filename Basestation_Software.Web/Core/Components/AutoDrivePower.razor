@@ -39,6 +39,6 @@
 
     private void SetWatchdogMode(byte mode)
     {
-        _ = _RoveCommService.SendAsync<byte>("Autonomy", "SetWatchdogMode", [mode]);
+        _ = _RoveCommService.SendAsync<byte>("Core", "SetWatchdogMode", [mode]);
     }
 }
