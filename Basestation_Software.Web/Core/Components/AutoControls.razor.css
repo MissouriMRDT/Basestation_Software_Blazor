@@ -1,11 +1,4 @@
-﻿.button-container {
-    display: flex;
-    width: auto;
-    gap: 1%;
-
-}
-
-button {
+﻿﻿button {
     width: auto;
 }
 
@@ -15,14 +8,13 @@ button {
     justify-content: center;
     align-content: center;
     align-items: center;
-    height: 25%;
+    /*    height: 25%;*/
 }
 
 .color-preview {
     width: 22px;
     height: 22px;
     border-radius: 50%;
-    margin-inline: 1%;
 }
 
 p {

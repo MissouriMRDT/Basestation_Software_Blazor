@@ -1,4 +1,4 @@
-﻿@using System.Xml.Linq
+﻿﻿@using System.Xml.Linq
 @inject RoveCommService _RoveCommService
 
 <div class="card full-height">
@@ -19,9 +19,9 @@
     private XElement?[] _stateElements = new XElement[11];
     // corresponds to rovecomm status
     private string[] _stateNames = [
-    "Idle", 
-    "Navigating", 
-    "SearchPattern", 
+    "Idle",
+    "Navigating",
+    "SearchPattern",
     "ApproachingMarker",
     "ApproachingObject",
     "VerifyingGPS",
@@ -47,7 +47,7 @@
         string diagramFilePath = "wwwroot/state-diagram.svg";
         diagramRoot = XElement.Load(diagramFilePath);
 
-        for(int i = 0; i < _stateNames.Length; i++)
+        for (int i = 0; i < _stateNames.Length; i++)
         {
             _stateElements[i] = (
                 from el in diagramRoot.Descendants()
