@@ -7,15 +7,27 @@
         <h3>Arm Angular</h3>
     </div>
     <div class="card-body">
+        <div class="d-flex">
+            <label class="form-label">IK Mode</label>
+            <InputCheckbox @bind-Value=_isIKMode></InputCheckbox>
+        </div>
+        <div class="d-flex">
+            <label class="form-label">Keyframe Increment Lerping</label>
+            <InputCheckbox @bind-Value=_enableKeyframeLerping></InputCheckbox>
+        </div>
         <div style="display: flex; flex-wrap: wrap; justify-content: center;">
             @foreach (string joint in JointNames.GetNames<JointNames>())
             {
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.1rem" JustifyContent="JustifyContent.Center" Style="flex: 0 1 160px; border-radius: 10px; background-color: lightgray; margin: 0.2rem; padding: 0.3rem;">
-                    <p style="width: 80px; margin-inline: 0.4rem; margin-bottom:0; text-align: right">@joint</p>
-                    <RadzenNumeric TValue="float" Min="-360" Max="360" @bind-value=@_activeJointValues.Values[joint]></RadzenNumeric>
-                    <button class="btn btn-sm btn-secondary" @onclick="() => SetSingle(joint)" title="Set Joint"><i class="bi bi-inline-text bi-arrow-up-right" /></button>
-                    <button class="btn btn-sm btn-secondary" @onclick="() => GetSingle(joint)" title="Get Joint"><i class="bi bi-inline-text bi-arrow-down-right" /></button>
-                </RadzenStack>
+                string _joint = joint;
+                <div class="d-flex flex-column" style="flex: 0 1 160px; border-radius: 10px; background-color: var(--bs-secondary-bg); margin: 0.2rem; padding: 0.3rem;">
+                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.1rem" JustifyContent="JustifyContent.Center" Style="">
+                        <p style="width: 80px; margin-inline: 0.4rem; margin-bottom:0; text-align: right">@(_isIKMode ? IKNames[(int)Enum.Parse(typeof(JointNames), _joint) - 1] : joint)</p>
+                        <RadzenNumeric TValue="float" Min="-360" Max="360" @bind-value=@_activeJointValues.Values[joint]></RadzenNumeric>
+                        <button class="btn btn-sm btn-secondary" @onclick="() => SetSingle(joint)" title="Set Joint"><i class="bi bi-inline-text bi-arrow-up-right" /></button>
+                        <button class="btn btn-sm btn-secondary" @onclick="() => GetSingle(joint)" title="Get Joint"><i class="bi bi-inline-text bi-arrow-down-right" /></button>
+                    </RadzenStack>
+                    <label class="form-label text-center">@(telemStrings[(int)Enum.Parse(typeof(JointNames), _joint) - 1])</label>
+                </div>
             }
         </div>
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center" Style="margin-block: 1rem">
@@ -55,11 +67,13 @@
                 Filterable="false"
                 Title="Actions"
                 Frozen="true"
-                Width="20px"
+                Width="50px"
                 TextAlign="TextAlign.Center">
 
                     <Template Context="preset">
                         <button class="btn btn-sm btn-danger" title="Delete Preset" @onclick="() => DeletePreset(preset)"><i class="bi bi-inline-text bi-trash" /></button>
+                        <button class="btn btn-sm btn-success" title="Add Keyframe" @onclick="() => AddKeyframe(preset)"><i class="bi bi-inline-text bi-plus" /></button>
+
                     </Template>
 
                 </RadzenDataGridColumn>
@@ -67,11 +81,26 @@
             </Columns>
 
         </RadzenDataGrid>
+
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center" Style="margin-block: 1rem">
             <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="() => AddPreset(_presetNameInput)">Save Preset</RadzenButton>
             <RadzenTextBox @bind-Value=_presetNameInput></RadzenTextBox>
 
         </RadzenStack>
+
+        <meter min="0" max="5000" value="@_keyframeStatusMeter"></meter>
+        <ol>
+            @for (int i = 0; i < _keyframes.Count; i++)
+            {
+                int _i = i;
+                <li style=@(_i == _currentKeyframeIndex ? "font-weight: bold" : "font-weight: auto")>@_keyframes[_i].Name</li>
+            }
+        </ol>
+        <div class="d-flex gap-2">
+            <button class="btn btn-primary" @onclick="@(() => PlayKeyframes())">Play</button>
+            <button class="btn btn-primary" @onclick="@(() => {_keyframes = new(); InvokeAsync(StateHasChanged);})">Clear</button>
+
+        </div>
 
     </div>
 </div>
@@ -84,12 +113,28 @@
     private string _presetNameInput = "";
     private RadzenDataGrid<ArmPreset>? _presetsDataGrid;
     private List<float> lastTelemetry = [0, 0, 0, 0, 0, 0];
+    private bool _isIKMode = false;
+    private string[] IKNames = ["X", "Y", "Z", "J4", "P", "R"];
+    private string[] telemStrings = ["-", "-", "-", "-", "-", "-"];
+    private List<ArmPreset> _keyframes = new();
+    private int _currentKeyframeIndex = 0;
+    private int _keyframeStatusMeter = 0;
+    private bool _enableKeyframeLerping = false;
 
     protected override async Task OnInitializedAsync()
     {
         _RoveCommService.On<float>("Arm", "Positions", async (packet) =>
         {
             lastTelemetry = packet.Data;
+            telemStrings[0] = packet.Data[0].ToString();
+            telemStrings[1] = packet.Data[1].ToString();
+			
+            telemStrings[2] = packet.Data[2].ToString();
+			telemStrings[3] = packet.Data[3].ToString();
+			telemStrings[4] = packet.Data[4].ToString();
+            telemStrings[5] = "-";
+
+            await InvokeAsync(StateHasChanged);
         });
         await _ArmAngularService.RefreshPresets();
         await SyncCache();
@@ -100,6 +145,41 @@
     {
         _cachedPresets = _ArmAngularService.GetPresets();
         await InvokeAsync(StateHasChanged);
+    }
+
+    private void AddKeyframe(ArmPreset preset)
+    {
+        _keyframes.Add(preset);
+    }
+
+    private async Task PlayKeyframes()
+    {
+        for (int i = 0; i < _keyframes.Count; i++)
+        {
+            _currentKeyframeIndex = i;
+            ArmPreset k = _keyframes[i];
+            _keyframeStatusMeter = 0;
+            Console.WriteLine(k.Name);
+            if (k.Joints != null) _ = _RoveCommService.SendAsync<float>(
+            "Arm",
+            "SetIKPosition",
+            [k.Joints.Values["X"], 0f, 0f, 0f, k.Joints.Values["Pitch"], 0f]);
+            await InvokeAsync(StateHasChanged);
+            for (int j = 0; j < 100; j++)
+            {
+                _keyframeStatusMeter += 50;
+                if (_enableKeyframeLerping)
+                {
+
+                }
+                _ = InvokeAsync(StateHasChanged);
+                await Task.Delay(50);
+            }
+            await _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [1]);
+            await Task.Delay(100);
+            await _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [0]);
+            await Task.Delay(100);
+        }
     }
 
     /// <summary>
@@ -150,10 +230,22 @@
 
     private void SetAll()
     {
-        _ = _RoveCommService.SendAsync<float>(
-            "Arm", 
-            "SetIndividualTargetAngles", 
-            _activeJointValues.Values.Values.ToList());
+		SetSingle("X");
+		SetSingle("Pitch");
+        // if (!_isIKMode)
+        // {
+        //     _ = _RoveCommService.SendAsync<float>(
+        //     "Arm",
+        //     "SetIndividualTargetAngles",
+        //     _activeJointValues.Values.Values.ToList());
+        // }
+        // else
+        // {
+        //     _ = _RoveCommService.SendAsync<float>(
+        //     "Arm",
+        //     "SetIKPosition",
+        //     _activeJointValues.Values.Values.ToList());
+        // }
     }
 
     private void SetSingle(string joint)
@@ -161,7 +253,7 @@
         _ = _RoveCommService.SendAsync<float>(
         "Arm",
         "SetJointTargetAngle",
-        [(int)Enum.Parse(typeof(JointNames), joint), _activeJointValues.Values[joint]]);
+        [(int)Enum.Parse(typeof(JointNames), joint)-1, _activeJointValues.Values[joint]]);
     }
 
     private void GetAll()
