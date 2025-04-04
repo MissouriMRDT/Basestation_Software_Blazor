@@ -40,6 +40,7 @@ builder.Services.AddSingleton<PingService>();
 builder.Services.AddSingleton<ArmSpeedState>();
 builder.Services.AddHttpClient<ArmAngularService>();
 builder.Services.AddSingleton<ArmAngularService>();
+builder.Services.AddSingleton<OpService>();
 builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
 builder.Services.AddSingleton<OpService>();
