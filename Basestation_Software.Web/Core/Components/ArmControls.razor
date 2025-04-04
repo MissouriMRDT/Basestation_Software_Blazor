@@ -54,8 +54,8 @@
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
             <p style="width:auto; text-align: center"><b>Calibration</b></p>
             <div class="btn-group d-flex justify-items-center gap-1" role="group">
-                <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [1, 0]))>Calibrate X</button>
-                <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0, 1]))>Calibrate Roll</button>
+                <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0b00000010]))>Calibrate X</button>
+                <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0b00000001]))>Calibrate Roll</button>
             </div>
         </div>
 
@@ -91,7 +91,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div style="display: flex; flex-wrap: wrap; justify-content: center;">
             @foreach (JointNames joint in JointNames.GetValues(typeof(JointNames)))
             {
@@ -174,12 +174,25 @@
                     </div>
                 }
             </div>
-            <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<ushort>("Arm", "SoftLimitOverride", limitOverrides))>Send Soft Overrides</button>
+            <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<ushort>("Arm", "SoftLimitOverride", [LimitListToBitmask(limitOverrides)]))>Send Soft Overrides</button>
         </div>
     </div>
 </div>
 
 @code {
+
+    // TODO: Arm Control logic was originally written when rovecomm took an array of bytes rather than a bitmask for limits.
+    // Rewrite logic instead of using a conversion method
+    private ushort LimitListToBitmask(List<ushort> l)
+    {
+        ushort b = 0;
+        for(int i = 0; i < l.Count; i++)
+        {
+            b += (ushort) (l[i] << (l.Count - i));
+        }
+        return b;
+    }
+
     // Available arm control schemes
     enum Scheme
     {

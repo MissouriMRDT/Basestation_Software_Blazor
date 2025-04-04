@@ -26,6 +26,6 @@
     }
     private async Task UnEStopArm()
     {
-        await _RoveCommService.SendAsync<byte>("Arm", "ClosedLoopOverride", [0, 0, 0, 0, 0, 0]);
+        await _RoveCommService.SendAsync<byte>("Arm", "ClosedLoopOverride", [0b00000000]);
     }
 }
