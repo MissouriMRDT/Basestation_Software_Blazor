@@ -14,25 +14,25 @@
 
 <style>
     #layout-grid {
-        display: grid;
-        grid-template-columns: repeat(@Config_.Columns, 1fr);
-        grid-template-rows: repeat(@Config_.Columns, 1fr);
-        width: @($"{Config_.Width}vw");
-        height: @($"{Config_.Height}vh");
-        padding-top: 75px;
+    display: grid;
+    grid-template-columns: repeat(@Config_.Columns, 1fr);
+    grid-template-rows: repeat(@Config_.Columns, 1fr);
+    width: @($"{Config_.Width}vw");
+    height: @($"{Config_.Height}vh");
+    padding-top: 75px;
     }
 
     #copy-area {
-        position: fixed;
-        inset: 10vh 10vw 10vh 10vw;
-        z-index: 2000;
-        display: grid;
-        grid-template-rows: 9fr 1fr;
-        grid-template-columns: 1fr 1fr;
+    position: fixed;
+    inset: 10vh 10vw 10vh 10vw;
+    z-index: 2000;
+    display: grid;
+    grid-template-rows: 9fr 1fr;
+    grid-template-columns: 1fr 1fr;
     }
 
     #copy-area button {
-        font-size: 5vh;
+    font-size: 5vh;
     }
 </style>
 
@@ -40,9 +40,14 @@
     <link rel="stylesheet" href="_content/Radzen.Blazor/css/default-base.css" />
     <link rel="stylesheet" href=themes/@RadzenTheme />
     <nav class="navbar navbar-expand-sm border-bottom box-shadow mb-3 mat-glass shadow-sm fixed-top" style="padding: 8px 16px">
-        <div class="navbar-nav mr-auto">
+        <div class="navbar-nav">
             <img src="images/swoosh.svg" height="35" />
-            @NavLinks
+            @if (ConfigID.Equals(_defaultGuid))
+            {
+                <p class="text-warning bold">Warning: This default page is hardcoded and read-only.</p>
+            } else {
+                @NavLinks
+            }
         </div>
         <div class="nav ms-auto me-e justify-content-end">
             <button class="btn btn-sm btn-primary" title="RoveComm Resubscribe All" style="margin-right: 3rem" @onclick="_RoveCommService.SubscribeAll">
@@ -51,12 +56,13 @@
             <select id="configSelect" @onchange=@((ChangeEventArgs __e) => {if (Guid.TryParse(__e?.Value as string, out Guid guid)) Navigate(guid);})>
                 @SelectOptions
             </select>
-            <button class="btn btn-sm btn-success" @onclick=SaveConfig title="Save"><i class="bi bi-inline-text bi-save2" /></button>
-            <button class="btn btn-sm btn-success" @onclick=NewConfig title="New"><i class="bi bi-inline-text bi-plus-circle" /></button>
-            <button class="btn btn-sm btn-success" @onclick=OpenCopyArea title="Import/Export"><i class="bi bi-inline-text bi-download" /><i class="bi bi-inline-text bi-upload" /></button>
-            <button class="btn btn-sm btn-danger" @onclick=DeleteConfig title="Delete"><i class="bi bi-inline-text bi-trash" /></button>
+            <button class="btn btn-sm btn-success" @onclick=NewConfig title="New Page"><i class="bi bi-inline-text bi-file-earmark-plus" /></button>
+            <button class="btn btn-sm btn-danger" @onclick=DeleteConfig title="Delete Page"><i class="bi bi-inline-text bi-trash" /></button>
+            <button class="btn btn-sm btn-success" @onclick=OpenCopyArea title="Edit Page"><i class="bi bi-inline-text bi-pencil" /></button>
+            <button class="btn btn-sm btn-success" @onclick=SaveConfig title="Save Page"><i class="bi bi-inline-text bi-floppy" /></button>
+            <button class="btn btn-sm btn-success" @onclick=NewComponent title="New Component"><i class="bi bi-inline-text bi-node-plus" /></button>
             <input class="nav ms-auto me-3 justify-content-end" type="checkbox" name="" id="checkbox" @bind="@IsDarkMode">
-        </div>		
+        </div>
         <BlazoredToasts ShowProgressBar="true" Position=Blazored.Toast.Configuration.ToastPosition.TopRight DisableTimeout />
     </nav>
     <div id="layout-grid">
@@ -66,8 +72,8 @@
     {
         <div id="copy-area">
             <InputTextArea @ref="CopyArea" @bind-Value="@CopyAreaValue" style="grid-area: 1 / 1 / 2 / 3"/>
-            <button @onclick="ImportConfig" class="btn btn-warning"><i class="bi bi-inline-text bi-upload" /></button>
-            <button @onclick="@(_ => CopyAreaVisible = false)" class="btn btn-success"><i class="bi bi-inline-text bi-x-circle" /></button>
+            <button @onclick="ImportConfig" class="btn btn-success" title="Save Page"><i class="bi bi-inline-text bi-floppy" /></button>
+            <button @onclick="@(_ => CopyAreaVisible = false)" class="btn btn-warning" title="Close"><i class="bi bi-inline-text bi-x-circle" /></button>
         </div>
     }
 </div>
@@ -79,6 +85,8 @@
 </div>
 
 @code {
+    private static readonly Guid _defaultGuid = new("00000000-0000-0000-0000-000000000001");
+
     // State
     private RenderFragment? NavLinks { get; set; }
     private RenderFragment? CustomRender { get; set; }
@@ -189,6 +197,7 @@
         // Sequence number i will increase with little change between renders
         builder.OpenRegion(0); // so we can start i at 0
         int i = 0;
+        int componentIndex = 0;
         foreach (Component component in Config_.Components)
         {
             Type? componentType = Type.GetType("Basestation_Software.Web.Core.Components." + component.Type);
@@ -202,12 +211,37 @@
             builder.AddAttribute(i + 1, "style",
                 $"grid-area: {component.Y + 1} / {component.X + 1} / span {component.Height} / span {component.Width}; place-self: {component.PlaceSelf}"
             );
-            builder.OpenComponent(i + 2, componentType); // <componentType>
-            if (component.ID is not null) // Needed for RoverMap, GPS and maybe others
-                builder.AddComponentParameter(i + 3, "ID", component.ID);
+            builder.OpenComponent(i + 2, typeof(ComponentOptions)); // <ComponentOptions>
+            builder.AddComponentParameter(i + 3, "Components", Config_.Components);
+            builder.AddComponentParameter(i + 4, "ComponentIndex", componentIndex);
+            builder.AddAttribute(i + 5, "OnSaved", EventCallback.Factory.Create(this, SaveConfig)); // It was a lot of fun to find this solution /s
+            builder.CloseComponent(); // </ComponentOptions>
+
+            builder.OpenComponent(i + 6, componentType); // <componentType>
+            if (componentType.GetMember("ID").Length > 0)
+            {
+                // Component requires an ID.
+                if (component.ID.Length == 0)
+                {
+                    // No ID was specified, generate one. Missing a required ID usually breaks the page.
+                    var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+                    var stringChars = new char[20];
+                    var random = new Random();
+
+                    for (int j = 0; j < stringChars.Length; j++)
+                    {
+                        stringChars[j] = chars[random.Next(chars.Length)];
+                    }
+                    component.ID = new String(stringChars);
+                }
+                builder.AddComponentParameter(i + 7, "ID", component.ID);
+            }
             builder.CloseComponent(); // </componentType>
             builder.CloseElement(); // </div>
+
             i += 10;
+            componentIndex++;
+
         }
         builder.CloseRegion();
     };
@@ -236,6 +270,23 @@
         ConfigID = new Guid("00000000-0000-0000-0000-000000000001");
         await _ConfigService.DeleteConfig(guid);
         await Navigate(ConfigID);
+    }
+
+    private async Task NewComponent()
+    {
+        Config_.Components.Add(new Component
+            {
+                X = 5,
+                Y = 5,
+                Width = 20,
+                Height = 10,
+                Type = "Placeholder",
+                PlaceSelf = "stretch",
+                ID = null
+            }
+        );
+        await SaveConfig(); // We rely on UpdateConfig awaiting ConfigChanged.
+        await SetDarkMode(IsDarkMode); // Shall be called after ConfigChanged.
     }
 
     private void OpenCopyArea()
