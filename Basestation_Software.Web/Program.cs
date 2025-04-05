@@ -37,13 +37,13 @@ builder.Services.AddHttpClient<ConfigService>();
 builder.Services.AddSingleton<ConfigService>();
 builder.Services.AddSingleton<TaskTimerService>();
 builder.Services.AddSingleton<PingService>();
+builder.Services.AddSingleton<OpService>();
 builder.Services.AddSingleton<ArmSpeedState>();
 builder.Services.AddHttpClient<ArmAngularService>();
 builder.Services.AddSingleton<ArmAngularService>();
 builder.Services.AddSingleton<CameraService>();
 builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
-builder.Services.AddSingleton<OpService>();
 
 var app = builder.Build();
 

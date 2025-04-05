@@ -28,7 +28,7 @@
         <div class="text-center">
             <div class="btn-group btn-group-sm justify-content-center" role="group">
                 <button title="Start Autonomy" class="btn btn-success" @onclick=StartAutonomy><i class="bi bi-caret-right-fill h1 d-block m-0"></i></button>
-                <button title="Stop Autonomy" class="btn btn-primary" @onclick=StopAutonomy><i class="bi bi-pause-fill h1 d-block m-0"></i></button>
+                <button title="Stop Autonomy" class="btn btn-danger" @onclick=StopAutonomy><i class="bi bi-pause-fill h1 d-block m-0"></i></button>
             </div>
         </div>
 
@@ -58,7 +58,7 @@
 
     void AddPositionLeg()
     {
-        if (_selectedWaypoint != null) 
+        if (_selectedWaypoint != null)
             _ = _RoveCommService.SendAsync<double>("Autonomy", "AddPositionLeg", [Double.Parse(_selectedWaypoint.Latitude), Double.Parse(_selectedWaypoint.Longitude)]);
     }
 
@@ -70,7 +70,7 @@
 
     void AddObjectLeg()
     {
-        if (_selectedWaypoint != null) 
+        if (_selectedWaypoint != null)
             _ = _RoveCommService.SendAsync<double>("Autonomy", "AddObjectLeg", [Double.Parse(_selectedWaypoint.Latitude), Double.Parse(_selectedWaypoint.Longitude), _selectedWaypoint.SearchRadius]);
     }
 

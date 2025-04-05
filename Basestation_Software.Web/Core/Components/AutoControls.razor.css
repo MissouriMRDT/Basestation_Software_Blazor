@@ -1,4 +1,4 @@
-﻿button {
+﻿﻿button {
     width: auto;
 }
 
@@ -8,14 +8,13 @@
     justify-content: center;
     align-content: center;
     align-items: center;
-/*    height: 25%;*/
+    /*    height: 25%;*/
 }
 
 .color-preview {
     width: 22px;
     height: 22px;
     border-radius: 50%;
-
 }
 
 p {
