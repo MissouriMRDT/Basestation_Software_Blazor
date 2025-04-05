@@ -312,8 +312,7 @@
                     }
 
                     // send rovecomm packets
-					Console.WriteLine("Sending...");
-					Console.WriteLine((int)(bindedInputs[0] * 1000f));
+					// Console.WriteLine((int)(bindedInputs[0] * 1000f));
                     _ = _RoveCommService.SendAsync("Auger", "AugerAxis_OpenLoop", [(short)(bindedInputs[0] * 1000f)]);
                     _ = _RoveCommService.SendAsync("Raman", "InstrumentsAxis_OpenLoop", [(short)(bindedInputs[1] * 1000f)]);
                     _ = _RoveCommService.SendAsync("Auger", "Auger", [(short)(bindedInputs[2] * 1000f)]);
