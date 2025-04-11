@@ -1,91 +1,104 @@
-﻿@inject CameraService _CameraService
-@inject RoveCommService _RoveCommService
+﻿@inject RoveCommService _RoveCommService
+@inject IJSRuntime _IJSRuntime
 @implements IDisposable
 
-<link rel="stylesheet" type="text/css" href="CameraDisplay.razor.css?version=0.1">
+<style>
+    .camera-display {
+        display: grid;
+        padding: 0;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        grid-template-rows: 1fr min-content min-content min-content;
+        grid-template-areas:
+            "video video video video"
+            "source-buttons source-buttons source-buttons source-buttons"
+            "connect disconnect restart shutdown"
+            "screenshot save panorama rotate";
+        place-items: stretch stretch;
+    }
 
-<div class="card full-height">
+    .video-display {
+        grid-area: video;
+        height: 100%;
+    }
+
+    .source-buttons-container {
+        grid-area: source-buttons;
+        display: flex;
+        flex-direction: row;
+        margin-inline: 5%;
+        margin-block: 1%;
+    }
+
+    .source-buttons-container button {
+        margin: 1px;
+        flex: 1;
+    }
+
+    .source-buttons-container :not(:first-child):not(:last-child) {
+        border-radius: 0;
+    }
+
+    .source-buttons-container :first-child {
+        border-radius: 20px 0 0 20px;
+    }
+
+    .source-buttons-container :last-child {
+        border-radius: 0 20px 20px 0;
+    }
+</style>
+
+<div class="card h-100">
     <div class="card-header">
         <h3>Camera Display</h3>
     </div>
-    <div class="card-body">
-        <div class="cam-container" style="transform:rotate(@(rot)deg)">
-            <img class="cam-display" src=@("data:image/gif;base64," + _frameData)  />
-        </div>
-
-        <div class="source-buttons-container" style="margin-block 0.5%">
-            @for (int i = 0; i < CameraService._sources.Length; i++)
+    <div @ref="videoContainer" class="card-body camera-display">
+        <div class="source-buttons-container">
+            @for (int i = 0; i < 8; i++)
             {
                 // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
                 var _i = i;
-                <button class="@("btn btn-secondary " + ((_sourceIndex == _i) ? "active" : ""))" @onclick="() => SetSource(_i)">@(_i + 1)</button>
+                <button class="@("btn btn-secondary " + ((_sourceIndex == _i) ? "active" : ""))" @onclick="() => SetSource(_i)">@(_i)</button>
             }
         </div>
-
         @* <div class="source-buttons-container" style="margin-block: 1%"> *@
         @*     @for (int i = 0; i < CameraService._sources.Length; i++) *@
         @*     { *@
         @*         <button class="power" style="background-image: url(images/@( streamingCams[i] == 1 ? "on.png" : "off.png"));"></button> *@
         @*     } *@
         @* </div> *@
-
-        <div style="display: grid; grid-template-columns: auto auto auto auto; gap: 0.4rem">
-            <button class="btn btn-primary" @onclick="RestartCam">Restart Reciever</button>
-            <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 1)">Restart Source</button>
-            <button class="btn btn-primary" @onclick="() => ToggleSource(_sourceIndex, 0)">Shutdown Source</button>
-            <button class="btn btn-primary" @onclick="TakeScreenshot">Take Screenshot</button>
-            <button class="btn btn-primary" @onclick="SaveImage">Save Image</button>
-            <button class="btn btn-primary" @onclick="TakePano">Take Pano</button>
-            <button class="btn btn-primary" @onclick="Rotate">Rotate</button>
-        </div>
+        <button class="btn btn-primary" style="grid-area: connect" onclick="webRTCCameras.connect()">Connect</button>
+        <button class="btn btn-primary" style="grid-area: disconnect" onclick="webRTCCameras.disconnect()">Disconnect</button>
+        <button class="btn btn-primary" style="grid-area: restart" @onclick="() => ToggleSource(_sourceIndex, 1)">Restart Source</button>
+        <button class="btn btn-primary" style="grid-area: shutdown" @onclick="() => ToggleSource(_sourceIndex, 0)">Shutdown Source</button>
+        <button class="btn btn-primary" style="grid-area: screenshot" @onclick="TakeScreenshot">Take Screenshot</button>
+        <button class="btn btn-primary" style="grid-area: save" @onclick="SaveImage">Save Image</button>
+        <button class="btn btn-primary" style="grid-area: panorama" @onclick="TakePano">Take Pano</button>
+        <button class="btn btn-primary" style="grid-area: rotate" @onclick="Rotate">Rotate</button>
     </div>
 </div>
 
 @code {
     private bool _prerendered = false;
     private int _sourceIndex = 0;
-    private string? _frameData;
-    private string _defualtFrameData = "images/loading.jpg";
-    private int[] streamingCams = [0, 0, 0, 1, 0, 0, 0, 0];
     private int rot = 0;
+    private ElementReference videoContainer;
+    private IJSObjectReference jsCameraDisplay; 
 
     private void Rotate()
     {
         rot += 90;
     }
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        await InvokeAsync(StateHasChanged);
-        _frameData = _defualtFrameData;
-        _CameraService.GetCameraReference(_sourceIndex).FrameNotifier += OnNewFrame;
+        if (firstRender)
+            jsCameraDisplay = await _IJSRuntime.InvokeAsync<IJSObjectReference>("createCameraDisplay", videoContainer);
     }
 
-    private async Task OnNewFrame(string frameData)
+    private async Task SetSource(int newSourceIndex)
     {
-        _frameData = frameData;
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private void SetSource(int newSourceIndex)
-    {
-        _CameraService.GetCameraReference(_sourceIndex).FrameNotifier -= OnNewFrame;
         _sourceIndex = newSourceIndex;
-        _CameraService.GetCameraReference(_sourceIndex).FrameNotifier += OnNewFrame;
-        _frameData = _defualtFrameData;
         StateHasChanged();
-
-    }
-
-    private void SetIP(string newIP)
-    {
-        _CameraService.SetIP(_sourceIndex, newIP);
-        RestartCam();
-    }
-
-    private void RestartCam()
-    {
-        _CameraService.Dispose(_sourceIndex);
-        _CameraService.InitCapture(_sourceIndex);
+        await jsCameraDisplay.InvokeVoidAsync("setCamera", _sourceIndex);
     }
 
     private void TakeScreenshot()
@@ -98,7 +111,7 @@
         Console.WriteLine("Write File");
         try 
         {
-            File.WriteAllBytes("CameraScreenshot_" + ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds() + ".png", Convert.FromBase64String(_frameData));
+            File.WriteAllBytes("CameraScreenshot_" + ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds() + ".png", Convert.FromBase64String("oiwebjfvdkhjgfdghjkwe"));
 
         }
         catch(Exception e)
@@ -131,13 +144,5 @@
 
     void IDisposable.Dispose()
     {
-        if (_prerendered)
-        {
-            _CameraService.DisposeAll();
-        }
-        else
-        {
-            _prerendered = true;
-        }
     }
 }
