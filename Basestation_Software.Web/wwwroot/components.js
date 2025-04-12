@@ -32,7 +32,7 @@ function createRoverAttitude(id, dotNetComponent) {
     window.roverAttitude[id] = new RoverAttitude(id, dotNetComponent);
 }
 
-class roverMap {
+class RoverMap {
     lMap = null;
     waypointLayerGroup = null;
     dotNetComponent = null;
@@ -94,5 +94,5 @@ class roverMap {
 function createRoverMap(id, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel) {
     // Create global roverMaps collection if it doesn't exist.
     if (window.roverMaps === undefined) { window.roverMaps = {}; }
-    window.roverMaps[id] = new roverMap(id, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel);
+    window.roverMaps[id] = new RoverMap(id, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel);
 }
