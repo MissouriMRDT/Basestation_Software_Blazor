@@ -1,6 +1,11 @@
 .card-header {
-    background-color: #9a0000; 
+    background-color: #9a0020;
     color: white;
+}
+
+.card {
+    border: 1px solid #9a0020;
+    transition: .25s;
 }
 
 .card-header h3 {
@@ -23,9 +28,4 @@
 .card:hover {
     box-shadow: 5px 5px 0px rgba(209, 3, 3, 0.692);
 /*    transform:scale(1.004);*/
-}
-
-.card {
-    border:1px solid black;
-    transition:.25s;
 }
