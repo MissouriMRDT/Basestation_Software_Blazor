@@ -65,7 +65,7 @@
         @*     { *@
         @*         <button class="power" style="background-image: url(images/@( streamingCams[i] == 1 ? "on.png" : "off.png"));"></button> *@
         @*     } *@
-        @* </div> *@
+        @* </div> *@ 
         <button class="btn btn-primary" style="grid-area: connect" onclick="webRTCCameras.connect()">Connect</button>
         <button class="btn btn-primary" style="grid-area: disconnect" onclick="webRTCCameras.disconnect()">Disconnect</button>
         <button class="btn btn-primary" style="grid-area: restart" @onclick="() => ToggleSource(_sourceIndex, 1)">Restart Source</button>
@@ -122,13 +122,13 @@
 
     private async Task TakePano()
     {
-        _ = _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [-180, 0]);
-        await Task.Delay(4000);
+        _ = _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [0, -180]);
+        await Task.Delay(2000);
         SaveImage();
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i <= 4; i++)
         {
-            _ = _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [90, 0]);
-            await Task.Delay(2000);
+            _ = _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [0, 45]);
+            await Task.Delay(500);
             SaveImage();
             TakeScreenshot();
             await Task.Delay(1000);
