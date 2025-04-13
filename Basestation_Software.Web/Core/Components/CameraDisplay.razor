@@ -84,9 +84,10 @@
     private ElementReference videoContainer;
     private IJSObjectReference jsCameraDisplay; 
 
-    private void Rotate()
+    private async void Rotate()
     {
         rot += 90;
+        await jsCameraDisplay.InvokeVoidAsync("rotate", rot);
     }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
