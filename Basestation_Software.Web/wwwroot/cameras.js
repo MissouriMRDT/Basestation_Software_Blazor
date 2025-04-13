@@ -59,6 +59,7 @@
 
 class CameraDisplay {
     videoContainer = null;
+    videoDisplay = null;
 
     constructor(videoContainer) {
         this.videoContainer = videoContainer;
@@ -69,22 +70,30 @@ class CameraDisplay {
             console.warn(`Cannot switch camera to track ${n} when ${window.webRTCCameras.tracks.length} tracks exist.`);
             return;
         }
-        var element = document.createElement(window.webRTCCameras.tracks[n].kind);
-        element.srcObject = new MediaStream([window.webRTCCameras.tracks[n]]);
-        element.autoplay = true;
-        element.controls = false;
-        element.className = "video-display";
+        
+        this.videoDisplay = document.createElement(window.webRTCCameras.tracks[n].kind);
+        this.videoDisplay.srcObject = new MediaStream([window.webRTCCameras.tracks[n]]);
+        this.videoDisplay.autoplay = true;
+        this.videoDisplay.controls = false;
+        this.videoDisplay.className = "video-display";
         for (let oldElement of this.videoContainer.getElementsByClassName("video-display")) {
             this.videoContainer.removeChild(oldElement);
         }
-        this.videoContainer.prepend(element);
+        this.videoContainer.prepend(this.videoDisplay);
+    }
+
+    rotate(deg) {
+        if (this.videoDisplay === null) {
+            console.warn("No display to rotate.");
+            return;
+        }
+        this.videoDisplay.style.transform = `rotate(${deg}deg`;
     }
 }
 
 function createCameraDisplay(videoContainer) {
     if (window.webRTCCameras === undefined) {
         window.webRTCCameras = new WebRTCCameras(`ws://${window.location.hostname}:8085`, 8);
-        window.cameraViewers = {};
     }
     return new CameraDisplay(videoContainer);
 }
