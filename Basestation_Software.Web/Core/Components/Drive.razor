@@ -81,6 +81,8 @@
                 <p>Invert gimbal axis</p>
                 <InputCheckbox @bind-Value=_invertGimbalAxis></InputCheckbox>
             </div>
+            <InputNumber @bind-Value=_gi></InputNumber>
+
         </div>
     </div>
     <div class="card-body drive w-100">
@@ -164,6 +166,7 @@
     private bool _invertControls = false;
     private bool _alwaysGimbal = false;
     private bool _invertGimbalAxis = false;
+    private int _gi = 4;
 
     protected override void OnInitialized()
     {
@@ -453,8 +456,8 @@
                     double x = GamepadSelector_.SelectedGamepad.Buttons[4].Value - GamepadSelector_.SelectedGamepad.Buttons[5].Value;
                     double y = -GamepadSelector_.SelectedGamepad.Buttons[6].Value + GamepadSelector_.SelectedGamepad.Buttons[7].Value;
                     // Clamp deadzone.
-                    Pan = (short)Utils.ClampMap(Math.Abs(x) > DeadZone ? x : 0, -1.0, 1.0, -5, 5);
-                    Tilt = (short)Utils.ClampMap(Math.Abs(y) > DeadZone ? y : 0, -1.0, 1.0, -5, 5);
+                    Pan = (short)Utils.ClampMap(Math.Abs(x) > DeadZone ? x : 0, -1.0, 1.0, -_gi, _gi);
+                    Tilt = (short)Utils.ClampMap(Math.Abs(y) > DeadZone ? y : 0, -1.0, 1.0, -_gi, _gi);
                     if (Math.Abs(Pan) > 0 || Math.Abs(Tilt) > 0 || _alwaysGimbal)
                     {
                         switch (SelectedGimbal)
