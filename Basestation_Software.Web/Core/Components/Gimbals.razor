@@ -195,9 +195,6 @@
                         bindedInputs[i] = (Math.Abs(bindedInputs[i]) < DeadZone) ? 0f : bindedInputs[i] * 4;
                     }
 
-                    // _ = _RoveCommService.SendAsync<short>("Core", "LeftDriveGimbalIncrement", [(short)bindedInputs[0]]);
-                    // _ = _RoveCommService.SendAsync<short>("Core", "RightDriveGimbalIncrement", [(short)bindedInputs[1]]);
-                    // _ = _RoveCommService.SendAsync<short>("Core", "LeftDriveGimbalIncrement", [(short)bindedInputs[0]]);
                     RoveComm.Boards.Core.LeftDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[0]);
                     RoveComm.Boards.Core.RightDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[1]);
                     RoveComm.Boards.Core.LeftMainGimbalIncrement(_RoveCommService, (short)bindedInputs[2], (short)bindedInputs[3]);
