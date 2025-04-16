@@ -1,58 +1,59 @@
-﻿@implements IDisposable
-@inject RoveCommService _RoveCommService
+﻿@inject RoveCommService _RoveCommService
 @inject OpService _OpService
 @inject IJSRuntime _IJSRuntime
-@using Basestation_Software.Web.Utils;
+@using Basestation_Software.Web.Utils
 
 <style>
     .drive {
-    display: grid;
-    padding: 2px; /* Grid exterior border width */
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    grid-template-areas:
-    "left-backward left-backward left-forward left-forward"
-    "right-backward right-backward right-forward right-forward"
-    "drivespeed-label drivespeed-label drivespeed gimbal"
-    "deadzone-label deadzone-label deadzone gimbal"
-    "none none none gimbal"
-    "none none none gimbal";
-    place-items: center;
-    font-weight: bold;
+        display: grid;
+        padding: 2px; /* Grid exterior border width */
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        grid-template-areas:
+        "left-backward left-backward left-forward left-forward"
+        "right-backward right-backward right-forward right-forward"
+        "drivespeed-label drivespeed-label drivespeed gimbal"
+        "midspeed-label midspeed-label midspeed gimbal"
+        "outspeed-label outspeed-label outspeed gimbal"
+        "deadzone-label deadzone-label deadzone gimbal"
+        "none none none gimbal"
+        "none none none gimbal";
+        place-items: center;
+        font-weight: bold;
     }
 
     .drive > p {
-    margin: 0;
-    align-content: center;
+        margin: 0;
+        align-content: center;
     }
 
     .drive > progress {
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    border: 2px solid #000;
-    background-color: #333;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        border: 2px solid #000;
+        background-color: #333;
     }
 
     .drive > progress[value]::-webkit-progress-bar {
-    background-color: #333;
-    border-radius: 0px;
+        background-color: #333;
+        border-radius: 0px;
     }
 
     .drive > progress[value]::-moz-progress-bar {
-    background-color: #00f;
-    border-radius: 0;
+        background-color: #00f;
+        border-radius: 0;
     }
 
     .drive > progress[value]::-webkit-progress-value {
-    background-color: #00f;
-    border-radius: 0;
+        background-color: #00f;
+        border-radius: 0;
     }
 
     .gimbal-frame {
-    grid-area: gimbal;
-    aspect-ratio: 1 / 1;
-    place-self: center;
-    height: 80%;
+        grid-area: gimbal;
+        aspect-ratio: 1 / 1;
+        place-self: center;
+        height: 80%;
     }
 </style>
 
@@ -93,6 +94,9 @@
         <p style="grid-area: left-backward-start / left-backward-start / left-forward-end / left-forward-end; z-index: 10">@($"{LeftSpeed:+0.00000;-0.00000;+0.00000}")</p>
         <p style="grid-area: right-backward-start / right-backward-start / right-forward-end / right-forward-end; z-index: 10">@($"{RightSpeed:+0.00000;-0.00000;+0.00000}")</p>
         <RadzenSlider Style="grid-area: drivespeed-label; width: 100%" @bind-Value=@DriveSpeed TValue="double" Min="0" Max="1" Step="0.001" /><p style="grid-area: drivespeed">Speed: @($"{DriveSpeed * 100:000.0}")%</p>
+        <RadzenSlider Style="grid-area: midspeed-label; width: 100%" @bind-Value=@MidMult TValue="double" Min="0" Max="3" Step="0.001" /><p style="grid-area: midspeed">Mid: @($"{MidMult:0.0}")x</p>
+        <RadzenSlider Style="grid-area: outspeed-label; width: 100%" @bind-Value=@OutMult TValue="double" Min="0" Max="3" Step="0.001" /><p style="grid-area: outspeed">Outer: @($"{OutMult:0.0}")x</p>
+
         <RadzenSlider Style="grid-area: deadzone-label; width: 100%" @bind-Value=@DeadZone TValue="double" Min="0" Max="(decimal)0.5" Step="0.001" /><p style="grid-area: deadzone">Dead Zone: @($"{DeadZone:0.000}")</p>
 
         <svg class="gimbal-frame" viewBox="0 0 60 60">
@@ -156,6 +160,9 @@
     private Scheme SelectedScheme;
     private Timer UpdateTimer;
     private double DriveSpeed = 0.1;
+    private double MidMult = 1.0;
+    private double OutMult = 1.0;
+
     private double DeadZone = 0.05;
     private int SelectedGimbal = 0;
     private double LeftSpeed;
@@ -496,16 +503,16 @@
                     LeftSpeed = isPT ? LeftSpeed * OutMult : LeftSpeed;
                     RightSpeed = isPT ? RightSpeed * OutMult : RightSpeed;
 
-                    //RoveComm.Boards.Core.DriveIndividual(
-                    //    _RoveCommService, 
-                    //    (float)LeftSpeed, 
-                    //    (float)LM,
-                    //    (float)LeftSpeed,
-                    //    (float)RightSpeed,
-                    //    (float)RM,
-                    //    (float)RightSpeed
-                    //);
-                    _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed }, false);
+                    RoveComm.Boards.Core.DriveIndividual(
+                        _RoveCommService, 
+                        (float)LeftSpeed, 
+                        (float)LM,
+                        (float)LeftSpeed,
+                        (float)RightSpeed,
+                        (float)RM,
+                        (float)RightSpeed
+                    );
+                    // _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed }, false);
                     break;
                 }
         }
