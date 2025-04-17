@@ -6,13 +6,11 @@
     .camera-display {
         display: grid;
         padding: 0;
-        grid-template-columns: 1fr 1fr 1fr 1fr;
+        grid-template-columns: 1fr;
         grid-template-rows: 1fr min-content min-content min-content;
         grid-template-areas:
-            "video video video video"
-            "source-buttons source-buttons source-buttons source-buttons"
-            "connect disconnect restart shutdown"
-            "screenshot save panorama rotate";
+            "video"
+            "source-buttons";
         place-items: stretch stretch;
     }
 
@@ -45,6 +43,17 @@
     .source-buttons-container :last-child {
         border-radius: 0 20px 20px 0;
     }
+
+    .camera-display-rotate {
+        position: absolute;
+        left: 0;
+        right: 0;
+        width: 3rem;
+    }
+
+    .camera-selected {
+        border: 4px solid black;
+    }
 </style>
 
 <div class="card h-100">
@@ -57,29 +66,16 @@
             {
                 // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
                 var _i = i;
-                <button class="@("btn btn-secondary " + ((_sourceIndex == _i) ? "active" : ""))" @onclick="() => SetSource(_i)">@(_i)</button>
+                <button class="@("btn btn-secondary " + ((sourceIndex == _i) ? "camera-selected" : ""))" @onclick="() => SetSource(_i)">@(_i)</button>
             }
         </div>
-        @* <div class="source-buttons-container" style="margin-block: 1%"> *@
-        @*     @for (int i = 0; i < CameraService._sources.Length; i++) *@
-        @*     { *@
-        @*         <button class="power" style="background-image: url(images/@( streamingCams[i] == 1 ? "on.png" : "off.png"));"></button> *@
-        @*     } *@
-        @* </div> *@ 
-        <button class="btn btn-primary" style="grid-area: connect" onclick="webRTCCameras.connect()">Connect</button>
-        <button class="btn btn-primary" style="grid-area: disconnect" onclick="webRTCCameras.disconnect()">Disconnect</button>
-        <button class="btn btn-primary" style="grid-area: restart" @onclick="() => ToggleSource(_sourceIndex, 1)">Restart Source</button>
-        <button class="btn btn-primary" style="grid-area: shutdown" @onclick="() => ToggleSource(_sourceIndex, 0)">Shutdown Source</button>
-        <button class="btn btn-primary" style="grid-area: screenshot" @onclick="TakeScreenshot">Take Screenshot</button>
-        <button class="btn btn-primary" style="grid-area: save" @onclick="SaveImage">Save Image</button>
-        <button class="btn btn-primary" style="grid-area: panorama" @onclick="TakePano">Take Pano</button>
-        <button class="btn btn-primary" style="grid-area: rotate" @onclick="Rotate">Rotate</button>
+        <button class="btn btn-primary camera-display-rotate" @onclick="Rotate"><i class="bi bi-arrow-clockwise"></i></button>
     </div>
 </div>
 
 @code {
     private bool _prerendered = false;
-    private int _sourceIndex = 0;
+    private int sourceIndex = 0;
     private int rot = 0;
     private ElementReference videoContainer;
     private IJSObjectReference jsCameraDisplay; 
@@ -97,50 +93,9 @@
 
     private async Task SetSource(int newSourceIndex)
     {
-        _sourceIndex = newSourceIndex;
+        sourceIndex = newSourceIndex;
         StateHasChanged();
-        await jsCameraDisplay.InvokeVoidAsync("setCamera", _sourceIndex);
-    }
-
-    private void TakeScreenshot()
-    {
-        _ = _RoveCommService.SendAsync<byte>("Camera" + (_sourceIndex < 4 ? "1" : "2"), "TakePicture", [(byte)(_sourceIndex % 4), 1]);
-    }
-
-    private void SaveImage()
-    {
-        Console.WriteLine("Write File");
-        try 
-        {
-            File.WriteAllBytes("CameraScreenshot_" + ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds() + ".png", Convert.FromBase64String("oiwebjfvdkhjgfdghjkwe"));
-
-        }
-        catch(Exception e)
-        {
-            Console.WriteLine("Wrong Format!");
-        }
-    }
-
-    private async Task TakePano()
-    {
-        _ = _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [0, -180]);
-        await Task.Delay(2000);
-        SaveImage();
-        for (int i = 0; i <= 4; i++)
-        {
-            _ = _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [0, 45]);
-            await Task.Delay(500);
-            SaveImage();
-            TakeScreenshot();
-            await Task.Delay(1000);
-        }
-        
-    }
-
-    private void ToggleSource(int source, int data)
-    {
-        string boardNum = (_sourceIndex < 4 ? "1" : "2");
-        _ = _RoveCommService.SendAsync<byte>("Camera" + boardNum, "ToggleStream" + boardNum, [(byte)(_sourceIndex % 4), (byte)data]);
+        await jsCameraDisplay.InvokeVoidAsync("setCamera", sourceIndex);
     }
 
     void IDisposable.Dispose()

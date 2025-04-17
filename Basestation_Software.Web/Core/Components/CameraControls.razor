@@ -1,0 +1,161 @@
+﻿@inject RoveCommService _RoveCommService
+@inject IJSRuntime _IJSRuntime
+@implements IDisposable
+
+<style>
+    .camera-controls {
+        display: grid;
+        padding: 0;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        grid-template-rows: min-content min-content min-content;
+        grid-template-areas:
+        "source-buttons source-buttons source-buttons source-buttons"
+        "connect disconnect restart shutdown"
+        "screenshot save panorama .";
+        place-items: stretch stretch;
+    }
+
+    .source-buttons-container {
+        grid-area: source-buttons;
+        display: flex;
+        flex-direction: row;
+        margin-inline: 5%;
+        margin-block: 1%;
+    }
+
+    .source-buttons-container button {
+        margin: 1px;
+        flex: 1;
+    }
+
+    .source-buttons-container :not(:first-child):not(:last-child) {
+        border-radius: 0;
+    }
+
+    .source-buttons-container :first-child {
+        border-radius: 20px 0 0 20px;
+    }
+
+    .source-buttons-container :last-child {
+        border-radius: 0 20px 20px 0;
+    }
+
+    .camera-selected {
+        border: 4px solid black;
+    }
+</style>
+
+<div class="card h-100">
+    <div class="card-header">
+        <h3>Camera Controls</h3>
+    </div>
+    <div @ref="videoContainer" class="card-body camera-controls">
+        <div class="source-buttons-container">
+            @for (int i = 0; i < 8; i++)
+            {
+                // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
+                var _i = i;
+                <button class="@("btn btn-secondary " + ((sourceIndex == _i) ? "camera-selected" : ""))" style="background-color: @(_i < 4 ? (_i < streaming1 ? "red" : _i < available1 ? "yellow" : "grey") : (_i - 4 < streaming2 ? "red" : _i - 4 < available2 ? "yellow" : "grey"))" @onclick="() => SetSource(_i)">@(_i)</button>
+            }
+        </div>
+        <button class="btn btn-primary" style="grid-area: connect" onclick="webRTCCameras.connect()">Connect</button>
+        <button class="btn btn-primary" style="grid-area: disconnect" onclick="webRTCCameras.disconnect()">Disconnect</button>
+        <button class="btn btn-primary" style="grid-area: restart" @onclick="() => ToggleSource(sourceIndex, true)">Restart Camera</button>
+        <button class="btn btn-primary" style="grid-area: shutdown" @onclick="() => ToggleSource(sourceIndex, false)">Shutdown Camera</button>
+        <button class="btn btn-primary" style="grid-area: screenshot" @onclick="TakePicture">Take Picture</button>
+        <button class="btn btn-primary" style="grid-area: save" @onclick="SaveImage">Save Image</button>
+        <button class="btn btn-primary" style="grid-area: panorama" @onclick="TakePano">Take Pano</button>
+    </div>
+</div>
+
+@code {
+
+    private int sourceIndex = 0;
+
+    private int available1 = 0;
+    private int available2 = 0;
+    private int streaming1 = 0;
+    private int streaming2 = 0;
+
+    private ElementReference videoContainer;
+    private IJSObjectReference jsCameraDisplay;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _RoveCommService.On<byte>("Camera1", "AvailableCameras", async (packet) =>
+        {
+            available1 = packet.Data[0];
+            await InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.On<byte>("Camera1", "StreamingCameras", async (packet) =>
+        {
+            streaming1 = packet.Data[0];
+            await InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.On<byte>("Camera2", "AvailableCameras", async (packet) =>
+        {
+            available2 = packet.Data[0];
+            await InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.On<byte>("Camera2", "StreamingCameras", async (packet) =>
+        {
+            streaming2 = packet.Data[0];
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            jsCameraDisplay = await _IJSRuntime.InvokeAsync<IJSObjectReference>("createCameraDisplay", videoContainer);
+    }
+
+    private async Task SetSource(int newSourceIndex)
+    {
+        sourceIndex = newSourceIndex;
+        StateHasChanged();
+    }
+
+    private void TakePicture()
+    {
+        _ = _RoveCommService.SendAsync<byte>(sourceIndex < 4 ? "Camera1" : "Camera2", "TakePicture", [(byte)(sourceIndex % 4), 1]);
+    }
+
+    private void SaveImage()
+    {
+        Console.WriteLine("Write File");
+        try 
+        {
+            File.WriteAllBytes("CameraScreenshot_" + ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds() + ".png", Convert.FromBase64String("oiwebjfvdkhjgfdghjkwe"));
+
+        }
+        catch(Exception e)
+        {
+            Console.WriteLine("Wrong Format!");
+        }
+    }
+
+    private async Task TakePano()
+    {
+        _ = _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [-180, 0]);
+        await Task.Delay(4000);
+        SaveImage();
+        for (int i = 0; i < 4; i++)
+        {
+            _ = _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [90, 0]);
+            await Task.Delay(2000);
+            TakePicture();
+            await Task.Delay(1000);
+        }
+    }
+
+    private void ToggleSource(int source, bool restartStream)
+    {
+
+        _ = _RoveCommService.SendAsync<byte>(sourceIndex < 4 ? "Camera1" : "Camera2", "ToggleStream", [(byte)(sourceIndex % 4), restartStream ? (byte)1 : (byte)0]);
+    }
+
+    void IDisposable.Dispose()
+    {
+    }
+}
