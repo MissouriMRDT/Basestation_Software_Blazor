@@ -53,7 +53,7 @@
             var _i = i;
             <div class="controlBox">
                 <p>Invert @_gimbalNames[_i]</p>
-                <RadzenCheckBox TValue="bool" />
+                <RadzenCheckBox TValue="bool" @bind-Value=inversions[_i] />
                 <div class="break"></div>
                 <select class="form-select-sm w-100" @bind=controllerBinds[_i] name="ControlBind">
                     @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
@@ -77,6 +77,7 @@
     public int UPDATE_INTERVAL = 100;
     private Timer UpdateTimer;
     private double DeadZone = 0.5;
+    private List<bool> inversions = new(new bool[9]);
 
     // Available gimbal control schemes
     enum Scheme
@@ -189,7 +190,6 @@
                     float[] bindedInputs = new float[controllerBinds.Count];
                     for (int i = 0; i < controllerBinds.Count; i++)
                     {
-                        Console.WriteLine((int)(controllerBinds[i]) + ", " + i);
                         bindedInputs[i] = (float)inputValues[(int)(controllerBinds[i])];
                     }
 
@@ -198,15 +198,15 @@
                     {
                         meterValues[i] = bindedInputs[i];
                         // multiply by 4 for speed
-                        bindedInputs[i] = (Math.Abs(bindedInputs[i]) < DeadZone) ? 0f : bindedInputs[i] * 4;
+                        bindedInputs[i] = (Math.Abs(bindedInputs[i]) < DeadZone) ? 0f : bindedInputs[i] * 4 * (inversions[i] == false ? 1 : -1);
                     }
 
-                    RoveComm.Boards.Core.LeftDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[0]);
-                    RoveComm.Boards.Core.RightDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[1]);
-                    RoveComm.Boards.Core.LeftMainGimbalIncrement(_RoveCommService, (short)bindedInputs[2], (short)bindedInputs[3]);
-                    RoveComm.Boards.Core.RightMainGimbalIncrement(_RoveCommService, (short)bindedInputs[4], (short)bindedInputs[5]);
-                    RoveComm.Boards.Core.BackDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[6]);
-                    RoveComm.Boards.Auger.AugerGimbalIncrement(_RoveCommService, (short)bindedInputs[7], (short)bindedInputs[8]);
+                    if (bindedInputs[0] > 0) RoveComm.Boards.Core.LeftDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[0]);
+                    if (bindedInputs[1] > 0) RoveComm.Boards.Core.RightDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[1]);
+                    if (bindedInputs[2] > 0 || bindedInputs[3] > 0) RoveComm.Boards.Core.LeftMainGimbalIncrement(_RoveCommService, (short)bindedInputs[2], (short)bindedInputs[3]);
+                    if (bindedInputs[4] > 0 || bindedInputs[5] > 0) RoveComm.Boards.Core.RightMainGimbalIncrement(_RoveCommService, (short)bindedInputs[4], (short)bindedInputs[5]);
+                    if (bindedInputs[6] > 0) RoveComm.Boards.Core.BackDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[6]);
+                    if (bindedInputs[7] > 0 || bindedInputs[8] > 0) RoveComm.Boards.Auger.AugerGimbalIncrement(_RoveCommService, (short)bindedInputs[7], (short)bindedInputs[8]);
 
                     break;
                 }
