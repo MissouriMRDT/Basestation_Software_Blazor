@@ -1,1 +1,113 @@
-var w=Object.defineProperty,v=(t,e,o)=>e in t?w(t,e,{enumerable:!0,configurable:!0,writable:!0,value:o}):t[e]=o,a=(t,e,o)=>(v(t,typeof e!="symbol"?e+"":e,o),o);import*as i from"./lib/pkg/three.js";import{STLLoader as u}from"./lib/pkg/three-stdlib.js";import{OrbitControls as b}from"./lib/pkg/three-stdlib.js";export const roverViews={};export class Rover3DView{constructor(e,o){a(this,"id",null),a(this,"dotNetComponent",null),a(this,"renderer",null),a(this,"scene",null),a(this,"camera",null),a(this,"roverMesh",null),this.id=e,this.dotNetComponent=o;const s=document.getElementById(`rover-view-${this.id}`),n=new i.Scene;n.castShadow=!0,n.receiveShadow=!0,new u().load("models/Rover.stl",p=>{const m=new i.MeshPhongMaterial({color:10092544,specular:1118481,shininess:200});this.roverMesh=new i.Mesh(p,m),this.roverMesh.position.set(0,0,0),this.roverMesh.scale.set(1,1,1),this.roverMesh.castShadow=!0,p.center(),n.add(this.roverMesh)});const h=new i.Mesh(new i.PlaneGeometry(20,20),new i.MeshPhongMaterial({color:10592673,side:i.DoubleSide}));h.rotation.x=-Math.PI/2,h.position.y=-5,h.receiveShadow=!0,n.add(h),n.add(new i.AmbientLight(16579023));const l=new i.DirectionalLight(16777215,5);l.position.y=3,l.castShadow=!0,n.add(l);const d=new i.PerspectiveCamera(75,s.clientWidth/s.clientHeight,.1,1e3);d.position.z=6;const r=new i.WebGLRenderer({alpha:!0});r.setSize(s.clientWidth,s.clientHeight),r.shadowMap.enabled=!0,r.shadowMap.type=i.PCFSoftShadowMap,s.appendChild(r.domElement),this.scene=n,this.camera=d,this.renderer=r,new ResizeObserver(()=>this.onResize()).observe(s);const c=new b(d,r.domElement);c.minDistance=1,c.maxDistance=7,c.enablePan=!1,this.animationLoop()}onResize(){const e=document.getElementById(`rover-view-${this.id}`);this.camera.aspect=e.clientWidth/e.clientHeight,this.camera.updateProjectionMatrix(),this.renderer.setSize(e.clientWidth,e.clientHeight)}animationLoop(){requestAnimationFrame(this.animationLoop.bind(this)),this.renderer.render(this.scene,this.camera)}updateAngles(e,o,s){this.roverMesh?.rotation.set(e,o,s)}}export function createRoverView(t,e){roverViews[t]=new Rover3DView(t,e),console.log("Created Rover3DView:",t)}export function deleteRoverView(t){delete roverViews[t],console.log("Deleted Rover3DView:",t)}
+﻿// Used by Rover3DView.razor
+
+import * as THREE from "./lib/three/three.js";
+import { STLLoader } from "./lib/three/STLLoader.js";
+import { OrbitControls } from "./lib/three/OrbitControls.js";
+
+export const roverViews = {};
+
+export class Rover3DView {
+    id = null;
+    dotNetComponent = null;
+    renderer = null;
+    scene = null;
+    camera = null;
+    roverMesh = null;
+
+    constructor(id, dotNetComponent) {
+        this.id = id;
+        this.dotNetComponent = dotNetComponent;
+
+        const container = document.getElementById(`rover-view-${this.id}`);
+
+        const scene = new THREE.Scene();
+        scene.castShadow = true;
+        scene.receiveShadow = true;
+        const loader = new STLLoader();
+
+        loader.load("models/Rover.stl", (roverGeometry) => {
+            const material = new THREE.MeshPhongMaterial({ color: 0x9a0000, specular: 0x111111, shininess: 200 });
+            this.roverMesh = new THREE.Mesh(roverGeometry, material);
+            this.roverMesh.position.set(0, 0, 0);
+            this.roverMesh.scale.set(1, 1, 1);
+            this.roverMesh.castShadow = true;
+
+            roverGeometry.center();
+            scene.add(this.roverMesh);
+        });
+
+        const groundPlane = new THREE.Mesh(
+            new THREE.PlaneGeometry(20, 20),
+            new THREE.MeshPhongMaterial({ color: 0xa1a1a1, side: THREE.DoubleSide })
+        );
+        groundPlane.rotation.x = -Math.PI / 2;
+        groundPlane.position.y = -5;
+        groundPlane.receiveShadow = true;
+        scene.add(groundPlane);
+
+        scene.add(new THREE.AmbientLight(0xfcf9cf));
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 5);
+        directionalLight.position.y = 3;
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+
+        //const helper = new THREE.CameraHelper(directionalLight.shadow.camera);
+        //this.scene.add(helper);
+
+        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        camera.position.z = 6;
+
+        const renderer = new THREE.WebGLRenderer({ alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap
+        container.appendChild(renderer.domElement);
+
+        this.scene = scene;
+        this.camera = camera;
+        this.renderer = renderer;
+
+        new ResizeObserver(() => this.onResize()).observe(container);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.minDistance = 1;
+        controls.maxDistance = 7;
+        controls.enablePan = false;
+
+        this.animationLoop();
+    }
+
+    onResize() {
+        const container = document.getElementById(`rover-view-${this.id}`);
+        if (container) {
+            this.camera.aspect = container.clientWidth / container.clientHeight;
+            this.camera.updateProjectionMatrix();
+            this.renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+    }
+
+    animationLoop() {
+        requestAnimationFrame(this.animationLoop.bind(this));
+        this.renderer.render(this.scene, this.camera);
+    }
+
+    updateAngles(pitch, yaw, roll) {
+        this.roverMesh?.rotation.set(pitch, yaw, roll);
+    }
+}
+
+export function createRoverView(id, dotNetComponent) {
+    if (id in roverViews) {
+        console.warn("Rover3DView", id, "already exists.");
+    } else {
+        roverViews[id] = new Rover3DView(id, dotNetComponent);
+        console.log("Created Rover3DView:", id);
+    }
+}
+
+export function deleteRoverView(id) {
+    if (id in roverViews) {
+        delete roverViews[id];
+        console.log("Deleted Rover3DView:", id);
+    }
+}
