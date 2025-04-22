@@ -1,34 +1,38 @@
 @implements IDisposable
 @inject GPSWaypointState _GPSWaypointState
 @inject RoveCommService _RoveCommService
+@inject OpService _OpService
 
-<style>
-    .scrollable {
-        max-height: 50vh; 
-        overflow-y: auto;
-        display: block;
-    }
-</style>
-
-<div class="card full-height">
+<div class="card h-100">
     <div class="card-header">
         <h3>Autonomy Controls</h3>
     </div>
+    <div class="card-body align-content-center h-100">
+        <div class="button-header">
+            <div class="d-inline-flex bg-body-secondary justify-content-center p-2 rounded gap-2">
+                <p><b>Selected:</b> @(_selectedWaypoint != null ? _selectedWaypoint.Name : "None!")</p>
+                <div class="color-preview" style="background-color: @_selectedWaypoint?.WaypointColor"></div>
+            </div>
+        </div>
 
-    <div class="button-header">
-        <p><b>Selected:</b> @(_selectedWaypoint != null ? _selectedWaypoint.Name : "None!")</p>
-        <div class="color-preview" style="background-color: @_selectedWaypoint?.WaypointColor"></div>
+        <div class="text-center">
+            <div class="btn-group btn-group-sm justify-content-center mb-2 gap-1" role="group">
+                <button class="btn btn-secondary" @onclick=AddPositionLeg>Add Position Leg</button>
+                <button class="btn btn-secondary" @onclick=AddMarkerLeg>Add Marker Leg</button>
+                <button class="btn btn-secondary" @onclick=AddObjectLeg>Add Object Leg</button>
+                <button class="btn btn-secondary" @onclick=AddObstacle>Add Obstacle</button>
+                <button class="btn btn-secondary" @onclick=ClearWaypoints>Clear Waypoints</button>
+            </div>
+        </div>
+
+        <div class="text-center">
+            <div class="btn-group btn-group-sm justify-content-center" role="group">
+                <button title="Start Autonomy" class="btn btn-success" @onclick=StartAutonomy><i class="bi bi-caret-right-fill h1 d-block m-0"></i></button>
+                <button title="Stop Autonomy" class="btn btn-danger" @onclick=StopAutonomy><i class="bi bi-pause-fill h1 d-block m-0"></i></button>
+            </div>
+        </div>
+
     </div>
-
-    <div class="button-container">
-        <button @onclick=StartAutonomy>Start Autonomy</button>
-        <button @onclick=StopAutonomy>Stop Autonomy</button>
-        <button @onclick=ClearWaypoints>Add Position Leg</button>
-        <button @onclick=AddPositionLeg>Add Marker Leg</button>
-        <button @onclick=AddObjectLeg>Add Object Leg</button>
-        <button @onclick=ClearWaypoints>Clear Waypoints</button>
-    </div>
-
 </div>
 
 @code
@@ -37,35 +41,43 @@
 
     void StartAutonomy()
     {
-        _ = _RoveCommService.SendAsync<int>("Autonomy", "StartAutonomy", [0]);
+        _ = _RoveCommService.SendAsync<byte>("Autonomy", "StartAutonomy", [0]);
+        _OpService.SetAutonomy();
     }
 
     void StopAutonomy()
     {
-        _ = _RoveCommService.SendAsync<int>("Autonomy", "StopAutonomy", [0]);
+        _ = _RoveCommService.SendAsync<byte>("Autonomy", "DisableAutonomy", [0]);
+        _OpService.SetTeleop();
     }
 
     void ClearWaypoints()
     {
-        _ = _RoveCommService.SendAsync<int>("Autonomy", "ClearWaypoints", [0]);
+        _ = _RoveCommService.SendAsync<byte>("Autonomy", "ClearWaypoints", [0]);
     }
 
     void AddPositionLeg()
     {
-        if (_selectedWaypoint != null) 
-            _ = _RoveCommService.SendAsync<string>("Autonomy", "AddPositionLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude]);
+        if (_selectedWaypoint != null)
+            _ = _RoveCommService.SendAsync<double>("Autonomy", "AddPositionLeg", [Double.Parse(_selectedWaypoint.Latitude), Double.Parse(_selectedWaypoint.Longitude)]);
     }
 
     void AddMarkerLeg()
     {
         if (_selectedWaypoint != null)
-            _ = _RoveCommService.SendAsync<string>("Autonomy", "AddMarkerLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude]);
+            _ = _RoveCommService.SendAsync<double>("Autonomy", "AddMarkerLeg", [Double.Parse(_selectedWaypoint.Latitude), Double.Parse(_selectedWaypoint.Longitude), _selectedWaypoint.TagID, _selectedWaypoint.SearchRadius]);
     }
 
     void AddObjectLeg()
     {
-        if (_selectedWaypoint != null) 
-            _ = _RoveCommService.SendAsync<string>("Autonomy", "AddObjectLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude]);
+        if (_selectedWaypoint != null)
+            _ = _RoveCommService.SendAsync<double>("Autonomy", "AddObjectLeg", [Double.Parse(_selectedWaypoint.Latitude), Double.Parse(_selectedWaypoint.Longitude), _selectedWaypoint.SearchRadius]);
+    }
+
+    void AddObstacle()
+    {
+        if (_selectedWaypoint != null)
+            _ = _RoveCommService.SendAsync<double>("Autonomy", "AddObstacle", [Double.Parse(_selectedWaypoint.Latitude), Double.Parse(_selectedWaypoint.Longitude), _selectedWaypoint.SearchRadius]);
     }
 
     protected override async Task OnInitializedAsync()
