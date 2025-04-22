@@ -1,1 +1,75 @@
-var s=Object.defineProperty,d=(o,e,t)=>e in o?s(o,e,{enumerable:!0,configurable:!0,writable:!0,value:t}):o[e]=t,i=(o,e,t)=>(d(o,typeof e!="symbol"?e+"":e,t),t);import l from"./lib/pkg/leaflet.js";import"./lib/pkg/leaflet-contextmenu.js";import"./lib/pkg/leaflet/dist/leaflet.css.proxy.js";import"./lib/pkg/leaflet-contextmenu/dist/leaflet.contextmenu.css.proxy.js";export const roverMaps={};export class RoverMap{constructor(e,t,a,n,r,p){i(this,"lMap",null),i(this,"waypointLayerGroup",null),i(this,"dotNetComponent",null),this.dotNetComponent=t,this.lMap=l.map(e,{center:[n,r],zoom:p,contextmenu:!0,contextmenuWidth:140,contextmenuItems:[{text:"Add Waypoint",callback:this.addWaypoint.bind(this)}]}).addLayer(l.tileLayer(a,{attribution:"Basestation_Software.Api",maxNativeZoom:18,maxZoom:21})).addControl(l.control.scale({metric:!0,imperial:!1})),this.lMap.on("zoomend",this.onZoomLevelChange.bind(this)),this.lMap.on("moveend",this.onZoomLevelChange.bind(this)),this.waypointLayerGroup=l.layerGroup([]).addTo(this.lMap)}onZoomLevelChange(){let e=this.lMap.getCenter(),t=this.lMap.getZoom();this.dotNetComponent.invokeMethodAsync("OnZoomLevel",e.lat,e.lng,t)}addWaypoint(e){this.dotNetComponent.invokeMethodAsync("AddWaypoint",e.latlng.lat,e.latlng.lng)}addWaypointMarker(e,t,a,n){a===0?l.circleMarker([e,t],{radius:20,color:n,dashArray:"15.4 16",fill:!1}).addTo(this.waypointLayerGroup):l.circle([e,t],{radius:a,color:n}).addTo(this.waypointLayerGroup)}clearWaypointMarkers(){this.waypointLayerGroup.clearLayers()}}export function createRoverMap(o,e,t,a,n,r){roverMaps[o]=new RoverMap(o,e,t,a,n,r),console.log("Created RoverMap:",o)}export function deleteRoverMap(o){delete roverMaps[o],console.log("Deleted RoverMap:",o)}
+﻿// Used by RoverMap.razor
+
+// imported globally in App.razor
+//import L from "./lib/leaflet/leaflet.js";
+//import "./lib/leaflet-contextmenu/leaflet.contextmenu.min.js";
+
+export const roverMaps = {};
+
+export class RoverMap {
+    lMap = null;
+    waypointLayerGroup = null;
+    dotNetComponent = null;
+    // Create leaflet map.
+    constructor(id, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel) {
+        this.dotNetComponent = dotNetComponent;
+        this.lMap = L.map(id, {
+            center: [initialLat, initialLong],
+            zoom: initialZoomLevel,
+            contextmenu: true,
+            contextmenuWidth: 140,
+            contextmenuItems: [{
+                text: "Add Waypoint",
+                callback: this.addWaypoint.bind(this)
+            }]
+        }).addLayer(L.tileLayer(urlTemplate, {
+            attribution: "Basestation_Software.Api",
+            maxNativeZoom: 18,
+            maxZoom: 21,
+        })).addControl(L.control.scale({
+            metric: true,
+            imperial: false
+        }));
+        this.lMap.on('zoomend', this.onZoomLevelChange.bind(this));
+        this.lMap.on('moveend', this.onZoomLevelChange.bind(this));
+        this.waypointLayerGroup = L.layerGroup([]).addTo(this.lMap);
+    }
+    // Call component.OnZoomLevel.
+    onZoomLevelChange() {
+        let center = this.lMap.getCenter();
+        let zoom = this.lMap.getZoom();
+        this.dotNetComponent.invokeMethodAsync("OnZoomLevel", center.lat, center.lng, zoom);
+    }
+    // Call component.AddWaypoint.
+    addWaypoint(event) {
+        this.dotNetComponent.invokeMethodAsync("AddWaypoint", event.latlng.lat, event.latlng.lng);
+    }
+    // Create a waypoint marker.
+    addWaypointMarker(lat, lng, radius, color) {
+        if (radius === 0) {
+            L.circleMarker([lat, lng], { radius: 20, color: color, dashArray: "15.4 16", fill: false }).addTo(this.waypointLayerGroup);
+        } else {
+            L.circle([lat, lng], { radius: radius, color: color }).addTo(this.waypointLayerGroup);
+        }
+    }
+    // Clear waypoint markers.
+    clearWaypointMarkers() {
+        this.waypointLayerGroup.clearLayers();
+    }
+}
+
+export function createRoverMap(id, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel) {
+    if (id in roverMaps) {
+        console.warn("RoverMap", id, "already exists.");
+    } else {
+        roverMaps[id] = new RoverMap(id, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel);
+    }
+    console.log("Created RoverMap:", id);
+}
+
+export function deleteRoverMap(id) {
+    if (id in roverMaps) {
+        delete roverMaps[id];
+        console.log("Deleted RoverMap:", id);
+    }
+}

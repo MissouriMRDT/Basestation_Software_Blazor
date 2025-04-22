@@ -68,6 +68,7 @@
         {
             if (jsModule is not null)
             {
+                await jsModule.InvokeVoidAsync("deleteRoverView", [ID]);
                 await jsModule.DisposeAsync();
             }
         }

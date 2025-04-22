@@ -224,6 +224,7 @@
         {
             if (jsModule is not null)
             {
+                await jsModule.InvokeVoidAsync("deleteRoverMap", [ID]);
                 await jsModule.DisposeAsync();
             }
         }
