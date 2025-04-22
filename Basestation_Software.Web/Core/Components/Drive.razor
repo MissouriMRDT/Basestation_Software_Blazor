@@ -488,8 +488,23 @@
                     double right = -GamepadSelector_.SelectedGamepad.Axes[3];
                     left = left > -DeadZone && left < DeadZone ? 0 : left;
                     right = right > -DeadZone && right < DeadZone ? 0 : right;
-                    LeftSpeed = Utils.ClampMap(left, -1.0, 1.0, -DriveSpeed, DriveSpeed) * (_invertControls ? -1 : 1);
-                    RightSpeed = Utils.ClampMap(right, -1.0, 1.0, -DriveSpeed, DriveSpeed) * (_invertControls ? -1 : 1);
+                    LeftSpeed = Utils.ClampMap(left, -1.0, 1.0, -DriveSpeed, DriveSpeed);
+                    RightSpeed = Utils.ClampMap(right, -1.0, 1.0, -DriveSpeed, DriveSpeed);
+                    bool isPT = Math.Sign(LeftSpeed) * Math.Sign(RightSpeed) < 0;
+                    double LM = isPT ? LeftSpeed * MidMult : LeftSpeed;
+                    double RM = isPT ? RightSpeed * MidMult : RightSpeed;
+                    LeftSpeed = isPT ? LeftSpeed * OutMult : LeftSpeed;
+                    RightSpeed = isPT ? RightSpeed * OutMult : RightSpeed;
+
+                    //RoveComm.Boards.Core.DriveIndividual(
+                    //    _RoveCommService, 
+                    //    (float)LeftSpeed, 
+                    //    (float)LM,
+                    //    (float)LeftSpeed,
+                    //    (float)RightSpeed,
+                    //    (float)RM,
+                    //    (float)RightSpeed
+                    //);
                     _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed }, false);
                     break;
                 }
