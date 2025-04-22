@@ -61,8 +61,8 @@
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
             <p style="width:auto; text-align: center"><b>Calibration</b></p>
             <div class="btn-group d-flex justify-items-center gap-1" role="group">
-                <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0b01]))>Calibrate X</button>
-                <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0b10]))>Calibrate Roll</button>
+                <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0b00000001]))>Calibrate X</button>
+                <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0b00000010]))>Calibrate Roll</button>
             </div>
         </div>
 
