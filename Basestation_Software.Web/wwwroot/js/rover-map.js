@@ -56,6 +56,10 @@ export class RoverMap {
     clearWaypointMarkers() {
         this.waypointLayerGroup.clearLayers();
     }
+    // Navigate to coordinate.
+    panToCoordinates(lat, long) {
+        this.lMap.panTo(new L.LatLng(lat, long));
+    }
 }
 
 export function createRoverMap(id, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel) {

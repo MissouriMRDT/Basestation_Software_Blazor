@@ -1,6 +1,7 @@
 @implements IAsyncDisposable
 @inject MapTileService _MapTileService
 @inject GPSWaypointService _GPSWaypointService
+@inject GPSWaypointState _GPSWaypointState
 @inject NavigationManager _NavigationManager
 @inject IJSRuntime _IJSRuntime
 
@@ -54,13 +55,9 @@
     private bool _dataLoaded = false;
     private bool _cachingMapTiles = false;
 
-    protected override void OnInitialized()
-    {
-        this.jsInteropName = $"roverMaps.{ID}";
-    }
-
     protected override async Task OnInitializedAsync()
     {
+        this.jsInteropName = $"roverMaps.{ID}";
         // Toggle component is done loading.
         _dataLoaded = true;
         await InvokeAsync(StateHasChanged);
@@ -85,6 +82,7 @@
             // Plot waypoints and keep them updated.
             await PlotWaypoints();
             _GPSWaypointService.SubscribeToWaypointsChanges(OnWaypointSync);
+            _GPSWaypointState.SubscribeToWaypointChanged(OnWaypointChanged);
         }
     }
 
@@ -124,12 +122,24 @@
         });
     }
 
+    private void OnWaypointChanged(List<GPSWaypointInput> waypoints)
+    {
+        if (waypoints.Count > 0) {
+            var target = waypoints.First();
+            Task.Run(async () => PanToCoordinates(Double.Parse(target.Latitude), Double.Parse(target.Longitude)));
+        }
+    }
+
+    public async Task PanToCoordinates(double lat, double lon)
+    {
+        await jsModule!.InvokeVoidAsync($"{jsInteropName}.panToCoordinates", [lat, lon]);
+    }
+
     [JSInvokable]
     public async Task OnZoomLevel(double lat, double lon, int zoom)
     {
 #if DEBUG
-    using (HttpClient client = new HttpClient())
-    {
+    using HttpClient client = new HttpClient();
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
     client.DefaultRequestHeaders.Referrer = new Uri("http://mt1.google.com");
 
@@ -143,19 +153,24 @@
     {
         for (int x = (tileX - 3); x < (tileX + 3); x++)
         {
-            MapTile? mapTile = await _MapTileService.GetMapTile(x, y, zoom);
-            if (mapTile is null)
-            {
-                string url = $"http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={zoom}";
-                tasks.Add(DownloadAndSaveTile(client, url, x, y, zoom));
-                _cachingMapTiles = true;
-            }
+            tasks.Add(Task.Run(async () => {
+                MapTile? mapTile = await _MapTileService.GetMapTile(x, y, zoom);
+                if (mapTile is null)
+                {
+                    if (!_cachingMapTiles)
+                    {
+                        _cachingMapTiles = true;
+                        await InvokeAsync(StateHasChanged);
+                    }
+                    string url = $"http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={zoom}";
+                    await DownloadAndSaveTile(client, url, x, y, zoom);
+                }
+            }));
         }
     }
 
     await Task.WhenAll(tasks);
     _cachingMapTiles = false;
-    }
 #else
     await Task.CompletedTask;
 #endif
@@ -194,6 +209,8 @@
 
     async ValueTask IAsyncDisposable.DisposeAsync()
     {
+        _GPSWaypointService.UnsubscribeFromWaypointsChanges(OnWaypointSync);
+        _GPSWaypointState.UnsubscribeFromWaypointChanged(OnWaypointChanged);
         try
         {
             if (jsModule is not null)
