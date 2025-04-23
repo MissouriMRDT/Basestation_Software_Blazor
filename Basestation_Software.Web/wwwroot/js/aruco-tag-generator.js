@@ -1,6 +1,5 @@
 ﻿// Taken from: https://chev.me/arucogen/
 
-var generatedArucoTags = {};
 var arucoTagDict = null;
 
 // Fetch markers dict
@@ -96,5 +95,17 @@ export async function appendArucoMarker(elementRef, scale, width, height, dictNa
     const svg = await generateArucoMarker(scale, width, height, dictName, id);
     if (elementRef) {
         elementRef.appendChild(svg);
+    }
+}
+
+export async function updateArucoMarker(elementRef, scale, width, height, dictName, id) {
+    for (const child of elementRef.children) {
+        if (child.nodeName.toUpperCase() == "SVG") {
+            const svg = await generateArucoMarker(scale, width, height, dictName, id);
+            if (elementRef) {
+                elementRef.replaceChild(svg, child);
+                return;
+            }
+        }
     }
 }
