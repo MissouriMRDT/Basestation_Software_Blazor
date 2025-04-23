@@ -1,7 +1,7 @@
-﻿@implements IDisposable
+﻿@implements IAsyncDisposable
 @inject IJSRuntime _IJSRuntime
 
-<div @ref=_generateSVG class="p-0"></div>
+<div @ref=_SVGContainer class="p-0"></div>
 
 @code
 {
@@ -11,19 +11,34 @@
     [Parameter]
     public int Scale { get; set; } = 4;
 
-    private ElementReference? _generateSVG;
+    private ElementReference? _SVGContainer;
+
+    private IJSObjectReference? jsModule;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            var jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/aruco-tag-generator.js");
-            await jsModule.InvokeVoidAsync("appendArucoMarker", [_generateSVG, Scale, 4, 4, "4x4_1000", ID]);
+            jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/aruco-tag-generator.js");
+            await jsModule.InvokeVoidAsync("appendArucoMarker", [_SVGContainer, Scale, 4, 4, "4x4_1000", ID]);
+        }
+        else if (jsModule is not null)
+        {
+            await jsModule.InvokeVoidAsync("updateArucoMarker", [_SVGContainer, Scale, 4, 4, "4x4_1000", ID]);
         }
     }
 
-    void IDisposable.Dispose()
+    async ValueTask IAsyncDisposable.DisposeAsync()
     {
-
+        try
+        {
+            if (jsModule is not null)
+            {
+                await jsModule.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
     }
 }

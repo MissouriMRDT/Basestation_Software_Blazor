@@ -76,13 +76,11 @@ export class RoverMap {
         if (radius === 0) {
             L.circleMarker([lat, lng], { radius: 20, color: color, dashArray: "15.4 16", fill: false })
                 .on("click", () => {
-                    console.log("clicked a marker");
                     this.dotNetComponent.invokeMethodAsync("OnWaypointSelected", lat, lng);
                 }).addTo(this.waypointLayerGroup);
         } else {
             L.circle([lat, lng], { radius: radius, color: color })
                 .on("click", () => {
-                    console.log("clicked a circle");
                     this.dotNetComponent.invokeMethodAsync("OnWaypointSelected", lat, lng);
                 })
                 .addTo(this.waypointLayerGroup);

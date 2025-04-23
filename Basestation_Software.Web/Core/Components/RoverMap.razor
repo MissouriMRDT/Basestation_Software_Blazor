@@ -107,7 +107,7 @@
             // Plot waypoints and keep them updated.
             await PlotWaypoints();
             _GPSWaypointService.SubscribeToWaypointsChanges(OnWaypointSync);
-            _GPSWaypointState.SubscribeToWaypointChanged(OnWaypointChanged);
+            _GPSWaypointState.SubscribeToWaypointSelected(OnWaypointSelected);
         }
     }
 
@@ -148,11 +148,10 @@
         });
     }
 
-    private void OnWaypointChanged(List<GPSWaypointInput> waypoints)
+    private async Task OnWaypointSelected(GPSWaypoint? waypoint)
     {
-        if (waypoints.Count > 0) {
-            var target = waypoints.First();
-            _ = PanToCoordinates(Double.Parse(target.Latitude), Double.Parse(target.Longitude));
+        if (waypoint is not null && waypoint.Latitude is not null && waypoint.Longitude is not null) {
+            await PanToCoordinates(waypoint.Latitude ?? 0, waypoint.Longitude ?? 0);
         }
     }
 
@@ -238,19 +237,18 @@
     {
         // Find closest match by lat and lon
         List<GPSWaypoint> waypoints = _GPSWaypointService.GetGPSWaypoints();
-        GPSWaypoint closestWaypoint = waypoints.OrderBy(w => Math.Abs((w.Latitude ?? 100 - lat)*(w.Longitude ?? 100 - lon))).First();
-        Console.WriteLine("Selected Waypoint {0}", closestWaypoint.ID);
+        GPSWaypoint? closestWaypoint = waypoints.OrderBy(w => Math.Abs(((w.Latitude ?? 100) - lat)*((w.Longitude ?? 100) - lon))).FirstOrDefault();
+        if (closestWaypoint is not null)
+        {
+            _GPSWaypointState.SelectedWaypoint = closestWaypoint;
+        }
         await Task.CompletedTask;
-        // GPSWaypointInput stupidContainer = new() {
-
-        // };
-        // _GPSWaypointState.SelectedWaypoints = [stupidContainer];
     }
 
     async ValueTask IAsyncDisposable.DisposeAsync()
     {
         _GPSWaypointService.UnsubscribeFromWaypointsChanges(OnWaypointSync);
-        _GPSWaypointState.UnsubscribeFromWaypointChanged(OnWaypointChanged);
+        _GPSWaypointState.UnsubscribeFromWaypointSelected(OnWaypointSelected);
         try
         {
             if (jsModule is not null)
