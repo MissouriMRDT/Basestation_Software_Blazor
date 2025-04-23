@@ -7,7 +7,7 @@ import { OrbitControls } from "./lib/three/OrbitControls.js";
 export const roverViews = {};
 
 export class Rover3DView {
-    id = null;
+    id = "";
     dotNetComponent = null;
     renderer = null;
     scene = null;
@@ -38,7 +38,7 @@ export class Rover3DView {
 
         const groundPlane = new THREE.Mesh(
             new THREE.PlaneGeometry(20, 20),
-            new THREE.MeshPhongMaterial({ color: 0xa1a1a1, side: THREE.DoubleSide })
+            new THREE.MeshPhongMaterial({ color: 0xa1a1a1, side: THREE.FrontSide })
         );
         groundPlane.rotation.x = -Math.PI / 2;
         groundPlane.position.y = -5;

@@ -8,8 +8,8 @@
             <div class="col-6 d-flex align-self-center">
                 <h3>Waypoints</h3>
                 <div class="vr">&nbsp;</div>
-                    <RadzenButton ButtonStyle="ButtonStyle.Dark" Text="New Waypoint" Click="@InsertRow" />
-                    
+                <RadzenButton ButtonStyle="ButtonStyle.Dark" Text="New Waypoint" Click="@InsertRow" />
+
             </div>
             <div class ="col-6 d-flex justify-content-end">
                 <RadzenCheckBox TValue="bool" @bind-Value="@_showTagIDs" Name="TagIDVisToggle"></RadzenCheckBox>
@@ -36,23 +36,23 @@
         }
         else
         {
-        
+
             <RadzenDataGrid @ref="_waypointsDataGrid"
-                            Data="@_waypointsInputTable"
-                            EditMode="DataGridEditMode.Multiple"
-                            TItem="GPSWaypointInput"
-                            RowUpdate="@OnUpdateRow"
-                            RowCreate="@OnCreateRow"
-                            AllowSorting="true"
-                            AllowMultiColumnSorting="true"
-                            AllowVirtualization="false"
-                            Density="Density.Compact"
-                            AllowFiltering="false"
-                            AllowColumnResize="true"
-                            Style="height: 100%;"
-                            SelectionMode="DataGridSelectionMode.Single"
-                            CellRender="@OnCellRender"
-                            RowClick="@OnRowClick">
+            Data="@_waypointsInputTable"
+            EditMode="DataGridEditMode.Multiple"
+            TItem="GPSWaypointInput"
+            RowUpdate="@OnUpdateRow"
+            RowCreate="@OnCreateRow"
+            AllowSorting="true"
+            AllowMultiColumnSorting="true"
+            AllowVirtualization="false"
+            Density="Density.Compact"
+            AllowFiltering="false"
+            AllowColumnResize="true"
+            Style="height: 100%;"
+            SelectionMode="DataGridSelectionMode.Single"
+            CellRender="@OnCellRender"
+            RowClick="@OnRowClick">
                 <Columns>
                     @* <RadzenDataGridColumn Property="Timestamp" Title="Timestamp" /> *@
                     <RadzenDataGridColumn Property="Name" Title="Waypoint">
@@ -89,7 +89,13 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn Property="TagID" Title="Tag ID" Visible=@_showTagIDs>
                         <Template Context="waypoint">
-                            @waypoint.TagID
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
+                                @waypoint.TagID
+                                @if (waypoint.TagID >= 0)
+                                {
+                                    <ArucoTagDisplay ID="@waypoint.TagID" Scale="4" />
+                                }
+                            </RadzenStack>
                         </Template>
                         <EditTemplate Context="waypoint">
                             <RadzenNumeric Name="TagID" @bind-Value="waypoint.TagID" class="form-control form-control-sm" style="z-index: 0;" />
