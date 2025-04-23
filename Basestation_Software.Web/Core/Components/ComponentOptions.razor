@@ -56,9 +56,9 @@
         <p>Height</p><InputNumber @bind-Value=Height></InputNumber>
         <p>Type</p>
         <select @bind="@Type_">
-            @foreach (var typename in Assembly.GetExecutingAssembly().GetTypes().Where(type => type.Namespace == "Basestation_Software.Web.Core.Components" && type.BaseType?.Name == "ComponentBase").Select(type => type.Name))
+            @foreach (var typename in GetComponentTypes())
             {
-                <option value="@typename">@typename</option>
+                <option value="@typename.Name">@typename.Name</option>
             }
         </select>
         <p>PlaceSelf</p><InputText @bind-Value=PlaceSelf></InputText>
@@ -72,7 +72,7 @@
 {
     // Component parameters
     [Parameter]
-    public List<Component> Components { get; set; }
+    public List<Component> Components { get; set; } = [];
     [Parameter]
     public int ComponentIndex { get; set; }
     [Parameter]
@@ -81,7 +81,7 @@
     // State
     private bool Visible = false;
     private int X, Y, Width, Height;
-    private string Type_, PlaceSelf, ID;
+    private string Type_ = "", PlaceSelf = "", ID = "";
 
     protected override void OnInitialized()
     {
@@ -145,6 +145,15 @@
         Visible = false;
         await OnSaved.InvokeAsync();
         await InvokeAsync(StateHasChanged);
+    }
+
+    private static IEnumerable<Type> GetComponentTypes()
+    {
+        return Assembly.GetExecutingAssembly()
+            .GetTypes()
+            .Where(type => type.Namespace == "Basestation_Software.Web.Core.Components"
+                && type.IsSubclassOf(typeof(ComponentBase))
+                && !type.IsDefined(typeof(ComponentAttributes.Ignore)));
     }
 
     void IDisposable.Dispose() { }
