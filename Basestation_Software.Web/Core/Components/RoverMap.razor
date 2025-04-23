@@ -17,7 +17,7 @@
             }
         </div>
     </div>
-    <div class="card-body" style="padding: 0;">
+    <div class="card-body p-0">
         @if (!_dataLoaded)
         {
             <div class="row">
@@ -32,7 +32,6 @@
             <div class="w-100 h-100 "id="@ID" style="position: relative;"></div>
         }
     </div>
-    <div class="card-footer" id="cursorPosition"></div>
 </div>
 
 @code
@@ -98,10 +97,11 @@
         await Task.WhenAll(_GPSWaypointService.GetGPSWaypoints().ConvertAll<Task>(waypoint =>
         {
             return jsModule!.InvokeVoidAsync($"{jsInteropName}.addWaypointMarker", [
-                waypoint.Latitude.GetValueOrDefault(0),
-                waypoint.Longitude.GetValueOrDefault(0),
-                waypoint.SearchRadius.GetValueOrDefault(0),
-                ColorTranslator.ToHtml(Color.FromArgb(waypoint.WaypointColor.GetValueOrDefault(0)))
+                waypoint.Latitude ?? 0,
+                waypoint.Longitude ?? 0,
+                waypoint.SearchRadius ?? 0,
+                ColorTranslator.ToHtml(Color.FromArgb(waypoint.WaypointColor ?? 0)),
+                waypoint.TagID ?? -1
             ]).AsTask();
         }));
     }
@@ -126,7 +126,7 @@
     {
         if (waypoints.Count > 0) {
             var target = waypoints.First();
-            Task.Run(async () => PanToCoordinates(Double.Parse(target.Latitude), Double.Parse(target.Longitude)));
+            _ = PanToCoordinates(Double.Parse(target.Latitude), Double.Parse(target.Longitude));
         }
     }
 
@@ -205,6 +205,20 @@
     {
         double latRad = lat * Math.PI / 180.0;
         return (int)Math.Floor((1.0 - Math.Log(Math.Tan(latRad) + 1.0 / Math.Cos(latRad)) / Math.PI) / 2.0 * Math.Pow(2.0, zoom));
+    }
+
+    [JSInvokable]
+    public async Task OnWaypointSelected(double lat, double lon)
+    {
+        // Find closest match by lat and lon
+        List<GPSWaypoint> waypoints = _GPSWaypointService.GetGPSWaypoints();
+        GPSWaypoint closestWaypoint = waypoints.OrderBy(w => Math.Abs((w.Latitude ?? 100 - lat)*(w.Longitude ?? 100 - lon))).First();
+        Console.WriteLine("Selected Waypoint {0}", closestWaypoint.ID);
+        await Task.CompletedTask;
+        // GPSWaypointInput stupidContainer = new() {
+
+        // };
+        // _GPSWaypointState.SelectedWaypoints = [stupidContainer];
     }
 
     async ValueTask IAsyncDisposable.DisposeAsync()

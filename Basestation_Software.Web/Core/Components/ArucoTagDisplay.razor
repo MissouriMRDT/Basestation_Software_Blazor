@@ -1,0 +1,29 @@
+﻿@implements IDisposable
+@inject IJSRuntime _IJSRuntime
+
+<div @ref=_generateSVG class="p-0"></div>
+
+@code
+{
+    [Parameter]
+    public int ID { get; set; }
+
+    [Parameter]
+    public int Scale { get; set; } = 4;
+
+    private ElementReference? _generateSVG;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/aruco-tag-generator.js");
+            await jsModule.InvokeVoidAsync("appendArucoMarker", [_generateSVG, Scale, 4, 4, "4x4_1000", ID]);
+        }
+    }
+
+    void IDisposable.Dispose()
+    {
+
+    }
+}
