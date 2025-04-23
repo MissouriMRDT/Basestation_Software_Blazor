@@ -209,6 +209,12 @@
                 continue;
             }
 
+            if (componentType.IsDefined(typeof(ComponentAttributes.Ignore)))
+            {
+                _ToastService.ShowWarning($"Component type {component.Type} is not valid.");
+                continue;
+            }
+
             builder.OpenElement(i, "div"); // <div>
             builder.AddAttribute(i + 1, "style",
                 $"grid-area: {component.Y + 1} / {component.X + 1} / span {component.Height} / span {component.Width}; place-self: {component.PlaceSelf}"

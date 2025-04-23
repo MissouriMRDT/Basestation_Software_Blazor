@@ -49,20 +49,20 @@ public class OpService
     public void SetTeleop()
     {
         OpColor = Color.Blue;
-        _roveCommService.Send<byte>("Core", "StateDisplay", [0]);
+        _ = _roveCommService.SendAsync<byte>("Core", "StateDisplay", [(byte)RoveComm.Boards.Core.DisplayState.TELEOP]);
 
     }
 
     public void SetAutonomy()
     {
         OpColor = Color.Red;
-        _roveCommService.Send<byte>("Core", "StateDisplay", [1]);
+        _ = _roveCommService.SendAsync<byte>("Core", "StateDisplay", [(byte)RoveComm.Boards.Core.DisplayState.AUTONOMY]);
     }
 
     public void SetReachedGoal()
     {
         OpColor = Color.Green;
-        _roveCommService.Send<byte>("Core", "StateDisplay", [2]);
+        _ = _roveCommService.SendAsync<byte>("Core", "StateDisplay", [(byte)RoveComm.Boards.Core.DisplayState.REACHED_GOAL]);
     }
 
 }

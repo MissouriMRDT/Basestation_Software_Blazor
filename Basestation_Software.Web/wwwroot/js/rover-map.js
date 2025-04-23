@@ -40,23 +40,21 @@ export class RoverMap {
         let Position = L.Control.extend({
             container: null,
             options: {
-                position: "bottomleft"
+                position: "topright"
             },
             onAdd: function(map) {
                 this.container = L.DomUtil.create("div", "mouseposition");
-                this.container.style = "padding: 0.1em; color: red; background-color: rgba(255, 255, 0, 0.5);";
+                this.container.style = "padding: 0.1em; color: red; background-color: rgba(255, 255, 0, 0.9);";
                 return this.container;
             },
             updateHTML: function(lat, lng) {
-                this.container.innerHTML = `Latitude: ${lat} Longitiude: ${lng}`;
+                this.container.innerHTML = `Latitude: ${lat.toFixed(6)} Longitiude: ${lng.toFixed(6)}`;
             }
         });
         this.positionDisplay = new Position();
         this.lMap.addControl(this.positionDisplay);
         this.lMap.addEventListener('mousemove', (event) => {
-            let lat = Math.round(event.latlng.lat * 100000) / 100000;
-            let lng = Math.round(event.latlng.lng * 100000) / 100000;
-            this.positionDisplay.updateHTML(lat, lng);
+            this.positionDisplay.updateHTML(event.latlng.lat, event.latlng.lng);
         });
 
         this.waypointLayerGroup = L.layerGroup([]).addTo(this.lMap);
