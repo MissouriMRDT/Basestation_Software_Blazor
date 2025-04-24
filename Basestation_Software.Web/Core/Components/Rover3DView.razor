@@ -3,29 +3,92 @@
 @inject RoveCommService _RoveCommService
 @inject IJSRuntime _IJSRuntime
 
+<style>
+    .motor-info-grid {
+        flex-grow: 1;
+        flex-basis: 200px;
+        display: grid;
+        gap: 2px;
+        padding: 2px;
+        background-color: black;
+    }
+</style>
+
 <div class="card h-100">
     <div class="card-header">
         <h5 class="mr-auto">3D Rover</h5>
     </div>
     <div class="card-body p-0">
-        @if (!_dataLoaded)
-        {
-            <div class="row">
-                <div class="spinner-border " role="status"></div>
-                <div class="col">
-                    <h3>Loading...</h3>
-                </div>
+        <div class="h-100 d-flex flex-wrap align-items-start">
+            <div style="flex-basis: 200px; flex-grow: 1; height: 50%;">
+                @if (!_dataLoaded)
+                {
+                    <div class="row">
+                        <div class="spinner-border " role="status"></div>
+                        <div class="col">
+                            <h3>Loading...</h3>
+                        </div>
+                    </div>
+                }
+                <div id="rover-view-@ID" class="h-100" hidden="@(!_dataLoaded)"></div>
             </div>
-        }
-        <div id="rover-view-@ID" class="w-100 h-100" hidden="@(!_dataLoaded)"></div>
+            <div class="motor-info-grid">
+                @for (int i = 0; i < 6; i++)
+                {
+                    MotorInfo? motor = _motorData[i];
+                    <div class="d-flex flex-column" style="grid-row-start: @(i % 3); grid-column-start: col-start @(i / 3);">
+                        <div class="d-flex align-items-center @(motor.FaultCode == 0 ? "" : "bg-danger")">
+                            <div class="col-3 text-center fw-bold p-1">@motor.DisplayName</div>
+                            <div class="col d-flex flex-column">
+                                @if (motor.InputCurrent is not null)
+                                {
+                                    <div class="px-2 py-1" style="background-color: color-mix(in oklab, green @(Math.Clamp((double)motor.InputCurrent, 0, 6)/6.0 * 100)%, red); color: black;">
+                                        Input Current: <span class="float-end">@($"{motor.InputCurrent:0.00}") A</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="px-2 py-1" style="background-color: lightgray; color: black;">Input Current: --</div>
+                                }
+
+                                @if (motor.MotorCurrent is not null)
+                                {
+                                    <div class="px-2 py-1" style="background-color: color-mix(in oklab, green @(Math.Clamp((double)motor.MotorCurrent, 0, 60)/60.0 * 100)%, red); color: black;">
+                                        Motor Current: <span class="float-end">@($"{motor.InputCurrent:0.00}") A</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="px-2 py-1" style="background-color: lightgray; color: black;">Motor Current: --</div>
+                                }
+                            </div>
+                        </div>
+                        @if (motor.FaultCode != 0)
+                        {
+                            <div class="bg-danger px-2 py-1 fw-bold" sytle="font-family: Consolas; color: black;">@(Enum.GetName<RoveComm.Boards.Core.VESCFaultCode>(motor.FaultCode))</div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
     </div>
 </div>
 
+
 @code
 {
-
     [Parameter]
     public string ID { get; set; } = "";
+
+    private class MotorInfo
+    {
+        public string DisplayName = "";
+        public float? InputCurrent { get; set; }
+        public float? MotorCurrent { get; set; }
+        public RoveComm.Boards.Core.VESCFaultCode FaultCode { get; set; } = 0;
+    }
+
+    private List<MotorInfo> _motorData = [];
 
     // In radians
     private double Pitch = 0, Yaw = 0, Roll = 0;
@@ -38,6 +101,12 @@
     protected override void OnInitialized()
     {
         jsInteropName = $"roverViews.{ID}";
+        _motorData.Add(new() { DisplayName = "FL" });
+        _motorData.Add(new() { DisplayName = "ML" });
+        _motorData.Add(new() { DisplayName = "BL" });
+        _motorData.Add(new() { DisplayName = "FR" });
+        _motorData.Add(new() { DisplayName = "MR" });
+        _motorData.Add(new() { DisplayName = "BR" });
         // TODO: fix this when CoreBoard's accelerometer is fixed
         _RoveCommService.On<float>("Nav", "IMUData", async (packet) =>
         {
@@ -47,6 +116,36 @@
             // Roll relative to upright [-180L, 180R]
             Roll = Math.Clamp(packet.Data[2], -180, 180) * DEG_TO_RAD;
             await jsModule!.InvokeVoidAsync($"{jsInteropName}.updateAngles", [Pitch, Yaw, Roll]);
+        });
+        //100 Core MotorCurrents 0 0 0 0 0 0
+        //100 Core VESCCurrents 0 0 0 0 0 0
+        //100 Core VESCFault 0 1
+        _RoveCommService.On<float>("Core", "MotorCurrents", async (packet) =>
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                _motorData[i].MotorCurrent = packet.Data[i];
+            }
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<float>("Core", "VESCCurrents", async (packet) =>
+        {
+            for (int i = 0; i < 6; i++)
+            {
+                _motorData[i].InputCurrent = packet.Data[i];
+            }
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<byte>("Core", "VESCFault", async (packet) =>
+        {
+            int motorId = packet.Data[0];
+            if (motorId < 6)
+            {
+                _motorData[motorId].FaultCode = (RoveComm.Boards.Core.VESCFaultCode)packet.Data[1];
+                await InvokeAsync(StateHasChanged);
+            }
         });
     }
 
