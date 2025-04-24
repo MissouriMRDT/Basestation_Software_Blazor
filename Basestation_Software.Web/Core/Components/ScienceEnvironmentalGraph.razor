@@ -1,0 +1,130 @@
+@inject RoveCommService _RoveCommService
+@using System;
+
+<div class="card h-100">
+    <div class="card-header">
+        <h3>Science Enviromental Graph</h3>
+    </div>
+    <div class="card-body">
+        <RadzenChart>
+            <RadzenLineSeries Smooth="true" Data="@temps" CategoryProperty="Time" Title="Temperature" ValueProperty="Temperature">
+                <RadzenMarkers Visible="@showMarkers" />
+                <RadzenSeriesDataLabels Visible="@showDataLabels" />
+            </RadzenLineSeries>
+            <RadzenLineSeries Smooth="true" Data="@humids" CategoryProperty="Time" Title="Humidity" LineType="LineType.Dashed" ValueProperty="Humidity">
+                <RadzenMarkers Visible="@showMarkers" />
+                <RadzenSeriesDataLabels Visible="@showDataLabels" />
+            </RadzenLineSeries>
+        </RadzenChart>
+        <button class="btn btn-temp-rng" @onclick=AddRandTempData>Add Random Temperature Data</button>
+        <button class="btn btn-humid-rng" @onclick=AddRandHumidData>Add Random Humidity Data</button>
+        <button class="btn btn-clear" @onclick=ClearData>Clear Data</button>
+    </div>
+</div>
+
+@code {
+    bool showDataLabels = true;
+    bool showMarkers = true;
+    static float time = 0;
+
+    // Data
+    class TempItem
+    {
+        public float Time { get; }
+        public float Temperature { get; set; }
+
+        public TempItem()
+        {
+            Time = time;
+            Temperature = 0;
+        }
+        public TempItem(float temp)
+        {
+            Time = time;
+            Temperature = temp;
+        }
+    }
+    class HumidItem
+    {
+        public float Time { get; set; }
+        public float Humidity { get; set; }
+
+        public HumidItem()
+        {
+            Time = time;
+            Humidity = 0;
+        }
+        public HumidItem(float humid)
+        {
+            Time = time;
+            Humidity = humid;
+        }
+    }
+    List<TempItem> temps = new();
+    List<HumidItem> humids = new();
+
+    // Set up timer
+    private System.Timers.Timer? timer;
+    private async void UpdateTime(object sender, System.Timers.ElapsedEventArgs e)
+    {
+        temps.Add(new TempItem());
+        humids.Add(new HumidItem());
+        time += 0.5f;
+        await InvokeAsync(StateHasChanged);
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        // Set up callback functions
+        _RoveCommService.On<float>("Auger", "Temperature", OnTemperatureTelemetry);
+        _RoveCommService.On<float>("Auger", "Humidity", OnHumidityTelemetry);
+
+        // Set up timer
+        timer = new System.Timers.Timer(500); // 500 ms
+        timer.Elapsed += UpdateTime;
+        timer.Start();
+    }
+
+    // Called whenever a new temperature value is received
+    private async Task OnTemperatureTelemetry(RoveCommPacket<float> packet)
+    {
+        temps[^1].Temperature = packet.Data[0];
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // Called whenever a new humidity value is received
+    private async Task OnHumidityTelemetry(RoveCommPacket<float> packet)
+    {
+        int curIndex = humids.Count - 1;
+        humids[curIndex].Humidity = packet.Data[0];
+        
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // Test function for adding temperature data
+    private void AddRandTempData()
+    {
+        Random rand = new Random();
+        temps[^1].Temperature = rand.Next(20, 41);
+    }
+
+    // Test function for adding humidity data
+    private void AddRandHumidData()
+    {
+        Random rand = new Random();
+        humids[^1].Humidity = rand.Next(0, 101);
+    }
+
+    // Remove all empty data
+    @* private void CleanData<T>(List<T> list, int curIndex)
+    {
+        list.RemoveAll(x => )
+    } *@
+
+    // Clear all graphing data
+    private void ClearData()
+    {
+        temps.Clear();
+        humids.Clear();
+        time = 0;
+    }
+}
