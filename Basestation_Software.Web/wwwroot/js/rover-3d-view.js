@@ -58,9 +58,11 @@ export class Rover3DView {
         camera.position.z = 6;
 
         const renderer = new THREE.WebGLRenderer({ alpha: true });
-        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setSize(container.clientWidth, container.clientHeight, false);
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap
+        renderer.domElement.style = "position: absolute; top: 0; left: 0;";
+        container.style.position = "relative";
         container.appendChild(renderer.domElement);
 
         this.scene = scene;
@@ -82,7 +84,7 @@ export class Rover3DView {
         if (container) {
             this.camera.aspect = container.clientWidth / container.clientHeight;
             this.camera.updateProjectionMatrix();
-            this.renderer.setSize(container.clientWidth, container.clientHeight);
+            this.renderer.setSize(container.clientWidth, container.clientHeight, false);
         }
     }
 
