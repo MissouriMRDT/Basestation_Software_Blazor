@@ -1,0 +1,147 @@
+@inject RoveCommService _RoveCommService
+@using System;
+
+<div class="card h-100">
+    <div class="card-header">
+        <h3>Science Enviromental Graph</h3>
+    </div>
+    <div class="card-body">
+        <RadzenChart>
+            <RadzenValueAxis>
+                <RadzenAxisTitle Text="Temperature (°C) and Humidity (0-100%)"/>
+            </RadzenValueAxis>
+            <RadzenLineSeries Data="@timeProgression" CategoryProperty="Time" Title="Time" ValueProperty="yValue" StrokeWidth="0">
+                <RadzenMarkers Visible="false" />
+                <RadzenSeriesDataLabels Visible="false" />
+                <RadzenChartTooltipOptions Visible="false"/>
+            </RadzenLineSeries>
+            <RadzenLineSeries Smooth="true" Data="@temps" CategoryProperty="Time" Title="Temperature" ValueProperty="Temperature">
+                <RadzenMarkers Visible="false" />
+                <RadzenSeriesDataLabels Visible="@showDataLabels" />
+            </RadzenLineSeries>
+            <RadzenLineSeries Smooth="true" Data="@humids" CategoryProperty="Time" Title="Humidity" LineType="LineType.Dashed" ValueProperty="Humidity">
+                <RadzenMarkers Visible="false" />
+                <RadzenSeriesDataLabels Visible="@showDataLabels" />
+            </RadzenLineSeries>
+        </RadzenChart>
+        <div style="box-sizing: border-box;display: flex;flex-flow: column nowrap">
+            <div style="display: flex;justify-content: space-around;align-items: center;border-radius: 25px;background-color: #292E33">
+                <div style="padding: 10px 40px">
+                    <RadzenCheckBox @bind-Value=@chartGrowsWithTime Name="ChartGrowsWithTime" />
+                    <RadzenLabel Text="Chart Grows With Time" Component="ChartGrowsWithTime" class="rz-ms-2" />
+                </div>
+                <div style="padding: 10px 40px">
+                    <RadzenCheckBox @bind-Value=@showDataLabels Name="ShowDataLabels" />
+                    <RadzenLabel Text="Show Data Labels" Component="ShowDataLabels" class="rz-ms-2" />
+                </div>
+                <div style="padding: 5px 40px"><button class="btn btn-primary" style="font-size: 16px" @onclick=ClearData>Clear Data</button></div>
+                <div style="width: 250px;padding: 15px 40px;text-align: center">Elapsed Time: @time.ToString("N1")</div>
+            </div>
+            <div style="display: flex;justify-content: space-around">
+                <button class="btn btn-primary" @onclick=AddRandTempData>Add Random Temperature Data</button>
+                <button class="btn btn-primary" @onclick=AddRandHumidData>Add Random Humidity Data</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    bool showDataLabels = true;
+    bool chartGrowsWithTime = true;
+    static float time = 0;
+    float timeInterval = 0.1f;
+
+    // Data
+    class TempItem
+    {
+        public float Time { get; }
+        public float Temperature { get; }
+        public TempItem(float temp)
+        {
+            Time = time;
+            Temperature = temp;
+        }
+    }
+    class HumidItem
+    {
+        public float Time { get; }
+        public float Humidity { get; }
+        public HumidItem(float humid)
+        {
+            Time = time;
+            Humidity = humid;
+        }
+    }
+    // Dummy class so the graph is always shifting
+    class TimeItem
+    {
+        public float Time { get; }
+        public int yValue { get; }
+        public TimeItem()
+        {
+            Time = time;
+            yValue = 0;
+        }
+    }
+    List<TempItem> temps = new();
+    List<HumidItem> humids = new();
+    List<TimeItem> timeProgression = new();
+
+    // Set up timer
+    private System.Timers.Timer timer;
+    private async void UpdateTime(object sender, System.Timers.ElapsedEventArgs e)
+    {
+        if(chartGrowsWithTime)
+            timeProgression.Add(new TimeItem());
+        time += timeInterval;
+        await InvokeAsync(StateHasChanged);
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        // Set up callback functions
+        _RoveCommService.On<float>("Auger", "Temperature", OnTemperatureTelemetry);
+        _RoveCommService.On<float>("Auger", "Humidity", OnHumidityTelemetry);
+
+        // Set up timer
+        timer = new System.Timers.Timer(timeInterval*1000);
+        timer.Elapsed += UpdateTime;
+        timer.Start();
+    }
+
+    // Called whenever a new temperature value is received
+    private async Task OnTemperatureTelemetry(RoveCommPacket<float> packet)
+    {
+        temps.Add(new TempItem(packet.Data[0]));
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // Called whenever a new humidity value is received
+    private async Task OnHumidityTelemetry(RoveCommPacket<float> packet)
+    {
+        humids.Add(new HumidItem(packet.Data[0]));
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // Test function for adding temperature data
+    private void AddRandTempData()
+    {
+        Random rand = new Random();
+        temps.Add(new TempItem(rand.Next(20, 41)));
+    }
+
+    // Test function for adding humidity data
+    private void AddRandHumidData()
+    {
+        Random rand = new Random();
+        humids.Add(new HumidItem(rand.Next(0, 101)));
+    }
+
+    // Clear all graphing data
+    private void ClearData()
+    {
+        temps.Clear();
+        humids.Clear();
+        timeProgression.Clear();
+        time = 0;
+    }
+}
