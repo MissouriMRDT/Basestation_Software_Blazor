@@ -16,16 +16,16 @@
 			<RadzenCheckBox TValue="bool" Style="margin:8px 0px 8px 8px;" Value="@(_LoggerService.autoExport)" Change="@(value => updateAutoExport(value))"></RadzenCheckBox>
 		</div>
 		<div class="optionBarColumn">
-			<RadzenText class="optionText">Auto Export</RadzenText>
+			<label class="optionText">Auto Export</label>
 		</div>
 		<div class="optionBarColumn optionTextColumn">
-			<RadzenText class="optionText">Auto Export Size</RadzenText>
+			<label class="optionText">Auto Export Size</label>
 		</div>
 		<div class="optionBarColumn optionTextBoxColumn">
 			<RadzenTextBox class="optionTextBox" Value="@(_LoggerService.autoExportSize.ToString())" ValueChanged="@(value => updateAutoExportSize(value))"></RadzenTextBox>
 		</div>
 		<div class="optionBarColumn optionTextColumn">
-			<RadzenText class="optionText">Manual Export/Clear Range</RadzenText>
+			<label class="optionText">Manual Export/Clear Range</label>
 		</div>
 		<div class="optionBarColumn optionTextBoxColumn">
 			<RadzenTextBox class="optionTextBox" Value="" ValueChanged="@(value => updateExportRange_lowerLimit(value))"></RadzenTextBox>
@@ -34,13 +34,13 @@
 			<RadzenTextBox class="optionTextBox" Value="" ValueChanged="@(value => updateExportRange_upperLimit(value))"></RadzenTextBox>
 		</div>
 		<div class="optionBarColumn optionTextColumn">
-			<RadzenText class="optionText">Auto Scroll</RadzenText>
+			<label class="optionText">Auto Scroll</label>
 		</div>
 		<div class="optionBarColumn optionTextBoxColumn">
 			<RadzenCheckBox TValue="bool" Style="margin:8px 0px 8px 8px;" Value="@(autoScroll)" Change="@(value => updateAutoScroll(value))"></RadzenCheckBox>
 		</div>
 		<div class="optionBarColumn optionTextColumn">
-			<RadzenText class="optionText">Page Size</RadzenText>
+			<label class="optionText">Page Size</label>
 		</div>
 		<div class="optionBarColumn optionTextBoxColumn">
 			<RadzenTextBox class="optionTextBox" Value="@(pageSize.ToString())" ValueChanged="@(value => onPageSizeUpdate(value))"></RadzenTextBox>
@@ -96,7 +96,7 @@
 			</RadzenButton>
 		</div>
 		<div class="navBarColumn_center">
-			<RadzenText Style="margin:0px">@(pageStartingIndex + 1) - @(Math.Min(pageEndingIndex + 1, logs_filtered.Count())) / @(logs_filtered.Count())</RadzenText>
+			<label Style="margin:0px">@(pageStartingIndex + 1) - @(Math.Min(pageEndingIndex + 1, logs_filtered.Count())) / @(logs_filtered.Count())</label>
 		</div>
 		<div class="navBarColumn_right">
 			<RadzenButton class="navBarButton" Click="@(nextPage)">
@@ -141,7 +141,7 @@
 			</RadzenButton>
 		</div>
 		<div class="navBarColumn_center">
-			<RadzenText Style="margin:0px;">@(pageStartingIndex + 1) - @(Math.Min(pageEndingIndex + 1, logs_filtered.Count())) / @(logs_filtered.Count())</RadzenText>
+			<label Style="margin:0px;">@(pageStartingIndex + 1) - @(Math.Min(pageEndingIndex + 1, logs_filtered.Count())) / @(logs_filtered.Count())</label>
 		</div>
 		<div class="navBarColumn_right">
 			<RadzenButton class="navBarButton" Click="@(nextPage)">
@@ -368,14 +368,15 @@
 
 	.optionBar {
 		display: flex;
-		background-color: #e9edf0;
+		flex-wrap:wrap;
+		background-color: var(--bs-secondary-bg);
 		margin: 4px;
 		padding: 4px;
 	}
 
 	.optionBarColumn {
 		display: flex;
-		background-color: #e9edf0;
+		background-color: var(--bs-secondary-bg);
 		align-items:center;
 	}
 
@@ -400,7 +401,7 @@
 
 	.logEntry {
 		display:flex;
-		background-color: #e9edf0;
+		background-color: var(--bs-secondary-bg);
 		margin:4px;
 		padding:4px;
 	}
@@ -414,21 +415,21 @@
 
 	.navBar {
 		display:flex;
-		background-color: #e9edf0;
+		background-color: var(--bs-secondary-bg);
 		margin:4px;
 		padding:4px;
 	}
 
 	.navBarColumn_left {
 		display:flex;
-		background-color: #e9edf0;
+		background-color: var(--bs-secondary-bg);
 		flex-shrink:1;
 		flex-basis:0;
 	}
 
 	.navBarColumn_center {
 		display:flex;
-		background-color: #e9edf0;
+		background-color: var(--bs-secondary-bg);
 		flex-grow:1;
 		flex-basis:0;
 		align-items:center;
@@ -437,7 +438,7 @@
 
 	.navBarColumn_right {
 		display:flex;
-		background-color: #e9edf0;
+		background-color: var(--bs-secondary-bg);
 		flex-shrink:1;
 		flex-basis:0;
 	}
