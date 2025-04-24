@@ -7,9 +7,13 @@
     </div>
     <div class="card-body">
         <RadzenChart>
+            <RadzenValueAxis>
+                <RadzenAxisTitle Text="Temperature (°C) and Humidity (0-100%)"/>
+            </RadzenValueAxis>
             <RadzenLineSeries Data="@timeProgression" CategoryProperty="Time" Title="Time" ValueProperty="yValue" StrokeWidth="0">
                 <RadzenMarkers Visible="false" />
                 <RadzenSeriesDataLabels Visible="false" />
+                <RadzenChartTooltipOptions Visible="false"/>
             </RadzenLineSeries>
             <RadzenLineSeries Smooth="true" Data="@temps" CategoryProperty="Time" Title="Temperature" ValueProperty="Temperature">
                 <RadzenMarkers Visible="false" />
