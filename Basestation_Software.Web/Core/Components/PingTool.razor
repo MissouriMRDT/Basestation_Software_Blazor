@@ -1,0 +1,364 @@
+@using System.Net.NetworkInformation;
+@using System.Diagnostics;
+@using System.ComponentModel;
+
+@inject PingService PingService
+@inject RoveCommService RoveCommService
+
+<style>
+    .scrollable {
+        max-height: 50vh;
+        overflow-y: auto;
+        display: block;
+    }
+</style>
+
+<div class="card h-100">
+    <div class="card-header">
+        <h3>Ping Tool</h3>
+    </div>
+    <div class="card-body scrollable">
+        @if (!_dataLoaded)
+        {
+            <div class="row">
+                <div class="spinner-border " role="status"></div>
+                <div class="col">
+                    <h3>Loading...</h3>
+                </div>
+            </div>
+        }
+        else
+        {
+            <Modal @ref="poorConnection_Modal">
+                <Header>
+                    <label><b>Networking Error: Poor Connection</b></label>
+                </Header>
+                <Body>
+                    <label>Pings are failing to reach endpoint. Please check that all networking components are active and that signal strength is sufficient.</label>
+                </Body>
+            </Modal>
+
+            <!-- Ping Delay Field -->
+            <div class="row">
+                <div class="col" style="display:flex; flex-grow:0; flex-basis:content; align-items:center">
+                    <label>AutoPing Delay (seconds): </label>
+                </div>
+                <div class="col" style="">
+                    <RadzenTextBox style="min-width:15%" Value="5" ValueChanged="@((string value) => UpdateAutoPingDelay(value))"></RadzenTextBox>
+                </div>
+            </div>
+
+            <!-- Ping Timeout Field -->
+            <div class="row">
+                <div class="col" style="display:flex; flex-grow:0; flex-basis:content; align-items:center">
+                    <label>Ping Timeout (seconds): </label>
+                </div>
+                <div class="col" style="">
+                    <RadzenTextBox style="min-width:15%" Value="1" ValueChanged="@((string value) => UpdatePingTimeout(value))"></RadzenTextBox>
+                </div>
+            </div>
+
+            <!-- Autoping All Checkbox -->
+            <div class="row">
+                <div class="col" style="display:flex; flex-grow:0; flex-basis:content; align-items:center">
+                    <RadzenCheckBox Name="AutoPingAll_CheckBox" TValue="bool" ValueChanged="@((bool value) => AutoPingAll(value))"></RadzenCheckBox>
+                </div>
+                <div class="col">
+                    <label>AutoPing All</label>
+                </div>
+            </div>
+
+            <!-- For Spacing -->
+            <div class="row" style="height:16px" />
+
+            <div class="row">
+                <div class="col" style="display:flex; flex-grow:0; flex-basis:content; align-items:center">
+                    <RadzenCheckBox Name="PoorConnectionWarning_CheckBox" TValue="bool" ValueChanged="@((bool value) => UpdateWarnOfPoorConnection(value))"></RadzenCheckBox>
+                </div>
+                <div class="col">
+                    <label>Warn of Poor Connection</label>
+                </div>
+            </div>
+
+            <!-- For Spacing -->
+            <div class="row" style="height:16px" />
+
+            @foreach (var device in devices)
+            {
+                <div class="row">
+                    <div class="col" style="flex-grow:0; align-content:center">
+                        <RadzenCheckBox TValue="bool" @bind-Value="@device.AutoPing"></RadzenCheckBox>
+                    </div>
+                    <div class="col" style="display:flex; justify-content:flex-start; @device.PingStatusHighlight; min-width:40%">
+                        <div class="col" style="margin:4px">
+                            <label>@device.Name</label>
+                        </div>
+                        <div class="col" style="margin:4px">
+                            <label>@device.IpAddress</label>
+                        </div>
+                        <div class="col" style="margin:4px; flex-grow:0">
+                            <label>@device.PingStatus</label>
+                        </div>
+                    </div>
+                    <div class="col" style="flex-grow:0;">
+                        <button onclick="@(() => PingIpAddressAsync(@device, @device.IpAddress))">ICMP</button>
+                    </div>
+                    @if (device.RoveCapable)
+                    {
+                        <div class="col" style="flex-grow:0">
+                            <button onclick="@(() => RovePingBoard(@device, @device.Name))">Rove</button>
+                        </div>
+                    } else
+                    {
+                        <!-- Works but shouldn't be necessary -->
+                        <!-- For spacing purposes -->
+                        <div class="col" style="flex-grow:0">
+                            <button style="visibility:hidden">Rove</button>
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+
+@code
+{
+    // Declare page member variables.
+    private string goodConnection_hightlight = "background-color:lightgreen";
+    private string poorConnection_hightlight = "background-color:lightcoral";
+
+    private System.Timers.Timer? autoPingTimer;
+
+    private int autoPingDelay = 5000;
+    private int pingTimeout = 1000;
+
+    private List<Device> devices = new List<Device> { };
+
+    private Modal poorConnection_Modal = new();
+    private bool warnOfPoorConnection = false;
+
+    // Flags.
+    private bool _dataLoaded = true; // originally set to false
+
+    protected override void OnInitialized()
+    {
+        // Create some timers.
+        autoPingTimer = new System.Timers.Timer(5000);
+        autoPingTimer.Elapsed += AutoPing;
+        autoPingTimer.AutoReset = true;
+        autoPingTimer.Enabled = true;
+
+        // Pull network device IP Addresses from RoveComm Manifest
+        foreach (string netDevice in RoveCommManifest.Devices.Keys)
+        {
+            devices.Add(new Device(
+                name: netDevice,
+                ipAddress: RoveCommManifest.Devices[netDevice].Ip
+            ));
+        }
+
+        // Pull board IP Addresses from RoveComm Manifest
+        foreach (string board in RoveCommManifest.Boards.Keys)
+        {
+            devices.Add(new Device(
+                name: board,
+                ipAddress: RoveCommManifest.Boards[board].IP,
+                roveCapable: true
+            ));
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        //await PingIpAddress();
+    }
+
+    // Handles individual pinging of components (ICMP)
+    private int failedPings = 0;
+    private async Task PingIpAddressAsync(Device device, string ipAddress)
+    {
+        try
+        {
+            PingReply reply = await PingService.PingAsync(ipAddress, pingTimeout);
+            device.PingStatus = reply.Status.ToString();
+
+            // Set PingStatusHighlight
+            if (reply.Status == IPStatus.Success)
+            {
+                device.PingStatusHighlight = goodConnection_hightlight;
+                failedPings = 0;
+            }
+            else
+            {
+                device.PingStatusHighlight = poorConnection_hightlight;
+                failedPings += 1;
+            }
+
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+        }
+    }
+
+    // Handles automatic ICMP pinging of components
+    private bool AutoPingProcessRunning = false;
+    private async void AutoPing(object? sender, System.Timers.ElapsedEventArgs e)
+    {
+        if (!AutoPingProcessRunning) // Ensures that there is not already a process running
+        {
+            try
+            {
+                AutoPingProcessRunning = true;
+                autoPingTimer.Enabled = false;
+                foreach (Device device in devices)
+                {
+                    if (device.AutoPing == true)
+                    {
+                        await PingIpAddressAsync(device, device.IpAddress);
+
+                        if (failedPings >= 4) // Display alert modal if 4 or more consecutive pings fail
+                        {
+                            if (warnOfPoorConnection)
+                            {
+                                await InvokeAsync(poorConnection_Modal.Open);
+                            }
+                            failedPings = 0;
+                        }
+
+                        await Task.Delay(autoPingDelay);
+                        continue;
+                    }
+                }
+                AutoPingProcessRunning = false;
+                autoPingTimer.Enabled = true;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
+        }
+    }
+
+    // Sets all components to be pinged automatically.
+    private void AutoPingAll(bool value)
+    {
+        foreach (Device device in devices)
+        {
+            device.AutoPing = value;
+        }
+    }
+
+    // Updates whether ping tool should warn user of a poor connection
+    private void UpdateWarnOfPoorConnection(bool value)
+    {
+        warnOfPoorConnection = value;
+    }
+
+    private void UpdateAutoPingDelay(string delay)
+    {
+        try
+        {
+            autoPingDelay = int.Parse(delay) * 1000;
+        }
+        catch
+        {
+            autoPingDelay = 5000;
+        }
+    }
+
+    private void UpdatePingTimeout(string timeout)
+    {
+        try
+        {
+            pingTimeout = int.Parse(timeout) * 1000;
+        }
+        catch
+        {
+            pingTimeout = 1000;
+        }
+    }
+
+    private async void RovePingBoard(Device device, string board)
+    {
+        device.PingStatus = "Pinging...";
+        await InvokeAsync(StateHasChanged);
+
+        DateTime start = DateTime.Now;
+        RoveCommService.Ping(board);
+        var response = await RoveCommService.Listen<int>(RoveCommManifest.SystemPackets.PING_REPLY);
+        DateTime end = DateTime.Now;
+        TimeSpan latency = end - start;
+
+        if (response != null)
+        {
+            device.PingStatus = $"Response in {latency.TotalSeconds.ToString()} seconds";
+        } else
+        {
+            device.PingStatus = "NoResponse";
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public class Device : INotifyPropertyChanged
+    {
+        private string pingStatus;
+        private string pingStatusHighlight;
+        private bool autoPing;
+
+        public string Name { get; set; }
+        public string IpAddress { get; set; }
+
+        public string PingStatus
+        {
+            get => pingStatus;
+            set
+            {
+                pingStatus = value;
+                OnPropertyChanged(nameof(PingStatus));
+            }
+        }
+
+        public string PingStatusHighlight
+        {
+            get => pingStatusHighlight;
+            set
+            {
+                pingStatusHighlight = value;
+                OnPropertyChanged(nameof(PingStatusHighlight));
+            }
+        }
+
+        public bool AutoPing
+        {
+            get => autoPing;
+            set
+            {
+                autoPing = value;
+                OnPropertyChanged(nameof(AutoPing));
+            }
+        }
+
+        public bool RoveCapable { get; set; }
+
+        public Device(string name, string ipAddress, bool autoPing = false, string pingStatus = "-1", bool roveCapable = false)
+        {
+            Name = name;
+            IpAddress = ipAddress;
+            AutoPing = autoPing;
+            PingStatus = pingStatus;
+            RoveCapable = roveCapable;
+            PingStatusHighlight = "background-color:lightcoral";
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+}

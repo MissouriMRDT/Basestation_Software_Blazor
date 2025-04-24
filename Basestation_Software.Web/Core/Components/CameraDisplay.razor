@@ -1,0 +1,58 @@
+﻿@implements IDisposable
+
+<link rel="stylesheet" type="text/css" href="CameraDisplay.razor.css?version=0.1">
+
+<div class="card h-100">
+    <div class="card-header">
+        <h3>Camera Display</h3>
+    </div>
+    <div class="cam-container">
+        <img class="cam-display" src="images/loading.jpg" />
+    </div>
+    <div class="source-buttons-container">
+        @for (int i = 0; i < 8; i++)
+        {
+            // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
+            var _i = i;
+            <button class="@("btn btn-secondary " + ((_sourceIndex == _i) ? "active" : ""))" @onclick="() => SetSource(_i)">@(_i + 1)</button>
+        }
+    </div>
+    <p>Source: @_sourceIndex</p>
+    <button @onclick="RestartCam">restart</button>
+</div>
+
+@code {
+    private bool _prerendered = false;
+    private int _sourceIndex = 0;
+
+    private async Task OnNewFrame()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void SetSource(int newSourceIndex)
+    {
+        _sourceIndex = newSourceIndex;
+        StateHasChanged();
+    }
+
+    private void RestartCam()
+    {
+    }
+
+    void IDisposable.Dispose()
+    {
+        if (_prerendered)
+        {
+        }
+        else
+        {
+            _prerendered = true;
+        }
+    }
+}

@@ -1,0 +1,74 @@
+﻿﻿@using System.Xml.Linq
+@inject RoveCommService _RoveCommService
+
+<div class="card full-height">
+    <div class="card-header">
+        <h3>Autonomy State Diagram</h3>
+    </div>
+    <div class="card-body">
+        <svg style="width:100%; height:800px" preserveAspectRatio="xMidYMax meet">
+            @AsMarkupString(diagramRoot)
+        </svg>
+
+    </div>
+</div>
+
+@code {
+    XElement? diagramRoot;
+    private byte _lastState = 0;
+    private XElement?[] _stateElements = new XElement[11];
+    // corresponds to rovecomm status
+    private string[] _stateNames = [
+    "Idle",
+    "Navigating",
+    "SearchPattern",
+    "ApproachingMarker",
+    "ApproachingObject",
+    "VerifyingGPS",
+    "VerifyingMarker",
+    "VerifyingObject",
+    "Avoidance",
+    "Reversing",
+    "Stuck"
+    ];
+
+    private string _activeCol = "#10d010";
+    private string _inactiveCol = "#ffffff";
+
+    // Helper function to get displayable XML of an XElement
+    private MarkupString AsMarkupString(XElement el)
+    {
+        return (MarkupString)Regex.Replace(el.ToString(), "svg:", String.Empty);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load auto diagram as XElement
+        string diagramFilePath = "wwwroot/state-diagram.svg";
+        diagramRoot = XElement.Load(diagramFilePath);
+
+        for (int i = 0; i < _stateNames.Length; i++)
+        {
+            _stateElements[i] = (
+                from el in diagramRoot.Descendants()
+                where el.Attribute("id")?.Value == "path" + _stateNames[i]
+                select el
+                ).FirstOrDefault();
+        }
+
+        _RoveCommService.On<byte>("Autonomy", "CurrentState", async (packet) =>
+        {
+            byte currState = packet.Data[0];
+
+            _stateElements[_lastState]?.SetAttributeValue("fill", _inactiveCol);
+            _stateElements[currState]?.SetAttributeValue("fill", _activeCol);
+
+            _lastState = currState;
+
+            await InvokeAsync(StateHasChanged);
+        });
+        await InvokeAsync(StateHasChanged);
+
+    }
+
+}

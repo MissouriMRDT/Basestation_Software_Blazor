@@ -17,6 +17,28 @@ namespace Basestation_Software.Api.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.6");
 
+            modelBuilder.Entity("Basestation_Software.Models.Config.ConfigEntity", b =>
+                {
+                    b.Property<Guid>("ID")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Data")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ID");
+
+                    b.ToTable("Configs");
+
+                    b.HasData(
+                        new
+                        {
+                            ID = new Guid("00000000-0000-0000-0000-000000000001"),
+                            Data = "{\"Name\":\"Default\",\"Dark\":true,\"Links\":{},\"Components\":[],\"Columns\":60,\"Rows\":60,\"Width\":100,\"Height\":100}"
+                        });
+                });
+
             modelBuilder.Entity("Basestation_Software.Models.Geospatial.GPSWaypoint", b =>
                 {
                     b.Property<int?>("ID")
@@ -37,6 +59,9 @@ namespace Basestation_Software.Api.Migrations
 
                     b.Property<double?>("SearchRadius")
                         .HasColumnType("REAL");
+
+                    b.Property<int?>("TagID")
+                        .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("Timestamp")
                         .HasColumnType("TEXT");
@@ -60,7 +85,7 @@ namespace Basestation_Software.Api.Migrations
                             Longitude = -110.792207,
                             Name = "MDRS",
                             SearchRadius = 5.0,
-                            Timestamp = new DateTime(2024, 7, 6, 18, 13, 39, 408, DateTimeKind.Local).AddTicks(2836),
+                            Timestamp = new DateTime(2025, 1, 5, 10, 5, 45, 522, DateTimeKind.Local).AddTicks(6963),
                             Type = 0,
                             WaypointColor = -16744448
                         },
@@ -72,7 +97,7 @@ namespace Basestation_Software.Api.Migrations
                             Longitude = -91.778441000000001,
                             Name = "SDELC",
                             SearchRadius = 5.0,
-                            Timestamp = new DateTime(2024, 7, 6, 18, 13, 39, 408, DateTimeKind.Local).AddTicks(2958),
+                            Timestamp = new DateTime(2025, 1, 5, 10, 5, 45, 522, DateTimeKind.Local).AddTicks(7077),
                             Type = 0,
                             WaypointColor = -65536
                         });

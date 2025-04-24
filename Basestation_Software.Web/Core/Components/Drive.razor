@@ -1,0 +1,453 @@
+﻿@implements IDisposable
+@inject RoveCommService _RoveCommService
+@inject IJSRuntime _IJSRuntime
+@using Basestation_Software.Web.Utils;
+
+<style>
+    .drive {
+        display: grid;
+        padding: 2px; /* Grid exterior border width */
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+        grid-template-areas:
+            "left-backward left-backward left-forward left-forward"
+            "right-backward right-backward right-forward right-forward"
+            "drivespeed-label drivespeed-label drivespeed gimbal"
+            "deadzone-label deadzone-label deadzone gimbal"
+            "none none none gimbal"
+            "none none none gimbal";
+        place-items: center;
+        font-weight: bold;
+    }
+
+    .drive > p {
+        margin: 0;
+        align-content: center;
+    }
+
+    .drive > progress {
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+        border: 2px solid #000;
+        background-color: #333;
+    }
+
+    .drive > progress[value]::-webkit-progress-bar {
+        background-color: #333;
+        border-radius: 0px;
+    }
+
+    .drive > progress[value]::-moz-progress-bar {
+        background-color: #00f;
+        border-radius: 0;
+    }
+
+    .drive > progress[value]::-webkit-progress-value {
+        background-color: #00f;
+        border-radius: 0;
+    }
+
+    .gimbal-frame {
+        grid-area: gimbal;
+        aspect-ratio: 1 / 1;
+        place-self: center;
+        height: 80%;
+    }
+</style>
+
+<div class="card h-100">
+    <div class="card-header">
+        <div class="col-6 d-flex align-self-center">
+            <h5>Drive</h5>
+            <div class="vr">&nbsp;</div>
+            <InputSelect @bind-Value=@SelectedScheme>
+                @foreach (var value in Enum.GetValues<Scheme>())
+                {
+                    <option value="@value">@value</option>
+                }
+            </InputSelect>
+            <GamepadSelector @ref=GamepadSelector_ ChangedCallback=GamepadSelectionChanged />
+        </div>
+    </div>
+    <div class="card-body drive w-100">
+        <progress style="grid-area: left-backward; transform: rotate(180deg); place-self: stretch" value=@(LeftSpeed < 0 ? -LeftSpeed : 0) max=@DriveSpeed />
+        <progress style="grid-area: left-forward; place-self: stretch" value=@(LeftSpeed > 0 ? LeftSpeed : 0) max=@DriveSpeed />
+        <progress style="grid-area: right-backward; transform: rotate(180deg); place-self: stretch" value=@(RightSpeed < 0 ? -RightSpeed : 0) max=@DriveSpeed />
+        <progress style="grid-area: right-forward; place-self: stretch" value=@(RightSpeed > 0 ? RightSpeed : 0) max=@DriveSpeed />
+        <p style="grid-area: left-backward-start / left-backward-start / left-forward-end / left-forward-end; z-index: 10">@($"{LeftSpeed:+0.00000;-0.00000;+0.00000}")</p>
+        <p style="grid-area: right-backward-start / right-backward-start / right-forward-end / right-forward-end; z-index: 10">@($"{RightSpeed:+0.00000;-0.00000;+0.00000}")</p>
+        <RadzenSlider Style="grid-area: drivespeed-label; width: 100%" @bind-Value=@DriveSpeed TValue="double" Min="0" Max="1" Step="0.001" /><p style="grid-area: drivespeed">Speed: @($"{DriveSpeed * 100:000.0}")%</p>
+        <RadzenSlider Style="grid-area: deadzone-label; width: 100%" @bind-Value=@DeadZone TValue="double" Min="0" Max="(decimal)0.5" Step="0.001" /><p style="grid-area: deadzone">Dead Zone: @($"{DeadZone:0.000}")</p>
+        <svg class="gimbal-frame" viewBox="0 0 60 60">
+            <style>
+                .background {
+                    stroke: none;
+                    fill: #ffff;
+                }
+
+                .frame {
+                    stroke-width: 0.5;
+                    stroke: #000f;
+                    fill: #ffff;
+                }
+
+                .center {
+                    stroke-width: 0.5;
+                    stroke: #000f;
+                    fill: none;
+                }
+
+                .dot {
+                    stroke: none;
+                    fill: #00ff;
+                }
+            </style>
+            <rect class="background" x="0" y="0" width="60" height="60" />
+            <rect class="frame" x="5" y="5" width="50" height="50" />
+            <line class="center" x1="0" y1="30" x2="60" y2="30" />
+            <line class="center" x1="30" y1="0" x2="30" y2="60" />
+            <circle class="dot" cx="@Utils.Map(Pan, -5, 5, 5, 55)" cy="@Utils.Map(Tilt, -5, 5, 55, 5)" r="3" />
+        </svg>
+        @for (int i = 0; i < GIMBAL_NAMES.Count(); i++)
+        {
+            <p style="@(i == SelectedGimbal ? "color: #0f0" : "")">@GIMBAL_NAMES[i]</p>
+        }
+    </div>
+</div>
+
+@code
+{
+
+    enum Scheme
+    {
+        Flightstick,
+        Xboxpower,
+        Xboxtank,
+    }
+
+    // Constants
+    public const int UPDATE_INTERVAL = 100;
+    public const double BUMP_SPEED = 0.05, GAMMA_FLIGHTSTICK = 1.5, GAMMA_XBOX = 1.5;
+    public readonly List<string> GIMBAL_NAMES = new List<string>()
+    {
+        "Left Drive", "Right Drive", "Left Main",
+        "Right Main", "Back Drive", "Auger"
+    };
+
+    // State
+    private GamepadSelector GamepadSelector_;
+    private Scheme SelectedScheme;
+    private Timer UpdateTimer;
+    private double DriveSpeed = 0.1;
+    private double DeadZone = 0.05;
+    private int SelectedGimbal = 0;
+    private double LeftSpeed;
+    private double RightSpeed;
+    private short Pan;
+    private short Tilt;
+    private bool LastProcessGamepadInputOK = false;
+
+    protected override void OnInitialized()
+    {
+        UpdateTimer = new Timer(Update);
+    }
+
+    /// This function is called every UPDATE_INTERVAL ms, takes input from the selected gamepad, and sends the proper
+    /// commands to drive the left and right motors in tank drive.
+    private void Update(object? _)
+    {
+        bool ProcessGamepadInputOK = ProcessGamepadInput();
+        if (ProcessGamepadInputOK) {
+            _RoveCommService.Send<byte>("Core", "StateDisplay", new List<byte>() { 0 }); // 0: teleop
+        } else if (LastProcessGamepadInputOK) {
+            _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { 0f, 0f }, false);
+        }
+        LastProcessGamepadInputOK = ProcessGamepadInputOK;
+        InvokeAsync(StateHasChanged);
+    }
+
+    // Process gamepad input and return true if rovecomm packets were sent.
+    private bool ProcessGamepadInput() {
+        if (GamepadSelector_.SelectedGamepad is null) return false;
+        switch (SelectedScheme)
+        {
+            case Scheme.Flightstick:
+                {
+                    // Axes:
+                    // 0: x [-1, 1]: turn [left, right]
+                    // 1: y [-1, 1]: drive [DriveSpeed, -DriveSpeed]
+                    // 2: undefined
+                    // 3: undefined
+                    // 4: undefined
+                    // 5: z
+                    // 6: throttle
+                    // 7: undefined
+                    // 8: undefined
+                    // 9: hat
+                    // {
+                    //   -1.0: up
+                    //   -0.7: up-right
+                    //   -0.4: right
+                    //   -0.1: down-right
+                    //   0.1: down
+                    //   0.4: down-left
+                    //   0.7: left
+                    //   1.0: up-left
+                    //   1.3: middle
+                    // }
+                    // Buttons:
+                    // 0: trigger
+                    // 1: side
+                    // 2: 3: bump backward
+                    // 3: 4: previous gimbal
+                    // 4: 5: bump forward
+                    // 5: 6: next gimbal
+                    // 6: 7
+                    // 7: 8
+                    // 8: 9
+                    // 9: 10
+                    // 10: 11
+                    // 11: 12
+                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 10 || GamepadSelector_.SelectedGamepad.Buttons.Count < 12) return false;
+
+                    // Drive controls:
+                    if (GamepadSelector_.SelectedGamepad.Buttons[4].Pressed)
+                    {
+                        // Bump forward.
+                        LeftSpeed = BUMP_SPEED;
+                        RightSpeed = BUMP_SPEED;
+                        _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed });
+                    }
+                    else if (GamepadSelector_.SelectedGamepad.Buttons[2].Pressed)
+                    {
+                        // Bump backward.
+                        LeftSpeed = -BUMP_SPEED;
+                        RightSpeed = -BUMP_SPEED;
+                        _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed });
+                    }
+                    else
+                    {
+                        double x = GamepadSelector_.SelectedGamepad.Axes[0];
+                        double y = -GamepadSelector_.SelectedGamepad.Axes[1];
+                        double throttle = Utils.ClampMap(GamepadSelector_.SelectedGamepad.Axes[6], -1.0, 1.0, 1.0, 0.0);
+                        // Clamp deadzone and scale exponentially.
+                        x = x < -DeadZone ? -Math.Pow(-x, GAMMA_FLIGHTSTICK) : x > DeadZone ? Math.Pow(x, GAMMA_FLIGHTSTICK) : 0;
+                        y = y < -DeadZone ? -Math.Pow(-y, GAMMA_FLIGHTSTICK) : x > DeadZone ? Math.Pow(y, GAMMA_FLIGHTSTICK) : 0;
+
+                        // Convert to polar.
+                        double r = double.Hypot(x, y);
+                        double t = Math.Atan2(y, x);
+                        // Rotate by 45 degrees.
+                        t -= double.Pi / 4;
+                        // Convert to cartesian, rescale and clamp.
+                        LeftSpeed = Utils.ClampMap(r * Math.Cos(t), -Math.Sqrt(2) / 2, Math.Sqrt(2) / 2, -DriveSpeed, DriveSpeed) * throttle;
+                        RightSpeed = Utils.ClampMap(r * Math.Sin(t), -Math.Sqrt(2) / 2, Math.Sqrt(2) / 2, -DriveSpeed, DriveSpeed) * throttle;
+
+                        _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed });
+                    }
+
+                    // Gimbal controls:
+                    if (GamepadSelector_.SoftwareDebounce(5)) SelectedGimbal = (SelectedGimbal + 1) % 6; // Next
+                    if (GamepadSelector_.SoftwareDebounce(3)) SelectedGimbal = (SelectedGimbal + 5) % 6; // Previous
+
+                    // Decode hat.
+                    // The hat reports positions as such:
+                    //   -1.0: up
+                    //   -0.7: up-right
+                    //   -0.4: right
+                    //   -0.1: down-right
+                    //   0.1: down
+                    //   0.4: down-left
+                    //   0.7: left
+                    //   1.0: up-left
+                    //   1.3: middle
+                    // For simplicity we will consider:
+                    //   (-0.85, 0): right
+                    //   (0.25, 1.15): left
+                    //   (-1.15, -0.55) U (0.85, 1.15): up
+                    //   (-0.25, 0.45): down
+
+                    double hat = GamepadSelector_.SelectedGamepad.Axes[9];
+                    // Cast because short literals don't exist for some reason.
+                    Pan = (short)((-0.85 < hat && hat < 0) ? 5 : (0.25 < hat && hat < 1.15) ? -5 : 0);
+                    Tilt = (short)(((-1.15 < hat && hat < -0.55) || (0.85 < hat && hat < 1.15)) ? 5 : (-0.25 < hat && hat < 0.45) ? -5 : 0);
+
+                    if (Math.Abs(Pan) > 0 && Math.Abs(Tilt) > 0)
+                    {
+                        switch (SelectedGimbal)
+                        {
+                            // TODO: invert pan and tilt as required
+                            case 0:
+                                _RoveCommService.Send<short>("Core", "LeftDriveGimbalIncrement", new List<short>() { Tilt });
+                                break;
+                            case 1:
+                                _RoveCommService.Send<short>("Core", "RightDriveGimbalIncrement", new List<short>() { Tilt });
+                                break;
+                            case 2:
+                                _RoveCommService.Send<short>("Core", "LeftMainGimbalIncrement", new List<short>() { Pan, Tilt });
+                                break;
+                            case 3:
+                                _RoveCommService.Send<short>("Core", "RightMainGimbalIncrement", new List<short>() { Pan, Tilt });
+                                break;
+                            case 4:
+                                _RoveCommService.Send<short>("Core", "BackDriveGimbalIncrement", new List<short>() { Tilt });
+                                break;
+                            case 5:
+                                _RoveCommService.Send<short>("Core", "AugerGimbalIncrement", new List<short>() { Pan, Tilt });
+                                break;
+                        }
+                    }
+
+                    break;
+                }
+            case Scheme.Xboxpower:
+                {
+                    // Axes:
+                    // 0: left-x [-1, 1]: turn [left, right]
+                    // 1: left-y [-1, 1]: drive [DriveSpeed, -DriveSpeed]
+                    // 2: right-x [-1, 1]: selected gimbal left/right
+                    // 3: right-y [-1, 1]: selected gimbal down/up
+                    // Buttons:
+                    // 0: a
+                    // 1: b
+                    // 2: x
+                    // 3: y
+                    // 4: left bumper
+                    // 5: right bumper
+                    // 6: left trigger
+                    // 7: right trigger
+                    // 8: view
+                    // 9: menu
+                    // 10: left joystick
+                    // 11: right joystick
+                    // 12: dpad-up: bump forward
+                    // 13: dpad-down: bump backward
+                    // 14: dpad-left: previous gimbal
+                    // 15: dpad-right: next gimbal
+                    // 16: guide
+
+                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
+
+                    // Drive controls:
+                    double x, y;
+                    if (GamepadSelector_.SelectedGamepad.Buttons[12].Pressed)
+                    {
+                        // Bump forward.
+                        LeftSpeed = BUMP_SPEED;
+                        RightSpeed = BUMP_SPEED;
+                        _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed });
+                    }
+                    else if (GamepadSelector_.SelectedGamepad.Buttons[13].Pressed)
+                    {
+                        // Bump backward.
+                        LeftSpeed = -BUMP_SPEED;
+                        RightSpeed = -BUMP_SPEED;
+                        _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed });
+                    }
+                    else
+                    {
+                        x = GamepadSelector_.SelectedGamepad.Axes[0];
+                        y = -GamepadSelector_.SelectedGamepad.Axes[1];
+                        // Clamp deadzone and scale exponentially.
+                        x = x < -DeadZone ? -Math.Pow(-x, GAMMA_XBOX) : x > DeadZone ? Math.Pow(x, GAMMA_XBOX) : 0;
+                        y = y < -DeadZone ? -Math.Pow(-y, GAMMA_XBOX) : x > DeadZone ? Math.Pow(y, GAMMA_XBOX) : 0;
+                        // Convert to polar.
+                        double r = double.Hypot(x, y);
+                        double t = Math.Atan2(y, x);
+                        // Rotate by 45 degrees.
+                        t -= double.Pi / 4;
+                        // Convert to cartesian, rescale and clamp.
+                        LeftSpeed = Utils.ClampMap(r * Math.Cos(t), -Math.Sqrt(2) / 2, Math.Sqrt(2) / 2, -DriveSpeed, DriveSpeed);
+                        RightSpeed = Utils.ClampMap(r * Math.Sin(t), -Math.Sqrt(2) / 2, Math.Sqrt(2) / 2, -DriveSpeed, DriveSpeed);
+
+                        _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed }, false);
+                    }
+
+                    // Gimbal controls:
+                    if (GamepadSelector_.SoftwareDebounce(15)) SelectedGimbal = (SelectedGimbal + 1) % 6; // Next
+                    if (GamepadSelector_.SoftwareDebounce(14)) SelectedGimbal = (SelectedGimbal + 5) % 6; // Previous
+
+                    x = GamepadSelector_.SelectedGamepad.Axes[2];
+                    y = -GamepadSelector_.SelectedGamepad.Axes[3];
+                    // Clamp deadzone.
+                    Pan = (short)Utils.ClampMap(Math.Abs(x) > DeadZone ? x : 0, -1.0, 1.0, -5, 5);
+                    Tilt = (short)Utils.ClampMap(Math.Abs(y) > DeadZone ? y : 0, -1.0, 1.0, -5, 5);
+                    if (Math.Abs(Pan) > 0 && Math.Abs(Tilt) > 0)
+                    {
+                        switch (SelectedGimbal)
+                        {
+                            // TODO: invert pan and tilt as required
+                            case 0:
+                                _RoveCommService.Send<short>("Core", "LeftDriveGimbalIncrement", new List<short>() { Tilt });
+                                break;
+                            case 1:
+                                _RoveCommService.Send<short>("Core", "RightDriveGimbalIncrement", new List<short>() { Tilt });
+                                break;
+                            case 2:
+                                _RoveCommService.Send<short>("Core", "LeftMainGimbalIncrement", new List<short>() { Pan, Tilt });
+                                break;
+                            case 3:
+                                _RoveCommService.Send<short>("Core", "RightMainGimbalIncrement", new List<short>() { Pan, Tilt });
+                                break;
+                            case 4:
+                                _RoveCommService.Send<short>("Core", "BackDriveGimbalIncrement", new List<short>() { Tilt });
+                                break;
+                            case 5:
+                                _RoveCommService.Send<short>("Core", "AugerGimbalIncrement", new List<short>() { Pan, Tilt });
+                                break;
+                        }
+                    }
+
+                    break;
+                }
+            case Scheme.Xboxtank:
+                {
+                    // Axes:
+                    // 0: left-x: unused
+                    // 1: left-y [-1, 1]: left drive [DriveSpeed, -DriveSpeed]
+                    // 2: right-x: unused
+                    // 3: right-y [-1, 1]: left drive [DriveSpeed, -DriveSpeed]
+                    // Buttons:
+                    // 0: a
+                    // 1: b
+                    // 2: x
+                    // 3: y
+                    // 4: left bumper
+                    // 5: right bumper
+                    // 6: left trigger
+                    // 7: right trigger
+                    // 8: view
+                    // 9: menu
+                    // 10: left joystick
+                    // 11: right joystick
+                    // 12: dpad-up: bump forward
+                    // 13: dpad-down: bump backward
+                    // 14: dpad-left: previous gimbal
+                    // 15: dpad-right: next gimbal
+                    // 16: guide
+
+                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
+
+                    double left = -GamepadSelector_.SelectedGamepad.Axes[1];
+                    double right = -GamepadSelector_.SelectedGamepad.Axes[3];
+                    left = left > -DeadZone && left < DeadZone ? 0 : left;
+                    right = right > -DeadZone && right < DeadZone ? 0 : right;
+                    LeftSpeed = Utils.ClampMap(left, -1.0, 1.0, -DriveSpeed, DriveSpeed);
+                    RightSpeed = Utils.ClampMap(right, -1.0, 1.0, -DriveSpeed, DriveSpeed);
+                    _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed }, false);
+                    break;
+                }
+        }
+        return true;
+    }
+
+    public void GamepadSelectionChanged()
+    {
+        if (GamepadSelector_.SelectedGamepad == null)
+            UpdateTimer.Change(-1, -1);
+        else
+            UpdateTimer.Change(0, UPDATE_INTERVAL);
+    }
+
+    void IDisposable.Dispose() { }
+}
