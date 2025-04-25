@@ -13,6 +13,7 @@ export class Rover3DView {
     scene = null;
     camera = null;
     roverMesh = null;
+    lightingPanel = null;
 
     constructor(id, dotNetComponent) {
         this.id = id;
@@ -31,8 +32,16 @@ export class Rover3DView {
             this.roverMesh.position.set(0, 0, 0);
             this.roverMesh.scale.set(1, 1, 1);
             this.roverMesh.castShadow = true;
-
             roverGeometry.center();
+
+            this.lightingPanel = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.8, 0.8),
+                new THREE.MeshPhysicalMaterial({ color: 0x000000, emissive: 0x000000 })
+            );
+            this.lightingPanel.position.y = -0.55;
+            this.lightingPanel.position.z = 2;
+            this.roverMesh.add(this.lightingPanel);
+
             scene.add(this.roverMesh);
         });
 
@@ -94,7 +103,12 @@ export class Rover3DView {
     }
 
     updateAngles(pitch, yaw, roll) {
+        console.log("Set angle:", pitch, yaw, roll);
         this.roverMesh?.rotation.set(pitch, yaw, roll);
+    }
+
+    updateLighting(r, g, b) {
+        this.lightingPanel?.material.emissive.setRGB(r / 255.0, g / 255.0, b / 255.0);
     }
 }
 
