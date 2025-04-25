@@ -89,7 +89,7 @@
     private float PackCurrent = 0, PackVoltage = 0, AuxCurrent = 0;
     private List<float> CellVoltage = new List<float>() { 0, 0, 0, 0, 0, 0 }; // C1 ... C6
     private List<float> MiscCurrent = new List<float>() { 0, 0, 0 }; // CS1 ... CS3
-    private System.Threading.Timer? TelemetryWatchdog;
+    private System.Threading.Timer TelemetryWatchdog = null!;
 
     protected override void OnInitialized()
     {
@@ -153,7 +153,7 @@
 
     void ResetWatchdog()
     {
-        TelemetryWatchdog?.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
+        TelemetryWatchdog.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
     }
 
     async Task toggleBus(int i)
