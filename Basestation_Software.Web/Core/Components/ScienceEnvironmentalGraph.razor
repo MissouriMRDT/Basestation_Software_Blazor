@@ -7,14 +7,11 @@
     </div>
     <div class="card-body">
         <RadzenChart>
-            <RadzenValueAxis>
+            <RadzenValueAxis Min="0" Max="100" Step="25">
                 <RadzenAxisTitle Text="Temperature (°C) and Humidity (0-100%)"/>
+                <RadzenGridLines Visible="true" />
             </RadzenValueAxis>
-            <RadzenLineSeries Data="@timeProgression" CategoryProperty="Time" Title="Time" ValueProperty="yValue" StrokeWidth="0">
-                <RadzenMarkers Visible="false" />
-                <RadzenSeriesDataLabels Visible="false" />
-                <RadzenChartTooltipOptions Visible="false"/>
-            </RadzenLineSeries>
+            <RadzenCategoryAxis Min="@time" Max="@(time+graphWidth)" Step="@(graphWidth/2-1)" FormatString="{0:N1}" />
             <RadzenLineSeries Smooth="true" Data="@temps" CategoryProperty="Time" Title="Temperature" ValueProperty="Temperature">
                 <RadzenMarkers Visible="false" />
                 <RadzenSeriesDataLabels Visible="@showDataLabels" />
@@ -27,15 +24,15 @@
         <div style="box-sizing: border-box;display: flex;flex-flow: column nowrap">
             <div style="display: flex;justify-content: space-around;align-items: center;border-radius: 25px;background-color: #292E33">
                 <div style="padding: 10px 40px">
-                    <RadzenCheckBox @bind-Value=@chartGrowsWithTime Name="ChartGrowsWithTime" />
-                    <RadzenLabel Text="Chart Grows With Time" Component="ChartGrowsWithTime" class="rz-ms-2" />
+                    <RadzenCheckBox @bind-Value="@freezeGraph" Name="FreezeGraph" />
+                    <RadzenLabel Text="Freeze Graph" Component="FreezeGraph" class="rz-ms-2" />
                 </div>
                 <div style="padding: 10px 40px">
-                    <RadzenCheckBox @bind-Value=@showDataLabels Name="ShowDataLabels" />
+                    <RadzenCheckBox @bind-Value="@showDataLabels" Name="ShowDataLabels" />
                     <RadzenLabel Text="Show Data Labels" Component="ShowDataLabels" class="rz-ms-2" />
                 </div>
+                @* <div style="padding: 10px 40px"><RadzenTextBox Change="@(val => SetNewGraphWidth(val))" Style="width: 100%" /></div> *@
                 <div style="padding: 5px 40px"><button class="btn btn-primary" style="font-size: 16px" @onclick=ClearData>Clear Data</button></div>
-                <div style="width: 250px;padding: 15px 40px;text-align: center">Elapsed Time: @time.ToString("N1")</div>
             </div>
             <div style="display: flex;justify-content: space-around">
                 <button class="btn btn-primary" @onclick=AddRandTempData>Add Random Temperature Data</button>
@@ -47,9 +44,10 @@
 
 @code {
     bool showDataLabels = true;
-    bool chartGrowsWithTime = true;
+    bool freezeGraph = false;
     static float time = 0;
-    float timeInterval = 0.1f;
+    static float graphWidth = 30;
+    float refreshRate = 0.1f;
 
     // Data
     class TempItem
@@ -58,7 +56,7 @@
         public float Temperature { get; }
         public TempItem(float temp)
         {
-            Time = time;
+            Time = time+graphWidth;
             Temperature = temp;
         }
     }
@@ -68,32 +66,23 @@
         public float Humidity { get; }
         public HumidItem(float humid)
         {
-            Time = time;
+            Time = time+graphWidth;
             Humidity = humid;
-        }
-    }
-    // Dummy class so the graph is always shifting
-    class TimeItem
-    {
-        public float Time { get; }
-        public int yValue { get; }
-        public TimeItem()
-        {
-            Time = time;
-            yValue = 0;
         }
     }
     List<TempItem> temps = new();
     List<HumidItem> humids = new();
-    List<TimeItem> timeProgression = new();
 
     // Set up timer
-    private System.Timers.Timer timer;
+    private System.Timers.Timer timer = null!;
     private async void UpdateTime(object sender, System.Timers.ElapsedEventArgs e)
     {
-        if(chartGrowsWithTime)
-            timeProgression.Add(new TimeItem());
-        time += timeInterval;
+        if(freezeGraph)
+            return;
+
+        time += refreshRate;
+        temps.RemoveAll(temp => temp.Time < time);
+        humids.RemoveAll(humid => humid.Time < time);
         await InvokeAsync(StateHasChanged);
     }
     protected override async Task OnInitializedAsync()
@@ -103,7 +92,7 @@
         _RoveCommService.On<float>("Auger", "Humidity", OnHumidityTelemetry);
 
         // Set up timer
-        timer = new System.Timers.Timer(timeInterval*1000);
+        timer = new System.Timers.Timer(refreshRate*1000);
         timer.Elapsed += UpdateTime;
         timer.Start();
     }
@@ -111,6 +100,9 @@
     // Called whenever a new temperature value is received
     private async Task OnTemperatureTelemetry(RoveCommPacket<float> packet)
     {
+        if(freezeGraph)
+            return;
+
         temps.Add(new TempItem(packet.Data[0]));
         await InvokeAsync(StateHasChanged);
     }
@@ -118,6 +110,9 @@
     // Called whenever a new humidity value is received
     private async Task OnHumidityTelemetry(RoveCommPacket<float> packet)
     {
+        if(freezeGraph)
+            return;
+
         humids.Add(new HumidItem(packet.Data[0]));
         await InvokeAsync(StateHasChanged);
     }
@@ -125,6 +120,9 @@
     // Test function for adding temperature data
     private void AddRandTempData()
     {
+        if(freezeGraph)
+            return;
+
         Random rand = new Random();
         temps.Add(new TempItem(rand.Next(20, 41)));
     }
@@ -132,16 +130,27 @@
     // Test function for adding humidity data
     private void AddRandHumidData()
     {
+        if(freezeGraph)
+            return;
+
         Random rand = new Random();
         humids.Add(new HumidItem(rand.Next(0, 101)));
     }
+
+    @* //
+    private void SetNewGraphWidth(string var)
+    {
+        if(var.Length > 0 && float.TryParse(var, out _))
+            graphWidth = float.Parse(var);
+        else
+            graphWidth = 30;
+    } *@
 
     // Clear all graphing data
     private void ClearData()
     {
         temps.Clear();
         humids.Clear();
-        timeProgression.Clear();
         time = 0;
     }
 }
