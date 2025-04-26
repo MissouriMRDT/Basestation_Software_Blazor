@@ -41,10 +41,10 @@
                         <div class="d-flex align-items-center flex-grow-1 h-100 @(motor.FaultCode == 0 ? "" : "bg-danger")" style="color: white;">
                             <div class="col-3 text-center fw-bold p-1">@motor.DisplayName</div>
                             <div class="col d-flex flex-column h-100">
-                                <div class="small px-2 py-1 flex-grow-1" style="background-color: @(motor.InputCurrent is null ? "lightgray" : $"color-mix(in oklab, #ff0000 {Math.Clamp((double)motor.InputCurrent, 0, 6)/6.0 * 100}%, #00ff00)"); color: black;">
-                                    Input Current: <span class="float-end">@(motor.InputCurrent is null ? "--" : $"{motor.InputCurrent:0.00}") A</span>
+                                <div class="small px-2 py-1 flex-grow-1" style="background-color: @(motor.InputCurrent is null ? "lightgray" : $"color-mix(in oklab, #ff0000 {Math.Clamp((double)motor.InputCurrent, 0, DANGER_INPUT_CURRENT)/DANGER_INPUT_CURRENT * 100}%, #00ff00)"); color: black;">
+                                    VESC Current: <span class="float-end">@(motor.InputCurrent is null ? "--" : $"{motor.InputCurrent:0.00}") A</span>
                                 </div>
-                                <div class="small px-2 py-1 flex-grow-1" style="background-color: @(motor.MotorCurrent is null ? "lightgray" : $"color-mix(in oklab, #ff0000 {Math.Clamp((double)motor.MotorCurrent, 0, 60)/60.0 * 100}%, #00ff00)"); color: black;">
+                                <div class="small px-2 py-1 flex-grow-1" style="background-color: @(motor.MotorCurrent is null ? "lightgray" : $"color-mix(in oklab, #ff0000 {Math.Clamp((double)motor.MotorCurrent, 0, DANGER_MOTOR_CURRENT)/DANGER_MOTOR_CURRENT * 100}%, #00ff00)"); color: black;">
                                     Motor Current: <span class="float-end">@(motor.MotorCurrent is null ? "--" : $"{motor.MotorCurrent:0.00}") A</span>
                                 </div>
                             </div>
@@ -76,11 +76,9 @@
         public Timer? FaultWatchdog;
     }
 
+    const double DANGER_MOTOR_CURRENT = 60;
+    const double DANGER_INPUT_CURRENT = 6;
     private List<MotorInfo> _motorData = [];
-
-    // In radians
-    private double Pitch = 0, Yaw = 0, Roll = 0;
-    private static readonly double DEG_TO_RAD = Math.PI / 180;
 
     private IJSObjectReference? jsModule;
     private string jsInteropName = "";
@@ -98,8 +96,7 @@
         _motorData.Add(new() { DisplayName = "FR" });
         _motorData.Add(new() { DisplayName = "MR" });
         _motorData.Add(new() { DisplayName = "BR" });
-        // TODO: fix this when CoreBoard's accelerometer is fixed
-        _RoveCommService.On<float>("Nav", "IMUData", OnAccelerometer);
+        _RoveCommService.On<float>("Core", "AccelerometerData", OnAccelerometer);
         _RoveCommService.On<float>("Core", "MotorSpeeds", OnVescCurrents);
         _RoveCommService.On<float>("Core", "MotorCurrents", OnMotorCurrents);
         _RoveCommService.On<float>("Core", "VESCCurrents", OnVescCurrents);
@@ -131,7 +128,7 @@
 
     private void ResetTelemetryWatchdog()
     {
-        TelemetryWatchdog.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
+        TelemetryWatchdog?.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
     }
 
     private async void OnResetTelemetry(object? _)
@@ -150,20 +147,19 @@
     private async void OnResetFault(object? context)
     {
         MotorInfo? motor = context as MotorInfo;
-        motor.FaultCode = 0;
+        if (motor is not null) {
+            motor.FaultCode = 0;
+        }
 
         await InvokeAsync(StateHasChanged);
     }
 
     private async Task OnAccelerometer(RoveCommPacket<float> packet)
     {
-        // Pitch relative to upright [-90D,90U]
-        Pitch = Math.Clamp(packet.Data[0], -90, 90) * DEG_TO_RAD;
-        Yaw = packet.Data[1] * DEG_TO_RAD;
-        // Roll relative to upright [-180L, 180R]
-        Roll = Math.Clamp(packet.Data[2], -180, 180) * DEG_TO_RAD;
         ResetTelemetryWatchdog();
-        await jsModule!.InvokeVoidAsync($"{jsInteropName}.updateAngles", [Pitch, Yaw, Roll]);
+        // CoreBoard: y-forward, z-up, x-right
+        // ThreeJS (WebGL): -z-forward, y-up, x-right
+        await jsModule!.InvokeVoidAsync($"{jsInteropName}.updateAnglesFromUpVector", [packet.Data[0], packet.Data[2], -packet.Data[1]]);
     }
 
     private async Task OnMotorSpeeds(RoveCommPacket<float> packet)
