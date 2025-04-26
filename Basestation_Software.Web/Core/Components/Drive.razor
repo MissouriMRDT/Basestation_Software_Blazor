@@ -457,11 +457,11 @@
                     if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
 
                     // Gimbal controls:
-                    if (GamepadSelector_.SoftwareDebounce(15)) SelectedGimbal = (SelectedGimbal + 1) % 6; // Next
-                    if (GamepadSelector_.SoftwareDebounce(14)) SelectedGimbal = (SelectedGimbal + 5) % 6; // Previous
+                    if (GamepadSelector_.SoftwareDebounce(5)) SelectedGimbal = (SelectedGimbal + 1) % 6; // Next
+                    if (GamepadSelector_.SoftwareDebounce(4)) SelectedGimbal = (SelectedGimbal + 5) % 6; // Previous
 
-                    double x = GamepadSelector_.SelectedGamepad.Buttons[4].Value - GamepadSelector_.SelectedGamepad.Buttons[5].Value;
-                    double y = -GamepadSelector_.SelectedGamepad.Buttons[6].Value + GamepadSelector_.SelectedGamepad.Buttons[7].Value;
+                    double x = GamepadSelector_.SelectedGamepad.Buttons[15].Value - GamepadSelector_.SelectedGamepad.Buttons[14].Value;
+                    double y = -GamepadSelector_.SelectedGamepad.Buttons[12].Value + GamepadSelector_.SelectedGamepad.Buttons[13].Value;
                     // Clamp deadzone.
                     Pan = (short)Utils.ClampMap(Math.Abs(x) > DeadZone ? x : 0, -1.0, 1.0, -_gi, _gi);
                     Tilt = (short)Utils.ClampMap(Math.Abs(y) > DeadZone ? y : 0, -1.0, 1.0, -_gi, _gi);
