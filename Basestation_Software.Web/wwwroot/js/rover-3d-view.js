@@ -6,6 +6,9 @@ import { OrbitControls } from "./lib/three/OrbitControls.js";
 
 export const roverViews = {};
 
+const NEGATIVE_Y = new THREE.Vector3(0, -1, 0);
+const POSITIVE_Y = new THREE.Vector3(0, 1, 0);
+
 export class Rover3DView {
     id = "";
     dotNetComponent = null;
@@ -105,6 +108,28 @@ export class Rover3DView {
     updateAngles(pitch, yaw, roll) {
         console.log("Set angle:", pitch, yaw, roll);
         this.roverMesh?.rotation.set(pitch, yaw, roll);
+    }
+
+    updateAnglesFromUpVector(x, y, z) {
+        const upVector = new THREE.Vector3(x, y, z);
+        const normalizedUp = upVector.clone().normalize();
+        const axisAround = normalizedUp.clone().cross(POSITIVE_Y).normalize();
+        const angleAround = normalizedUp.angleTo(POSITIVE_Y);
+        let roll = Math.round((Math.asin(normalizedUp.x) / Math.PI) * 180);
+        let pitch = Math.round((Math.asin(normalizedUp.z) / Math.PI) * 180);
+        // this still braks for y < 0, but if the rover gets itself into that orientation, we have bigger problems
+        if (normalizedUp.y < 0) {
+            roll = 180 - roll;
+            pitch = 180 - pitch;
+        }
+        // set angles
+        if (normalizedUp.equals(NEGATIVE_Y)) {
+            this.roverMesh?.setRotationFromEuler(new THREE.Euler(0, 0, Math.PI));
+        } else {
+            this.roverMesh?.setRotationFromAxisAngle(axisAround, angleAround);
+        }
+        // displayPitch: -pitch;
+        // displayRoll: -roll;
     }
 
     updateLighting(r, g, b) {
