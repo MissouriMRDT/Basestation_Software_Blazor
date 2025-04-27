@@ -9,16 +9,17 @@ import { generateArucoMarker } from "./aruco-tag-generator.js";
 export const roverMaps = {};
 
 export class RoverMap {
-    id = "";
+    container = null;
     lMap = null;
     waypointLayerGroup = null;
     dotNetComponent = null;
     positionDisplay = null;
 
     // Create leaflet map.
-    constructor(id, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel) {
+    constructor(container, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel) {
+        this.container = container;
         this.dotNetComponent = dotNetComponent;
-        this.lMap = L.map(id, {
+        this.lMap = L.map(this.container, {
             center: [initialLat, initialLong],
             zoom: initialZoomLevel,
             contextmenu: true,
@@ -38,17 +39,17 @@ export class RoverMap {
         this.lMap.on("zoomend", this.onZoomLevelChange.bind(this));
         this.lMap.on("moveend", this.onZoomLevelChange.bind(this));
         let Position = L.Control.extend({
-            container: null,
+            positionDiv: null,
             options: {
                 position: "topright"
             },
             onAdd: function(map) {
-                this.container = L.DomUtil.create("div", "mouseposition");
-                this.container.style = "padding: 0.1em; color: red; background-color: rgba(255, 255, 0, 0.9);";
-                return this.container;
+                this.positionDiv = L.DomUtil.create("div", "mouseposition");
+                this.positionDiv.style = "padding: 0.1em; color: red; background-color: rgba(255, 255, 0, 0.9);";
+                return this.positionDiv;
             },
             updateHTML: function(lat, lng) {
-                this.container.innerHTML = `Latitude: ${lat.toFixed(6)} Longitiude: ${lng.toFixed(6)}`;
+                this.positionDiv.innerHTML = `Latitude: ${lat.toFixed(6)} Longitiude: ${lng.toFixed(6)}`;
             }
         });
         this.positionDisplay = new Position();
@@ -103,18 +104,6 @@ export class RoverMap {
     }
 }
 
-export function createRoverMap(id, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel) {
-    if (id in roverMaps) {
-        console.warn("RoverMap", id, "already exists.");
-    } else {
-        roverMaps[id] = new RoverMap(id, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel);
-    }
-    console.log("Created RoverMap:", id);
-}
-
-export function deleteRoverMap(id) {
-    if (id in roverMaps) {
-        delete roverMaps[id];
-        console.log("Deleted RoverMap:", id);
-    }
+export function createRoverMap(container, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel) {
+    return new RoverMap(container, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel);
 }

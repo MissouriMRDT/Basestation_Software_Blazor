@@ -29,7 +29,7 @@
         }
         else
         {
-            <div class="w-100 h-100 "id="@ID" style="position: relative;"></div>
+            <div @ref=MapContainer class="w-100 h-100" style="position: relative;"></div>
         }
     </div>
 </div>
@@ -38,8 +38,6 @@
 {
     // Component parameters.
     [Parameter]
-    public string ID { get; set; } = "";
-    [Parameter]
     public double InitialLat { get; set; } = 37.951764;
     [Parameter]
     public double InitialLong { get; set; } = -91.778441;
@@ -47,8 +45,8 @@
     public int InitialZoomLevel { get; set; } = 18;
 
     // Declare page member variables.
-    private string jsInteropName = "";
-    private IJSObjectReference? jsModule;
+    private ElementReference MapContainer;
+    private IJSObjectReference? jsRoverMap;
 
     // Flags.
     private bool _dataLoaded = false;
@@ -56,7 +54,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        this.jsInteropName = $"roverMaps.{ID}";
         // Toggle component is done loading.
         _dataLoaded = true;
         await InvokeAsync(StateHasChanged);
@@ -66,11 +63,11 @@
     {
         if (firstRender)
         {
-            jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-map.js");
+            var jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-map.js");
             // Create leaflet map.
             Uri baseUri = new Uri(_NavigationManager.BaseUri);
-            await jsModule.InvokeVoidAsync("createRoverMap", [
-                ID,
+            jsRoverMap = await jsModule.InvokeAsync<IJSObjectReference>("createRoverMap", [
+                MapContainer,
                 DotNetObjectReference.Create(this),
                 $"{baseUri.Scheme}://{baseUri.Host}:5000/api/MapTiles/{{z}}/{{y}}/{{x}}.png",
                 InitialLat,
@@ -88,7 +85,7 @@
     private async Task OnWaypointSync()
     {
         // Update waypoint markers.
-        await jsModule!.InvokeVoidAsync($"{jsInteropName}.clearWaypointMarkers");
+        await jsRoverMap!.InvokeVoidAsync("clearWaypointMarkers");
         await PlotWaypoints();
     }
 
@@ -96,7 +93,7 @@
     {
         await Task.WhenAll(_GPSWaypointService.GetGPSWaypoints().ConvertAll<Task>(waypoint =>
         {
-            return jsModule!.InvokeVoidAsync($"{jsInteropName}.addWaypointMarker", [
+            return jsRoverMap!.InvokeVoidAsync("addWaypointMarker", [
                 waypoint.Latitude ?? 0,
                 waypoint.Longitude ?? 0,
                 waypoint.SearchRadius ?? 0,
@@ -131,14 +128,15 @@
 
     public async Task PanToCoordinates(double lat, double lon)
     {
-        await jsModule!.InvokeVoidAsync($"{jsInteropName}.panToCoordinates", [lat, lon]);
+        await jsRoverMap!.InvokeVoidAsync("panToCoordinates", [lat, lon]);
     }
 
     [JSInvokable]
     public async Task OnZoomLevel(double lat, double lon, int zoom)
     {
 #if DEBUG
-    using HttpClient client = new HttpClient();
+    using (HttpClient client = new HttpClient())
+    {
     client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
     client.DefaultRequestHeaders.Referrer = new Uri("http://mt1.google.com");
 
@@ -170,6 +168,7 @@
 
     await Task.WhenAll(tasks);
     _cachingMapTiles = false;
+    }
 #else
     await Task.CompletedTask;
 #endif
@@ -225,10 +224,9 @@
         _GPSWaypointState.UnsubscribeFromWaypointSelected(OnWaypointSelected);
         try
         {
-            if (jsModule is not null)
+            if (jsRoverMap is not null)
             {
-                await jsModule.InvokeVoidAsync("deleteRoverMap", [ID]);
-                await jsModule.DisposeAsync();
+                await jsRoverMap.DisposeAsync();
             }
         }
         catch (JSDisconnectedException)

@@ -4,25 +4,21 @@ import * as THREE from "./lib/three/three.js";
 import { STLLoader } from "./lib/three/STLLoader.js";
 import { OrbitControls } from "./lib/three/OrbitControls.js";
 
-export const roverViews = {};
-
 const NEGATIVE_Y = new THREE.Vector3(0, -1, 0);
 const POSITIVE_Y = new THREE.Vector3(0, 1, 0);
 
 export class Rover3DView {
-    id = "";
     dotNetComponent = null;
+    container = null;
     renderer = null;
     scene = null;
     camera = null;
     roverMesh = null;
     lightingPanel = null;
 
-    constructor(id, dotNetComponent) {
-        this.id = id;
+    constructor(container, dotNetComponent) {
+        this.container = container;
         this.dotNetComponent = dotNetComponent;
-
-        const container = document.getElementById(`rover-view-${this.id}`);
 
         const scene = new THREE.Scene();
         scene.castShadow = true;
@@ -66,22 +62,22 @@ export class Rover3DView {
         //const helper = new THREE.CameraHelper(directionalLight.shadow.camera);
         //this.scene.add(helper);
 
-        const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+        const camera = new THREE.PerspectiveCamera(75, this.container.clientWidth / this.container.clientHeight, 0.1, 1000);
         camera.position.z = 6;
 
         const renderer = new THREE.WebGLRenderer({ alpha: true });
-        renderer.setSize(container.clientWidth, container.clientHeight, false);
+        renderer.setSize(this.container.clientWidth, this.container.clientHeight, false);
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap
         renderer.domElement.style = "position: absolute; top: 0; left: 0;";
-        container.style.position = "relative";
-        container.appendChild(renderer.domElement);
+        this.container.style.position = "relative";
+        this.container.appendChild(renderer.domElement);
 
         this.scene = scene;
         this.camera = camera;
         this.renderer = renderer;
 
-        new ResizeObserver(() => this.onResize()).observe(container);
+        new ResizeObserver(() => this.onResize()).observe(this.container);
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.minDistance = 1;
@@ -92,11 +88,10 @@ export class Rover3DView {
     }
 
     onResize() {
-        const container = document.getElementById(`rover-view-${this.id}`);
-        if (container) {
-            this.camera.aspect = container.clientWidth / container.clientHeight;
+        if (this.container !== null) {
+            this.camera.aspect = this.container.clientWidth / this.container.clientHeight;
             this.camera.updateProjectionMatrix();
-            this.renderer.setSize(container.clientWidth, container.clientHeight, false);
+            this.renderer.setSize(this.container.clientWidth, this.container.clientHeight, false);
         }
     }
 
@@ -137,18 +132,6 @@ export class Rover3DView {
     }
 }
 
-export function createRoverView(id, dotNetComponent) {
-    if (id in roverViews) {
-        console.warn("Rover3DView", id, "already exists.");
-    } else {
-        roverViews[id] = new Rover3DView(id, dotNetComponent);
-        console.log("Created Rover3DView:", id);
-    }
-}
-
-export function deleteRoverView(id) {
-    if (id in roverViews) {
-        delete roverViews[id];
-        console.log("Deleted Rover3DView:", id);
-    }
+export function createRoverView(container, dotNetComponent) {
+    return new Rover3DView(container, dotNetComponent);
 }
