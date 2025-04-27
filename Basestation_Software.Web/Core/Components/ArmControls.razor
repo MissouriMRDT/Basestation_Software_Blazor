@@ -447,7 +447,7 @@
                     solMeterValue = inputValues[(int)solBind];
 
                     if (inputValues[(int)laserBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Laser", [(byte)((inputValues[(int)laserBind] * (isLaserInverted ? -1 : 1)) < 0 ? 0 : 1)]);
-                    if (inputValues[(int)solBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [(byte)((inputValues[(int)solBind] * (isSolInverted ? -1 : 1)) < 0 ? 0 : 1)]);
+                     _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [(byte)((inputValues[(int)solBind] == 0 ? 0 : 1))]);
 
                     break;
                 }
