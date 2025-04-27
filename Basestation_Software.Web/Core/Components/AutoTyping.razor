@@ -1,0 +1,116 @@
+﻿@inject RoveCommService _RoveCommService
+
+<div class="card h-100">
+    <div class="card-header">
+        <h3>Autonomous Typing</h3>
+    </div>
+
+    <div class="d-flex flex-column justify-content-center align-content-center rounded p-2 bg-body-secondary text-center">
+        <p class="font-monospace fs-3">@(_phrase != "" ? _phrase : "_")</p>
+        <p class="">@_statusMessage</p>
+        <progress max="5000" value=@_charStatusMeter class="progress"></progress>
+    </div>
+
+    <div class="d-flex gap-2 justify-content-center">
+        <InputText class="form-text" @bind-Value="@_phrase" @oninput="OnPhraseChanged" />
+        <button class="btn btn-primary" @onclick="@PlayPhrase">Start</button>
+    </div>
+</div>
+
+@code {
+    private string _phrase = "";
+    private string _statusMessage = "Placeholder";
+    private int _currentCharIndex = 0;
+    private int _charStatusMeter = 0;
+
+    // X and Pitch positional diffs based on Q
+    private Dictionary<char, List<float>> keys = new()
+    {
+        { 'Q', [0f, 0f]},
+        { 'W', [-0.771f, 0f]},
+        { 'E', [-1.52f, 0f]},
+        { 'R', [-2.289f, 0f]},
+        { 'T', [-3.045f, 0f]},
+        { 'Y', [-3.789f, 0f]},
+        { 'U', [-4.513f, 0f]},
+        { 'I', [-5.24f, 0f]},
+        { 'O', [-5.966f, 0f]},
+        { 'P', [-6.708f, 0f]},
+        { 'A', [-0.784f, -5.5f]},
+        { 'S', [-1.209f, -5.5f]},
+        { 'D', [-1.842f, -5.5f]},
+        { 'F', [-2.564f, -5.5f]},
+        { 'G', [-3.3f, -5,5f]},
+        { 'H', [-4.022f, -5.5f]},
+        { 'J', [-4.755f, -5.5f]},
+        { 'K', [-5.48f, -5.5f]},
+        { 'L', [-6.19f, -5.5f]},
+        { 'Z', [-1.603f, -11f]},
+        { 'X', [-1.993f, -11f]},
+        { 'C', [-2.55f, -11f]},
+        { 'V', [-3.196f, -11f]},
+        { 'B', [-3.872f, -11f]},
+        { 'N', [-4.572f, -11f]},
+        { 'M', [-5.28f, -11f]},
+    };
+
+    protected override void OnInitialized()
+    {
+
+    }
+
+    private async Task PlayPhrase()
+    {
+        List<float> totalOffset = [0f, 0f];
+        for (int i = 0; i < _phrase.Length; i++)
+        {
+            _currentCharIndex = i;
+            if (!keys.ContainsKey(_phrase[i])) continue;
+            List<float> pos = keys[_phrase[i]];
+            _charStatusMeter = 0;
+            _statusMessage = "Moving to " + _phrase[i];
+            if (pos != null) 
+            { 
+                // X
+                _RoveCommService.Send<float>(
+                "Arm",
+                "IncrementJointTargetAngle",
+                [0, pos[0] - totalOffset[0]]
+                );
+
+                // Pitch
+                _RoveCommService.Send<float>(
+                "Arm",
+                "IncrementJointTargetAngle",
+                [4, pos[1] - totalOffset[1]]
+                );
+
+                totalOffset[0] = pos[0];
+                totalOffset[1] = pos[1];
+            }
+
+            await InvokeAsync(StateHasChanged);
+            for (int j = 0; j < 100; j++)
+            {
+                _charStatusMeter += 50;
+                _ = InvokeAsync(StateHasChanged);
+                await Task.Delay(50);
+            }
+            _statusMessage = "Running solenoid";
+            _ = InvokeAsync(StateHasChanged);
+            await _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [1]);
+            await Task.Delay(100);
+            await _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [0]);
+            await Task.Delay(100);
+        }
+
+        _statusMessage = "Done";
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void OnPhraseChanged(ChangeEventArgs e)
+    {
+        _phrase = e.Value.ToString().ToUpper();
+        StateHasChanged();
+    }
+}
