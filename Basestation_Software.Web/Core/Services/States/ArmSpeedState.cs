@@ -2,7 +2,7 @@ namespace Basestation_Software.Web.Core.Services.States;
 
 public class ArmSpeedState
 {
-    public delegate void ArmSpeedChangedCallback(Dictionary<string, float> waypoints);
+    public delegate void ArmSpeedChangedCallback(Dictionary<string, float> speeds);
     private event ArmSpeedChangedCallback? ArmSpeedChangedNotifier;
 
     public void SubscribeToArmSpeedChanged(ArmSpeedChangedCallback callback)

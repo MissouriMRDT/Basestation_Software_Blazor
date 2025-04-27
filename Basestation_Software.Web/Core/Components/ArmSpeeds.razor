@@ -6,8 +6,8 @@
         <h3>Arm Speeds</h3>
     </div>
     <div class="card-body">
-        <button class="btn btn-primary" onclick="@(() => EStopArm())">ESTOP</button>
-        <button class="btn btn-primary" onclick="@(() => UnEStopArm())">UNESTOP</button>
+        <button class="btn btn-primary" @onclick=EStopArm>ESTOP</button>
+        <button class="btn btn-primary" @onclick=UnEStopArm>UNESTOP</button>
         @foreach(string joint in _ArmSpeedState.ArmSpeeds.Keys)
         {
             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center">
