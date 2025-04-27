@@ -39,6 +39,7 @@ public class REDDatabase : DbContext
     public DbSet<GPSWaypoint> Waypoints { get; set; }
     public DbSet<MapTile> MapTiles { get; set; }
     public DbSet<ArmPresetEntity> ArmPresets { get; set; }
+    public DbSet<ControlPreset> ControlPresets { get; set; }
 
     public void Configure(EntityTypeBuilder<ConfigEntity> modelBuilder)
     {

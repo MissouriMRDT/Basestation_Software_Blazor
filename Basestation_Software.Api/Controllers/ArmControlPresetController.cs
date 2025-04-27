@@ -4,22 +4,20 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Basestation_Software.Api.Controllers;
 
-// CONTROLS PRESETS FOR ARM ANGULAR COMPONENT. 
-// TODO: Rename to differentiate from ArmControlPresrtController
 [Route("api/[controller]")]
 [ApiController]
-public class ArmPresetController : ControllerBase
+public class ArmControlPresetController : ControllerBase
 {
     // Declare member variables.
-    private readonly IArmPresetRepository _armPresetRepository;
+    private readonly ControlPresetRepository _controlPresetRepository;
 
     /// <summary>
     /// Constructor
     /// </summary>
-    /// <param name="armPresetRepository">Implicitly passed in.</param>
-    public ArmPresetController(IArmPresetRepository armPresetRepository)
+    /// <param name="controlPresetRepository">Implicitly passed in.</param>
+    public ArmControlPresetController(ControlPresetRepository controlPresetRepository)
     {
-        _armPresetRepository = armPresetRepository;
+        _controlPresetRepository = controlPresetRepository;
     }
 
     /// <summary>
@@ -28,9 +26,9 @@ public class ArmPresetController : ControllerBase
     /// <param name="preset">The arm preset object.</param>
     /// <returns>The API response object.</returns>
     [HttpPut]
-    public async Task<IActionResult> AddPreset(ArmPreset preset)
+    public async Task<IActionResult> AddPreset(ControlPreset preset)
     {
-        ArmPresetEntity? dbPreset = await _armPresetRepository.AddPreset(preset);
+        ControlPreset? dbPreset = await _controlPresetRepository.AddPreset(preset);
         if (dbPreset is not null)
         {
             return Ok();
@@ -49,7 +47,7 @@ public class ArmPresetController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<IActionResult> DeletePreset(int id)
     {
-        ArmPresetEntity? dbPreset = await _armPresetRepository.DeletePreset(id);
+        ControlPreset? dbPreset = await _controlPresetRepository.DeletePreset(id);
         if (dbPreset is not null)
         {
             return Ok();
@@ -68,7 +66,7 @@ public class ArmPresetController : ControllerBase
     [HttpGet("{id}")]
     public async Task<IActionResult> GetPreset(int id)
     {
-        ArmPreset? dbPreset = await _armPresetRepository.GetPreset(id);
+        ControlPreset? dbPreset = await _controlPresetRepository.GetPreset(id);
         if (dbPreset is not null)
         {
             return Ok(dbPreset);
@@ -86,6 +84,6 @@ public class ArmPresetController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetAllPresets()
     {
-        return Ok(await _armPresetRepository.GetAllPresets());
+        return Ok(await _controlPresetRepository.GetAllPresets());
     }
 }
