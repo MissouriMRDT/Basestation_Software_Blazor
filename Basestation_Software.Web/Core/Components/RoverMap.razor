@@ -47,6 +47,7 @@
     // Declare page member variables.
     private ElementReference MapContainer;
     private IJSObjectReference? jsRoverMap;
+    private DotNetObjectReference<RoverMap>? ObjectReference;
 
     // Flags.
     private bool _dataLoaded = false;
@@ -63,12 +64,13 @@
     {
         if (firstRender)
         {
-            var jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-map.js");
+            await using var jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-map.js");
             // Create leaflet map.
             Uri baseUri = new Uri(_NavigationManager.BaseUri);
+            ObjectReference = DotNetObjectReference.Create(this);
             jsRoverMap = await jsModule.InvokeAsync<IJSObjectReference>("createRoverMap", [
                 MapContainer,
-                DotNetObjectReference.Create(this),
+                ObjectReference,
                 $"{baseUri.Scheme}://{baseUri.Host}:5000/api/MapTiles/{{z}}/{{y}}/{{x}}.png",
                 InitialLat,
                 InitialLong,
@@ -222,6 +224,7 @@
     {
         _GPSWaypointService.UnsubscribeFromWaypointsChanges(OnWaypointSync);
         _GPSWaypointState.UnsubscribeFromWaypointSelected(OnWaypointSelected);
+        ObjectReference?.Dispose();
         try
         {
             if (jsRoverMap is not null)

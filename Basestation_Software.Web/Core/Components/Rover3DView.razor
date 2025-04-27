@@ -105,12 +105,19 @@
     {
         if (firstRender)
         {
-            var jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-3d-view.js");
-            jsRoverView = await jsModule.InvokeAsync<IJSObjectReference>("createRoverView", [CanvasContainer, DotNetObjectReference.Create(this)]);
+            try
+            {
+                await using var jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-3d-view.js");
+                jsRoverView = await jsModule.InvokeAsync<IJSObjectReference>("createRoverView", [CanvasContainer]);
+            }
+            catch
+            {
+                jsRoverView = null;
+            }
 
             _OpState.SubscribeToStateChanged((Color? c) =>
             {
-                if (c is not null)
+                if (c is not null && jsRoverView is not null)
                 {
                     _ = jsRoverView.InvokeVoidAsync("updateLighting", [c?.R, c?.G, c?.B]);
                 }
@@ -155,7 +162,10 @@
         ResetTelemetryWatchdog();
         // CoreBoard: y-forward, z-up, x-right
         // ThreeJS (WebGL): -z-forward, y-up, x-right
-        await jsRoverView!.InvokeVoidAsync("updateAnglesFromUpVector", [packet.Data[0], packet.Data[2], -packet.Data[1]]);
+        if (jsRoverView is not null)
+        {
+            await jsRoverView!.InvokeVoidAsync("updateAnglesFromUpVector", [packet.Data[0], packet.Data[2], -packet.Data[1]]);
+        }
     }
 
     private async Task OnMotorSpeeds(RoveCommPacket<float> packet)

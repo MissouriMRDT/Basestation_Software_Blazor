@@ -6,8 +6,6 @@
 
 import { generateArucoMarker } from "./aruco-tag-generator.js";
 
-export const roverMaps = {};
-
 export class RoverMap {
     container = null;
     lMap = null;
@@ -32,6 +30,7 @@ export class RoverMap {
             attribution: "Basestation_Software.Api",
             maxNativeZoom: 18,
             maxZoom: 21,
+            errorTileUrl: "js/lib/leaflet/images/tile-error.png",
         })).addControl(L.control.scale({
             metric: true,
             imperial: false

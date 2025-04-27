@@ -4,11 +4,10 @@ var arucoTagDict = null;
 
 // Fetch markers dict
 function loadArucoTagDict() {
-    console.log("Loading aruco-tags.json...");
     return fetch("js/lib/aruco-tags.json").then((res) => res.json())
         .then((json) => {
             arucoTagDict = json;
-            console.log("Loaded aruco-tags.json.");
+            //console.log("Loaded aruco-tags.json");
         }).catch((err) => console.error("Failed to load aruco-tags.json:", err.message));
 }
 

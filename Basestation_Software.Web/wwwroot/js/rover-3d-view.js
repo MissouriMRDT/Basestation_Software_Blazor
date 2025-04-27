@@ -8,7 +8,6 @@ const NEGATIVE_Y = new THREE.Vector3(0, -1, 0);
 const POSITIVE_Y = new THREE.Vector3(0, 1, 0);
 
 export class Rover3DView {
-    dotNetComponent = null;
     container = null;
     renderer = null;
     scene = null;
@@ -16,9 +15,8 @@ export class Rover3DView {
     roverMesh = null;
     lightingPanel = null;
 
-    constructor(container, dotNetComponent) {
+    constructor(container) {
         this.container = container;
-        this.dotNetComponent = dotNetComponent;
 
         const scene = new THREE.Scene();
         scene.castShadow = true;
@@ -132,6 +130,6 @@ export class Rover3DView {
     }
 }
 
-export function createRoverView(container, dotNetComponent) {
-    return new Rover3DView(container, dotNetComponent);
+export function createRoverView(container) {
+    return new Rover3DView(container);
 }
