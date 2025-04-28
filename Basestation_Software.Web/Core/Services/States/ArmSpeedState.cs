@@ -31,7 +31,8 @@ public class ArmSpeedState
     {
         get { return _armSpeeds; }
         set 
-        { 
+        {
+            Console.WriteLine("Set");
             _armSpeeds = value;
             ArmSpeedChangedNotifier?.Invoke(_armSpeeds);
         }

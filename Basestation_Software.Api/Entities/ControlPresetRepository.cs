@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Basestation_Software.Api.Entities;
 
-public class ControlPresetRepository
+public class ControlPresetRepository : IControlPresetRepository
 {
     private readonly REDDatabase _REDDatabase;
 

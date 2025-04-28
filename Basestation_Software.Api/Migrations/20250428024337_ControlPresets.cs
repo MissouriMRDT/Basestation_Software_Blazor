@@ -17,26 +17,34 @@ namespace Basestation_Software.Api.Migrations
                 {
                     ID = table.Column<int>(type: "INTEGER", nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    Name = table.Column<string>(type: "TEXT", nullable: true)
+                    Name = table.Column<string>(type: "TEXT", nullable: true),
+                    jointInversions = table.Column<string>(type: "TEXT", nullable: true),
+                    gamepadBinds = table.Column<string>(type: "TEXT", nullable: true),
+                    jointSpeeds = table.Column<string>(type: "TEXT", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ControlPresets", x => x.ID);
                 });
 
+            migrationBuilder.InsertData(
+                table: "ControlPresets",
+                columns: new[] { "ID", "Name", "gamepadBinds", "jointInversions", "jointSpeeds" },
+                values: new object[] { 1, "Default", "[0,1,2,3,4,5]", "[false,false,false,false,false,false]", "[0.12,1,1,1,5,5,5,0.05]" });
+
             migrationBuilder.UpdateData(
                 table: "Waypoints",
                 keyColumn: "ID",
                 keyValue: 1,
                 column: "Timestamp",
-                value: new DateTime(2025, 4, 26, 22, 2, 35, 761, DateTimeKind.Local).AddTicks(4686));
+                value: new DateTime(2025, 4, 27, 21, 43, 36, 523, DateTimeKind.Local).AddTicks(5772));
 
             migrationBuilder.UpdateData(
                 table: "Waypoints",
                 keyColumn: "ID",
                 keyValue: 2,
                 column: "Timestamp",
-                value: new DateTime(2025, 4, 26, 22, 2, 35, 761, DateTimeKind.Local).AddTicks(4790));
+                value: new DateTime(2025, 4, 27, 21, 43, 36, 523, DateTimeKind.Local).AddTicks(5932));
         }
 
         /// <inheritdoc />

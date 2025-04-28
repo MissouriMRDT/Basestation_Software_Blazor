@@ -41,6 +41,7 @@ builder.Services.AddSingleton<OpService>();
 builder.Services.AddSingleton<ArmSpeedState>();
 builder.Services.AddHttpClient<ArmAngularService>();
 builder.Services.AddSingleton<ArmAngularService>();
+builder.Services.AddSingleton<ArmControlService>();
 builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
 

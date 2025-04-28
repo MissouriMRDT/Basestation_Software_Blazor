@@ -64,6 +64,19 @@ public class REDDatabase : DbContext
     }
 
     /// <summary>
+    /// Configure the primary key for the arm control preset table.
+    /// </summary>
+    public void Configure(EntityTypeBuilder<ControlPreset> modelBuilder)
+    {
+        modelBuilder.HasKey(x => x.ID);
+        modelBuilder.Property(x => x.ID)
+            .HasColumnName(@"ID")
+            .IsRequired()
+            .ValueGeneratedOnAdd()
+            ;
+    }
+
+    /// <summary>
     /// Configure the primary key for the Waypoints table.
     /// </summary>
     /// <param name="modelBuilder"></param>
@@ -150,6 +163,18 @@ public class REDDatabase : DbContext
             {
                 ID = 1,
                 Name = "Default",
+            }
+        );
+
+        modelBuilder.Entity<ControlPreset>().HasData(
+            new
+            {
+                ID = 1,
+                Name = "Default",
+                jointInversions = new List<bool>([false, false, false, false, false, false]),
+                gamepadBinds = new List<int>([0, 1, 2, 3, 4, 5]),
+                jointSpeeds = new List<float>([0.12f, 1f, 1f, 1f, 5f, 5f, 5f, 0.05f]),
+
             }
         );
 

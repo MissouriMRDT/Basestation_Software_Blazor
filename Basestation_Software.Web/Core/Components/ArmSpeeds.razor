@@ -20,6 +20,18 @@
 </div>
 
 @code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        _ArmSpeedState.SubscribeToArmSpeedChanged(OnSpeedsChanged);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async void OnSpeedsChanged(Dictionary<string, float> speeds)
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
     private async Task EStopArm()
     {
         await _RoveCommService.SendAsync<byte>("Arm", "EStop", [1]);

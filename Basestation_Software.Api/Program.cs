@@ -12,6 +12,8 @@ builder.Services.AddScoped<IConfigRepository, ConfigRepository>();
 builder.Services.AddScoped<IGPSWaypointRepository, GPSWaypointRepository>();
 builder.Services.AddScoped<IMapTileRepository, MapTileRepository>();
 builder.Services.AddScoped<IArmPresetRepository, ArmPresetRepository>();
+builder.Services.AddScoped<IControlPresetRepository, ControlPresetRepository>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

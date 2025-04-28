@@ -4,6 +4,7 @@
 @inject RoveCommService _RoveCommService
 @inject ArmSpeedState _ArmSpeedState
 @inject OpService _OpService
+@inject ArmControlService _ArmControlService
 
 <style>
     p {
@@ -45,7 +46,15 @@
         <GamepadSelector @ref=GamepadSelector_ ChangedCallback=GamepadSelectionChanged />
     </div>
     <div class="card-body">
+        <div style="d-flex">
+            <label>Preset:</label>
+            <RadzenDropDown TValue="ControlPreset" Data="@_cachedPresets" bind="@_selectedPreset" Change="(args) => LoadPreset((ControlPreset)args)"/>
+            <InputText @bind-Value=@_presetNameInput></InputText>
+            <button class="btn btn-primary" @onclick="(() => AddPreset(_presetNameInput))">Save Preset</button>
+            <button class="btn btn-primary" @onclick="DeletePreset">Delete Preset</button>
 
+
+        </div>
         <div style="display:flex; gap:0.6rem;">
             <RadzenCheckBox TValue="bool" Value="true" bind-Value=@UpdateIndividualJoints />
             <p style="width: auto; text-align: left">Control Joints Individually</p>
@@ -91,7 +100,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div style="display: flex; flex-wrap: wrap; justify-content: center;">
             @foreach (JointNames joint in JointNames.GetValues(typeof(JointNames)))
             {
@@ -205,7 +214,6 @@
 
     private void UpdateInterval()
     {
-        Console.WriteLine(UPDATE_INTERVAL);
         if (GamepadSelector_.SelectedGamepad == null)
             UpdateTimer.Change(-1, -1);
         else
@@ -238,7 +246,7 @@
     // Member variables
     private GamepadSelector GamepadSelector_;
     private Scheme SelectedScheme;
-    public int UPDATE_INTERVAL = 10;
+    public int UPDATE_INTERVAL = 50;
     private Timer UpdateTimer;
     private bool LastProcessGamepadInputOK = false;
     private double DeadZone = 0.5;
@@ -267,7 +275,9 @@
     double solMeterValue = 0;
     double[] lastUpdateInputs = [0, 0, 0, 0, 0, 0];
 
-
+    private List<ControlPreset>? _cachedPresets = [];
+    private ControlPreset? _selectedPreset = null;
+    private string _presetNameInput = "";
 
     public void GamepadSelectionChanged()
     {
@@ -277,8 +287,11 @@
             UpdateTimer.Change(0, UPDATE_INTERVAL);
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
+        await _ArmControlService.RefreshPresets();
+        await SyncCache();
+        _selectedPreset = _cachedPresets?[0];
         // Run update function every 100ms
         UpdateTimer = new(Update);
     }
@@ -331,7 +344,6 @@
                     {
                         for (int i = 0; i < jointInputs.Length; i++)
                         {
-                            Console.WriteLine(Convert.ToInt16(jointInputs[i]));
                             if (!(jointInputs[i] == 0d && lastUpdateInputs[i] == 0d)) _ = _RoveCommService.SendAsync<short>("Arm", "SetJointSpeed", [(short)(i + 1), Convert.ToInt16(jointInputs[i])]);
                             // We just stopped inputting, send a bunch of stop packets to account for packet loss
                             // Needs to be worked on embedded-side
@@ -339,7 +351,6 @@
                             {
                                 for (int j = 0; j < 20; j++)
                                 {
-                                    Console.WriteLine("STOP!");
                                     _ = Task.Run(() => _RoveCommService.SendAsync<short>("Arm", "SetJointSpeed", [(short)(i), 0]));
                                 }
                             }
@@ -348,7 +359,6 @@
                     else
                     {
 
-                        Console.WriteLine("Fighting");
                         _ = _RoveCommService.SendAsync<float>("Arm", "SetIndividualSpeeds", Array.ConvertAll(jointInputs, j => (float)j).ToList());
                     }
 
@@ -448,7 +458,7 @@
                     solMeterValue = inputValues[(int)solBind];
 
                     if (inputValues[(int)laserBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Laser", [(byte)((inputValues[(int)laserBind] * (isLaserInverted ? -1 : 1)) < 0 ? 0 : 1)]);
-                     _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [(byte)((inputValues[(int)solBind] == 0 ? 0 : 1))]);
+                    _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [(byte)((inputValues[(int)solBind] == 0 ? 0 : 1))]);
 
                     break;
                 }
@@ -459,6 +469,55 @@
         return true;
     }
 
+
+    private async Task SyncCache()
+    {
+        _cachedPresets = _ArmControlService.GetPresets();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task AddPreset(string presetName)
+    {
+        ControlPreset newPreset = new()
+            {
+                Name = presetName,
+                jointInversions = new(isJointInverted),
+                gamepadBinds = jointInputBinds.Cast<int>().ToList(),
+                jointSpeeds = _ArmSpeedState.ArmSpeeds.Values.ToList(),
+            };
+
+        await _ArmControlService.AddPreset(newPreset);
+        await SyncCache();
+
+    }
+
+    private async Task DeletePreset()
+    {
+        if (_selectedPreset == null || _selectedPreset.ID == 1) return;
+        await _ArmControlService.DeletePreset(_selectedPreset);
+        await SyncCache();
+    }
+
+    private async void LoadPreset(ControlPreset preset)
+    {
+        isJointInverted = new(preset.jointInversions!);
+        jointInputBinds = new(preset.gamepadBinds!.Cast<Bind>()!);
+
+        _ArmSpeedState.ArmSpeeds = new Dictionary<string, float>(){
+            { "X", preset.jointSpeeds![0]},
+            { "J2", preset.jointSpeeds![1]},
+            { "J3", preset.jointSpeeds![2]},
+            { "J4", preset.jointSpeeds![3]},
+            { "Pitch", preset.jointSpeeds![4]},
+            { "Roll", preset.jointSpeeds![5]},
+            { "Gripper", preset.jointSpeeds![6]},
+            { "Master", preset.jointSpeeds![7]}
+        };
+
+        _selectedPreset = preset;
+
+        await InvokeAsync(StateHasChanged);
+    }
 
     void IDisposable.Dispose() { }
 }

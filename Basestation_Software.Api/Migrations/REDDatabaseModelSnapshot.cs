@@ -50,9 +50,28 @@ namespace Basestation_Software.Api.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("gamepadBinds")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("jointInversions")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("jointSpeeds")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("ID");
 
                     b.ToTable("ControlPresets");
+
+                    b.HasData(
+                        new
+                        {
+                            ID = 1,
+                            Name = "Default",
+                            gamepadBinds = "[0,1,2,3,4,5]",
+                            jointInversions = "[false,false,false,false,false,false]",
+                            jointSpeeds = "[0.12,1,1,1,5,5,5,0.05]"
+                        });
                 });
 
             modelBuilder.Entity("Basestation_Software.Models.Config.ConfigEntity", b =>
@@ -123,7 +142,7 @@ namespace Basestation_Software.Api.Migrations
                             Longitude = -110.792207,
                             Name = "MDRS",
                             SearchRadius = 5.0,
-                            Timestamp = new DateTime(2025, 4, 26, 22, 2, 35, 761, DateTimeKind.Local).AddTicks(4686),
+                            Timestamp = new DateTime(2025, 4, 27, 21, 43, 36, 523, DateTimeKind.Local).AddTicks(5772),
                             Type = 0,
                             WaypointColor = -16744448
                         },
@@ -135,7 +154,7 @@ namespace Basestation_Software.Api.Migrations
                             Longitude = -91.778441000000001,
                             Name = "SDELC",
                             SearchRadius = 5.0,
-                            Timestamp = new DateTime(2025, 4, 26, 22, 2, 35, 761, DateTimeKind.Local).AddTicks(4790),
+                            Timestamp = new DateTime(2025, 4, 27, 21, 43, 36, 523, DateTimeKind.Local).AddTicks(5932),
                             Type = 0,
                             WaypointColor = -65536
                         });

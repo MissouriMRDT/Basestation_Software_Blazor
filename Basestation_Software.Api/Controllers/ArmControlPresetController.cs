@@ -9,13 +9,13 @@ namespace Basestation_Software.Api.Controllers;
 public class ArmControlPresetController : ControllerBase
 {
     // Declare member variables.
-    private readonly ControlPresetRepository _controlPresetRepository;
+    private readonly IControlPresetRepository _controlPresetRepository;
 
     /// <summary>
     /// Constructor
     /// </summary>
     /// <param name="controlPresetRepository">Implicitly passed in.</param>
-    public ArmControlPresetController(ControlPresetRepository controlPresetRepository)
+    public ArmControlPresetController(IControlPresetRepository controlPresetRepository)
     {
         _controlPresetRepository = controlPresetRepository;
     }
