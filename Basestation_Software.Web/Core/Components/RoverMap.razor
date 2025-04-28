@@ -5,6 +5,20 @@
 @inject IJSRuntime _IJSRuntime
 @inject RoveCommService _RoveCommService
 
+<style>
+    .rover-map-icon:after {
+        background-image: url(images/marker.png);
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 50px;
+        width: 50px;
+        content: "";
+        display: inline-block;
+        transform: rotateZ(@(_heading)deg);
+    }
+</style>
+
 <div class="card h-100">
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
@@ -49,6 +63,7 @@
 
     // Declare page member variables.
     private string jsInteropName;
+    private float _heading = 0;
 
     // Flags.
     private bool _dataLoaded = false;
@@ -67,6 +82,12 @@
         _RoveCommService.On<double>("Nav", "GPSLatLonAlt", async (packet) =>
         {
             await _IJSRuntime.InvokeVoidAsync($"{jsInteropName}.addRoverIcon", [packet.Data[0], packet.Data[1]]);
+        });
+
+        _RoveCommService.On<float>("Nav", "CompassData", async (packet) => 
+        {
+            _heading = packet.Data[0];
+            await InvokeAsync(StateHasChanged);
         });
     }
 

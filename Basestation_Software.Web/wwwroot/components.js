@@ -59,7 +59,7 @@ class RoverMap {
         this.lMap.on('zoomend', this.onZoomLevelChange.bind(this));
         this.lMap.on('moveend', this.onZoomLevelChange.bind(this));
         this.waypointLayerGroup = L.layerGroup([]).addTo(this.lMap);
-        this.roverIcon = L.marker([37.951764, -91.778441], { icon: new L.icon({ iconUrl: "images/marker.png", iconSize: [50, 50] }) }).addTo(this.lMap);
+        this.roverIcon = L.marker([37.951764, -91.778441], { icon: new L.divIcon({ className: "rover-map-icon", iconSize: [50, 50] }) }).addTo(this.lMap);
 
     }
     // Call component.OnZoomLevel.
