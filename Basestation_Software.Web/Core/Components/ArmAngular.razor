@@ -1,5 +1,4 @@
-﻿@using Models.Arm
-@inject ArmAngularService _ArmAngularService
+﻿@inject ArmAngularService _ArmAngularService
 @inject RoveCommService _RoveCommService
 
 <div class="card full-height">
@@ -16,17 +15,17 @@
             <InputCheckbox @bind-Value=_enableKeyframeLerping></InputCheckbox>
         </div>
         <div style="display: flex; flex-wrap: wrap; justify-content: center;">
-            @foreach (string joint in JointNames.GetNames<JointNames>())
+            @foreach (JointNames joint in Enum.GetValues<JointNames>())
             {
-                string _joint = joint;
+                JointNames _joint = joint;
                 <div class="d-flex flex-column" style="flex: 0 1 160px; border-radius: 10px; background-color: var(--bs-secondary-bg); margin: 0.2rem; padding: 0.3rem;">
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.1rem" JustifyContent="JustifyContent.Center" Style="">
-                        <p style="width: 80px; margin-inline: 0.4rem; margin-bottom:0; text-align: right">@(_isIKMode ? IKNames[(int)Enum.Parse(typeof(JointNames), _joint) - 1] : joint)</p>
-                        <RadzenNumeric TValue="float" Min="-360" Max="360" @bind-value=@_activeJointValues.Values[joint]></RadzenNumeric>
-                        <button class="btn btn-sm btn-secondary" @onclick="() => SetSingle(joint)" title="Set Joint"><i class="bi bi-inline-text bi-arrow-up-right" /></button>
-                        <button class="btn btn-sm btn-secondary" @onclick="() => GetSingle(joint)" title="Get Joint"><i class="bi bi-inline-text bi-arrow-down-right" /></button>
+                        <p style="width: 80px; margin-inline: 0.4rem; margin-bottom:0; text-align: right">@(_isIKMode ? Enum.GetName((IKNames)_joint) : Enum.GetName(_joint))</p>
+                        <RadzenNumeric TValue="float" Min="-360" Max="360" @bind-value=@(_activeJointValues[_joint])></RadzenNumeric>
+                        <button class="btn btn-sm btn-secondary" @onclick="() => SetSingle(_joint)" title="Set Joint"><i class="bi bi-inline-text bi-arrow-up-right" /></button>
+                        <button class="btn btn-sm btn-secondary" @onclick="() => GetSingle(_joint)" title="Get Joint"><i class="bi bi-inline-text bi-arrow-down-right" /></button>
                     </RadzenStack>
-                    <label class="form-label text-center">@(telemStrings[(int)Enum.Parse(typeof(JointNames), _joint) - 1])</label>
+                    <label class="form-label text-center">@(_lastTelemetry?[_joint].ToString() ?? "-")</label>
                 </div>
             }
         </div>
@@ -112,10 +111,8 @@
     private JointValues _activeJointValues = new();
     private string _presetNameInput = "";
     private RadzenDataGrid<ArmPreset>? _presetsDataGrid;
-    private List<float> lastTelemetry = [0, 0, 0, 0, 0, 0];
+    private JointValues? _lastTelemetry;
     private bool _isIKMode = false;
-    private string[] IKNames = ["X", "Y", "Z", "J4", "P", "R"];
-    private string[] telemStrings = ["-", "-", "-", "-", "-", "-"];
     private List<ArmPreset> _keyframes = new();
     private int _currentKeyframeIndex = 0;
     private int _keyframeStatusMeter = 0;
@@ -125,14 +122,16 @@
     {
         _RoveCommService.On<float>("Arm", "Positions", async (packet) =>
         {
-            lastTelemetry = packet.Data;
-            telemStrings[0] = packet.Data[0].ToString();
-            telemStrings[1] = packet.Data[1].ToString();
-			
-            telemStrings[2] = packet.Data[2].ToString();
-			telemStrings[3] = packet.Data[3].ToString();
-			telemStrings[4] = packet.Data[4].ToString();
-            telemStrings[5] = "-";
+
+            if (_lastTelemetry is null)
+            {
+                _lastTelemetry = new();
+            }
+
+            for (int i = 0; i < packet.DataCount; i++)
+            {
+                _lastTelemetry[(JointNames)i] = packet.Data[i];
+            }
 
             await InvokeAsync(StateHasChanged);
         });
@@ -160,11 +159,15 @@
             ArmPreset k = _keyframes[i];
             _keyframeStatusMeter = 0;
             Console.WriteLine(k.Name);
-            if (k.Joints != null) _ = _RoveCommService.SendAsync<float>(
-            "Arm",
-            "SetIKPosition",
-            [k.Joints.Values["X"], 0f, 0f, 0f, k.Joints.Values["Pitch"], 0f]);
-            await InvokeAsync(StateHasChanged);
+            if (k.Joints != null)
+            {
+                _ = _RoveCommService.SendAsync<float>(
+                    "Arm",
+                    "SetIKPosition",
+                    [k.Joints[JointNames.X], 0f, 0f, 0f, k.Joints[JointNames.Pitch], 0f]);
+            }
+
+                await InvokeAsync(StateHasChanged);
             for (int j = 0; j < 100; j++)
             {
                 _keyframeStatusMeter += 50;
@@ -182,6 +185,12 @@
         }
     }
 
+    private async void ClearKeyframes()
+    {
+        _keyframes = new();
+        await InvokeAsync(StateHasChanged);
+    }
+
     /// <summary>
     /// Runs when a preset row is clicked.
     /// </summary>
@@ -189,14 +198,14 @@
     private void OnPresetClick(DataGridRowMouseEventArgs<ArmPreset> args)
     {
         _selectedPreset = args.Data;
-        _presetNameInput = args.Data.Name;
+        _presetNameInput = args.Data.Name ?? "---";
         StateHasChanged();
     }
 
     // load preset on double-click
     private void OnPresetDoubleClick(DataGridRowMouseEventArgs<ArmPreset> args)
     {
-        _activeJointValues.Values = new(args.Data.Joints.Values);
+        _activeJointValues = args.Data.Joints ?? new();
     }
 
     private void OnCellRender(DataGridCellRenderEventArgs<ArmPreset> args)
@@ -207,16 +216,13 @@
 
     private async Task AddPreset(string presetName)
     {
-        ArmPreset newPreset = new() 
-        {
-            Name = presetName,
-            Joints = new(),
-        };
-        newPreset.Joints.Values = new(_activeJointValues.Values);
+        ArmPreset newPreset = new();
+        newPreset.Name = presetName;
+        newPreset.Joints = new();
+        newPreset.Joints.SetAll(_activeJointValues);
         await _ArmAngularService.AddPreset(newPreset);
         await SyncCache();
         _presetsDataGrid?.Reload();
-
     }
 
     private async void DeletePreset(ArmPreset preset)
@@ -230,42 +236,39 @@
 
     private void SetAll()
     {
-		SetSingle("X");
-		SetSingle("Pitch");
+        SetSingle(JointNames.X);
+        SetSingle(JointNames.Pitch);
         // if (!_isIKMode)
         // {
         //     _ = _RoveCommService.SendAsync<float>(
         //     "Arm",
         //     "SetIndividualTargetAngles",
-        //     _activeJointValues.Values.Values.ToList());
+        //     _activeJointValues.ToList());
         // }
         // else
         // {
         //     _ = _RoveCommService.SendAsync<float>(
         //     "Arm",
         //     "SetIKPosition",
-        //     _activeJointValues.Values.Values.ToList());
+        //     _activeJointValues.ToList());
         // }
     }
 
-    private void SetSingle(string joint)
+    private void SetSingle(JointNames joint)
     {
         _ = _RoveCommService.SendAsync<float>(
-        "Arm",
-        "SetJointTargetAngle",
-        [(int)Enum.Parse(typeof(JointNames), joint)-1, _activeJointValues.Values[joint]]);
+            "Arm",
+            "SetJointTargetAngle",
+            [(int)joint, _activeJointValues[joint]]);
     }
 
     private void GetAll()
     {
-        for (int i = 0; i < _activeJointValues.Values.Count; i++)
-        {
-            _activeJointValues.Values[Enum.GetName(typeof(JointNames), i+1)] = lastTelemetry[i];
-        }
+        _activeJointValues.SetAll(_lastTelemetry ?? new());
     }
 
-    private void GetSingle(string joint)
+    private void GetSingle(JointNames joint)
     {
-        _activeJointValues.Values[joint] = lastTelemetry[(int)Enum.Parse(typeof(JointNames), joint)];
+        _activeJointValues[joint] = _lastTelemetry?[joint] ?? 0;
     }
 }
