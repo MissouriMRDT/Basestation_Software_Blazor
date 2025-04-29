@@ -107,6 +107,7 @@
 
 @code 
 {
+    private bool OutputDisabled = false;
     private List<ArmPreset>? _cachedPresets;
     private ArmPreset? _selectedPreset = null;
     private JointValues _activeJointValues = new();

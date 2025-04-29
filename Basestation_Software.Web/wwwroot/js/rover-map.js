@@ -14,6 +14,7 @@ export class RoverMap {
     waypointLayerGroup = null;
     dotNetComponent = null;
     positionDisplay = null;
+    roverIcon = null;
 
     // Create leaflet map.
     constructor(id, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel) {
@@ -56,6 +57,7 @@ export class RoverMap {
         this.lMap.addEventListener('mousemove', (event) => {
             this.positionDisplay.updateHTML(event.latlng.lat, event.latlng.lng);
         });
+        this.roverIcon = L.marker([37.951764, -91.778441], { icon: new L.icon({ iconUrl: "images/marker.png", iconSize: [50, 50] }) }).addTo(this.lMap);
 
         this.waypointLayerGroup = L.layerGroup([]).addTo(this.lMap);
     }
@@ -92,6 +94,7 @@ export class RoverMap {
                 L.polyline([[lat, lng], [lat + o, lng]], { color: "white" }).addTo(this.waypointLayerGroup);
             });
         }
+
     }
     // Clear waypoint markers.
     clearWaypointMarkers() {
@@ -100,6 +103,10 @@ export class RoverMap {
     // Navigate to coordinate.
     panToCoordinates(lat, long) {
         this.lMap.panTo(new L.LatLng(lat, long));
+    }
+    // Add a pin where the rover is.
+    addRoverIcon(lat, lng) {
+        this.roverIcon.setLatLng([lat, lng]);
     }
 }
 

@@ -33,9 +33,11 @@
     // State
     private GamepadSelector GamepadSelector_;
 
+    Timer Timer_;
+
     protected override void OnInitialized()
     {
-        new Timer(_ =>
+        Timer_ = new Timer(_ =>
         {
             InvokeAsync(StateHasChanged);
         }, null, 0, 100);

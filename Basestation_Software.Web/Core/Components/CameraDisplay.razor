@@ -1,13 +1,13 @@
 ﻿@inject RoveCommService _RoveCommService
 @inject IJSRuntime _IJSRuntime
-@implements IDisposable
+@implements IAsyncDisposable
 
 <style>
     .camera-display {
         display: grid;
         padding: 0;
         grid-template-columns: 1fr;
-        grid-template-rows: 1fr min-content min-content min-content;
+        grid-template-rows: 1fr 30px;
         grid-template-areas:
             "video"
             "source-buttons";
@@ -23,13 +23,15 @@
         grid-area: source-buttons;
         display: flex;
         flex-direction: row;
-        margin-inline: 5%;
-        margin-block: 1%;
+        margin-inline: 0;
+        margin-block: 0;
     }
 
     .source-buttons-container button {
         margin: 1px;
         flex: 1;
+        padding: 0;
+        color: white;
     }
 
     .source-buttons-container :not(:first-child):not(:last-child) {
@@ -52,19 +54,7 @@
     }
 
     .camera-selected {
-        border: 4px solid black;
-    }
-
-    .camera-streaming {
-        background-color: #65c100 !important;
-    }
-
-    .camera-available {
-        background-color: #cd9f00 !important;
-    }
-
-    .camera-none {
-        background-color: #808080 !important;
+        color: black !important;
     }
 </style>
 
@@ -78,7 +68,7 @@
             {
                 // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
                 var _i = i;
-                <button class="@("btn btn-secondary " + ((sourceIndex == _i) ? "camera-selected" : "")) @(GetClass(_i))" @onclick="() => SetSource(_i)">@(_i)</button>
+                <button class="@("btn btn-secondary " + ((sourceIndex == _i) ? "camera-selected" : ""))" @onclick="() => SetSource(_i)">@(_i)</button>
             }
         </div>
         <button class="btn btn-primary camera-display-rotate" @onclick="Rotate"><i class="bi bi-arrow-clockwise"></i></button>
@@ -88,67 +78,46 @@
 @code {
     private bool _prerendered = false;
     private int sourceIndex = 0;
-
-    private int available1 = 0;
-    private int available2 = 0;
-    private int streaming1 = 0;
-    private int streaming2 = 0;
-
-    private int rot = 0;
     private ElementReference videoContainer;
-    private IJSObjectReference jsCameraDisplay;
-
-    protected override async Task OnInitializedAsync()
-    {
-        _RoveCommService.On<byte>("Camera1", "AvailableCameras", async (packet) =>
-        {
-            available1 = packet.Data[0];
-            await InvokeAsync(StateHasChanged);
-        });
-        _RoveCommService.On<byte>("Camera1", "StreamingCameras", async (packet) =>
-        {
-            streaming1 = packet.Data[0];
-            await InvokeAsync(StateHasChanged);
-        });
-        _RoveCommService.On<byte>("Camera2", "AvailableCameras", async (packet) =>
-        {
-            available2 = packet.Data[0];
-            await InvokeAsync(StateHasChanged);
-        });
-        _RoveCommService.On<byte>("Camera2", "StreamingCameras", async (packet) =>
-        {
-            streaming2 = packet.Data[0];
-            await InvokeAsync(StateHasChanged);
-        });
-    }
-
-    private String GetClass(int i) {
-        if (i < 4)
-            return i < streaming1 ? "camera-streaming" : i < available1 ? "camera-available" : "camera-none";
-        else
-            return i - 4 < streaming2 ? "camera-streaming" : i - 4 < available2 ? "camera-available" : "camera-none";
-    }
+    private IJSObjectReference? jsCameraDisplay;
 
     private async void Rotate()
     {
-        rot += 90;
-        await jsCameraDisplay.InvokeVoidAsync("rotate", rot);
+        if (jsCameraDisplay is not null)
+        {
+            await jsCameraDisplay.InvokeVoidAsync("rotate", 90);
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
-            jsCameraDisplay = await _IJSRuntime.InvokeAsync<IJSObjectReference>("createCameraDisplay", videoContainer);
+        {
+            jsCameraDisplay = await _IJSRuntime.InvokeAsync<IJSObjectReference>("cameras.createCameraDisplay", videoContainer);
+        }
     }
 
     private async Task SetSource(int newSourceIndex)
     {
         sourceIndex = newSourceIndex;
         StateHasChanged();
-        await jsCameraDisplay.InvokeVoidAsync("setCamera", sourceIndex);
+        if (jsCameraDisplay is not null)
+        {
+            await jsCameraDisplay.InvokeVoidAsync("setCamera", sourceIndex);
+        }
     }
 
-    void IDisposable.Dispose()
+    async ValueTask IAsyncDisposable.DisposeAsync()
     {
+        try
+        {
+            if (jsCameraDisplay is not null)
+            {
+                await jsCameraDisplay.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
     }
 }

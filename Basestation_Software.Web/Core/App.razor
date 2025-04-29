@@ -30,6 +30,12 @@
     <!-- Leaflet does not support JS modules -->
     <script src="js/lib/leaflet/leaflet.js"></script>
     <script src="js/lib/leaflet-contextmenu/leaflet.contextmenu.min.js"></script>
+    <!-- Script needs to be imported only once for the page -->
+    <script type="module">
+        import * as cameras from "/js/cameras.js";
+        window.cameras = cameras;
+    </script>
+
     <!-- three.js and rover javascript code is imported with modules, so do not require a script tag -->
 
     <script>

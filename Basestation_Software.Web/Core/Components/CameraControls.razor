@@ -1,13 +1,13 @@
 ﻿@inject RoveCommService _RoveCommService
 @inject IJSRuntime _IJSRuntime
-@implements IDisposable
+@implements IAsyncDisposable
 
 <style>
     .camera-controls {
         display: grid;
         padding: 0;
         grid-template-columns: 1fr 1fr 1fr 1fr;
-        grid-template-rows: min-content min-content min-content;
+        grid-template-rows: 30px min-content min-content;
         grid-template-areas:
         "source-buttons source-buttons source-buttons source-buttons"
         "connect disconnect restart shutdown"
@@ -19,13 +19,15 @@
         grid-area: source-buttons;
         display: flex;
         flex-direction: row;
-        margin-inline: 5%;
-        margin-block: 1%;
+        margin-inline: 0;
+        margin-block: 0;
     }
 
     .source-buttons-container button {
         margin: 1px;
         flex: 1;
+        padding: 0;
+        color: white;
     }
 
     .source-buttons-container :not(:first-child):not(:last-child) {
@@ -41,7 +43,7 @@
     }
 
     .camera-selected {
-        border: 4px solid black;
+        color: black !important;
     }
 
     .camera-streaming {
@@ -54,6 +56,10 @@
 
     .camera-none {
         background-color: #808080 !important;
+    }
+
+    .camera-disconnected {
+        background-color: #ff0000 !important;
     }
 </style>
 
@@ -70,10 +76,10 @@
                 <button class="btn btn-secondary @(sourceIndex == _i ? "camera-selected" : "") @(GetClass(_i))" @onclick="() => SetSource(_i)">@(_i)</button>
             }
         </div>
-        <button class="btn btn-primary" style="grid-area: connect" onclick="webRTCCameras.connect()">Connect</button>
-        <button class="btn btn-primary" style="grid-area: disconnect" onclick="webRTCCameras.disconnect()">Disconnect</button>
-        <button class="btn btn-primary" style="grid-area: restart" @onclick="() => ToggleSource(sourceIndex, true)">Restart Camera</button>
-        <button class="btn btn-primary" style="grid-area: shutdown" @onclick="() => ToggleSource(sourceIndex, false)">Shutdown Camera</button>
+        <button class="btn btn-primary" style="grid-area: connect" @onclick="ConnectCameras">Connect</button>
+        <button class="btn btn-primary" style="grid-area: disconnect" @onclick="DisconnectCameras">Disconnect</button>
+        <button class="btn btn-primary" style="grid-area: restart" @onclick="async () => await ToggleSource(sourceIndex, true)">Restart Camera</button>
+        <button class="btn btn-primary" style="grid-area: shutdown" @onclick="async () => await ToggleSource(sourceIndex, false)">Shutdown Camera</button>
         <button class="btn btn-primary" style="grid-area: screenshot" @onclick="TakePicture">Take Picture</button>
         <button class="btn btn-primary" style="grid-area: save" @onclick="SaveImage">Save Image</button>
         <button class="btn btn-primary" style="grid-area: panorama" @onclick="TakePano">Take Pano</button>
@@ -81,58 +87,111 @@
 </div>
 
 @code {
+    public const uint TELEMETRY_TIMEOUT = 10_000; // ms
+    private System.Threading.Timer TelemetryWatchdog1 = null!;
+    private System.Threading.Timer TelemetryWatchdog2 = null!;
 
     private int sourceIndex = 0;
 
+    private bool connected1 = false;
+    private bool connected2 = false;
     private int available1 = 0;
     private int available2 = 0;
     private int streaming1 = 0;
     private int streaming2 = 0;
 
     private ElementReference videoContainer;
-    private IJSObjectReference jsCameraDisplay;
+
+    private IJSObjectReference? jsModule;
+    private IJSObjectReference? jsCameraDisplay;
 
     protected override async Task OnInitializedAsync()
     {
+        TelemetryWatchdog1 = new System.Threading.Timer(WatchdogTimeout, 1, TELEMETRY_TIMEOUT, Timeout.Infinite);
+        TelemetryWatchdog2 = new System.Threading.Timer(WatchdogTimeout, 2, TELEMETRY_TIMEOUT, Timeout.Infinite);
+
         _RoveCommService.On<byte>("Camera1", "AvailableCameras", async (packet) =>
         {
             available1 = packet.Data[0];
+            ResetWatchdog(1);
             await InvokeAsync(StateHasChanged);
         });
         _RoveCommService.On<byte>("Camera1", "StreamingCameras", async (packet) =>
         {
             streaming1 = packet.Data[0];
+            ResetWatchdog(1);
             await InvokeAsync(StateHasChanged);
         });
         _RoveCommService.On<byte>("Camera2", "AvailableCameras", async (packet) =>
         {
             available2 = packet.Data[0];
+            ResetWatchdog(2);
             await InvokeAsync(StateHasChanged);
         });
         _RoveCommService.On<byte>("Camera2", "StreamingCameras", async (packet) =>
         {
             streaming2 = packet.Data[0];
+            ResetWatchdog(2);
             await InvokeAsync(StateHasChanged);
         });
+
+        await Task.CompletedTask;
+    }
+
+    async void WatchdogTimeout(object? pi)
+    {
+        if ((int?)pi == 1) connected1 = false;
+        if ((int?)pi == 2) connected2 = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    void ResetWatchdog(int pi)
+    {
+        if (pi == 1)
+        {
+            connected1 = true;
+            TelemetryWatchdog1.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
+        }
+        if (pi == 2)
+        {
+            connected2 = true;
+            TelemetryWatchdog2.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
+        }
     }
 
     private String GetClass(int i) {
         if (i < 4)
-            return i < streaming1 ? "camera-streaming" : i < available1 ? "camera-available" : "camera-none";
+        {
+            return !connected1 ? "camera-disconnected" : i < streaming1 ? "camera-streaming" : i < available1 ? "camera-available" : "camera-none";
+        }
         else
-            return i - 4 < streaming2 ? "camera-streaming" : i - 4 < available2 ? "camera-available" : "camera-none";
+        {
+            return !connected2 ? "camera-disconnected" : i - 4 < streaming2 ? "camera-streaming" : i - 4 < available2 ? "camera-available" : "camera-none";
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
-            jsCameraDisplay = await _IJSRuntime.InvokeAsync<IJSObjectReference>("createCameraDisplay", videoContainer);
+        {
+            jsCameraDisplay = await _IJSRuntime.InvokeAsync<IJSObjectReference>("cameras.createCameraDisplay", videoContainer);
+        }
+    }
+
+    private async Task ConnectCameras()
+    {
+        await _IJSRuntime.InvokeVoidAsync("cameras.connect");
+    }
+
+    private async Task DisconnectCameras()
+    {
+        await _IJSRuntime.InvokeVoidAsync("cameras.disconnect");
     }
 
     private async Task SetSource(int newSourceIndex)
     {
         sourceIndex = newSourceIndex;
-        StateHasChanged();
+        await InvokeAsync(StateHasChanged);
     }
 
     private void TakePicture()
@@ -146,9 +205,8 @@
         try
         {
             File.WriteAllBytes("CameraScreenshot_" + ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds() + ".png", Convert.FromBase64String("oiwebjfvdkhjgfdghjkwe"));
-
         }
-        catch(Exception e)
+        catch(Exception)
         {
             Console.WriteLine("Wrong Format!");
         }
@@ -156,25 +214,34 @@
 
     private async Task TakePano()
     {
-        _ = _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [-180, 0]);
+        await _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [-180, 0]);
         await Task.Delay(4000);
         SaveImage();
         for (int i = 0; i < 4; i++)
         {
-            _ = _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [90, 0]);
+            await _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [90, 0]);
             await Task.Delay(2000);
             TakePicture();
             await Task.Delay(1000);
         }
     }
 
-    private void ToggleSource(int source, bool restartStream)
+    private async Task ToggleSource(int source, bool restartStream)
     {
-
-        _ = _RoveCommService.SendAsync<byte>(sourceIndex < 4 ? "Camera1" : "Camera2", "ToggleStream", [(byte)(sourceIndex % 4), restartStream ? (byte)1 : (byte)0]);
+        await _RoveCommService.SendAsync<byte>(sourceIndex < 4 ? "Camera1" : "Camera2", "ToggleStream", [(byte)(sourceIndex % 4), restartStream ? (byte)1 : (byte)0]);
     }
 
-    void IDisposable.Dispose()
+    async ValueTask IAsyncDisposable.DisposeAsync()
     {
+        try
+        {
+            if (jsCameraDisplay is not null)
+            {
+                await jsCameraDisplay.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
     }
 }
