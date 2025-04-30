@@ -16,6 +16,7 @@
     <div class="d-flex flex-column justify-content-center align-content-center rounded p-2 bg-body-secondary text-center">
         <p class="font-monospace fs-3">@(_phrase != "" ? _phrase : "_")</p>
         <p class="">@_statusMessage</p>
+        <p>@(delay * 10)ms</p>
         <progress max="5000" value=@_charStatusMeter class="progress"></progress>
     </div>
 
@@ -32,6 +33,11 @@
     private int _currentCharIndex = 0;
     private int _charStatusMeter = 0;
 
+    private const float r1 = 5.2f;
+    private const float r2 = 10.4f;
+
+    private int delay = 0;
+
     // X and Pitch positional diffs based on Q
     private Dictionary<char, List<float>> keys = new()
     {
@@ -45,22 +51,22 @@
         { 'I', [-5.24f, 0f]},
         { 'O', [-5.966f, 0f]},
         { 'P', [-6.708f, 0f]},
-        { 'A', [-0.784f, 4f]},
-        { 'S', [-1.209f, 4f]},
-        { 'D', [-1.842f, 4f]},
-        { 'F', [-2.564f, 4f]},
-        { 'G', [-3.3f, 4f]},
-        { 'H', [-4.022f, 4f]},
-        { 'J', [-4.755f, 4f]},
-        { 'K', [-5.48f, 4f]},
-        { 'L', [-6.19f, 4f]},
-        { 'Z', [-1.603f, 9f]},
-        { 'X', [-1.993f, 9f]},
-        { 'C', [-2.55f, 9f]},
-        { 'V', [-3.196f, 9f]},
-        { 'B', [-3.872f, 9f]},
-        { 'N', [-4.572f, 9f]},
-        { 'M', [-5.28f, 9f]},
+        { 'A', [-0.182f, r1]},
+        { 'S', [-0.938f, r1]},
+        { 'D', [-1.677f, r1]},
+        { 'F', [-2.448f, r1]},
+        { 'G', [-3.211f, r1]},
+        { 'H', [-3.949f, r1]},
+        { 'J', [-4.693f, r1]},
+        { 'K', [-5.427f, r1]},
+        { 'L', [-6.148f, r1]},
+        { 'Z', [-0.509f, r2]},
+        { 'X', [-1.289f, r2]},
+        { 'C', [-2.047f, r2]},
+        { 'V', [-2.811f, r2]},
+        { 'B', [-3.561f, r2]},
+        { 'N', [-4.312f, r2]},
+        { 'M', [-5.056f, r2]},
     };
 
     protected override void OnInitialized()
@@ -94,17 +100,20 @@
                 [4, pos[1] - totalOffset[1]]
                 );
 
+                delay = (int)Math.Ceiling(Math.Abs(pos[0] - totalOffset[0])) * 100 + 100;
+
                 totalOffset[0] = pos[0];
                 totalOffset[1] = pos[1];
+
+                await InvokeAsync(StateHasChanged);
+                for (int j = 0; j < delay; j++)
+                {
+                    _charStatusMeter += 1 / delay;
+                    _ = InvokeAsync(StateHasChanged);
+                    await Task.Delay(10);
+                }
             }
 
-            await InvokeAsync(StateHasChanged);
-            for (int j = 0; j < 100; j++)
-            {
-                _charStatusMeter += 50;
-                _ = InvokeAsync(StateHasChanged);
-                await Task.Delay(50);
-            }
             _statusMessage = "Running solenoid";
             _ = InvokeAsync(StateHasChanged);
             await _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [1]);
