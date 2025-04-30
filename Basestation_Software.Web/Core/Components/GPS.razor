@@ -16,8 +16,23 @@
 </style>
 
 <div class="card h-100">
-    <div class="card-header">
+    <div class="card-header d-flex gap-2">
         <h3>NAV</h3>
+        <button class="btn btn-primary btn-sm" @onclick=@(async () => {
+                await _GPSWaypointService.AddGPSWaypoint(new GPSWaypoint{
+                ID = -1,
+                Name = "NAV Waypoint",
+                Latitude = Lat,
+                Longitude = Lon,
+                Timestamp = DateTime.Now,
+                Altitude = -1,
+                SearchRadius = 0,
+                TagID = 0,
+                Type = 0,
+                });
+                })>
+            <i class="bi bi-sm bi-plus-circle" />
+        </button>
     </div>
     <div class="card-body gps">
         <p>Lat [&#176;]</p><p>Lon [&#176;]</p><p>Alt [m]</p>
@@ -39,14 +54,6 @@
         <p>@($"{Pitch:00.0}")</p><p>@($"{Yaw:00.0}")</p><p>@($"{Roll:00.0}")</p>
         <p style="grid-area: 10 / 1 / 11 / 4">XYZ Acceleration [ms&#8315;&#178;]</p>
         <p>@($"{AccelX:00.0}")</p><p>@($"{AccelY:00.0}")</p><p>@($"{AccelZ:00.0}")</p>
-        <button class="btn btn-primary" @onclick=@(async () => {
-            await _GPSWaypointService.AddGPSWaypoint(new GPSWaypoint{
-                Name = "Generated GPS Waypoint",
-                Latitude = Lat,
-                Longitude = Lon,
-                Timestamp = DateTime.Now,
-            });
-        })>Add as Waypoint</button>
         <svg id="@ID" style="grid-area: 12 / 1 / 13 / 4; place-self: stretch stretch;" viewBox="0 0 60 60">
             <style>
                 .elev {
