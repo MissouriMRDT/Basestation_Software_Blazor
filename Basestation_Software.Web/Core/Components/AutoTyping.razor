@@ -1,5 +1,13 @@
 ﻿@inject RoveCommService _RoveCommService
 
+@* TODO: Look into why width style is getting inherited on p tags*@
+<style>
+    p {
+        width: auto;
+        text-align: center;
+    }
+</style>
+
 <div class="card h-100">
     <div class="card-header">
         <h3>Autonomous Typing</h3>
@@ -14,6 +22,7 @@
     <div class="d-flex gap-2 justify-content-center">
         <InputText class="form-text" @bind-Value="@_phrase" @oninput="OnPhraseChanged" />
         <button class="btn btn-primary" @onclick="@PlayPhrase">Start</button>
+        <button class="btn btn-primary" @onclick="@Flip">180 Pitch</button>
     </div>
 </div>
 
@@ -106,6 +115,11 @@
 
         _statusMessage = "Done";
         _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void Flip()
+    {
+        RoveComm.Boards.Arm.IncrementIndividualTargetAngles(_RoveCommService, 0, 0, 0, 0, 180f, 0);
     }
 
     private void OnPhraseChanged(ChangeEventArgs e)
