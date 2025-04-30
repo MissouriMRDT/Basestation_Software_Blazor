@@ -81,10 +81,10 @@
         <p style="grid-area: right-backward-start / right-backward-start / right-forward-end / right-forward-end; z-index: 10">@($"{RightSpeed:+0.00000;-0.00000;+0.00000}")</p>
         <InputNumber Style="grid-area: drivespeed-input; width: 100%" @bind-Value=@DriveSpeed TValue="double"/>
         <div style="grid-area: drivespeed-buttons">
-            <button @onclick=@(() => DriveSpeed = 10)>10</button>
-            <button @onclick=@(() => DriveSpeed = 20)>20</button>
-            <button @onclick=@(() => DriveSpeed = 30)>30</button>
-            <button @onclick=@(() => DriveSpeed = 40)>40</button>
+            <button @onclick=@(() => DriveSpeed = 0.1)>10</button>
+            <button @onclick=@(() => DriveSpeed = 0.2)>20</button>
+            <button @onclick=@(() => DriveSpeed = 0.3)>30</button>
+            <button @onclick=@(() => DriveSpeed = 0.4)>40</button>
         </div>
         <InputNumber Style="grid-area: midspeed-input; width: 100%" @bind-Value=@MidMult TValue="double"/><p style="grid-area: midspeed">Mid: @($"{MidMult:0.0}")x</p>
         <InputNumber Style="grid-area: outspeed-input; width: 100%" @bind-Value=@OutMult TValue="double"/><p style="grid-area: outspeed">Outer: @($"{OutMult:0.0}")x</p>
@@ -513,5 +513,4 @@
         }
     }
 
-    void IDisposable.Dispose() { }
 }

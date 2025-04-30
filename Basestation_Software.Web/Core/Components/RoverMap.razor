@@ -107,7 +107,7 @@
             // Plot waypoints and keep them updated.
             await PlotWaypoints();
             _GPSWaypointService.SubscribeToWaypointsChanges(OnWaypointSync);
-            _GPSWaypointState.SubscribeToWaypointSelected(OnWaypointSelected);
+            @* _GPSWaypointState.SubscribeToWaypointSelected(OnWaypointSelected); *@
         }
     }
 
