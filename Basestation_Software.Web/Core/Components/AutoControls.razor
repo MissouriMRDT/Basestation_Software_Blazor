@@ -26,6 +26,7 @@
                 <button class="btn btn-secondary" @onclick=AddObjectLeg>Add Object Leg</button>
                 <button class="btn btn-secondary" @onclick=AddObstacle>Add Obstacle</button>
                 <button class="btn btn-secondary" @onclick=ClearWaypoints>Clear Waypoints</button>
+                <button class="btn btn-secondary" @onclick=ClearWaypoints>Clear Objects</button>
             </div>
         </div>
 
@@ -58,6 +59,11 @@
     public async Task ClearWaypoints()
     {
         await _RoveCommService.SendAsync<byte>("Autonomy", "ClearWaypoints", [0]);
+    }
+
+    public async Task ClearObjects()
+    {
+        await _RoveCommService.SendAsync<byte>("Autonomy", "ClearObstacles", [0]);
     }
 
     public async Task AddPositionLeg()
