@@ -46,6 +46,7 @@
 
     public async Task StartAutonomy()
     {
+        _RoveCommService.SubscribeAll();
         await _RoveCommService.SendAsync<byte>("Autonomy", "StartAutonomy", [0]);
         _OpService.SetAutonomy();
     }
