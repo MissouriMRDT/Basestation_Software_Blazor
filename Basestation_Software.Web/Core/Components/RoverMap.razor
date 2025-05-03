@@ -81,9 +81,9 @@
             await jsModule!.InvokeVoidAsync($"{jsInteropName}.addRoverIcon", [packet.Data[0], packet.Data[1]]);
         });
 
-        _RoveCommService.On<float>("Nav", "CompassData", async (packet) => 
+        _RoveCommService.On<float>("Nav", "IMUData", async (packet) => 
         {
-            _heading = packet.Data[0];
+            _heading = packet.Data[1];
             await InvokeAsync(StateHasChanged);
         });
     }
