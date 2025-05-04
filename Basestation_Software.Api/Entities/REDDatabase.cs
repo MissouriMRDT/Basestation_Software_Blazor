@@ -3,6 +3,8 @@ using Basestation_Software.Models.Config;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Xml.Linq;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Basestation_Software.Api.Entities;
 
@@ -18,6 +20,16 @@ public class REDDatabase : DbContext
     {
         // Assign member variables.
         Configuration = configuration;
+
+        // Attempt to form missing tables in data.db
+        try
+        {
+            (Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator).CreateTables();
+        }
+        catch
+        {
+            // CreateTables throws error if table already exists but we don't care
+        }
     }
 
     /// <summary>
