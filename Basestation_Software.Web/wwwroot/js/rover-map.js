@@ -57,7 +57,7 @@ export class RoverMap {
         this.lMap.addEventListener('mousemove', (event) => {
             this.positionDisplay.updateHTML(event.latlng.lat, event.latlng.lng);
         });
-        this.roverIcon = L.marker([37.951764, -91.778441], { icon: new L.icon({ iconUrl: "images/marker.png", iconSize: [50, 50] }) }).addTo(this.lMap);
+        this.roverIcon = L.marker([37.951764, -91.778441], { icon: new L.divIcon({ className: "rover-map-icon", iconSize: [50, 50] }) }).addTo(this.lMap);
 
         this.waypointLayerGroup = L.layerGroup([]).addTo(this.lMap);
     }
