@@ -99,7 +99,9 @@
         Bumpers,
         Triggers,
         DpadX,
-        DpadY
+        DpadY,
+        LBumpTrig,
+        RBumpTrig,
     }
 
     private string[] _gimbalNames = [
@@ -115,8 +117,8 @@
     ];
 
     private List<Bind> controllerBinds = [
-        Bind.Bumpers, 
-        Bind.AB, 
+        Bind.LBumpTrig, 
+        Bind.RBumpTrig, 
         Bind.LSX, 
         Bind.LSY, 
         Bind.RSX, 
@@ -144,7 +146,9 @@
             gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
             gamepad.Axes[4] - gamepad.Axes[5],
             gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
-            gamepad.Buttons[12].Value - gamepad.Buttons[13].Value
+            gamepad.Buttons[12].Value - gamepad.Buttons[13].Value,
+            gamepad.Axes[4] - gamepad.Buttons[4].Value,
+            gamepad.Axes[5] - gamepad.Buttons[5].Value
         ];
 
         return gamepadInputs;
