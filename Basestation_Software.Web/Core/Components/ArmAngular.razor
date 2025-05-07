@@ -30,7 +30,7 @@
                 </div>
             }
         </div>
-        <p style="width: auto; text-align: center">Pitch From Ground: @_ac</p>
+        <p style="width: auto; text-align: center">Pitch From Ground: @(Math.Round(_ac, 2))</p>
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center" Style="margin-block: 1rem">
             <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="@GetAll">Get All</RadzenButton>
             <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="@SetAll">Set All</RadzenButton>
