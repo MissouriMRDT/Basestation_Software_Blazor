@@ -7,9 +7,6 @@
 *.userosscache
 *.sln.docstates
 
-# Basestation_Software.Web/wwwroot/js/*
-Basestation_Software.Web/Core/JS/node_modules/*
-
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
@@ -25,6 +22,13 @@ bin/
 [Bb]in/
 [Oo]bj/
 [Ll]og/
+
+# Ignore database files
+*.db
+/Basestation_Software.Api/Data/
+
+# Uncomment if you have tasks that create the project's static files in wwwroot
+#wwwroot/
 
 # Visual Studio cache/options directory
 .vs/
@@ -264,5 +268,3 @@ __pycache__/
 *.pyc
 /.vs/ProjectEvaluation/basestation_software.metadata.v7.bin
 /.vs/ProjectEvaluation/basestation_software.projects.v7.bin
-
-/Basestation_Software.Api/Data/*
