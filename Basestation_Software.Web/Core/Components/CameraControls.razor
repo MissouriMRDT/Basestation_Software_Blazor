@@ -170,14 +170,6 @@
         }
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            jsCameraDisplay = await _IJSRuntime.InvokeAsync<IJSObjectReference>("cameras.createCameraDisplay", videoContainer);
-        }
-    }
-
     private async Task ConnectCameras()
     {
         await _IJSRuntime.InvokeVoidAsync("cameras.connect");
