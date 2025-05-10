@@ -326,10 +326,10 @@
                         // send rovecomm packets
                         if (!OutputDisabled)
                         {
-                            if (Math.Abs(bindedInputs[0]) > DeadZone) _ = _RoveCommService.SendAsync("Auger", "AugerAxis_OpenLoop", [(short)(bindedInputs[0] * 1000f * _augerAxisMult)]);
-                            if (Math.Abs(bindedInputs[1]) > DeadZone) _ = _RoveCommService.SendAsync("Raman", "InstrumentsAxis_OpenLoop", [(short)(bindedInputs[1] * 1000f * _instrumentAxisMult)]);
-                            if (Math.Abs(bindedInputs[2]) > DeadZone) _ = _RoveCommService.SendAsync("Auger", "Auger", [(short)(bindedInputs[2] * 1000f * _augerMult)]);
-                            if (Math.Abs(bindedInputs[3]) > DeadZone) _ = _RoveCommService.SendAsync("Auger", "MultiplexerServo", [(bindedInputs[3] < 0 ? multiplexerMin : _multiplexerMax)]);
+                            _ = _RoveCommService.SendAsync("Auger", "AugerAxis_OpenLoop", [(short)(bindedInputs[0] * 1000f * _augerAxisMult)]);
+                            _ = _RoveCommService.SendAsync("Raman", "InstrumentsAxis_OpenLoop", [(short)(bindedInputs[1] * 1000f * _instrumentAxisMult)]);
+                            _ = _RoveCommService.SendAsync("Auger", "Auger", [(short)(bindedInputs[2] * 1000f * _augerMult)]);
+                            _ = _RoveCommService.SendAsync("Auger", "MultiplexerServo", [(bindedInputs[3] < 0 ? multiplexerMin : _multiplexerMax)]);
                             if (Math.Abs(bindedInputs[4]) > DeadZone || (Math.Abs(bindedInputs[5]) > DeadZone)) _ = _RoveCommService.SendAsync("Raman", "RamanGimbalIncrement", [(short)(bindedInputs[4]), (short)(bindedInputs[5])]);
                         }
                         break;
