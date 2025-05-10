@@ -7,12 +7,18 @@
         display: grid;
         padding: 0;
         grid-template-columns: 1fr 1fr 1fr 1fr;
-        grid-template-rows: 30px min-content min-content;
+        grid-template-rows: 30px min-content min-content min-content;
         grid-template-areas:
         "source-buttons source-buttons source-buttons source-buttons"
+        "utilization-1 utilization-1 utilization-2 utilization-2"
         "connect disconnect restart shutdown"
-        "screenshot save panorama .";
+        "screenshot save panorama arguments";
         place-items: stretch stretch;
+    }
+
+    .camera-controls p {
+        place-self: center;
+        font-family: Courier New, monospace;
     }
 
     .source-buttons-container {
@@ -61,6 +67,19 @@
     .camera-disconnected {
         background-color: #ff0000 !important;
     }
+
+    .camera-arguments {
+        position: fixed;
+        inset: 10vh 10vw 10vh 10vw;
+        z-index: 2000;
+        display: grid;
+        grid-template-rows: 9fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .camera-arguments button {
+        font-size: 5vh;
+    }
 </style>
 
 <div class="card h-100">
@@ -76,6 +95,8 @@
                 <button class="btn btn-secondary @(sourceIndex == _i ? "camera-selected" : "") @(GetClass(_i))" @onclick="() => SetSource(_i)">@(_i)</button>
             }
         </div>
+        <p style="grid-area: utilization-1">@utilization1</p>
+        <p style="grid-area: utilization-2">@utilization2</p>
         <button class="btn btn-primary" style="grid-area: connect" @onclick="ConnectCameras">Connect</button>
         <button class="btn btn-primary" style="grid-area: disconnect" @onclick="DisconnectCameras">Disconnect</button>
         <button class="btn btn-primary" style="grid-area: restart" @onclick="async () => await ToggleSource(sourceIndex, true)">Restart Camera</button>
@@ -83,7 +104,17 @@
         <button class="btn btn-primary" style="grid-area: screenshot" @onclick="TakePicture">Take Picture</button>
         <button class="btn btn-primary" style="grid-area: save" @onclick="SaveImage">Save Image</button>
         <button class="btn btn-primary" style="grid-area: panorama" @onclick="TakePano">Take Pano</button>
+        <button class="btn btn-primary" style="grid-area: arguments" @onclick="@(_ => CameraArgumentsVisible = true)">Arguments</button>
     </div>
+    @if (CameraArgumentsVisible)
+    {
+        <div class="camera-arguments">
+            <InputTextArea @bind-Value="@CameraArgumentsValue" style="grid-area: 1 / 1 / 2 / 4" />
+            <button @onclick="@(_ => CameraArgumentsVisible = false)" class="btn btn-warning" title="Close"><i class="bi bi-inline-text bi-x-circle" /></button>
+            <button @onclick=SetFFMPEGArguments class="btn btn-success" title="Set FFMPEG Arguments"><i class="bi bi-inline-text bi-camera-video" /></button>
+            <button @onclick=SetPictureArguments class="btn btn-success" title="Set Picture Arguments"><i class="bi bi-inline-text bi-image" /></button>
+        </div>
+    }
 </div>
 
 @code {
@@ -99,6 +130,11 @@
     private int available2 = 0;
     private int streaming1 = 0;
     private int streaming2 = 0;
+    private String utilization1 = "cpu0: ???% 1: ???% 2: ???% 3: ???% mem: ???% sd: ???%";
+    private String utilization2 = "cpu0: ???% 1: ???% 2: ???% 3: ???% mem: ???% sd: ???%";
+
+    private bool CameraArgumentsVisible = false;
+    private String CameraArgumentsValue = "";
 
     private ElementReference videoContainer;
 
@@ -122,6 +158,12 @@
             ResetWatchdog(1);
             await InvokeAsync(StateHasChanged);
         });
+        _RoveCommService.On<byte>("Camera1", "Utilization", async (packet) =>
+        {
+            utilization1 = $"cpu0: {packet.Data[0]:000}% 1: {packet.Data[1]:000}% 2: {packet.Data[2]:000}% 3: {packet.Data[3]:000}% mem: {packet.Data[4]:000}% sd: {packet.Data[5]:000}%";
+            ResetWatchdog(1);
+            await InvokeAsync(StateHasChanged);
+        });
         _RoveCommService.On<byte>("Camera2", "AvailableCameras", async (packet) =>
         {
             available2 = packet.Data[0];
@@ -131,6 +173,12 @@
         _RoveCommService.On<byte>("Camera2", "StreamingCameras", async (packet) =>
         {
             streaming2 = packet.Data[0];
+            ResetWatchdog(2);
+            await InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.On<byte>("Camera2", "Utilization", async (packet) =>
+        {
+            utilization2 = $"cpu0: {packet.Data[0]:000}% 1: {packet.Data[1]:000}% 2: {packet.Data[2]:000}% 3: {packet.Data[3]:000}% mem: {packet.Data[4]:000}% sd: {packet.Data[5]:000}%";
             ResetWatchdog(2);
             await InvokeAsync(StateHasChanged);
         });
@@ -167,14 +215,6 @@
         else
         {
             return !connected2 ? "camera-disconnected" : i - 4 < streaming2 ? "camera-streaming" : i - 4 < available2 ? "camera-available" : "camera-none";
-        }
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            jsCameraDisplay = await _IJSRuntime.InvokeAsync<IJSObjectReference>("cameras.createCameraDisplay", videoContainer);
         }
     }
 
@@ -229,6 +269,22 @@
     private async Task ToggleSource(int source, bool restartStream)
     {
         await _RoveCommService.SendAsync<byte>(sourceIndex < 4 ? "Camera1" : "Camera2", "ToggleStream", [(byte)(sourceIndex % 4), restartStream ? (byte)1 : (byte)0]);
+    }
+
+    private async Task SetFFMPEGArguments()
+    {
+        List<char> characters = String.Join("\x1f", CameraArgumentsValue.Split("\n")).ToList();
+        characters.Add('\x04');
+        RoveCommBoardDesc board = RoveCommManifest.Boards[sourceIndex < 4 ? "Camera1" : "Camera2"];
+        await _RoveCommService.SendAsync<char>(board.Commands["SetFFMPEGArguments"].DataID, characters, board.IP);
+    }
+
+    private async Task SetPictureArguments()
+    {
+        List<char> characters = String.Join("\x1f", CameraArgumentsValue.Split("\n")).ToList();
+        characters.Add('\x04');
+        RoveCommBoardDesc board = RoveCommManifest.Boards[sourceIndex < 4 ? "Camera1" : "Camera2"];
+        await _RoveCommService.SendAsync<char>(board.Commands["SetPictureArguments"].DataID, characters, board.IP);
     }
 
     async ValueTask IAsyncDisposable.DisposeAsync()

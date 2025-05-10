@@ -17,6 +17,7 @@
     .video-display {
         grid-area: video;
         height: 100%;
+        width: 100%;
     }
 
     .source-buttons-container {
@@ -48,7 +49,7 @@
 
     .camera-display-rotate {
         position: absolute;
-        left: 0;
+        top: 0;
         right: 0;
         width: 3rem;
     }
@@ -59,9 +60,6 @@
 </style>
 
 <div class="card h-100">
-    <div class="card-header">
-        <h3>Camera Display</h3>
-    </div>
     <div @ref="videoContainer" class="card-body camera-display">
         <div class="source-buttons-container">
             @for (int i = 0; i < 8; i++)

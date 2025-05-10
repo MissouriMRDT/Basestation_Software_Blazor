@@ -147,8 +147,8 @@
             gamepad.Axes[4] - gamepad.Axes[5],
             gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
             gamepad.Buttons[12].Value - gamepad.Buttons[13].Value,
-            gamepad.Axes[4] - gamepad.Buttons[4].Value,
-            gamepad.Axes[5] - gamepad.Buttons[5].Value
+            (gamepad.Axes[4] + 1) / 2.0 - gamepad.Buttons[4].Value,
+            (gamepad.Axes[5] + 1) / 2.0 - gamepad.Buttons[5].Value
         ];
 
         return gamepadInputs;

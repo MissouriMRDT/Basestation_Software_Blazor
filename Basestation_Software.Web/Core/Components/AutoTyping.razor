@@ -33,13 +33,46 @@
     private int _currentCharIndex = 0;
     private int _charStatusMeter = 0;
 
-    private const float r1 = 5.2f;
-    private const float r2 = 10.4f;
+    private const float r1 = 4f;
+    private const float r2 = 8f;
+    private const float keydx = -(10.67f - 4.03f);
+    private const float r1xo = -(11.49f - 11.28f); 
+
+    private const float r2xo = -(11.49f - 10.87f);
 
     private int delay = 0;
 
     // X and Pitch positional diffs based on Q
-    private Dictionary<char, List<float>> keys = new()
+        private Dictionary<char, List<float>> keys = new()
+    {
+        { 'Q', [0, 0f]},
+        { 'W', [keydx * (1f/9f), 0f]},
+        { 'E', [keydx * (2f/9f), 0f]},
+        { 'R', [keydx * (3f/9f), 0f]},
+        { 'T', [keydx * (4f/9f), 0f]},
+        { 'Y', [keydx * (5f/9f), 0f]},
+        { 'U', [keydx * (6f/9f), 0f]},
+        { 'I', [keydx * (7f/9f), 0f]},
+        { 'O', [keydx * (8f/9f), 0f]},
+        { 'P', [keydx * (9f/9f), 0f]},
+        { 'A', [r1xo + keydx * (0f/9f), r1]},
+        { 'S', [r1xo + keydx * (1f/9f), r1]},
+        { 'D', [r1xo + keydx * (2f/9f), r1]},
+        { 'F', [r1xo + keydx * (3f/9f), r1]},
+        { 'G', [r1xo + keydx * (4f/9f), r1]},
+        { 'H', [r1xo + keydx * (5f/9f), r1]},
+        { 'J', [r1xo + keydx * (6f/9f), r1]},
+        { 'K', [r1xo + keydx * (7f/9f), r1]},
+        { 'L', [r1xo + keydx * (8f/9f), r1]},
+        { 'Z', [r2xo + keydx * (0f/9f), r2]},
+        { 'X', [r2xo + keydx * (1f/9f), r2]},
+        { 'C', [r2xo + keydx * (2f/9f), r2]},
+        { 'V', [r2xo + keydx * (3f/9f), r2]},
+        { 'B', [r2xo + keydx * (4f/9f), r2]},
+        { 'N', [r2xo + keydx * (5f/9f), r2]},
+        { 'M', [r2xo + keydx * (6f/9f), r2]},
+    };
+    @* private Dictionary<char, List<float>> keys = new()
     {
         { 'Q', [0f, 0f]},
         { 'W', [-0.771f, 0f]},
@@ -67,7 +100,7 @@
         { 'B', [-3.561f, r2]},
         { 'N', [-4.312f, r2]},
         { 'M', [-5.056f, r2]},
-    };
+    }; *@
 
     protected override void OnInitialized()
     {
@@ -82,6 +115,8 @@
             _currentCharIndex = i;
             if (!keys.ContainsKey(_phrase[i])) continue;
             List<float> pos = keys[_phrase[i]];
+            pos[0] -= keys['Q'][0];
+            pos[1] -= keys['Q'][1];
             _charStatusMeter = 0;
             _statusMessage = "Moving to " + _phrase[i];
             if (pos != null) 

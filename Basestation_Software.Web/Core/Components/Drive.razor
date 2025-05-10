@@ -213,20 +213,36 @@
                     // 10: 11
                     // 11: 12
                     if (GamepadSelector_.SelectedGamepad.Axes.Count < 6 || GamepadSelector_.SelectedGamepad.Buttons.Count < 12) return false;
-
+                    double finalBumpSpeed = BUMP_SPEED * (GamepadSelector_.SelectedGamepad.Buttons[0].Pressed ? 0.5f : 1f);
                     // Drive controls:
                     if (GamepadSelector_.SelectedGamepad.Buttons[4].Pressed)
                     {
                         // Bump forward.
-                        LeftSpeed = BUMP_SPEED;
-                        RightSpeed = BUMP_SPEED;
+                        LeftSpeed = finalBumpSpeed;
+                        RightSpeed = finalBumpSpeed;
                         if (!OutputDisabled) _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed });
                     }
                     else if (GamepadSelector_.SelectedGamepad.Buttons[2].Pressed)
                     {
                         // Bump backward.
-                        LeftSpeed = -BUMP_SPEED;
-                        RightSpeed = -BUMP_SPEED;
+                        LeftSpeed = -finalBumpSpeed;
+                        RightSpeed = -finalBumpSpeed;
+                        if (!OutputDisabled) _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed });
+                    }
+                    else if (GamepadSelector_.SelectedGamepad.Buttons[3].Pressed)
+                    {
+                        // PT Right
+                        // Bump backward.
+                        LeftSpeed = finalBumpSpeed * 2f;
+                        RightSpeed = -finalBumpSpeed * 2f;
+                        if (!OutputDisabled) _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed });
+                    }
+                    else if (GamepadSelector_.SelectedGamepad.Buttons[5].Pressed)
+                    {
+                        // PT Left
+                        // Bump backward.
+                        LeftSpeed = -finalBumpSpeed * 2f;
+                        RightSpeed = finalBumpSpeed * 2f;
                         if (!OutputDisabled) _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed });
                     }
                     else
@@ -246,14 +262,14 @@
                     }
 
                     // Gimbal controls:
-                    if (GamepadSelector_.SoftwareDebounce(5)) SelectedGimbal = (SelectedGimbal + 1) % 6; // Next
-                    if (GamepadSelector_.SoftwareDebounce(3)) SelectedGimbal = (SelectedGimbal + 5) % 6; // Previous
+                    if (GamepadSelector_.SoftwareDebounce(7)) SelectedGimbal = (SelectedGimbal + 1) % 6; // Next
+                    if (GamepadSelector_.SoftwareDebounce(6)) SelectedGimbal = (SelectedGimbal + 5) % 6; // Previous
 
                     // Cast because short literals don't exist for some reason.
                     Pan = (short)(GamepadSelector_.SelectedGamepad.Axes[4] < -0.2 ? -5 : GamepadSelector_.SelectedGamepad.Axes[4] > 0.2 ? 5 : 0);
                     Tilt = (short)(GamepadSelector_.SelectedGamepad.Axes[5] < -0.2 ? 5 : GamepadSelector_.SelectedGamepad.Axes[5] > 0.2 ? -5 : 0);
 
-                    if (!OutputDisabled && Math.Abs(Pan) > 0 && Math.Abs(Tilt) > 0)
+                    if (!OutputDisabled || Math.Abs(Pan) > 0 || Math.Abs(Tilt) > 0)
                     {
                         switch (SelectedGimbal)
                         {
