@@ -26,11 +26,11 @@
                         <button class="btn btn-sm btn-secondary" @onclick="() => SetSingle(_joint)" title="Set Joint"><i class="bi bi-inline-text bi-arrow-up-right" /></button>
                         <button class="btn btn-sm btn-secondary" @onclick="() => GetSingle(_joint)" title="Get Joint"><i class="bi bi-inline-text bi-arrow-down-right" /></button>
                     </RadzenStack>
-                    <label class="form-label text-center">@(_lastTelemetry?[_joint].ToString() ?? "-")</label>
+                    <label class="form-label text-center">@(_lastTelemetry?[_joint].ToString("F") ?? "-")</label>
                 </div>
             }
         </div>
-        <p style="width: auto; text-align: center">Pitch From Ground: @(Math.Round(_ac, 2))</p>
+        <p style="width: auto; text-align: center">Pitch From Ground: @(_ac.ToString("F"))</p>
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center" Style="margin-block: 1rem">
             <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="@GetAll">Get All</RadzenButton>
             <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="@SetAll">Set All</RadzenButton>
