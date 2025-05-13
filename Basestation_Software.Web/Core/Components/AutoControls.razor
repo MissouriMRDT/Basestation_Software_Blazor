@@ -71,7 +71,7 @@
     void AddObjectLeg()
     {
         if (_selectedWaypoint != null)
-            _ = _RoveCommService.SendAsync<double>("Autonomy", "AddObjectLeg", [Double.Parse(_selectedWaypoint.Latitude), Double.Parse(_selectedWaypoint.Longitude), _selectedWaypoint.SearchRadius]);
+            _ = _RoveCommService.SendAsync<double>("Autonomy", "AddObjectLeg", [Double.Parse(_selectedWaypoint.Latitude), Double.Parse(_selectedWaypoint.Longitude), _selectedWaypoint.TagID, _selectedWaypoint.SearchRadius]);
     }
 
     void AddObstacle()
