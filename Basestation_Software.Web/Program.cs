@@ -39,6 +39,7 @@ builder.Services.AddSingleton<PingService>();
 builder.Services.AddSingleton<OpService>();
 builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
+builder.Services.AddSingleton<LoggerService>();
 
 var app = builder.Build();
 
