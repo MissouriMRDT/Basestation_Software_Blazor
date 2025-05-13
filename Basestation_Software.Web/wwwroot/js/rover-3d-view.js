@@ -82,7 +82,7 @@ export class Rover3DView {
         controls.maxDistance = 7;
         controls.enablePan = false;
 
-        this.animationLoop();
+        this.renderer.setAnimationLoop(this.animationLoop.bind(this));
     }
 
     onResize() {
@@ -94,7 +94,6 @@ export class Rover3DView {
     }
 
     animationLoop() {
-        requestAnimationFrame(this.animationLoop.bind(this));
         this.renderer.render(this.scene, this.camera);
     }
 
@@ -127,6 +126,10 @@ export class Rover3DView {
 
     updateLighting(r, g, b) {
         this.lightingPanel?.material.emissive.setRGB(r / 255.0, g / 255.0, b / 255.0);
+    }
+
+    dispose() {
+        this.renderer.setAnimationLoop(null);
     }
 }
 

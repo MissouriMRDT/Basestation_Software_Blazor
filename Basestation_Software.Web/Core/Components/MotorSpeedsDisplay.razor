@@ -3,19 +3,23 @@
 
 <style>
     .motor-info-grid {
-    display: grid;
-    gap: 2px;
-    grid-template-rows: 1fr 1fr 1fr;
-    grid-template-columns: 50% 50%;
-    grid-auto-flow: column;
-    padding: 2px;
-    background-color: black;
+        display: grid;
+        gap: 2px;
+        grid-template-rows: 1fr 1fr 1fr;
+        grid-template-columns: 50% 50%;
+        grid-auto-flow: column;
+        padding: 2px;
+        background-color: black;
     }
 </style>
 
 <div class="card h-100">
-    <div class="card-header">
+    <div class="card-header d-flex justify-content-between">
         <h5 class="mr-auto">Motor Speeds</h5>
+        <div>
+            <label for="show-3d-rover">Super cool feature!<i class="bi bi-arrow-right"></i></label>
+            <input type="checkbox" name="show-3d-rover" @bind="_show3DRover" />
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="h-100 d-flex flex-column align-items-start">
@@ -25,7 +29,7 @@
                     <Rover3DView />
                 </div>
             }
-            <div class="motor-info-grid w-100">
+            <div class="motor-info-grid w-100 flex-grow-1">
                 @foreach (MotorInfo? motor in _motorData)
                 {
                     <div class="d-flex flex-column fw-bold w-100 h-100">

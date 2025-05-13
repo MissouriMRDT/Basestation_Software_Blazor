@@ -75,6 +75,7 @@
         {
             if (jsRoverView is not null)
             {
+                await jsRoverView.InvokeVoidAsync("dispose");
                 await jsRoverView.DisposeAsync();
             }
         }
