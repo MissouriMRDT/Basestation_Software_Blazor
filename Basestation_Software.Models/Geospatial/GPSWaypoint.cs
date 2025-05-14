@@ -10,6 +10,6 @@ public class GPSWaypoint
     public DateTime? Timestamp { get; set; } = DateTime.Now;
     public int? WaypointColor { get; set; }
     public double? SearchRadius { get; set; }
-    public int? TagID { get; set; }
+    public int? DetectionID { get; set; }
     public WaypointType? Type { get; set; }
 }

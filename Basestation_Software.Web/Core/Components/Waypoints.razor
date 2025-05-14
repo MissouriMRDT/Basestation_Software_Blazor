@@ -87,13 +87,13 @@
                             <RadzenNumeric Name="SearchRadius" @bind-Value="waypoint.SearchRadius" class="form-control form-control-sm" style="z-index: 0;" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Property="TagID" Title="Tag ID" Visible=@_showTagIDs>
+                    <RadzenDataGridColumn Property="DetectionID" Title="Tag ID" Visible=@_showTagIDs>
                         <Template Context="waypoint">
-                            @((RoveComm.Boards.Autonomy.AUTONOMYDETECTIONTYPES)waypoint.TagID)
+                            @((RoveComm.Boards.Autonomy.AUTONOMYDETECTIONTYPES)waypoint.DetectionID)
                         </Template>
                         <EditTemplate Context="waypoint">
-                            @* <RadzenNumeric Name="TagID" @bind-Value="waypoint.TagID" class="form-control form-control-sm" style="z-index: 0;" /> *@
-                            <InputSelect @bind-Value="@waypoint.TagID" class="form-control form-control-sm" style="z-index: 0;">
+                            @* <RadzenNumeric Name="DetectionID" @bind-Value="waypoint.DetectionID" class="form-control form-control-sm" style="z-index: 0;" /> *@
+                            <InputSelect @bind-Value="@waypoint.DetectionID" class="form-control form-control-sm" style="z-index: 0;">
                                 @foreach (var waypoint in Enum.GetValues(typeof(RoveComm.Boards.Autonomy.AUTONOMYDETECTIONTYPES)))
                                 {
                                     <option value="@((int)waypoint)">@waypoint</option>
@@ -212,7 +212,7 @@
                 Timestamp = DateTime.Parse(waypoint.Timestamp),
                 WaypointColor = ConvertRgbStringToColor(waypoint.WaypointColor).ToArgb(),
                 SearchRadius = waypoint.SearchRadius,
-                TagID = waypoint.TagID,
+                DetectionID = waypoint.DetectionID,
                 Type = (WaypointType)Enum.Parse(typeof(WaypointType), waypoint.Type)
             };
 
@@ -241,7 +241,7 @@
                 Timestamp = waypoint.Timestamp.ToString() ?? DateTime.MinValue.ToString(),
                 WaypointColor = colorString,
                 SearchRadius = waypoint.SearchRadius ?? 0,
-                TagID = waypoint.TagID ?? -1,
+                DetectionID = waypoint.DetectionID ?? -1,
                 Type = waypoint.Type.ToString() ?? WaypointType.Navigation.ToString()
             };
 
