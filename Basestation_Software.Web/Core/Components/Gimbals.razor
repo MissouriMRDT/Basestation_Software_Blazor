@@ -108,8 +108,6 @@
 	"Right Main Pan",
     "Right Main Tilt",
 	"Back Drive",
-	"Auger Pan",
-    "Auger Tilt",
     ];
 
     private List<Bind> controllerBinds = [
@@ -206,7 +204,6 @@
                     if (bindedInputs[2] > 0 || bindedInputs[3] > 0) RoveComm.Boards.Core.LeftMainGimbalIncrement(_RoveCommService, (short)bindedInputs[2], (short)bindedInputs[3]);
                     if (bindedInputs[4] > 0 || bindedInputs[5] > 0) RoveComm.Boards.Core.RightMainGimbalIncrement(_RoveCommService, (short)bindedInputs[4], (short)bindedInputs[5]);
                     if (bindedInputs[6] > 0) RoveComm.Boards.Core.BackDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[6]);
-                    if (bindedInputs[7] > 0 || bindedInputs[8] > 0) RoveComm.Boards.Auger.AugerGimbalIncrement(_RoveCommService, (short)bindedInputs[7], (short)bindedInputs[8]);
 
                     break;
                 }
