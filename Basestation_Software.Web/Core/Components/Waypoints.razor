@@ -12,8 +12,8 @@
                     
             </div>
             <div class ="col-6 d-flex justify-content-end">
-                <RadzenCheckBox TValue="bool" @bind-Value="@_showTagIDs" Name="TagIDVisToggle"></RadzenCheckBox>
-                <RadzenLabel Text="Show Tag IDs" Component="TagIdVisToggle" />
+                <RadzenCheckBox TValue="bool" @bind-Value="@_showDetectionIDs" Name="DetectionIDVisToggle"></RadzenCheckBox>
+                <RadzenLabel Text="Show Detection IDs" Component="DetectionIDVisToggle" />
 
                 @if (_waypointsToUpdate.Count > 0 || _waypointsToInsert.Count > 0)
                 {
@@ -87,7 +87,7 @@
                             <RadzenNumeric Name="SearchRadius" @bind-Value="waypoint.SearchRadius" class="form-control form-control-sm" style="z-index: 0;" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn Property="DetectionID" Title="Tag ID" Visible=@_showTagIDs>
+                    <RadzenDataGridColumn Property="DetectionID" Title="Detection ID" Visible=@_showDetectionIDs>
                         <Template Context="waypoint">
                             @((RoveComm.Boards.Autonomy.AUTONOMYDETECTIONTYPES)waypoint.DetectionID)
                         </Template>
@@ -136,7 +136,7 @@
     private List<GPSWaypointInput> _waypointsToUpdate = new List<GPSWaypointInput>();
     // Flags.
     private bool _dataLoaded = false;
-    private bool _showTagIDs = true;
+    private bool _showDetectionIDs = true;
 
     protected override void OnInitialized()
     {
