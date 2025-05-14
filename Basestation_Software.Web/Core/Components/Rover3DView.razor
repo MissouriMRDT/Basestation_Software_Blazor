@@ -18,61 +18,23 @@
     }
     <div @ref=CanvasContainer class="h-100 w-100" hidden="@(!_dataLoaded)"></div>
 </div>
-            <div class="motor-info-grid w-100">
-                @foreach (MotorInfo? motor in _motorData)
-                {
-                    <div class="d-flex flex-column fw-bold w-100 h-100">
-                        <div class="d-flex align-items-center flex-grow-1 h-100 @(motor.FaultCode == 0 ? "" : "bg-danger")" style="color: white;">
-                            <div class="col-3 text-center fw-bold p-1">@motor.DisplayName</div>
-                            <div class="col d-flex flex-column h-100">
-                                <div class="small px-2 py-1 flex-grow-1" style="background-color: @(motor.InputCurrent is null ? "lightgray" : $"color-mix(in oklab, #ff0000 {Math.Clamp((double)motor.InputCurrent, 0, DANGER_INPUT_CURRENT)/DANGER_INPUT_CURRENT * 100}%, #00ff00)"); color: black;">
-                                    VESC Current: <span class="float-end">@(motor.InputCurrent is null ? "--" : $"{motor.InputCurrent:0.00}") A</span>
-                                </div>
-                                <div class="small px-2 py-1 flex-grow-1" style="background-color: @(motor.MotorCurrent is null ? "lightgray" : $"color-mix(in oklab, #ff0000 {Math.Clamp((double)motor.MotorCurrent, 0, DANGER_MOTOR_CURRENT)/DANGER_MOTOR_CURRENT * 100}%, #00ff00)"); color: black;">
-                                    Motor Current: <span class="float-end">@(motor.MotorCurrent is null ? "--" : $"{motor.MotorCurrent:0.00}") A</span>
-                                </div>
-                            </div>
-                        </div>
-                        @if (motor.FaultCode != 0)
-                        {
-                            <div class="bg-danger px-2 py-1 small" sytle="font-family: Consolas; color: black;">@(Enum.GetName<RoveComm.Boards.Core.VESCFaultCode>(motor.FaultCode))</div>
-                        }
-                    </div>
-                }
-            </div>
-        </div>
-    </div>
-</div>
-
 
 @code
 {
-    [Parameter]
-    public string ID { get; set; } = "";
+    /* WARNING: THIS COMPONENT IS EVIL AND UNTRUSTWORTHY!!!
+     * We enabled it and it ate all of basestation's performance. It appears there is no good way to clean up a Three.js scene.
+     * Three.js is only meant to be initialized once and remain until the browser reloads. This means it does not play nice
+     * with Blazor's SignalIR-JS-injection-voodoo-rendering tomfoolery.
+     * USE AT YOUR OWN RISK!
+     */
 
     private ElementReference CanvasContainer;
     private IJSObjectReference? jsRoverView;
     private bool _dataLoaded = false;
 
-    public const int TELEMETRY_TIMEOUT = 10_000; // ms
-    private Timer? TelemetryWatchdog = null!;
-
     protected override void OnInitialized()
     {
-        jsInteropName = $"roverViews.{ID}";
-        _motorData.Add(new() { DisplayName = "FL" });
-        _motorData.Add(new() { DisplayName = "ML" });
-        _motorData.Add(new() { DisplayName = "BL" });
-        _motorData.Add(new() { DisplayName = "FR" });
-        _motorData.Add(new() { DisplayName = "MR" });
-        _motorData.Add(new() { DisplayName = "BR" });
         _RoveCommService.On<float>("Core", "AccelerometerData", OnAccelerometer);
-        _RoveCommService.On<float>("Core", "MotorSpeeds", OnVescCurrents);
-        _RoveCommService.On<float>("Core", "MotorCurrents", OnMotorCurrents);
-        _RoveCommService.On<float>("Core", "VESCCurrents", OnVescCurrents);
-        _RoveCommService.On<byte>("Core", "VESCFault", OnVescFault);
-
-        TelemetryWatchdog = new Timer(OnResetTelemetry, null, TELEMETRY_TIMEOUT, Timeout.Infinite);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -107,7 +69,6 @@
 
     private async Task OnAccelerometer(RoveCommPacket<float> packet)
     {
-        ResetTelemetryWatchdog();
         // CoreBoard: y-forward, z-up, x-right
         // ThreeJS (WebGL): -z-forward, y-up, x-right
         if (jsRoverView is not null)

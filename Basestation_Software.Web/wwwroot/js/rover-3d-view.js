@@ -16,12 +16,11 @@ export class Rover3DView {
     camera = null;
     roverMesh = null;
     lightingPanel = null;
+    resizeObserver = null;
+    frameId = 0;
 
     constructor(container) {
         this.container = container;
-
-        const container = document.getElementById(`rover-view-${this.id}`);
-
         const scene = new THREE.Scene();
         scene.castShadow = true;
         scene.receiveShadow = true;
@@ -79,14 +78,15 @@ export class Rover3DView {
         this.camera = camera;
         this.renderer = renderer;
 
-        new ResizeObserver(() => this.onResize()).observe(this.container);
+        this.resizeObserver = new ResizeObserver(this.onResize.bind(this));
+        this.resizeObserver.observe(this.container);
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.minDistance = 1;
         controls.maxDistance = 7;
         controls.enablePan = false;
 
-        this.renderer.setAnimationLoop(this.animationLoop.bind(this));
+        this.animationLoop();
     }
 
     onResize() {
@@ -98,8 +98,8 @@ export class Rover3DView {
     }
 
     animationLoop() {
-        requestAnimationFrame(this.animationLoop.bind(this));
         this.renderer.render(this.scene, this.camera);
+        this.frameId = requestAnimationFrame(this.animationLoop.bind(this));
     }
 
     updateAngles(pitch, yaw, roll) {
@@ -132,11 +132,11 @@ export class Rover3DView {
     updateLighting(r, g, b) {
         this.lightingPanel?.material.emissive.setRGB(r / 255.0, g / 255.0, b / 255.0);
     }
-}
 
     dispose() {
-        this.renderer.setAnimationLoop(null);
+        cancelAnimationFrame(this.frameId);
         this.renderer.dispose(); // this should happen automatically, but it doesn't hurt to be safe
+        this.resizeObserver.disconnect(); // ResizeObserver keeps references to js objects
     }
 }
 

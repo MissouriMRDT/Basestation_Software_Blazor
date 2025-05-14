@@ -71,7 +71,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        this.jsInteropName = $"roverMaps.{ID}";
         // Toggle component is done loading.
         _dataLoaded = true;
         await InvokeAsync(StateHasChanged);
@@ -230,19 +229,6 @@
     {
         double latRad = lat * Math.PI / 180.0;
         return (int)Math.Floor((1.0 - Math.Log(Math.Tan(latRad) + 1.0 / Math.Cos(latRad)) / Math.PI) / 2.0 * Math.Pow(2.0, zoom));
-    }
-
-    [JSInvokable]
-    public async Task OnWaypointSelected(double lat, double lon)
-    {
-        // Find closest match by lat and lon
-        List<GPSWaypoint> waypoints = _GPSWaypointService.GetGPSWaypoints();
-        GPSWaypoint? closestWaypoint = waypoints.OrderBy(w => Math.Abs(((w.Latitude ?? 100) - lat)*((w.Longitude ?? 100) - lon))).FirstOrDefault();
-        if (closestWaypoint is not null)
-        {
-            _GPSWaypointState.SelectedWaypoint = closestWaypoint;
-        }
-        await Task.CompletedTask;
     }
 
     [JSInvokable]
