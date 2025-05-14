@@ -4,36 +4,20 @@
 @inject OpService _OpState
 @inject IJSRuntime _IJSRuntime
 
-<style>
-    .motor-info-grid {
-    display: grid;
-    gap: 2px;
-    grid-template-rows: 1fr 1fr 1fr;
-    grid-template-columns: 50% 50%;
-    grid-auto-flow: column;
-    padding: 2px;
-    background-color: black;
-    }
-</style>
+@attribute [ComponentAttributes.Ignore]
 
-<div class="card h-100">
-    <div class="card-header">
-        <h5 class="mr-auto">3D Rover</h5>
-    </div>
-    <div class="card-body p-0">
-        <div class="h-100 d-flex flex-column align-items-start">
-            <div class="w-100 flex-grow-1" style="min-width: 20%; min-height: 20%;">
-                @if (!_dataLoaded)
-                {
-                    <div class="row">
-                        <div class="spinner-border " role="status"></div>
-                        <div class="col">
-                            <h3>Loading...</h3>
-                        </div>
-                    </div>
-                }
-                <div id="rover-view-@ID" class="h-100 w-100" hidden="@(!_dataLoaded)"></div>
+<div class="h-100 w-100">
+    @if (!_dataLoaded)
+    {
+        <div class="row">
+            <div class="spinner-border " role="status"></div>
+            <div class="col">
+                <h3>Loading...</h3>
             </div>
+        </div>
+    }
+    <div @ref=CanvasContainer class="h-100 w-100" hidden="@(!_dataLoaded)"></div>
+</div>
             <div class="motor-info-grid w-100">
                 @foreach (MotorInfo? motor in _motorData)
                 {
@@ -66,22 +50,8 @@
     [Parameter]
     public string ID { get; set; } = "";
 
-    private class MotorInfo
-    {
-        public string DisplayName = "";
-        public float? MotorSpeed { get; set; }
-        public float? MotorCurrent { get; set; }
-        public float? InputCurrent { get; set; }
-        public RoveComm.Boards.Core.VESCFaultCode FaultCode { get; set; } = 0;
-        public Timer? FaultWatchdog;
-    }
-
-    const double DANGER_MOTOR_CURRENT = 60;
-    const double DANGER_INPUT_CURRENT = 6;
-    private List<MotorInfo> _motorData = [];
-
-    private IJSObjectReference? jsModule;
-    private string jsInteropName = "";
+    private ElementReference CanvasContainer;
+    private IJSObjectReference? jsRoverView;
     private bool _dataLoaded = false;
 
     public const int TELEMETRY_TIMEOUT = 10_000; // ms
@@ -109,46 +79,27 @@
     {
         if (firstRender)
         {
-            jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-3d-view.js");
-            await jsModule.InvokeVoidAsync("createRoverView", [ID, DotNetObjectReference.Create(this)]);
+            try
+            {
+                await using var jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-3d-view.js");
+                jsRoverView = await jsModule.InvokeAsync<IJSObjectReference>("createRoverView", [CanvasContainer]);
+            }
+            catch
+            {
+                jsRoverView = null;
+            }
 
             _OpState.SubscribeToStateChanged((Color? c) =>
             {
-                if (c is not null)
+                if (c is not null && jsRoverView is not null)
                 {
-                    _ = jsModule.InvokeVoidAsync($"{jsInteropName}.updateLighting", [c?.R, c?.G, c?.B]);
+                    _ = jsRoverView.InvokeVoidAsync("updateLighting", [c?.R, c?.G, c?.B]);
                 }
             });
 
             _dataLoaded = true;
             await InvokeAsync(StateHasChanged);
             // component will resize once unhidden
-        }
-    }
-
-    private void ResetTelemetryWatchdog()
-    {
-        TelemetryWatchdog?.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
-    }
-
-    private async void OnResetTelemetry(object? _)
-    {
-        foreach (MotorInfo? motor in _motorData)
-        {
-            motor.InputCurrent = null;
-            motor.MotorCurrent = null;
-            motor.MotorSpeed = null;
-            motor.FaultCode = 0;
-        }
-
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async void OnResetFault(object? context)
-    {
-        MotorInfo? motor = context as MotorInfo;
-        if (motor is not null) {
-            motor.FaultCode = 0;
         }
 
         await InvokeAsync(StateHasChanged);
@@ -159,61 +110,9 @@
         ResetTelemetryWatchdog();
         // CoreBoard: y-forward, z-up, x-right
         // ThreeJS (WebGL): -z-forward, y-up, x-right
-        await jsModule!.InvokeVoidAsync($"{jsInteropName}.updateAnglesFromUpVector", [packet.Data[0], packet.Data[2], -packet.Data[1]]);
-    }
-
-    private async Task OnMotorSpeeds(RoveCommPacket<float> packet)
-    {
-        for (int i = 0; i < 6; i++)
+        if (jsRoverView is not null)
         {
-            MotorInfo? motor = _motorData[i];
-            motor.MotorSpeed = packet.Data[i];
-        }
-
-        ResetTelemetryWatchdog();
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task OnMotorCurrents(RoveCommPacket<float> packet)
-    {
-        for (int i = 0; i < 6; i++)
-        {
-            MotorInfo? motor = _motorData[i];
-            motor.MotorCurrent = packet.Data[i];
-        }
-
-        ResetTelemetryWatchdog();
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task OnVescCurrents(RoveCommPacket<float> packet)
-    {
-        for (int i = 0; i < 6; i++)
-        {
-            _motorData[i].InputCurrent = packet.Data[i];
-        }
-
-        ResetTelemetryWatchdog();
-        await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task OnVescFault(RoveCommPacket<byte> packet)
-    {
-        int motorId = packet.Data[0];
-        if (motorId < 6)
-        {
-            MotorInfo? motor = _motorData[motorId];
-            motor.FaultCode = (RoveComm.Boards.Core.VESCFaultCode) packet.Data[1];
-            if (motor.FaultWatchdog is null)
-            {
-                motor.FaultWatchdog = new Timer(OnResetFault, motor, TELEMETRY_TIMEOUT, Timeout.Infinite);
-            }
-            else
-            {
-                motor.FaultWatchdog.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
-            }
-
-            await InvokeAsync(StateHasChanged);
+            await jsRoverView!.InvokeVoidAsync("updateAnglesFromUpVector", [packet.Data[0], packet.Data[2], -packet.Data[1]]);
         }
     }
 
@@ -221,10 +120,10 @@
     {
         try
         {
-            if (jsModule is not null)
+            if (jsRoverView is not null)
             {
-                await jsModule.InvokeVoidAsync("deleteRoverView", [ID]);
-                await jsModule.DisposeAsync();
+                await jsRoverView.InvokeVoidAsync("dispose");
+                await jsRoverView.DisposeAsync();
             }
         }
         catch (JSDisconnectedException)

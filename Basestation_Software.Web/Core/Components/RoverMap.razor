@@ -44,7 +44,7 @@
         }
         else
         {
-            <div class="w-100 h-100 "id="@ID" style="position: relative;"></div>
+            <div @ref=MapContainer class="w-100 h-100" style="position: relative;"></div>
         }
     </div>
 </div>
@@ -52,8 +52,6 @@
 @code
 {
     // Component parameters.
-    [Parameter]
-    public string ID { get; set; } = "";
     [Parameter]
     public double InitialLat { get; set; } = 37.951764;
     [Parameter]
@@ -63,8 +61,9 @@
 
     // Declare page member variables.
     private float _heading = 0;
-    private string jsInteropName = "";
-    private IJSObjectReference? jsModule;
+    private ElementReference MapContainer;
+    private IJSObjectReference? jsRoverMap;
+    private DotNetObjectReference<RoverMap>? ObjectReference;
 
     // Flags.
     private bool _dataLoaded = false;
@@ -78,7 +77,7 @@
         await InvokeAsync(StateHasChanged);
         _RoveCommService.On<double>("Nav", "GPSLatLonAlt", async (packet) =>
         {
-            await jsModule!.InvokeVoidAsync($"{jsInteropName}.addRoverIcon", [packet.Data[0], packet.Data[1]]);
+            await jsRoverMap!.InvokeVoidAsync("addRoverIcon", [packet.Data[0], packet.Data[1]]);
         });
 
         _RoveCommService.On<float>("Nav", "IMUData", async (packet) => 
@@ -92,12 +91,13 @@
     {
         if (firstRender)
         {
-            jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-map.js");
+            await using var jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-map.js");
             // Create leaflet map.
             Uri baseUri = new Uri(_NavigationManager.BaseUri);
-            await jsModule.InvokeVoidAsync("createRoverMap", [
-                ID,
-                DotNetObjectReference.Create(this),
+            ObjectReference = DotNetObjectReference.Create(this);
+            jsRoverMap = await jsModule.InvokeAsync<IJSObjectReference>("createRoverMap", [
+                MapContainer,
+                ObjectReference,
                 $"{baseUri.Scheme}://{baseUri.Host}:5000/api/MapTiles/{{z}}/{{y}}/{{x}}.png",
                 InitialLat,
                 InitialLong,
@@ -107,14 +107,14 @@
             // Plot waypoints and keep them updated.
             await PlotWaypoints();
             _GPSWaypointService.SubscribeToWaypointsChanges(OnWaypointSync);
-            @* _GPSWaypointState.SubscribeToWaypointSelected(OnWaypointSelected); *@
+            _GPSWaypointState.SubscribeToWaypointSelected(OnWaypointSelected);
         }
     }
 
     private async Task OnWaypointSync()
     {
         // Update waypoint markers.
-        await jsModule!.InvokeVoidAsync($"{jsInteropName}.clearWaypointMarkers");
+        await jsRoverMap!.InvokeVoidAsync("clearWaypointMarkers");
         await PlotWaypoints();
     }
 
@@ -122,7 +122,7 @@
     {
         await Task.WhenAll(_GPSWaypointService.GetGPSWaypoints().ConvertAll<Task>(waypoint =>
         {
-            return jsModule!.InvokeVoidAsync($"{jsInteropName}.addWaypointMarker", [
+            return jsRoverMap!.InvokeVoidAsync("addWaypointMarker", [
                 waypoint.Latitude ?? 0,
                 waypoint.Longitude ?? 0,
                 waypoint.SearchRadius ?? 0,
@@ -157,7 +157,7 @@
 
     public async Task PanToCoordinates(double lat, double lon)
     {
-        await jsModule!.InvokeVoidAsync($"{jsInteropName}.panToCoordinates", [lat, lon]);
+        await jsRoverMap!.InvokeVoidAsync("panToCoordinates", [lat, lon]);
     }
 
     [JSInvokable]
@@ -245,16 +245,29 @@
         await Task.CompletedTask;
     }
 
+    [JSInvokable]
+    public async Task OnWaypointSelected(double lat, double lon)
+    {
+        // Find closest match by lat and lon
+        List<GPSWaypoint> waypoints = _GPSWaypointService.GetGPSWaypoints();
+        GPSWaypoint? closestWaypoint = waypoints.OrderBy(w => Math.Abs(((w.Latitude ?? 100) - lat)*((w.Longitude ?? 100) - lon))).FirstOrDefault();
+        if (closestWaypoint is not null)
+        {
+            _GPSWaypointState.SelectedWaypoint = closestWaypoint;
+        }
+        await Task.CompletedTask;
+    }
+
     async ValueTask IAsyncDisposable.DisposeAsync()
     {
         _GPSWaypointService.UnsubscribeFromWaypointsChanges(OnWaypointSync);
         _GPSWaypointState.UnsubscribeFromWaypointSelected(OnWaypointSelected);
+        ObjectReference?.Dispose();
         try
         {
-            if (jsModule is not null)
+            if (jsRoverMap is not null)
             {
-                await jsModule.InvokeVoidAsync("deleteRoverMap", [ID]);
-                await jsModule.DisposeAsync();
+                await jsRoverMap.DisposeAsync();
             }
         }
         catch (JSDisconnectedException)
