@@ -130,6 +130,7 @@ export class Rover3DView {
 
     dispose() {
         this.renderer.setAnimationLoop(null);
+        this.renderer.dispose(); // this should happen automatically, but it doesn't hurt to be safe
     }
 }
 
