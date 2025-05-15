@@ -204,7 +204,9 @@
         Bumpers,
         Triggers,
         DpadX,
-        DpadY
+        DpadY,
+        StartSelect,
+        Nothin,
     }
 
     private void UpdateInterval()
@@ -232,7 +234,9 @@
             gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
             gamepad.Axes[4] - gamepad.Axes[5],
             gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
-            gamepad.Buttons[12].Value - gamepad.Buttons[13].Value
+            gamepad.Buttons[12].Value - gamepad.Buttons[13].Value,
+            gamepad.Buttons[9].Value - gamepad.Buttons[8].Value,
+            0d,
         ];
 
         return gamepadInputs;
