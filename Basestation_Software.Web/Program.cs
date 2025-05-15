@@ -44,6 +44,7 @@ builder.Services.AddSingleton<ArmAngularService>();
 builder.Services.AddSingleton<ArmControlService>();
 builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
+builder.Services.AddSingleton<LoggerService>();
 
 var app = builder.Build();
 
