@@ -1,0 +1,525 @@
+﻿@inject RoveCommService _RoveCommService
+@inject ArmSpeedState _ArmSpeedState
+@inject OpService _OpService
+@inject ArmControlService _ArmControlService
+@using Models.Arm
+
+<style>
+    p {
+        width: 110px;
+        text-align: right;
+        margin-bottom: 0;
+    }
+
+    .jointBox {
+        display: flex;
+        column-gap: 0.6rem;
+        row-gap: 0.1rem;
+        justify-items: center;
+        flex: 0 1 160px;
+        flex-wrap:wrap;
+        border-radius: 10px;
+        background-color: var(--bs-secondary-bg);
+        margin: 0.2rem;
+        padding: 0.3rem;
+    }
+
+    .break {
+        flex-basis: 100%;
+        height: 0;
+    }
+</style>
+
+<div class="card full-height">
+    <div class="card-header" style="display: flex">
+        <h3>Arm Controls</h3>
+        <div class="vr">&nbsp;</div>
+        <InputCheckbox @bind-Value=OutputDisabled></InputCheckbox>
+        <InputSelect @bind-Value=@SelectedScheme>
+            @foreach (var value in Enum.GetValues<Scheme>())
+            {
+                <option value="@value">@value</option>
+            }
+        </InputSelect>
+        <GamepadSelector @ref=GamepadSelector_ ChangedCallback=GamepadSelectionChanged />
+    </div>
+    <div class="card-body">
+        <div style="d-flex">
+            <label>Preset:</label>
+            <RadzenDropDown TValue="ControlPreset" Data="@_cachedPresets" bind="@_selectedPreset" Change="(args) => LoadPreset((ControlPreset)args)"/>
+            <InputText @bind-Value=@_presetNameInput></InputText>
+            <button class="btn btn-primary" @onclick="(() => AddPreset(_presetNameInput))">Save Preset</button>
+            <button class="btn btn-primary" @onclick="DeletePreset">Delete Preset</button>
+
+
+        </div>
+        <div style="display:flex; gap:0.6rem;">
+            <RadzenCheckBox TValue="bool" Value="true" bind-Value=@UpdateIndividualJoints />
+            <p style="width: auto; text-align: left">Control Joints Individually</p>
+        </div>
+
+        <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
+            <p style="width:auto; text-align: center"><b>Calibration</b></p>
+            <div class="btn-group d-flex justify-items-center gap-1" role="group">
+                <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0b00000001]))>Calibrate X</button>
+                <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0b00000010]))>Calibrate Roll</button>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-evenly">
+            <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
+                <p style="width:auto; text-align: center"><b>Laser</b></p>
+                <div class="btn-group d-flex justify-items-center" role="group">
+                    <button class="btn btn-success" @onclick=@(() =>  _RoveCommService.SendAsync<byte>("Arm", "Laser", [1]))>On</button>
+                    <button class="btn btn-primary" @onclick=@(() =>  _RoveCommService.SendAsync<byte>("Arm", "Laser", [0]))>Off</button>
+                </div>
+            </div>
+
+            <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
+                <p style="width:auto; text-align: center"><b>Solenoid</b></p>
+                <div class="btn-group d-flex justify-items-center" role="group">
+                    <button class="btn btn-success" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [1]))>On</button>
+                    <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [0]))>Off</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-center gap-2">
+            <div class="d-flex flex-column my-2 justify-content-center align-content-center bg-body-secondary rounded p-2">
+                <label class="form-label" style="width: auto">Poll Interval (ms):</label>
+                <InputNumber TValue="int" class="form-control-sm" @bind-Value=@UPDATE_INTERVAL @bind-Value:after="() => UpdateInterval()"></InputNumber>
+            </div>
+
+            <div class="d-flex flex-column my-2 justify-content-center align-content-center bg-body-secondary rounded p-2">
+                <label class="form-label">Dead Zone: </label>
+                <div class="d-flex align-content-center gap-2">
+                    <RadzenSlider @bind-Value=@DeadZone TValue="double" Min="0" Max="(decimal)0.5" Step="0.001" Style="width: 5rem;  align-self: center" />
+                    <InputNumber class="form-control-sm" min="0" max="(decimal)0.5" step="0.001" @bind-Value=@DeadZone></InputNumber>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-wrap: wrap; justify-content: center;">
+            @foreach (JointNames joint in JointNames.GetValues(typeof(JointNames)))
+            {
+                <div class="jointBox">
+                    <p>Invert @((SelectedScheme != Scheme.InverseKinematics) ? Enum.GetName(joint) : Enum.GetName((IKNames)joint))</p>
+                    <RadzenCheckBox TValue="bool" @bind-Value=@isJointInverted[(int)joint]/>
+                    <div class="break"></div>
+                    <select class="form-select-sm w-100" name="JointBind" @bind=@jointInputBinds[(int)joint]>
+                        @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
+                        {
+                            <option value="@bind">@bind</option>
+                        }
+                    </select>
+                    <div style="display: flex; width:100%">
+                        <meter min="-1.0" max="1.0" value="@inputMeterValues[(int)joint]" style="width: 100%" />
+                    </div>
+
+                </div>
+            }
+
+            <div class="jointBox">
+                <p>Invert Gripper</p>
+                <RadzenCheckBox TValue="bool" @bind-value=@isGripperInverted />
+                <div class="break"></div>
+                <select class="form-select-sm w-100" name="JointBind" @bind=@gripperBind>
+                    @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
+                    {
+                        <option value="@bind">@bind</option>
+                    }
+                </select>
+                <div style="display: flex; width:100%">
+                    <meter min="-1.0" max="1.0" value="@gripperMeterValue" style="width: 100%" />
+                </div>
+
+            </div>
+
+            <div class="jointBox">
+                <p>Invert Laser</p>
+                <RadzenCheckBox TValue="bool" @bind-value=@isLaserInverted />
+                <div class="break"></div>
+                <select class="form-select-sm w-100" name="JointBind" @bind=@laserBind>
+                    @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
+                    {
+                        <option value="@bind">@bind</option>
+                    }
+                </select>
+                <div style="display: flex; width:100%">
+                    <meter min="-1.0" max="1.0" value="@laserMeterValue" style="width: 100%" />
+                </div>
+
+            </div>
+
+            <div class="jointBox">
+                <p>Invert Solenoid</p>
+                <RadzenCheckBox TValue="bool" @bind-value=@isSolInverted />
+                <div class="break"></div>
+                <select class="form-select-sm w-100" name="JointBind" @bind=@solBind>
+                    @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
+                    {
+                        <option value="@bind">@bind</option>
+                    }
+                </select>
+                <div style="display: flex; width:100%">
+                    <meter min="-1.0" max="1.0" value="@solMeterValue" style="width: 100%" />
+                </div>
+
+            </div>
+        </div>
+        <div class="jointBox" style="flex-direction: column">
+            <div style="display: grid; grid-template-columns: auto auto; align-items: center; justify-items: center;">
+                @for (int i = 0; i < limitOverrides.Count; i++)
+                {
+                    var _i = i;
+                    <div style="display: flex; justify-items: center; align-items: center; flex-basis: 0.5">
+                        <p style="width:30px">@limitNames[i]</p>
+                        <RadzenCheckBox TValue="bool" @bind-Value=@limitOverrides[_i] />
+                    </div>
+                }
+            </div>
+            <button class="btn btn-primary" @onclick=@(() => {
+                ushort mask = 0;
+                for (int i = 0; i < limitOverrides.Count; i++)
+                {
+                    mask += (ushort)((limitOverrides[i] ? 1 : 0) << limitOverrides.Count - i);
+                }
+                _RoveCommService.Send<ushort>("Arm", "SoftLimitOverride", [mask]);
+
+            })>Send Soft Overrides</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    // Available arm control schemes
+    enum Scheme
+    {
+        XboxDecipercents,
+        XboxTargetAngles,
+        InverseKinematics
+    }
+
+    // Gamepade inputs are put in a list for rebinding.
+    enum Bind
+    {
+        LSX = 0,
+        LSY,
+        RSX,
+        RSY,
+        AB,
+        XY,
+        Bumpers,
+        Triggers,
+        DpadX,
+        DpadY,
+        StartSelect,
+        Nothin,
+    }
+
+    private void UpdateInterval()
+    {
+        if (GamepadSelector_.SelectedGamepad == null)
+            UpdateTimer.Change(-1, -1);
+        else
+            UpdateTimer.Change(0, UPDATE_INTERVAL);
+    }
+
+    /// <summary>
+    /// Returns an array of input values in range [-1, 1] for possible joint control setups on an xinput gamepad. Value indexes are based on the Bind enum
+    /// </summary>
+    /// <param name="gamepad"></param>
+    /// <returns></returns>
+    private double[] GetBindableGamepadInputs(Toolbelt.Blazor.Gamepad.Gamepad gamepad)
+    {
+        double[] gamepadInputs = [
+            gamepad.Axes[0],
+            gamepad.Axes[1],
+            gamepad.Axes[2],
+            gamepad.Axes[3],
+            gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
+            gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
+            gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
+            gamepad.Axes[4] - gamepad.Axes[5],
+            gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
+            gamepad.Buttons[12].Value - gamepad.Buttons[13].Value,
+            gamepad.Buttons[9].Value - gamepad.Buttons[8].Value,
+            0d,
+        ];
+
+        return gamepadInputs;
+    }
+
+    // Member variables
+    private bool OutputDisabled = false;
+    private GamepadSelector GamepadSelector_;
+    private Scheme SelectedScheme;
+    public int UPDATE_INTERVAL = 50;
+    private Timer UpdateTimer;
+    private bool LastProcessGamepadInputOK = false;
+    private double DeadZone = 0.5;
+    bool UpdateIndividualJoints = true;
+    List<bool> isJointInverted = [false, false, false, false, false, false];
+    // in order of joint enum
+    // List<int> jointInputBinds = [0, 1, 2, 3, 4, 5];
+    List<Bind> jointInputBinds = [Bind.RSX, Bind.RSY, Bind.LSY, Bind.LSX, Bind.Triggers, Bind.Bumpers];
+    // TODO add gripper to joint enumeration
+    Bind gripperBind = Bind.DpadX;
+    Bind laserBind = Bind.AB;
+    Bind solBind = Bind.XY;
+    bool isGripperInverted = false;
+    bool isLaserInverted = false;
+    bool isSolInverted = false;
+    // 0 off, 1 on
+    private List<bool> limitOverrides = [false, false, false, false, false, false, false, false, false];
+    private static readonly string[] limitNames = ["X+", "X-", "J2+", "J2-", "J3+", "J3-", "J4+", "J4-", "P"];
+
+    List<double> inputMeterValues = [0, 0, 0, 0, 0, 0];
+    double gripperMeterValue = 0;
+    double laserMeterValue = 0;
+    double solMeterValue = 0;
+    double[] lastUpdateInputs = [0, 0, 0, 0, 0, 0];
+
+    private List<ControlPreset>? _cachedPresets = [];
+    private ControlPreset? _selectedPreset = null;
+    private string _presetNameInput = "";
+
+    public void GamepadSelectionChanged()
+    {
+        if (GamepadSelector_.SelectedGamepad is null)
+            UpdateTimer.Change(-1, -1);
+        else
+            UpdateTimer.Change(0, UPDATE_INTERVAL);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await _ArmControlService.RefreshPresets();
+        await SyncCache();
+        _selectedPreset = _cachedPresets?[0];
+        // Run update function every 100ms
+        UpdateTimer = new(Update);
+    }
+
+    private void Update(object? _)
+    {
+        bool ProcessGamepadInputOK = ProcessGamepadInput();
+        if (ProcessGamepadInputOK)
+        {
+            // set teleop if controller being used
+            _OpService.SetTeleop();
+        }
+        else if (LastProcessGamepadInputOK)
+        {
+            // Stop arm speeds
+            _ = _RoveCommService.SendAsync<short>("Arm", "SetIndividualSpeeds", [0, 0, 0, 0, 0, 0]);
+        }
+        LastProcessGamepadInputOK = ProcessGamepadInputOK;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    // Process gamepad input and return true if rovecomm packets were sent.
+    private bool ProcessGamepadInput()
+    {
+        double[] jointInputs = [0, 0, 0, 0, 0, 0];
+        if (GamepadSelector_.SelectedGamepad is null) return false;
+        switch (SelectedScheme)
+        {
+            case Scheme.XboxDecipercents:
+                {
+                    // Controller check
+                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
+
+                    double[] inputValues = GetBindableGamepadInputs(GamepadSelector_.SelectedGamepad);
+                    inputMeterValues = [0, 0, 0, 0, 0, 0];
+                    for (int i = 0; i < jointInputs.Length; i++)
+                    {
+                        jointInputs[i] = inputValues[(int)jointInputBinds[i]];
+                        inputMeterValues[i] = inputValues[(int)jointInputBinds[i]];
+                    }
+
+                    // sanitize based on dead zone and apply multipliers
+                    for (int i = 0; i < jointInputs.Length; i++)
+                    {
+                        jointInputs[i] = (Math.Abs(jointInputs[i]) < DeadZone) ? 0d :
+                        jointInputs[i] * (_ArmSpeedState.ArmSpeeds.Values.ToArray()[i]*200f) * (isJointInverted[i] ? -1f : 1f) * _ArmSpeedState.ArmSpeeds["Master"];
+                    }
+
+                    if (UpdateIndividualJoints)
+                    {
+                        for (int i = 0; i < jointInputs.Length; i++)
+                        {
+                            if (!OutputDisabled && !(jointInputs[i] == 0d && lastUpdateInputs[i] == 0d)) _ = _RoveCommService.SendAsync<short>("Arm", "SetJointSpeed", [(short)(i + 1), Convert.ToInt16(jointInputs[i])]);
+                            // We just stopped inputting, send a bunch of stop packets to account for packet loss
+                            // Needs to be worked on embedded-side
+                            if (jointInputs[i] == 0d && lastUpdateInputs[i] != 0d)
+                            {
+                                for (int j = 0; j < 20; j++)
+                                {
+                                    _ = Task.Run(() => _RoveCommService.SendAsync<short>("Arm", "SetJointSpeed", [(short)(i), 0]));
+                                }
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (!OutputDisabled) _ = _RoveCommService.SendAsync<float>("Arm", "SetIndividualSpeeds", Array.ConvertAll(jointInputs, j => (float)j).ToList());
+                    }
+
+                    if (GamepadSelector_.SelectedGamepad.Buttons[0].Pressed)
+                    {
+                        if (!OutputDisabled)_ = _RoveCommService.SendAsync<float>("Arm", "Laser", [1]);
+                    }
+                    if (GamepadSelector_.SelectedGamepad.Buttons[1].Pressed)
+                    {
+                        if (!OutputDisabled)_ = _RoveCommService.SendAsync<float>("Arm", "Laser", [0]);
+                    }
+
+                    if (!OutputDisabled)_ = _RoveCommService.SendAsync<short>("Arm", "SetGripperSpeed", [(short)(inputValues[(int)gripperBind] * _ArmSpeedState.ArmSpeeds["Gripper"] * 200f * _ArmSpeedState.ArmSpeeds["Master"] * (isGripperInverted ? -1 : 1))]);
+                    gripperMeterValue = inputValues[(int)gripperBind];
+
+                    if (!OutputDisabled && inputValues[(int)laserBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Laser", [(byte)((inputValues[(int)laserBind] * (isLaserInverted ? -1 : 1)) < 0 ? 0 : 1)]);
+                    if (!OutputDisabled && inputValues[(int)solBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [(byte)((inputValues[(int)solBind] * (isSolInverted ? -1 : 1)) < 0 ? 0 : 1)]);
+
+                    break;
+                }
+            case Scheme.XboxTargetAngles:
+                {
+                    // Controller check
+                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
+
+
+                    double[] inputValues = GetBindableGamepadInputs(GamepadSelector_.SelectedGamepad);
+                    inputMeterValues = [0, 0, 0, 0, 0, 0];
+                    for (int i = 0; i < jointInputs.Length; i++)
+                    {
+                        jointInputs[i] = inputValues[(int)jointInputBinds[i]];
+                        inputMeterValues[i] = inputValues[(int)jointInputBinds[i]];
+                    }
+
+                    // sanitize based on dead zone and apply multipliers
+                    for (int i = 0; i < jointInputs.Length; i++)
+                    {
+                        jointInputs[i] = (Math.Abs(jointInputs[i]) < DeadZone) ? 0d :
+                            jointInputs[i] * (isJointInverted[i] ? -1f : 1f) * (_ArmSpeedState.ArmSpeeds.Values.ToArray()[i]) * _ArmSpeedState.ArmSpeeds["Master"] * (UPDATE_INTERVAL / 10f);
+                    }
+
+                    if (UpdateIndividualJoints)
+                    {
+                        for (int i = 0; i < jointInputs.Length; i++)
+                        {
+                            if (!OutputDisabled && jointInputs[i] != 0d) _ = _RoveCommService.SendAsync<float>("Arm", "IncrementJointTargetAngle", [(float)(i), (float)jointInputs[i]]);
+                        }
+                    }
+                    else
+                    {
+                        if (!OutputDisabled) _ = _RoveCommService.SendAsync<float>("Arm", "IncrementIndividualTargetAngles", Array.ConvertAll(jointInputs, j => (float)j).ToList());
+                    }
+
+                    if (!OutputDisabled) _ = Task.Run(() => _RoveCommService.SendAsync<short>("Arm", "SetGripperSpeed", [(short)(inputValues[(int)gripperBind] * _ArmSpeedState.ArmSpeeds["Gripper"] * 1000f * (isGripperInverted ? -1 : 1))]));
+                    gripperMeterValue = inputValues[(int)gripperBind];
+                    laserMeterValue = inputValues[(int)laserBind];
+                    solMeterValue = inputValues[(int)solBind];
+
+                    if (!OutputDisabled && inputValues[(int)laserBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Laser", [(byte)((inputValues[(int)laserBind] * (isLaserInverted ? -1 : 1)) < 0 ? 0 : 1)]);
+                    if (!OutputDisabled && inputValues[(int)solBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [(byte)((inputValues[(int)solBind] * (isSolInverted ? -1 : 1)) < 0 ? 0 : 1)]);
+
+                    break;
+                }
+            case Scheme.InverseKinematics:
+                {
+                    // Controller check
+                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
+
+
+                    double[] inputValues = GetBindableGamepadInputs(GamepadSelector_.SelectedGamepad);
+                    inputMeterValues = [0, 0, 0, 0, 0, 0];
+                    for (int i = 0; i < jointInputs.Length; i++)
+                    {
+                        jointInputs[i] = inputValues[(int)jointInputBinds[i]];
+                        inputMeterValues[i] = inputValues[(int)jointInputBinds[i]];
+                    }
+
+                    // sanitize based on dead zone and apply multipliers
+                    for (int i = 0; i < jointInputs.Length; i++)
+                    {
+                        jointInputs[i] = (Math.Abs(jointInputs[i]) < DeadZone) ? 0d :
+                            jointInputs[i] * (isJointInverted[i] ? -1f : 1f) * (_ArmSpeedState.ArmSpeeds.Values.ToArray()[i]) * _ArmSpeedState.ArmSpeeds["Master"] * (UPDATE_INTERVAL / 10f);
+                    }
+
+                    if (!GamepadSelector_.SelectedGamepad.Buttons[9].Pressed)
+                    {
+                        if (!OutputDisabled && jointInputs.Sum() != 0) _ = _RoveCommService.Send<float>("Arm", "IncrementIKPosition", Array.ConvertAll(jointInputs, j => (float)j).ToList());
+                    }
+                    else
+                    {
+                        if (!OutputDisabled) _ = _RoveCommService.Send<float>("Arm", "IncrementLockModePosition", Array.ConvertAll(jointInputs, j => (float)j).Skip(3).ToList());
+                    }
+
+                    if (!OutputDisabled) _ = Task.Run(() => _RoveCommService.SendAsync<short>("Arm", "SetGripperSpeed", [(short)(inputValues[(int)gripperBind] * _ArmSpeedState.ArmSpeeds["Gripper"] * 1000f * (isGripperInverted ? -1 : 1))]));
+                    gripperMeterValue = inputValues[(int)gripperBind];
+                    laserMeterValue = inputValues[(int)laserBind];
+                    solMeterValue = inputValues[(int)solBind];
+
+                    if (!OutputDisabled && inputValues[(int)laserBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Laser", [(byte)((inputValues[(int)laserBind] * (isLaserInverted ? -1 : 1)) < 0 ? 0 : 1)]);
+                    if (!OutputDisabled && inputValues[(int)solBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [(byte)((inputValues[(int)solBind] * (isSolInverted ? -1 : 1)) < 0 ? 0 : 1)]);
+
+                    break;
+                }
+            default: return false;
+        }
+
+        lastUpdateInputs = new List<double>(jointInputs).ToArray();
+        return true;
+    }
+
+    private async Task SyncCache()
+    {
+        _cachedPresets = _ArmControlService.GetPresets();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task AddPreset(string presetName)
+    {
+        ControlPreset newPreset = new()
+            {
+                Name = presetName,
+                jointInversions = new(isJointInverted),
+                gamepadBinds = jointInputBinds.Cast<int>().ToList(),
+                jointSpeeds = _ArmSpeedState.ArmSpeeds.Values.ToList(),
+            };
+
+        await _ArmControlService.AddPreset(newPreset);
+        await SyncCache();
+
+    }
+
+    private async Task DeletePreset()
+    {
+        if (_selectedPreset == null || _selectedPreset.ID == 1) return;
+        await _ArmControlService.DeletePreset(_selectedPreset);
+        await SyncCache();
+    }
+
+    private async void LoadPreset(ControlPreset preset)
+    {
+        isJointInverted = new(preset.jointInversions!);
+        jointInputBinds = new(preset.gamepadBinds!.Cast<Bind>()!);
+
+        _ArmSpeedState.ArmSpeeds = new Dictionary<string, float>(){
+            { "X", preset.jointSpeeds![0]},
+            { "J2", preset.jointSpeeds![1]},
+            { "J3", preset.jointSpeeds![2]},
+            { "J4", preset.jointSpeeds![3]},
+            { "Pitch", preset.jointSpeeds![4]},
+            { "Roll", preset.jointSpeeds![5]},
+            { "Gripper", preset.jointSpeeds![6]},
+            { "Master", preset.jointSpeeds![7]}
+        };
+
+        _selectedPreset = preset;
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+}

@@ -1,6 +1,7 @@
 @implements IDisposable
 @inject IJSRuntime _IJSRuntime
 @inject RoveCommService _RoveCommService
+@inject GPSWaypointService _GPSWaypointService
 
 <style>
     .gps {
@@ -15,8 +16,23 @@
 </style>
 
 <div class="card h-100">
-    <div class="card-header">
+    <div class="card-header d-flex gap-2">
         <h3>NAV</h3>
+        <button class="btn btn-primary btn-sm" @onclick=@(async () => {
+                await _GPSWaypointService.AddGPSWaypoint(new GPSWaypoint{
+                ID = -1,
+                Name = "NAV Waypoint",
+                Latitude = Lat,
+                Longitude = Lon,
+                Timestamp = DateTime.Now,
+                Altitude = -1,
+                SearchRadius = 0,
+                TagID = 0,
+                Type = 0,
+                });
+                })>
+            <i class="bi bi-sm bi-plus-circle" />
+        </button>
     </div>
     <div class="card-body gps">
         <p>Lat [&#176;]</p><p>Lon [&#176;]</p><p>Alt [m]</p>
@@ -86,7 +102,7 @@
                     stroke: none;
                 }
             </style>
-            <g id="pitch" transform="translate(-60, -60) rotate(0, 90, 90)">
+            <g id="pitch" transform="translate(-60, @(Pitch - 60)) rotate(@Roll, 90, @(90 - Pitch))">
                 <rect class="sky" x="0" y="-60" width="180" height="150" />
                 <rect class="ground" x="0" y="90" width="180" height="150" />
                 <text class="elev-label" text-anchor="end" dominant-baseline="central" x="86" y="0">90</text>
@@ -204,7 +220,7 @@
                 <line class="elev" x1="88.56" y1="185" x2="91.44" y2="185" />
                 <line class="elev" x1="89.28" y1="187.5" x2="90.72" y2="187.5" />
             </g>
-            <g id="roll" transform="rotate(0, 30, 30)">
+            <g id="roll" transform="rotate(@Roll, 30, 30)">
                 <path class="roll-arc" d="M 10.5 30 a 19.5 19.5 180 0 1 39 0" />
                 <line class="roll-arc" x1="7" y1="30" x2="10.5" y2="30" />
                 <line class="roll-arc" x1="7" y1="30" x2="10.5" y2="30" transform="rotate(30, 30, 30)" />
@@ -245,12 +261,9 @@
     private float Pitch = 0, Yaw = 0, Roll = 0;
     private float AccelX = 0, AccelY = 0, AccelZ = 0;
 
-    // Declare page member variables.
-    private string jsInteropName;
-
     protected override void OnInitialized()
-    {     
-        _RoveCommService.On<double>("Nav", "GPSLatLonAlt", async (RoveCommPacket<double> packet) =>
+    {
+        _RoveCommService.On<double>("Nav", "GPSLatLonAlt", async (packet) =>
         {
             Lat = packet.Data[0];
             Lon = packet.Data[1];
@@ -258,27 +271,29 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<float>("Nav", "IMUData", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.On<float>("Nav", "IMUData", async (packet) =>
         {
-            Pitch = packet.Data[0];
+            // Pitch relative to upright [-90D,90U]
+            Pitch = Math.Clamp(packet.Data[0], -90, 90);
             Yaw = packet.Data[1];
-            Roll = packet.Data[2];
+            // Roll relative to upright [-180L, 180R]
+            Roll = Math.Clamp(packet.Data[2], -180, 180);
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<float>("Nav", "CompassData", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.On<float>("Nav", "CompassData", async (packet) =>
         {
             Heading = packet.Data[0];
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<byte>("Nav", "SatelliteCountData", async (RoveCommPacket<byte> packet) =>
+        _RoveCommService.On<byte>("Nav", "SatelliteCountData", async (packet) =>
         {
             Satellites = packet.Data[0];
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<float>("Nav", "AccelerometerData", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.On<float>("Nav", "AccelerometerData", async (packet) =>
         {
             AccelX = packet.Data[0];
             AccelY = packet.Data[1];
@@ -286,7 +301,7 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<float>("Nav", "AccuracyData", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.On<float>("Nav", "AccuracyData", async (packet) =>
         {
             AccurHor = packet.Data[0];
             AccurVer = packet.Data[1];
@@ -315,17 +330,9 @@
                 default:
                     FixType = "Undefined";
                     break;
-            };            
+            };
             await InvokeAsync(StateHasChanged);
         });
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender) // Initialize attitude indicator.
-            await _IJSRuntime.InvokeVoidAsync($"createRoverAttitude", [ID, DotNetObjectReference.Create(this)]);
-        else
-            await _IJSRuntime.InvokeVoidAsync($"{jsInteropName}.update", [Pitch, Roll]);
     }
 
     void IDisposable.Dispose() { }

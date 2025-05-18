@@ -10,8 +10,12 @@
     <div class="card-body align-content-center h-100">
         <div class="button-header">
             <div class="d-inline-flex bg-body-secondary justify-content-center p-2 rounded gap-2">
-                <p><b>Selected:</b> @(_selectedWaypoint != null ? _selectedWaypoint.Name : "None!")</p>
+                <p><b>Selected:</b> @(_selectedWaypoint is not null ? _selectedWaypoint.Name : "None")</p>
                 <div class="color-preview" style="background-color: @_selectedWaypoint?.WaypointColor"></div>
+                @if (_selectedWaypoint is not null && _selectedWaypoint.TagID is not null && _selectedWaypoint.TagID >= 0)
+                {
+                    <ArucoTagDisplay ID="@(_selectedWaypoint.TagID ?? 0)" Scale="10" />
+                }
             </div>
         </div>
 
@@ -22,6 +26,7 @@
                 <button class="btn btn-secondary" @onclick=AddObjectLeg>Add Object Leg</button>
                 <button class="btn btn-secondary" @onclick=AddObstacle>Add Obstacle</button>
                 <button class="btn btn-secondary" @onclick=ClearWaypoints>Clear Waypoints</button>
+                <button class="btn btn-secondary" @onclick=ClearObstacles>Clear Obstacles</button>
             </div>
         </div>
 
@@ -37,58 +42,85 @@
 
 @code
 {
-    private GPSWaypointInput? _selectedWaypoint = null;
+    private GPSWaypoint? _selectedWaypoint = null;
 
-    void StartAutonomy()
+    public async Task StartAutonomy()
     {
-        _ = _RoveCommService.SendAsync<byte>("Autonomy", "StartAutonomy", [0]);
+        _RoveCommService.SubscribeAll();
+        await _RoveCommService.SendAsync<byte>("Autonomy", "StartAutonomy", [0]);
         _OpService.SetAutonomy();
     }
 
-    void StopAutonomy()
+    public async Task StopAutonomy()
     {
-        _ = _RoveCommService.SendAsync<byte>("Autonomy", "DisableAutonomy", [0]);
+        await _RoveCommService.SendAsync<byte>("Autonomy", "DisableAutonomy", [0]);
         _OpService.SetTeleop();
     }
 
-    void ClearWaypoints()
+    public async Task ClearWaypoints()
     {
-        _ = _RoveCommService.SendAsync<byte>("Autonomy", "ClearWaypoints", [0]);
+        await _RoveCommService.SendAsync<byte>("Autonomy", "ClearWaypoints", [0]);
     }
 
-    void AddPositionLeg()
+    public async Task ClearObstacles()
     {
-        if (_selectedWaypoint != null)
-            _ = _RoveCommService.SendAsync<double>("Autonomy", "AddPositionLeg", [Double.Parse(_selectedWaypoint.Latitude), Double.Parse(_selectedWaypoint.Longitude)]);
+        await _RoveCommService.SendAsync<byte>("Autonomy", "ClearObstacles", [0]);
     }
 
-    void AddMarkerLeg()
+    public async Task AddPositionLeg()
     {
-        if (_selectedWaypoint != null)
-            _ = _RoveCommService.SendAsync<double>("Autonomy", "AddMarkerLeg", [Double.Parse(_selectedWaypoint.Latitude), Double.Parse(_selectedWaypoint.Longitude), _selectedWaypoint.TagID, _selectedWaypoint.SearchRadius]);
+        if (_selectedWaypoint is not null
+            && _selectedWaypoint.Latitude is not null
+            && _selectedWaypoint.Longitude is not null)
+        {
+            await _RoveCommService.SendAsync<double>("Autonomy", "AddPositionLeg", [_selectedWaypoint.Latitude ?? 0, _selectedWaypoint.Longitude ?? 0]);
+        }
     }
 
-    void AddObjectLeg()
+    public async Task AddMarkerLeg()
     {
-        if (_selectedWaypoint != null)
-            _ = _RoveCommService.SendAsync<double>("Autonomy", "AddObjectLeg", [Double.Parse(_selectedWaypoint.Latitude), Double.Parse(_selectedWaypoint.Longitude), _selectedWaypoint.SearchRadius]);
+        if (_selectedWaypoint != null
+            && _selectedWaypoint.Latitude is not null
+            && _selectedWaypoint.Longitude is not null
+            && _selectedWaypoint.TagID is not null && _selectedWaypoint.TagID >= 0
+            && _selectedWaypoint.SearchRadius is not null && _selectedWaypoint.SearchRadius >= 0)
+        {
+            await _RoveCommService.SendAsync<double>("Autonomy", "AddMarkerLeg", [_selectedWaypoint.Latitude ?? 0, _selectedWaypoint.Longitude ?? 0, _selectedWaypoint.TagID ?? 0, _selectedWaypoint.SearchRadius ?? 0]);
+        }
     }
 
-    void AddObstacle()
+    public async Task AddObjectLeg()
     {
-        if (_selectedWaypoint != null)
-            _ = _RoveCommService.SendAsync<double>("Autonomy", "AddObstacle", [Double.Parse(_selectedWaypoint.Latitude), Double.Parse(_selectedWaypoint.Longitude), _selectedWaypoint.SearchRadius]);
+        if (_selectedWaypoint != null
+            && _selectedWaypoint.Latitude is not null
+            && _selectedWaypoint.Longitude is not null
+            && _selectedWaypoint.SearchRadius is not null && _selectedWaypoint.SearchRadius >= 0)
+        {
+            await _RoveCommService.SendAsync<double>("Autonomy", "AddObjectLeg", [_selectedWaypoint.Latitude ?? 0, _selectedWaypoint.Longitude ?? 0, _selectedWaypoint.SearchRadius ?? 0]);
+        }
+    }
+
+    public async Task AddObstacle()
+    {
+        if (_selectedWaypoint != null
+            && _selectedWaypoint.Latitude is not null
+            && _selectedWaypoint.Longitude is not null
+            && _selectedWaypoint.SearchRadius is not null && _selectedWaypoint.SearchRadius >= 0)
+        {
+            await _RoveCommService.SendAsync<double>("Autonomy", "AddObstacle", [_selectedWaypoint.Latitude ?? 0, _selectedWaypoint.Longitude ?? 0, _selectedWaypoint.SearchRadius ?? 0]);
+        }
     }
 
     protected override async Task OnInitializedAsync()
     {
-        _GPSWaypointState.SubscribeToWaypointChanged(OnWaypointChanged);
+        _GPSWaypointState.SubscribeToWaypointSelected(OnWaypointSelected);
+        await Task.CompletedTask;
     }
 
-    private void OnWaypointChanged(List<GPSWaypointInput> waypoints)
+    private async Task OnWaypointSelected(GPSWaypoint? waypoint)
     {
-        _selectedWaypoint = waypoints[0];
-        StateHasChanged();
+        _selectedWaypoint = waypoint;
+        await InvokeAsync(StateHasChanged);
     }
 
     void IDisposable.Dispose()

@@ -1,0 +1,43 @@
+@inject RoveCommService _RoveCommService
+@inject ArmSpeedState _ArmSpeedState
+
+<div class="card full-height">
+    <div class="card-header">
+        <h3>Arm Speeds</h3>
+    </div>
+    <div class="card-body">
+        <button class="btn btn-primary" @onclick=EStopArm>ESTOP</button>
+        <button class="btn btn-primary" @onclick=UnEStopArm>UNESTOP</button>
+        @foreach(string joint in _ArmSpeedState.ArmSpeeds.Keys)
+        {
+            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center">
+                <p style="width: 80px; text-align: right">@joint</p>
+                <RadzenSlider TValue="float" Min="(decimal)0.0" Max="(decimal)5.0" Step="0.1" Style="width:30%" @bind-value=@_ArmSpeedState.ArmSpeeds[joint]> </RadzenSlider>
+                <RadzenNumeric TValue="float" Min="(decimal)0.0" Max="(decimal)5.0" Step="0.1" @bind-value=@_ArmSpeedState.ArmSpeeds[joint]></RadzenNumeric>
+            </RadzenStack>
+        }
+    </div>
+</div>
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        _ArmSpeedState.SubscribeToArmSpeedChanged(OnSpeedsChanged);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async void OnSpeedsChanged(Dictionary<string, float> speeds)
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task EStopArm()
+    {
+        await _RoveCommService.SendAsync<byte>("Arm", "EStop", [1]);
+    }
+    private async Task UnEStopArm()
+    {
+        await _RoveCommService.SendAsync<byte>("Arm", "ClosedLoopOverride", [0]);
+    }
+}

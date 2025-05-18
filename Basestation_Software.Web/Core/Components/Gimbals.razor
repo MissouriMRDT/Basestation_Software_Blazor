@@ -1,28 +1,28 @@
-﻿@inject RoveCommService _RoveCommService
+@inject RoveCommService _RoveCommService
 
 <style>
     p {
-    width: 110px;
-    text-align: right;
-    margin-bottom: 0;
+        width: 110px;
+        text-align: right;
+        margin-bottom: 0;
     }
 
     .controlBox {
-    display: flex;
-    column-gap: 0.6rem;
-    row-gap: 0.1rem;
-    justify-items: center;
-    flex: 0 1 160px;
-    flex-wrap: wrap;
-    border-radius: 10px;
-    background-color: var(--bs-secondary-bg);
-    margin: 0.2rem;
-    padding: 0.3rem;
+        display: flex;
+        column-gap: 0.6rem;
+        row-gap: 0.1rem;
+        justify-items: center;
+        flex: 0 1 160px;
+        flex-wrap: wrap;
+        border-radius: 10px;
+        background-color: var(--bs-secondary-bg);
+        margin: 0.2rem;
+        padding: 0.3rem;
     }
 
     .break {
-    flex-basis: 100%;
-    height: 0;
+        flex-basis: 100%;
+        height: 0;
     }
 </style>
 
@@ -30,6 +30,7 @@
     <div class="card-header d-flex">
         <h3>Gimbals</h3>
         <div class="vr">&nbsp;</div>
+        <InputCheckbox @bind-Value=OutputDisabled></InputCheckbox>
         <InputSelect @bind-Value=@SelectedScheme>
             @foreach (var value in Enum.GetValues<Scheme>())
             {
@@ -72,9 +73,10 @@
 
 @code {
     // Declare member variables
+    private bool OutputDisabled = false;
     private GamepadSelector GamepadSelector_;
     private Scheme SelectedScheme;
-    public int UPDATE_INTERVAL = 100;
+    public int UPDATE_INTERVAL = 50;
     private Timer UpdateTimer;
     private double DeadZone = 0.5;
     private List<bool> inversions = new(new bool[9]);
@@ -97,7 +99,9 @@
         Bumpers,
         Triggers,
         DpadX,
-        DpadY
+        DpadY,
+        LBumpTrig,
+        RBumpTrig,
     }
 
     private string[] _gimbalNames = [
@@ -111,8 +115,8 @@
     ];
 
     private List<Bind> controllerBinds = [
-        Bind.Bumpers, 
-        Bind.AB, 
+        Bind.LBumpTrig, 
+        Bind.RBumpTrig, 
         Bind.LSX, 
         Bind.LSY, 
         Bind.RSX, 
@@ -132,16 +136,17 @@
     {
         double[] gamepadInputs = [
             gamepad.Axes[0],
-    gamepad.Axes[1],
-    gamepad.Axes[2],
-    gamepad.Axes[3],
-    gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
-    gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
-    gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
-    gamepad.Buttons[6].Value - gamepad.Buttons[7].Value,
-    gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
-    gamepad.Buttons[12].Value - gamepad.Buttons[13].Value
-
+            gamepad.Axes[1],
+            gamepad.Axes[2],
+            gamepad.Axes[3],
+            gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
+            gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
+            gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
+            gamepad.Axes[4] - gamepad.Axes[5],
+            gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
+            gamepad.Buttons[12].Value - gamepad.Buttons[13].Value,
+            (gamepad.Axes[4] + 1) / 2.0 - gamepad.Buttons[4].Value,
+            (gamepad.Axes[5] + 1) / 2.0 - gamepad.Buttons[5].Value
         ];
 
         return gamepadInputs;
@@ -199,12 +204,13 @@
                         bindedInputs[i] = (Math.Abs(bindedInputs[i]) < DeadZone) ? 0f : bindedInputs[i] * 4 * (inversions[i] == false ? 1 : -1);
                     }
 
-                    if (bindedInputs[0] > 0) RoveComm.Boards.Core.LeftDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[0]);
-                    if (bindedInputs[1] > 0) RoveComm.Boards.Core.RightDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[1]);
-                    if (bindedInputs[2] > 0 || bindedInputs[3] > 0) RoveComm.Boards.Core.LeftMainGimbalIncrement(_RoveCommService, (short)bindedInputs[2], (short)bindedInputs[3]);
-                    if (bindedInputs[4] > 0 || bindedInputs[5] > 0) RoveComm.Boards.Core.RightMainGimbalIncrement(_RoveCommService, (short)bindedInputs[4], (short)bindedInputs[5]);
-                    if (bindedInputs[6] > 0) RoveComm.Boards.Core.BackDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[6]);
-
+                    if (!OutputDisabled)
+                    {
+                        if (Math.Abs(bindedInputs[0]) > 0) RoveComm.Boards.Core.LeftDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[0]);
+                        if (Math.Abs(bindedInputs[1]) > 0) RoveComm.Boards.Core.RightDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[1]);
+                        if (Math.Abs(bindedInputs[2]) > 0 || Math.Abs(bindedInputs[3]) > 0) RoveComm.Boards.Core.LeftMainGimbalIncrement(_RoveCommService, (short)bindedInputs[2], (short)bindedInputs[3]);
+                        if (Math.Abs(bindedInputs[4]) > 0 || Math.Abs(bindedInputs[5]) > 0) RoveComm.Boards.Core.RightMainGimbalIncrement(_RoveCommService, (short)bindedInputs[4], (short)bindedInputs[5]);
+                    }
                     break;
                 }
 
