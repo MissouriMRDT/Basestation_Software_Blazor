@@ -26,7 +26,9 @@
                         <button class="btn btn-sm btn-secondary" @onclick="() => SetSingle(_joint)" title="Set Joint"><i class="bi bi-inline-text bi-arrow-up-right" /></button>
                         <button class="btn btn-sm btn-secondary" @onclick="() => GetSingle(_joint)" title="Get Joint"><i class="bi bi-inline-text bi-arrow-down-right" /></button>
                     </RadzenStack>
-                    <label class="form-label text-center">@(_lastTelemetry?[_joint].ToString("F") ?? "-")</label>
+                    <label class="form-label text-center">@(_lastPosTelemetry?[_joint].ToString("F") ?? "-")</label>
+                    <label class="form-label text-center">@(_lastCoordTelemetry?[_joint].ToString("F") ?? "-")</label>
+
                 </div>
             }
         </div>
@@ -114,7 +116,8 @@
     private JointValues _activeJointValues = new();
     private string _presetNameInput = "";
     private RadzenDataGrid<ArmPreset>? _presetsDataGrid;
-    private JointValues? _lastTelemetry;
+    private JointValues? _lastPosTelemetry;
+    private JointValues? _lastCoordTelemetry;
     private bool _isIKMode = false;
     private List<ArmPreset> _keyframes = new();
     private int _currentKeyframeIndex = 0;
@@ -126,18 +129,31 @@
     {
         _RoveCommService.On<float>("Arm", "Positions", async (packet) =>
         {
-
-            if (_lastTelemetry is null)
+            if (_lastPosTelemetry is null)
             {
-                _lastTelemetry = new();
+                _lastPosTelemetry = new();
             }
 
             for (int i = 0; i < packet.DataCount - 1; i++)
             {
-                _lastTelemetry[(JointNames)i] = packet.Data[i];
+                _lastPosTelemetry[(JointNames)i] = packet.Data[i];
             }
             _ac = packet.Data[6];
 
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<float>("Arm", "Coordinates", async (packet) =>
+        {
+            if (_lastCoordTelemetry is null)
+            {
+                _lastCoordTelemetry = new();
+            }
+
+            for (int i = 0; i < packet.DataCount; i++)
+            {
+                _lastCoordTelemetry[(JointNames)i] = packet.Data[i];
+            }
             await InvokeAsync(StateHasChanged);
         });
         await _ArmAngularService.RefreshPresets();
@@ -269,11 +285,11 @@
 
     private void GetAll()
     {
-        _activeJointValues.SetAll(_lastTelemetry ?? new());
+        _activeJointValues.SetAll(_lastPosTelemetry ?? new());
     }
 
     private void GetSingle(JointNames joint)
     {
-        _activeJointValues[joint] = _lastTelemetry?[joint] ?? 0;
+        _activeJointValues[joint] = _lastPosTelemetry?[joint] ?? 0;
     }
 }
