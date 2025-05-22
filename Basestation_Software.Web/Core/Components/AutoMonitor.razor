@@ -1,0 +1,45 @@
+﻿@inject RoveCommService _RoveCommService
+
+<style>
+    p {
+    margin-bottom: 0;
+    }
+</style>
+
+<div class="card h-100">
+    <div class="card-header">
+        <h3>Autonomy Monitor</h3>
+    </div>
+    <div class="card-body">
+        <div style="display: grid; grid-template-columns: auto auto;" class="gap-2">
+            @for (int i = 0; i < _threadNames.Length; i++)
+            {
+                var _i = i;
+                <div class="d-flex flex-column rounded p-2 bg-body-secondary justify-content-center align-content-center text-center">
+                    <p>@_threadNames[_i]</p>
+                    <p class="font-monospace fs-3"><b>@_fpsValues[_i] FPS</b></p>
+                    <hr style="border-color: color-mix(in oklab, green @(Math.Min(_fpsValues[_i], 60)/60f * 100)%, red) !important" class="border border-4 opacity-50 rounded-2" />
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private uint[]_fpsValues = new uint[11];
+    private string[] _threadNames = Enum.GetNames(typeof(RoveComm.Boards.Autonomy.AUTONOMYTHREADS));
+
+    protected override async Task OnInitializedAsync()
+    {
+        _RoveCommService.On<uint>("Autonomy", "ThreadFPS", async (packet) =>
+        {
+            _fpsValues[(int)packet.Data[0]] = packet.Data[1];
+            // low fps warning
+            if (packet.Data[1] < 10)
+            {
+                // _ToastService.ShowWarning(string.Format("Autonomy Thread \"{0}\" is running at {1} FPS!", _threadNames[(int)packet.Data[0]], packet.Data[1]));
+            }
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+}

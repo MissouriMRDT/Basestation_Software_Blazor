@@ -3,27 +3,27 @@ namespace Basestation_Software.Web.Core.Services.States;
 
 public class GPSWaypointState
 {
-    public delegate void WaypointChangedCallback(List<GPSWaypointInput> waypoints);
-    private event WaypointChangedCallback? WaypointChangedNotifier; 
+    public delegate Task WaypointSelectedCallback(GPSWaypoint? waypoints);
+    private event WaypointSelectedCallback? WaypointSelectedNotifier; 
 
-    public void SubscribeToWaypointChanged(WaypointChangedCallback callback)
+    public void SubscribeToWaypointSelected(WaypointSelectedCallback callback)
     {
-        WaypointChangedNotifier += callback;
+        WaypointSelectedNotifier += callback;
     }
 
-    public void UnsubscribeFromWaypointChanged(WaypointChangedCallback callback)
+    public void UnsubscribeFromWaypointSelected(WaypointSelectedCallback callback)
     {
-        WaypointChangedNotifier -= callback;
+        WaypointSelectedNotifier -= callback;
     }
 
-    private List<GPSWaypointInput>? _selectedWaypoints;
-    public List<GPSWaypointInput>? SelectedWaypoints
+    private GPSWaypoint? _selectedWaypoint;
+    public GPSWaypoint? SelectedWaypoint
     {
-        get { return _selectedWaypoints; }
+        get { return _selectedWaypoint; }
         set 
         { 
-            _selectedWaypoints = value;
-            WaypointChangedNotifier?.Invoke(_selectedWaypoints);
+            _selectedWaypoint = value;
+            WaypointSelectedNotifier?.Invoke(_selectedWaypoint);
         }
     }
 

@@ -3,6 +3,7 @@ using Basestation_Software.Web.Core.Services;
 using Basestation_Software.Web.Core.Services.States;
 using Blazored.Toast;
 using Radzen;
+using RoveComm;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
 
 #pragma warning disable IDE0211 // Convert to 'Program.Main' style program
@@ -37,8 +38,13 @@ builder.Services.AddSingleton<ConfigService>();
 builder.Services.AddSingleton<TaskTimerService>();
 builder.Services.AddSingleton<PingService>();
 builder.Services.AddSingleton<OpService>();
+builder.Services.AddSingleton<ArmSpeedState>();
+builder.Services.AddHttpClient<ArmAngularService>();
+builder.Services.AddSingleton<ArmAngularService>();
+builder.Services.AddSingleton<ArmControlService>();
 builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
+builder.Services.AddSingleton<LoggerService>();
 
 var app = builder.Build();
 

@@ -1,0 +1,94 @@
+﻿@inject RoveCommService _RoveCommService
+@inject OpService _OpState;
+
+<div class="card full-height">
+    <div class="card-header">
+        <h3>Science Camera Controls</h3>
+    </div>
+    <div class="card-body">
+        <div style="display: grid; grid-template-columns: auto auto">
+            <label>Site Name: </label>
+            <input @bind="@_siteName" type="text" />
+            <label>Pano Index: </label>
+            <input @bind=@_panoIndex type="number" />
+        </div>
+        <button @onclick=@TakePano class="btn btn-primary">Take Pano</button>
+        <div class="d-flex flex-column gap-2">
+            @for(int i = 0; i < 8; i++)
+            {
+                int _i = i;
+                <div class="bg-body-secondary p-2 d-flex justify-content-around rounded-2">
+                    <label class="font-monospace align-self-center">Cam @i</label>
+                    <div class="btn-group" role="group">
+                        <button @onclick=@(() => TakePicture(_i, "pic")) class="btn btn-primary">Picture</button>
+                        <button @onclick=@(() => TakePicture(_i, "autoFl")) class="btn btn-primary">AutoFl</button>
+                        <button @onclick=@(() => TakePicture(_i, "strat")) class="btn btn-primary">Strat</button>
+                        <button @onclick=@(() => TakePicture(_i, "micro")) class="btn btn-primary">Micro</button>
+                        <button @onclick=@(() => TakePicture(_i, "overall")) class="btn btn-primary">Overall</button>
+                        <button @onclick=@(() => TakePicture(_i, "rock")) class="btn btn-primary">Rock</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private int _panoIndex = 0;
+    private string _siteName = "site1";
+    private string _optionsTemplate = @"--verbose
+--device
+$input
+--palette
+YUYV
+--resolution
+2560x1440
+--frames
+4
+--set
+Brightness=$brightness%
+--set
+Contrast=$contrast%
+--skip
+40
+--png
+9
+--no-timestamp
+--font
+sans:20
+--title
+$position
+pictures/{0}.png";
+    private List<string> panoSegmentNames = ["panoL", "panoM", "panoR"];
+
+    private async Task TakePicture(int cameraIndex, string pictureName)
+    {
+        var board = RoveCommManifest.Boards[cameraIndex < 4 ? "Camera1" : "Camera2"];
+        await _RoveCommService.SendAsync<char>(board.Commands["SetPictureArguments"].DataID, GeneratePictureArgs(pictureName), board.IP);
+
+        // Arbitrary delay to ensure packet is recieved
+        await Task.Delay(1000);
+        RoveComm.Boards.Camera1.TakePicture(_RoveCommService, (byte)cameraIndex, (byte)1);
+    }
+
+    private async Task TakePano()
+    {
+        await _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [-180, 0]);
+        await Task.Delay(3000);
+        for (int i = 0; i < 3; i++)
+        {
+            await TakePicture(_panoIndex, panoSegmentNames[i]);
+            await Task.Delay(20000);
+            await _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [90, 0]);
+            await Task.Delay(2000);
+        }
+    }
+
+    private List<char> GeneratePictureArgs(string filename)
+    {
+        string fullName = _siteName + "_" + filename;
+        List<char> characters = String.Join("\x1f", String.Format(_optionsTemplate, fullName).Split("\n")).ToList();
+        characters.Add('\x04');
+        return characters;
+    }
+}
