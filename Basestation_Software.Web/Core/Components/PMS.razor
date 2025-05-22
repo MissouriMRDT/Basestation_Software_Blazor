@@ -8,13 +8,13 @@
         padding: 2px; /* Grid exterior border width */
         grid-template-columns: 2fr 1fr 1fr 2fr 3fr;
         grid-template-areas:
-            "motors motors core-current core-current pack-current"
-            "core core core-current core-current pack-current"
-            "aux aux aux-current aux-current pack-current"
-            "cs1-current cs1-current cs2-current cs2-current cs3-current"
-            "c1-voltage c2-voltage c2-voltage c3-voltage pack-voltage"
-            "c4-voltage c5-voltage c5-voltage c6-voltage pack-voltage"
-            "reboot reboot e-stop e-stop suicide";
+        "motors motors core-current core-current pack-current"
+        "core core core-current core-current pack-current"
+        "aux aux aux-current aux-current pack-current"
+        "cs1-current cs1-current cs2-current cs2-current cs3-current"
+        "c1-voltage c2-voltage c2-voltage c3-voltage pack-voltage"
+        "c4-voltage c5-voltage c5-voltage c6-voltage pack-voltage"
+        "reboot reboot e-stop e-stop suicide";
         place-items: stretch stretch;
         color: #000;
         gap: 2px; /* Grid interior border width */
@@ -95,37 +95,37 @@
     {
         TelemetryWatchdog = new System.Threading.Timer(WatchdogTimeout, null, TELEMETRY_TIMEOUT, Timeout.Infinite);
 
-        _RoveCommService.On<float>("PMS", "PackCurrent", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.On<float>("PMS", "PackCurrent", async (packet) =>
         {
             PackCurrent = packet.Data[0];
             ResetWatchdog();
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.On<float>("PMS", "PackVoltage", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.On<float>("PMS", "PackVoltage", async (packet) =>
         {
             PackVoltage = packet.Data[0];
             ResetWatchdog();
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.On<float>("PMS", "CellVoltage", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.On<float>("PMS", "CellVoltage", async (packet) =>
         {
             CellVoltage = packet.Data;
             ResetWatchdog();
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.On<float>("PMS", "AuxCurrent", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.On<float>("PMS", "AuxCurrent", async (packet) =>
         {
             AuxCurrent = packet.Data[0];
             ResetWatchdog();
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.On<float>("PMS", "MiscCurrent", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.On<float>("PMS", "MiscCurrent", async (packet) =>
         {
             MiscCurrent = packet.Data;
             ResetWatchdog();
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.On<float>("PMS", "PackVoltage", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.On<float>("PMS", "PackVoltage", async (packet) =>
         {
             PackVoltage = packet.Data[0];
             ResetWatchdog();
@@ -137,6 +137,26 @@
                 BusStatus[i] = (packet.Data[0] & (1 << i)) == 0 ? BusState.Disabled : BusState.Enabled;
             ResetWatchdog();
             await InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.On<byte>("PMS", "PackOvercurrent", async (_) =>
+        {
+            _ToastService.ShowError("ERROR: Pack Overcurrent");
+            await Task.CompletedTask;
+        });
+        _RoveCommService.On<byte>("PMS", "AuxOvercurrent", async (_) =>
+        {
+            _ToastService.ShowError("ERROR: Aux Overcurrent");
+            await Task.CompletedTask;
+        });
+        _RoveCommService.On<byte>("PMS", "CellUndervoltage", async (_) =>
+        {
+            _ToastService.ShowError("ERROR: Cell Undervoltage");
+            await Task.CompletedTask;
+        });
+        _RoveCommService.On<byte>("PMS", "CellCritical", async (_) =>
+        {
+            _ToastService.ShowError("ERROR: Cell Critical");
+            await Task.CompletedTask;
         });
     }
 
