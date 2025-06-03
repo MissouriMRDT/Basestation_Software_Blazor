@@ -54,8 +54,9 @@
 
         </div>
         <div style="display:flex; gap:0.6rem;">
-            <InputCheckbox @bind-Value=@isAlternateGripper></InputCheckbox>
-            <p style="width: auto; text-align: left">@(isAlternateGripper ? "Driving Valk" : "Driving Talos")</p>
+            <!-- <InputCheckbox @bind-Value=@_ArmControlService.IsAlternateGripper></InputCheckbox> -->
+            <InputCheckbox @bind-Value=@(_ArmControlService.IsAlternateGripper)></InputCheckbox>
+            <p style="width: auto; text-align: left">@(_ArmControlService.IsAlternateGripper ? "Driving Valk" : "Driving Talos")</p>
         </div>
 
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
@@ -187,6 +188,15 @@
                 _RoveCommService.Send<ushort>("Arm", "SoftLimitOverride", [mask]);
 
             })>Send Soft Overrides</button>
+            <button class="btn btn-primary" @onclick=@(() => {
+                ushort mask = 0;
+                for (int i = 0; i < limitOverrides.Count - 1; i++)
+                {
+                    mask += (ushort)((limitOverrides[i] ? 1 : 0) << i);
+                }
+                _RoveCommService.Send<ushort>("Arm", "LimitSwitchOverride", [mask]);
+
+            })>Send Limit Overrides</button>
         </div>
     </div>
 </div>
@@ -259,7 +269,7 @@
     private bool LastProcessGamepadInputOK = false;
     private double DeadZone = 0.5;
     bool UpdateIndividualJoints = true;
-    private bool isAlternateGripper = false;
+    // private bool isAlternateGripper = false;
     List<bool> isJointInverted = [false, false, false, false, false, false];
     // in order of joint enum
     // List<int> jointInputBinds = [0, 1, 2, 3, 4, 5];
@@ -319,11 +329,15 @@
         _ = InvokeAsync(StateHasChanged);
     }
 
+    bool altGripperButtonPressed = false;
+
     // Process gamepad input and return true if rovecomm packets were sent.
     private bool ProcessGamepadInput()
     {
         double[] jointInputs = [0, 0, 0, 0, 0, 0];
         if (GamepadSelector_.SelectedGamepad is null) return false;
+        // check if button pressed last interval for gripper toggle
+        if (GamepadSelector_.SelectedGamepad.Buttons.Count >= 9 && !altGripperButtonPressed && GamepadSelector_.SelectedGamepad.Buttons[9].Pressed) _ArmControlService.IsAlternateGripper = !_ArmControlService.IsAlternateGripper;
         switch (SelectedScheme)
         {
             case Scheme.XboxDecipercents:
@@ -418,8 +432,8 @@
                     }
 
                     if (!OutputDisabled) _ =  _RoveCommService.SendAsync<short>("Arm", "SetGripperSpeed", [
-                        (short)((inputValues[(int)gripperBind] * _ArmSpeedState.ArmSpeeds["Gripper"] * 1000f * (isGripperInverted ? -1 : 1)) * (isAlternateGripper ? 0 : 1)),
-                        (short)((inputValues[(int)gripperBind] * _ArmSpeedState.ArmSpeeds["Gripper"] * 1000f * (isGripperInverted ? -1 : 1)) * (isAlternateGripper ? -1 : 0))
+                        (short)((inputValues[(int)gripperBind] * _ArmSpeedState.ArmSpeeds["Gripper"] * 1000f * (isGripperInverted ? -1 : 1)) * (_ArmControlService.IsAlternateGripper ? 0 : 1)),
+                        (short)((inputValues[(int)gripperBind] * _ArmSpeedState.ArmSpeeds["Gripper"] * 1000f * (isGripperInverted ? -1 : 1)) * (_ArmControlService.IsAlternateGripper ? -1 : 0))
                         ]);
                     gripperMeterValue = inputValues[(int)gripperBind];
                     laserMeterValue = inputValues[(int)laserBind];
@@ -427,6 +441,8 @@
 
                     if (!OutputDisabled && inputValues[(int)laserBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Laser", [(byte)((inputValues[(int)laserBind] * (isLaserInverted ? -1 : 1)) < 0 ? 0 : 1)]);
                     if (!OutputDisabled && inputValues[(int)solBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [(byte)((inputValues[(int)solBind] * (isSolInverted ? -1 : 1)) < 0 ? 0 : 1)]);
+
+                    altGripperButtonPressed = GamepadSelector_.SelectedGamepad.Buttons[9].Pressed;
 
                     break;
                 }
@@ -461,8 +477,8 @@
                     }
 
                     if (!OutputDisabled) _ =  _RoveCommService.SendAsync<short>("Arm", "SetGripperSpeed", [
-                        (short)((inputValues[(int)gripperBind] * _ArmSpeedState.ArmSpeeds["Gripper"] * 1000f * (isGripperInverted ? -1 : 1)) * (isAlternateGripper ? 0 : 1)),
-                        (short)((inputValues[(int)gripperBind] * _ArmSpeedState.ArmSpeeds["Gripper"] * 1000f * (isGripperInverted ? -1 : 1)) * (isAlternateGripper ? -1 : 0))
+                        (short)((inputValues[(int)gripperBind] * _ArmSpeedState.ArmSpeeds["Gripper"] * 1000f * (isGripperInverted ? -1 : 1)) * (_ArmControlService.IsAlternateGripper ? 0 : 1)),
+                        (short)((inputValues[(int)gripperBind] * _ArmSpeedState.ArmSpeeds["Gripper"] * 1000f * (isGripperInverted ? -1 : 1)) * (_ArmControlService.IsAlternateGripper ? -1 : 0))
                         ]);         
                     gripperMeterValue = inputValues[(int)gripperBind];
                     laserMeterValue = inputValues[(int)laserBind];
@@ -470,6 +486,8 @@
 
                     if (!OutputDisabled && inputValues[(int)laserBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Laser", [(byte)((inputValues[(int)laserBind] * (isLaserInverted ? -1 : 1)) < 0 ? 0 : 1)]);
                     if (!OutputDisabled && inputValues[(int)solBind] != 0) _ = _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [(byte)((inputValues[(int)solBind] * (isSolInverted ? -1 : 1)) < 0 ? 0 : 1)]);
+
+                    altGripperButtonPressed = GamepadSelector_.SelectedGamepad.Buttons[9].Pressed;
 
                     break;
                 }

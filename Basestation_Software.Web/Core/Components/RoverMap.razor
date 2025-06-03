@@ -98,6 +98,7 @@
                 MapContainer,
                 ObjectReference,
                 $"{baseUri.Scheme}://{baseUri.Host}:5000/api/MapTiles/{{z}}/{{y}}/{{x}}.png",
+                $"{baseUri.Scheme}://{baseUri.Host}:5000/api/LidarTiles/{{z}}/{{y}}/{{x}}.png",
                 InitialLat,
                 InitialLong,
                 InitialZoomLevel
@@ -126,7 +127,7 @@
                 waypoint.Longitude ?? 0,
                 waypoint.SearchRadius ?? 0,
                 ColorTranslator.ToHtml(Color.FromArgb(waypoint.WaypointColor ?? 0)),
-                waypoint.TagID ?? -1
+                waypoint.TagID ?? -99
             ]).AsTask();
         }));
     }
@@ -212,7 +213,7 @@
         {
             await response.Content.CopyToAsync(memoryStream);
             byte[] imageBytes = memoryStream.ToArray();
-            await _MapTileService.AddMapTile(new MapTile { X = x, Y = y, Z = z, ImageData = imageBytes });
+            // await _MapTileService.AddMapTile(new MapTile { X = x, Y = y, Z = z, ImageData = imageBytes });
         }
     }
 

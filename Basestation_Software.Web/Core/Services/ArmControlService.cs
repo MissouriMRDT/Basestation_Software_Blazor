@@ -7,6 +7,9 @@ public class ArmControlService
     private readonly HttpClient _HttpClient;
     private List<ControlPreset> _presets = [];
 
+    public delegate void GripperChangedCallback(bool isAlternateGripper);
+    private event GripperChangedCallback? GripperChangedNotifier;
+
     /// <summary>
     /// Constructor
     /// </summary>
@@ -72,6 +75,28 @@ public class ArmControlService
     public ControlPreset? GetPreset(int id)
     {
         return _presets.FirstOrDefault(x => x.ID == id);
+    }
+
+    public void SubscribeToGripperChanged(GripperChangedCallback callback)
+    {
+        GripperChangedNotifier += callback;
+    }
+
+    public void UnsubscribeFromGripperChanged(GripperChangedCallback callback)
+    {
+        GripperChangedNotifier -= callback;
+    }
+
+    private bool _isAlternateGripper;
+
+    public bool IsAlternateGripper
+    {
+        get { return _isAlternateGripper; }
+        set
+        {
+            _isAlternateGripper = value;
+            GripperChangedNotifier?.Invoke(_isAlternateGripper);
+        }
     }
 
 }

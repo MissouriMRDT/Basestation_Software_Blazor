@@ -30,10 +30,19 @@
             </div>
         </div>
 
-        <div class="text-center">
+        <div class="text-center mb-2">
             <div class="btn-group btn-group-sm justify-content-center" role="group">
-                <button title="Start Autonomy" class="btn btn-success" @onclick=StartAutonomy><i class="bi bi-caret-right-fill h1 d-block m-0"></i></button>
+                <button title="Start Autonomy" class="btn @(_doStuckRoutine ? "btn-info" : "btn-success")" @onclick=StartAutonomy><i class="bi bi-caret-right-fill h1 d-block m-0"></i></button>
                 <button title="Stop Autonomy" class="btn btn-danger" @onclick=StopAutonomy><i class="bi bi-pause-fill h1 d-block m-0"></i></button>
+            </div>
+        </div>
+
+        <div class="bg-body-secondary justify-content-center p-2 rounded gap-2 text-center">
+            <label><b>GET ME OUTTA HERE!!</b></label>
+            <div style="display: grid; grid-template-columns: auto auto; gap:0.5rem;">
+                <label>Enable: </label><InputCheckbox @bind-Value=@_doStuckRoutine style="align-self-right" />
+                <label>Speed: </label><InputNumber step="0.1" @bind-Value=@_unstuckSpeed />
+                <label>Time: </label><InputNumber step="100" @bind-Value=@_unstuckTime />
             </div>
         </div>
 
@@ -44,9 +53,25 @@
 {
     private GPSWaypoint? _selectedWaypoint = null;
 
+    private bool _doStuckRoutine = false;
+    // [0.0 - 1.0]
+    private float _unstuckSpeed = 0.5f;
+    // ms
+    private int _unstuckTime = 3000;
+
     public async Task StartAutonomy()
     {
         _RoveCommService.SubscribeAll();
+        _OpService.SetAutonomy();
+        if (_doStuckRoutine)
+        {
+            // Send drive packets every 100ms to avoid triggering watchdog
+            for (int i = 0; i < _unstuckTime; i += 100)
+            {
+                RoveComm.Boards.Core.DriveLeftRight(_RoveCommService, -_unstuckSpeed, -_unstuckSpeed);
+                await Task.Delay(100);
+            }
+        }
         await _RoveCommService.SendAsync<byte>("Autonomy", "StartAutonomy", [0]);
         _OpService.SetAutonomy();
     }
@@ -54,7 +79,7 @@
     public async Task StopAutonomy()
     {
         await _RoveCommService.SendAsync<byte>("Autonomy", "DisableAutonomy", [0]);
-        _OpService.SetTeleop();
+        _OpService.SetNone();
     }
 
     public async Task ClearWaypoints()
@@ -73,7 +98,9 @@
             && _selectedWaypoint.Latitude is not null
             && _selectedWaypoint.Longitude is not null)
         {
-            await _RoveCommService.SendAsync<double>("Autonomy", "AddPositionLeg", [_selectedWaypoint.Latitude ?? 0, _selectedWaypoint.Longitude ?? 0]);
+            // await _RoveCommService.SendAsync<double>("Autonomy", "AddPositionLeg", [_selectedWaypoint.Latitude ?? 0, _selectedWaypoint.Longitude ?? 0, _selectedWaypoint.TagID ?? -99]);
+            RoveCommBoardDesc board = RoveCommManifest.Boards["Autonomy"];
+            await _RoveCommService.SendAsync<double>(board.Commands["AddPositionLeg"].DataID, [_selectedWaypoint.Latitude ?? 0, _selectedWaypoint.Longitude ?? 0, _selectedWaypoint.TagID ?? -99], board.IP);
         }
     }
 
@@ -122,6 +149,7 @@
         _selectedWaypoint = waypoint;
         await InvokeAsync(StateHasChanged);
     }
+    
 
     void IDisposable.Dispose()
     {

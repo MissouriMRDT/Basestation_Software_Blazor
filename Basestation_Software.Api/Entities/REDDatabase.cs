@@ -23,14 +23,14 @@ public class REDDatabase : DbContext
         Configuration = configuration;
 
         // Attempt to form missing tables in data.db
-        try
-        {
-            (Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator).CreateTables();
-        }
-        catch
-        {
-            // CreateTables throws error if table already exists but we don't care
-        }
+        //try
+        //{
+        //    (Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator).CreateTables();
+        //}
+        //catch
+        //{
+        //    // CreateTables throws error if table already exists but we don't care
+        //}
     }
 
     /// <summary>
@@ -50,6 +50,8 @@ public class REDDatabase : DbContext
     public DbSet<ConfigEntity> Configs { get; set; }
     public DbSet<GPSWaypoint> Waypoints { get; set; }
     public DbSet<MapTile> MapTiles { get; set; }
+    public DbSet<LidarTile> LidarTiles { get; set; }
+
     public DbSet<ArmPresetEntity> ArmPresets { get; set; }
     public DbSet<ControlPreset> ControlPresets { get; set; }
 
