@@ -8,7 +8,34 @@
     <div class="card-body">
         <button class="btn" @onclick=TestCommand>Test Command</button>
         <svg viewBox="0 0 100 100">
+            <style>
+                .rockets {
+                    fill: rgba(255, 8, 0, 0.4);
+                }
+                .vlan2 {
+                    fill: rgba(32, 194, 0, 0.4);
+                }
+                .vlan3 {
+                    fill: rgba(0, 89, 255, 0.4);
+                }
+                .vlan4 {
+                    fill: rgba(255, 174, 0, 0.4);
+                }
+                .vlan100 {
+                    fill: rgba(153, 0, 255, 0.4);
+                }
+            </style>
             <image x="0" y="0" width="100" height="100" href="images/Cisco_IE_2000_16TC_GE.png" />
+            @for(int i = 0; i < 8; i++)
+            {
+                <rect id="fa1-@i" class="@vlan_assignments[i]" x="@((i%2+1)*11)" y="@((i/2+1)*11)" width="9" height="11" />
+            }
+            @for(int i = 0; i < 8; i++)
+            {
+                <rect id="fa1-@(i+8)" class="@vlan_assignments[i+8]" x="@(29+(i%2+1)*11)" y="@((i/2+1)*11)" width="9" height="11" />
+            }
+            <rect id="gi1-1" class="@vlan_assignments[16]" x="51" y="62.5" width="9" height="11" />
+            <rect id="gi1-2" class="@vlan_assignments[17]" x="51" y="80.5" width="9" height="11" />
         </svg>
     </div>
 </div>
@@ -16,8 +43,11 @@
 
 @code
 {
+    private string[] vlan_assignments = ["vlan3", "vlan3", "vlan3", "vlan3", "vlan3", "vlan2", "vlan2", "vlan2",
+    "vlan2", "vlan2", "vlan2", "vlan4", "vlan2", "vlan4", "vlan2", "rockets", "rockets", "rockets"];
     protected override void OnInitialized()
     {
+
     }
 
     private void TestCommand()
