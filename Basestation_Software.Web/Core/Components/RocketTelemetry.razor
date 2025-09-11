@@ -1,0 +1,121 @@
+﻿@* @inject RocketTelemetryService _RocketTelemetryService *@
+
+<div class="card h-100">
+    <div class="card-header">
+        <h3>Rocket Telemetry (@activeDeviceDatum.Name)</h3>
+    </div>
+    <div class="card-body">
+        <div style="display: grid; grid-template-rows: auto auto; grid-auto-flow: row">
+            <label>Device</label>
+            <InputSelect @bind-Value=@selectedDeviceIndex>
+                @for (int i = 0; i < deviceData.Count; i++)
+                {
+                    int _i = i;
+                    <option value="@_i">@deviceData[_i].Name</option>
+                }
+            </InputSelect>
+
+            <label>Username</label>
+            <InputText placeholder="Username" @bind-Value=@authUsername></InputText>
+
+            <label>Password</label>
+            <InputText placeholder="Password" type="password" @bind-Value=@authPassword></InputText>
+            <button @onclick=@TryLogin>Login</button>
+        </div>
+
+        @* Rocket telemetry graphs *@
+        <div class="d-flex flex-wrap">
+            <div class="border border-secondary">
+                <RadzenChart>
+                    <RadzenLineSeries Data="@activeDeviceDatum.Telemetry" CategoryProperty="Timestamp" ValueProperty="Ping">
+                        @* <RadzenMarkers Visible="@showMarkers" MarkerType="MarkerType.Circle" StrokeWidth="0" Size="@_dotSize" /> *@
+                        @* <RadzenSeriesDataLabels Visible="@showDataLabels" /> *@
+                    </RadzenLineSeries>
+
+                        <RadzenValueAxis Min="0" Max="100">
+                        <RadzenAxisTitle Text="Ping" />
+                    </RadzenValueAxis>
+                </RadzenChart>
+                @activeDeviceDatum.IP
+            </div>
+        </div>
+    </div>
+</div>
+
+@code 
+{
+    // gathered from each rocket at a fixed interval
+    private class TelemetryStep
+    {
+        // in ms
+        public long Timestamp { get; set; }
+        public int Ping { get; set; }
+    }
+
+    private class DeviceDatum
+    {
+        public string IP;
+        public string Name;
+        public List<TelemetryStep> Telemetry = new();
+    }
+
+    private Dictionary<string, RoveCommDeviceDesc> rocketDevices = new(RoveComm.RoveCommManifest.Devices.Skip(2).ToDictionary());
+    private List<string> IPs = RoveComm.RoveCommManifest.Devices.Skip(2).Select(kvp => kvp.Key).ToList();
+
+    private List<DeviceDatum> deviceData;
+    private int selectedDeviceIndex;
+    private DeviceDatum activeDeviceDatum { get => deviceData[selectedDeviceIndex]; }
+
+    private string authUsername = "";
+    private string authPassword = "";
+
+
+    private Timer RequestTimer;
+
+    private async void TryLogin()
+    {
+        Console.WriteLine("TryLogin");
+        // TODO Don't hardcode this
+        string request = string.Format(File.ReadAllText(Path.Combine("wwwroot/", "rocket-login-request.txt")), authUsername, authPassword);
+        Console.WriteLine(request);
+        // _ = _RocketTelemetryService.TryLogin(activeDeviceDatum.IP, request);
+        // await _RocketTelemetryService.TryLogin("192.168.1.20", request);
+
+    }
+
+    private string FormatAsReadableTime(object value)
+    {
+        return new DateTime().AddSeconds((double)value).ToLocalTime().ToLongTimeString();
+    }
+
+    protected override void OnInitialized()
+    {
+        // setup list of DeviceSettings objects so rockets can be easily enumerated
+        deviceData = new();
+        foreach(var kvp in rocketDevices)
+        {
+            deviceData.Add(new() {
+                IP = kvp.Value.Ip,
+                Name = Regex.Match(kvp.Key, @"\A(\w*)(GHzRocket|MHzRocket)").Groups[1].Value
+            });
+        }
+
+        // setup timer
+        RequestTimer = new Timer(RequestTelemetry);
+        RequestTimer.Change(0, 1000);    
+    }
+
+    private void RequestTelemetry(object? _)
+    {
+        // TODO make get request in service
+
+        // parse request response from service
+        activeDeviceDatum.Telemetry.Add(new()
+        {
+            Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+            Ping = (int) (Math.Sin(activeDeviceDatum.Telemetry.Count * Math.PI / 8f) * 50 + 50)
+        });
+
+        InvokeAsync(StateHasChanged);
+    }
+}

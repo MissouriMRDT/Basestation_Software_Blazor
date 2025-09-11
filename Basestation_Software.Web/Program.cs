@@ -3,10 +3,11 @@ using Basestation_Software.Web.Core.Services;
 using Basestation_Software.Web.Core.Services.States;
 using Blazored.Toast;
 using Radzen;
-using RoveComm;
+using System.Net;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
 
 #pragma warning disable IDE0211 // Convert to 'Program.Main' style program
+ServicePointManager.ServerCertificateValidationCallback += (o, c, ch, er) => true;
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure logging

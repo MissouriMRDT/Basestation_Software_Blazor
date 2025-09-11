@@ -1,0 +1,25 @@
+------geckoformboundaryff8b1bc7b31340d08bbc2849e38fc483
+Content-Disposition: form-data; name="uri"
+
+/
+------geckoformboundaryff8b1bc7b31340d08bbc2849e38fc483
+Content-Disposition: form-data; name="username"
+
+{0}
+------geckoformboundaryff8b1bc7b31340d08bbc2849e38fc483
+Content-Disposition: form-data; name="password"
+
+{1}
+------geckoformboundaryff8b1bc7b31340d08bbc2849e38fc483
+Content-Disposition: form-data; name="country"
+
+840
+------geckoformboundaryff8b1bc7b31340d08bbc2849e38fc483
+Content-Disposition: form-data; name="ui_language"
+
+en_US
+------geckoformboundaryff8b1bc7b31340d08bbc2849e38fc483
+Content-Disposition: form-data; name="lang_changed"
+
+no
+------geckoformboundaryff8b1bc7b31340d08bbc2849e38fc483--
