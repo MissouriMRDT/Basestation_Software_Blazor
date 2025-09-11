@@ -1,4 +1,4 @@
-﻿using Basestation_Software.Models.Arm;
+using Basestation_Software.Models.Arm;
 using Basestation_Software.Models.Geospatial;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;

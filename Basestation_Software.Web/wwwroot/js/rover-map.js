@@ -1,4 +1,4 @@
-﻿// Used by RoverMap.razor
+// Used by RoverMap.razor
 
 // imported globally in App.razor
 //import L from "./lib/leaflet/leaflet.js";

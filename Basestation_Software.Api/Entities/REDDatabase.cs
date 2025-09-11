@@ -167,7 +167,7 @@ public class REDDatabase : DbContext
                 //      was provided for the required property 'ID'. Please provide a value different from
                 //      '00000000-0000-0000-0000-000000000000'.
                 // Workaround: hardcode a default guid here and at the top of MainLayout.Razor.
-                ID = Guid.Parse("00000000-0000-0000-0000-000000000001"), 
+                ID = Guid.Parse("00000000-0000-0000-0000-000000000001"),
                 Data = System.Text.Json.JsonSerializer.Serialize(new Config { Name = "Default" })
             }
         );

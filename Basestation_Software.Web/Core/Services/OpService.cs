@@ -1,4 +1,4 @@
-﻿using System.Drawing;
+using System.Drawing;
 using RoveComm;
 
 namespace Basestation_Software.Web.Core.Services;
