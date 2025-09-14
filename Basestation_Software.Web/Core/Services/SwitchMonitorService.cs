@@ -7,92 +7,19 @@ using RoveComm;
 using Renci.SshNet;
 using Microsoft.Extensions.Hosting;
 using System.Text;
+using Basestation_Software.Models.Network;
 
 namespace Basestation_Software.Web.Core.Services;
 
-public class SwitchMonitorService
+public class SwitchMonitorService : IHostedService, IDisposable
 {
     private static readonly string SwitchUser = "admin";
     private static readonly string SwitchPassword = "nandgate";
     private static readonly string SwitchIP = RoveCommManifest.Devices["RoverSwitch"].Ip;
 
-    public enum InterfaceStatus
-    {
-        Up,
-        Down,
-        Disabled
-    }
-    public enum ProtocolStatus
-    {
-        Up,
-        Down
-    }
-
-    public enum InterfaceType
-    {
-        VLan,
-        FastEthernet,
-        GigabitEthernet,
-        Loopback,
-        Unknown
-    }
-
-    public class TrafficInfo
-    {
-        public int FiveMinuteInputRateBits { get; set; }
-        public int FiveMinuteInputRatePackets { get; set; }
-        public int TotalInputBytes { get; set; }
-        public int TotalInputPackets { get; set; }
-        public int FiveMinuteOutputRateBits { get; set; }
-        public int FiveMinuteOutputRatePackets { get; set; }
-        public int TotalOutputBytes { get; set; }
-        public int TotalOutputPackets { get; set; }
-    }
-
-    public class InterfaceInfo
-    {
-        public string Name { get; set; } = "";
-        public InterfaceType Type { get; set; }
-        public string? Description { get; set; }
-        public string? Ip { get; set; }
-        public InterfaceStatus Status { get; set; }
-        public ProtocolStatus ProtocolStatus { get; set; }
-        public TrafficInfo Traffic { get; set; } = new();
-
-        public override string ToString()
-        {
-            return $"""
-            Interface: {Name}, Type: {Type}, Description: {Description ?? "None"}, IP: {Ip ?? "Unspecified"}, Status: {Status}
-              Input:
-                Last 5 Minutes: {Traffic.FiveMinuteInputRatePackets} packets ({Traffic.FiveMinuteInputRateBits} bits) per second
-                Total: {Traffic.TotalInputPackets} packets ({Traffic.TotalInputBytes} bytes)
-              Output:
-                Last 5 Minutes: {Traffic.FiveMinuteOutputRatePackets} packets ({Traffic.FiveMinuteOutputRateBits} bits per second)
-                Total: {Traffic.TotalOutputPackets} packets ({Traffic.TotalOutputBytes} bytes)
-            """;
-        }
-    }
-
-    public class PortStatus
-    {
-        public string Port { get; set; } = "";
-        public bool Connected { get; set; }
-        public int? VLan { get; set; }
-        public bool Routed
-        {
-            get => VLan is null;
-            set => VLan = value ? null : 1;
-        }
-        public string Speed { get; set; } = "Unknown";
-        public string Type { get; set; } = "Unknown";
-
-        public override string ToString()
-        {
-            return $"""
-            Port: {Port}, Connected: {Connected}, Vlan: {(Routed ? "Routed" : VLan)}, Speed: {Speed}, Type: {Type}
-            """;
-        }
-    }
+    public event Action<List<InterfaceInfo>>? OnInterfaceUpdate;
+    public event Action<List<EigrpTopologyInfo>>? OnEigrpTopologyUpdate;
+    public event Action<List<PortStatus>>? OnPortStatusUpdate;
 
     public class VlanInfo
     {
@@ -102,38 +29,39 @@ public class SwitchMonitorService
         public List<string> Ports { get; set; } = [];
     }
 
-    public enum EigrpStatus
+    private Timer? _getInterfacesTimer;
+    private Timer? _getEigrpTopologyTimer;
+    private Timer? _getPortsTimer;
+
+    private readonly RoveCommService _roveCommService;
+    // Nav board state. TODO: Move this to a service
+    private double Lat = 0, Lon = 0, Alt = 0;
+
+    public SwitchMonitorService(RoveCommService roveCommService)
     {
-        Passive, Active, Update, Query, Reply, ReplyStatus, SiaStatus
-    }
-    public class EigrpSuccessorInfo
-    {
-        public string NextHopIp { get; set; } = "";
-        public int FeasibleDistance { get; set; }
-        public int AdvertisedDistance { get; set; }
-        public string OutgoingInterface { get; set; } = "";
-    }
-    public class EigrpTopologyInfo
-    {
-        public string DestinationIp { get; set; } = "";
-        public EigrpStatus Status;
-        public List<EigrpSuccessorInfo> Successors { get; set; } = [];
-        public override string ToString()
+        _roveCommService = roveCommService;
+        _roveCommService.On<double>("Nav", "GPSLatLonAlt", async (packet) =>
         {
-            var sb = new StringBuilder();
-            sb.Append($"Remote Network: {DestinationIp}, Status: {Status}\n");
-            foreach (var successor in Successors)
-            {
-                sb.Append($"  via Remote Port: {successor.NextHopIp}, Outgoing Interface: {successor.OutgoingInterface}, FD: ({successor.AdvertisedDistance}/{successor.FeasibleDistance})\n");
-            }
-            return sb.ToString();
-        }
+            Lat = packet.Data[0];
+            Lon = packet.Data[1];
+            Alt = packet.Data[2];
+            await Task.CompletedTask;
+        });
     }
 
-    public SwitchMonitorService()
+    public Task StartAsync(CancellationToken stop)
     {
-        Console.WriteLine("!!!!!!!!!!!!!!!!!!!!NUTS!!!!!!!!!!!!!!");
-        // GetInterfaces();
+        _getInterfacesTimer = new Timer(state => GetInterfaces(), null, TimeSpan.Zero, TimeSpan.FromSeconds(2));
+        _getEigrpTopologyTimer = new Timer(state => GetEigrpTopology(), null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
+        _getPortsTimer = new Timer(state => GetPorts(), null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
+        return Task.CompletedTask;
+    }
+    public Task StopAsync(CancellationToken stop)
+    {
+        _getInterfacesTimer?.Change(Timeout.Infinite, 0);
+        _getEigrpTopologyTimer?.Change(Timeout.Infinite, 0);
+        _getPortsTimer?.Change(Timeout.Infinite, 0);
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -141,7 +69,7 @@ public class SwitchMonitorService
     /// Parses the Cisco command SHOW INTERFACES
     /// </summary>
     /// <returns>A list of interfaces</returns>
-    public static List<InterfaceInfo> GetInterfaces()
+    public List<InterfaceInfo> GetInterfaces()
     {
         var interfaces = new List<InterfaceInfo>();
         using var client = new SshClient(SwitchIP, SwitchUser, SwitchPassword);
@@ -237,12 +165,12 @@ public class SwitchMonitorService
 
             interfaceMatch = nextMatch;
         }
-        Console.WriteLine("==========SHOW INTERFACES==========");
-        foreach (var info in interfaces)
-        {
-            Console.WriteLine(info);
-        }
-
+        // Console.WriteLine("==========SHOW INTERFACES==========");
+        // foreach (var info in interfaces)
+        // {
+        //     Console.WriteLine(info);
+        // }
+        OnInterfaceUpdate?.Invoke(interfaces);
         return interfaces;
     }
 
@@ -250,7 +178,7 @@ public class SwitchMonitorService
     /// Get the EIGRP topology table. Runs the Cisco command SHOW IP EIGRP TOPOLOGY
     /// </summary>
     /// <returns>A list of EIGRP entries</returns>
-    public static List<EigrpTopologyInfo> GetEigrpTopology()
+    public List<EigrpTopologyInfo> GetEigrpTopology()
     {
         var topology = new List<EigrpTopologyInfo>();
         using var client = new SshClient(SwitchIP, SwitchUser, SwitchPassword);
@@ -311,11 +239,12 @@ public class SwitchMonitorService
             eigrpMatch = nextMatch;
         }
 
-        Console.WriteLine("==========SHOW IP EIGRP TOPOLOGY==========");
-        foreach (var entry in topology)
-        {
-            Console.WriteLine(entry);
-        }
+        // Console.WriteLine("==========SHOW IP EIGRP TOPOLOGY==========");
+        // foreach (var entry in topology)
+        // {
+        //     Console.WriteLine(entry);
+        // }
+        OnEigrpTopologyUpdate?.Invoke(topology);
         return topology;
     }
 
@@ -323,7 +252,7 @@ public class SwitchMonitorService
     /// Get VLan port assignments
     /// </summary>
     /// <returns>A list of VLans with the ports assigned to them</returns>
-    // public static List<VlanInfo> GetVLanAssignments()
+    // public List<VlanInfo> GetVLanAssignments()
     // {
 
     // }
@@ -333,7 +262,7 @@ public class SwitchMonitorService
     /// Runs the Cisco command SHOW INTERFACE STATUS
     /// </summary>
     /// <returns>A list of port statuses</returns>
-    public static List<PortStatus> GetPorts()
+    public List<PortStatus> GetPorts()
     {
         var ports = new List<PortStatus>();
         using var client = new SshClient(SwitchIP, SwitchUser, SwitchPassword);
@@ -391,13 +320,20 @@ public class SwitchMonitorService
                 ports.Add(port);
             }
         }
-        Console.WriteLine("==========SHOW INTERFACE STATUS==========");
-        foreach (var port in ports)
-        {
-            Console.WriteLine(port);
-        }
-
+        // Console.WriteLine("==========SHOW INTERFACE STATUS==========");
+        // foreach (var port in ports)
+        // {
+        //     Console.WriteLine(port);
+        // }
+        OnPortStatusUpdate?.Invoke(ports);
         return ports;
+    }
+
+    public void Dispose()
+    {
+        _getInterfacesTimer?.Dispose();
+        _getEigrpTopologyTimer?.Dispose();
+        _getPortsTimer?.Dispose();
     }
 
 }

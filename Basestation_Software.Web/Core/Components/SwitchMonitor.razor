@@ -1,4 +1,6 @@
 @implements IDisposable
+@using Basestation_Software.Models.Network
+@using System.Text
 @inject SwitchMonitorService _SwitchMonitorService
 
 <div class="card full-height">
@@ -6,93 +8,174 @@
         <h3>Network Switch Monitor</h3>
     </div>
     <div class="card-body">
-        <button class="btn" @onclick=TestCommand>Test Command</button>
-        <svg viewBox="0 0 100 100">
-            <style>
-                .routed {
-                    fill: rgba(255, 8, 0, 0.4);
-                }
-                .vlan2 {
-                    fill: rgba(32, 194, 0, 0.4);
-                }
-                .vlan3 {
-                    fill: rgba(0, 89, 255, 0.4);
-                }
-                .vlan4 {
-                    fill: rgba(255, 174, 0, 0.4);
-                }
-                .vlan100 {
-                    fill: rgba(153, 0, 255, 0.4);
-                }
-                .connected {
-                    stroke: none;
-                }
-                .notconnect {
-                    stroke: yellow;
-                }
-            </style>
-            <image x="0" y="0" width="100" height="100" href="images/Cisco_IE_2000_16TC_GE.png" />
-            @for(int i = 0; i < 8; i++)
-            {
-                <g transform="translate(@((i%2+1)*11), @((i/2+1)*11))">
-                    <rect id="fa1-@i" class="@_ports[i].VLan" x="0" y="0" width="9" height="11" />
-                    <rect class="@(_ports[i].Connected ? "connected" : "notconnect")" fill="none" x="0" y="0" width="9" height="11" />
-                    <line class="@(_ports[i].Connected ? "connected" : "notconnect")" x1="0" y1="0" x2="9" y2="11" />
-                    <line class="@(_ports[i].Connected ? "connected" : "notconnect")" x1="9" y1="0" x2="0" y2="11" />
-                </g>
-            }
-            @for(int i = 0; i < 8; i++)
-            {
-                <g transform="translate(@(29+(i%2+1)*11), @((i/2+1)*11))">
-                    <rect id="fa1-@(i+8)" class="@_ports[i+8].VLan" x="0" y="0" width="9" height="11" />
-                    <rect class="@(_ports[i+8].Connected ? "connected" : "notconnect")" fill="none" x="0" y="0" width="9" height="11" />
-                    <line class="@(_ports[i+8].Connected ? "connected" : "notconnect")" x1="0" y1="0" x2="9" y2="11" />
-                    <line class="@(_ports[i+8].Connected ? "connected" : "notconnect")" x1="9" y1="0" x2="0" y2="11" />
-                </g>
-            }
-            <g transform="translate(51, 62.5)">
-                <rect id="gi1-1" class="@_ports[16].VLan" x="0" y="0" width="9" height="11" />
-                <rect class="@(_ports[16].Connected ? "connected" : "notconnect")" fill="none" x="0" y="0" width="9" height="11" />
-                <line class="@(_ports[16].Connected ? "connected" : "notconnect")" x1="0" y1="0" x2="9" y2="11" />
-                <line class="@(_ports[16].Connected ? "connected" : "notconnect")" x1="9" y1="0" x2="0" y2="11" />
-            </g>
-            <g transform="translate(51, 80.5)">
-                <rect id="gi1-2" class="@_ports[17].VLan" x="0" y="0" width="9" height="11" />
-                <rect class="@(_ports[17].Connected ? "connected" : "notconnect")" fill="none" x="0" y="0" width="9" height="11" />
-                <line class="@(_ports[17].Connected ? "connected" : "notconnect")" x1="0" y1="0" x2="9" y2="11" />
-                <line class="@(_ports[17].Connected ? "connected" : "notconnect")" x1="9" y1="0" x2="0" y2="11" />
-            </g>
-        </svg>
+        @* <button class="btn" @onclick=UpdateInterfaceStats>Test Command</button> *@
+        <div class=row>
+            <div class="col-8">
+                <svg viewBox="0 0 100 100">
+                    <style>
+                        .port {
+                            cursor: pointer;
+                        }
+                        .port:hover {
+                            fill-opacity: 1.0;
+                        }
+                        .routed {
+                            fill: rgba(255, 8, 0);
+                        }
+                        .vlan2 {
+                            fill: rgba(32, 194, 0);
+                        }
+                        .vlan3 {
+                            fill: rgba(0, 89, 255);
+                        }
+                        .vlan4 {
+                            fill: rgba(255, 174, 0);
+                        }
+                        .vlan100 {
+                            fill: rgba(153, 0, 255);
+                        }
+                        .connected {
+                            stroke: none;
+                        }
+                        .notconnect {
+                            stroke: yellow;
+                        }
+                    </style>
+                    <image x="0" y="0" width="100" height="100" href="images/Cisco_IE_2000_16TC_GE.png" />
+                    @for(int i = 0; i < 18; i++)
+                    {
+                        var (x, y) = GetPortDisplayPosition(i);
+                        int index = i;
+                        <g transform="translate(@x, @y)">
+                            <rect id="fa1-@i" class="port @(_ports[i].Routed ? "routed" : $"vlan{_ports[i].VLan}")"
+                                x="0" y="0" width="9" height="11"
+                                @onmouseover=@(()=>ShowPortStats(index))
+                                @onclick=@(()=>ShowPortStats(index))
+                                style="fill-opacity: @(1 - 0.7 * Math.Exp(-(1/50.0) * (_portStats[index].Traffic.FiveMinuteInputRatePackets + _portStats[index].Traffic.FiveMinuteOutputRatePackets)))"/>
+                            <rect class="@(_ports[i].Connected ? "connected" : "notconnect")" fill="none" x="0" y="0" width="9" height="11" />
+                            <line class="@(_ports[i].Connected ? "connected" : "notconnect")" x1="0" y1="0" x2="9" y2="11" />
+                            <line class="@(_ports[i].Connected ? "connected" : "notconnect")" x1="9" y1="0" x2="0" y2="11" />
+                        </g>
+                    }
+                </svg>
+            </div>
+            <div class="col-4">
+                <RadzenChart>
+                    <RadzenPieSeries Data="@_signalTraffic" Title="Signal Band Utilization" CategoryProperty="Band" ValueProperty="Traffic">
+                        <RadzenSeriesDataLabels />
+                    </RadzenPieSeries>
+                </RadzenChart>
+                <RadzenChart>
+                    <RadzenPieSeries Data="@_vlanTraffic" Title="VLAN Traffic" CategoryProperty="Band" ValueProperty="Traffic">
+                        <RadzenSeriesDataLabels />
+                    </RadzenPieSeries>
+                </RadzenChart>
+            </div>
+        </div>
+    </div>
+    <div>
+        @if(_displayStats is not null)
+        {
+            <h3>Stats for interface:
+                <span style="font-family:'Consolas', monospace; font-size: 18pt">
+                    @_displayStats.Name;
+                </span>
+            </h3>
+            <h4>Info</h4>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Description</th>
+                        <th scope="col">IP/Vlan</th>
+                        <th scope="col">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>@(_displayStats.Description ?? "None")</td>
+                        <td>@(_displayStats.Ip ?? "Unspecified")</td>
+                        <td>@(_displayStats.Status.ToString())</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="white-space: pre-wrap;font-family:'Consolas', monospace">@FormatDisplayStats()</div>
+        }
     </div>
 </div>
 
 
 @code
 {
-    public class PortInfo
+    class SignalTraffic
     {
-        public string VLan { get; set; } = "routed";
-        public bool Connected { get; set; }
+        public string Band {get; set;}
+        public int Traffic {get; set;}
     }
-    public PortInfo[] _ports = new PortInfo[18];
+    private SignalTraffic[] _signalTraffic = new SignalTraffic[] {
+        new SignalTraffic{Band = "900MHz"},
+        new SignalTraffic{Band = "2.4GHz"},
+        new SignalTraffic{Band = "5.8GHz"}
+    };
+    private SignalTraffic[] _vlanTraffic = new SignalTraffic[] {
+        new SignalTraffic{Band = "VLAN 2"},
+        new SignalTraffic{Band = "VLAN 3"},
+        new SignalTraffic{Band = "VLAN 4"}
+    };
+
+    private PortStatus[] _ports = new PortStatus[18];
+    private InterfaceInfo[] _portStats = new InterfaceInfo[18];
+    private InterfaceInfo[] _vlanStats = new InterfaceInfo[4];
+
+    private InterfaceInfo? _displayStats;
 
     protected override void OnInitialized()
     {
-        UpdatePortStatuses();
+        for (int i = 0; i < 18; i++)
+        {
+            _ports[i] = new();
+            _portStats[i] = new();
+        }
+        for (int i = 0; i < 4; i++)
+        {
+            _vlanStats[i] = new();
+        }
+        _SwitchMonitorService.OnInterfaceUpdate += UpdateInterfaceStats;
+        _SwitchMonitorService.OnPortStatusUpdate += UpdatePortStatuses;
     }
 
-    private void UpdatePortStatuses()
+    private void UpdateSignalTraffic()
     {
-        var ports = SwitchMonitorService.GetPorts();
+        var m9 = Array.Find(_portStats, p => p.Description.Contains("900MHz"));
+        if (m9 is not null)
+        {
+            _signalTraffic[0].Traffic = m9.Traffic.FiveMinuteInputRatePackets + m9.Traffic.FiveMinuteOutputRatePackets;
+        }
+        var m2 = Array.Find(_portStats, p => p.Description.Contains("2.4GHz"));
+        if (m2 is not null)
+        {
+            _signalTraffic[1].Traffic = m2.Traffic.FiveMinuteInputRatePackets + m2.Traffic.FiveMinuteOutputRatePackets;
+        }
+        var m5 = Array.Find(_portStats, p => p.Description.Contains("5.8GHz"));
+        if (m5 is not null)
+        {
+            _signalTraffic[2].Traffic = m5.Traffic.FiveMinuteInputRatePackets + m5.Traffic.FiveMinuteOutputRatePackets;
+        }
+
+        // VLANS cause why not
+        for (int i = 0; i < 3; i++)
+        {
+            _vlanTraffic[i].Traffic = _vlanStats[i+1].Traffic.FiveMinuteInputRatePackets + _vlanStats[i+1].Traffic.FiveMinuteOutputRatePackets;
+        }
+    }
+
+    private void UpdatePortStatuses(List<PortStatus> ports)
+    {
         for (int i = 0; i < 16; i++)
         {
             var port = ports.Find(p => p.Port == $"Fa1/{i+1}");
             if (port is not null)
             {
-                _ports[i] = new PortInfo {
-                        VLan = port.Routed ? "routed" : $"vlan{port.VLan}",
-                        Connected = port.Connected
-                    };
+                _ports[i] = port;
             }
         }
         for (int i = 0; i < 2; i++)
@@ -100,20 +183,106 @@
             var port = ports.Find(p => p.Port == $"Gi1/{i+1}");
             if (port is not null)
             {
-                _ports[16+i] = new PortInfo {
-                    VLan = port.Routed ? "routed" : $"vlan{port.VLan}",
-                    Connected = port.Connected
-                };
+                _ports[16+i] =  port;
             }
         }
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void ShowPortStats(int index)
+    {
+        if (index < 0)
+        {
+            _displayStats = null;
+        }
+        else
+        {
+            _displayStats = _portStats[index];
+            Console.WriteLine($"Showing info for {_displayStats.Name}");
+        }
+        StateHasChanged();
+    }
+
+    private string FormatDisplayStats()
+    {
+        if (_displayStats is not null)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Input:");
+            sb.AppendLine($"    Last 5 Minutes: {_displayStats.Traffic.FiveMinuteInputRatePackets} packets ({_displayStats.Traffic.FiveMinuteInputRateBits} bits) per second");
+            sb.AppendLine($"    Total: {_displayStats.Traffic.TotalInputPackets} packets ({_displayStats.Traffic.TotalInputBytes} bytes)");
+            sb.AppendLine("Output:");
+            sb.AppendLine($"    Last 5 Minutes: {_displayStats.Traffic.FiveMinuteOutputRatePackets} packets ({_displayStats.Traffic.FiveMinuteOutputRateBits} bits) per second");
+            sb.AppendLine($"    Total: {_displayStats.Traffic.TotalOutputPackets} packets ({_displayStats.Traffic.TotalOutputBytes} bytes)");
+            return sb.ToString();
+        }
+        else
+        {
+            return "";
+        }
+    }
+
+    private void UpdateInterfaceStats(List<InterfaceInfo> interfaces)
+    {
+        for (int i = 0; i < 16; i++)
+        {
+            var inter = interfaces.Find(inf => inf.Name == $"FastEthernet1/{i+1}");
+            if (inter is not null)
+            {
+                _portStats[i] = inter;
+            }
+        }
+        for (int i = 0; i < 2; i++)
+        {
+            var inter = interfaces.Find(inf => inf.Name == $"GigabitEthernet1/{i+1}");
+            if (inter is not null)
+            {
+                _portStats[16+i] = inter;
+            }
+        }
+        for (int i = 0; i < 4; i++)
+        {
+            var inter = interfaces.Find(inf => inf.Name == $"Vlan{i+1}");
+            if (inter is not null)
+            {
+                _vlanStats[i] = inter;
+            }
+        }
+        UpdateSignalTraffic();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private static (float, float) GetPortDisplayPosition(int index)
+    {
+        if (index < 0 || index >= 18) {
+            throw new ArgumentOutOfRangeException();
+        }
+        if (index < 8)
+        {
+            return ((index%2+1)*11, (index/2+1)*11);
+        }
+        if (index < 16)
+        {
+            index -= 8;
+            return (29+(index%2+1)*11, (index/2+1)*11);
+        }
+        if (index == 16)
+        {
+            return (51, 62.5f);
+        }
+        if (index == 17)
+        {
+            return (51, 80.5f);
+        }
+        throw new ArgumentOutOfRangeException(); 
     }
 
     private void TestCommand()
     {
         Console.WriteLine("Testing Commands...");
-        SwitchMonitorService.GetInterfaces();
-        SwitchMonitorService.GetEigrpTopology();
-        UpdatePortStatuses();
+        _SwitchMonitorService.GetInterfaces();
+        _SwitchMonitorService.GetEigrpTopology();
+        _SwitchMonitorService.GetPorts();
     }
 
     void IDisposable.Dispose() { }
