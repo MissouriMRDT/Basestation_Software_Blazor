@@ -60,12 +60,12 @@
                 </svg>
             </div>
             <div class="col-4">
-                <RadzenChart>
+                <RadzenChart style="height: 100px">
                     <RadzenPieSeries Data="@_signalTraffic" Title="Signal Band Utilization" CategoryProperty="Band" ValueProperty="Traffic">
                         <RadzenSeriesDataLabels />
                     </RadzenPieSeries>
                 </RadzenChart>
-                <RadzenChart>
+                <RadzenChart style="height: 100px">
                     <RadzenPieSeries Data="@_vlanTraffic" Title="VLAN Traffic" CategoryProperty="Band" ValueProperty="Traffic">
                         <RadzenSeriesDataLabels />
                     </RadzenPieSeries>
@@ -76,11 +76,11 @@
     <div>
         @if(_displayStats is not null)
         {
-            <h3>Stats for interface:
-                <span style="font-family:'Consolas', monospace; font-size: 18pt">
+            <h4>Stats for interface:
+                <span style="font-family:'Consolas', monospace; font-size: 14pt">
                     @_displayStats.Name;
                 </span>
-            </h3>
+            </h4>
             <h4>Info</h4>
             <table class="table">
                 <thead>
@@ -111,6 +111,7 @@
         public string Band {get; set;}
         public int Traffic {get; set;}
     }
+    // TODO: Make this dynamic
     private SignalTraffic[] _signalTraffic = new SignalTraffic[] {
         new SignalTraffic{Band = "900MHz"},
         new SignalTraffic{Band = "2.4GHz"},

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -7,15 +8,47 @@ using RoveComm;
 using Renci.SshNet;
 using Microsoft.Extensions.Hosting;
 using System.Text;
+using System.Text.Json;
 using Basestation_Software.Models.Network;
+using OpenCvSharp.Dnn;
 
 namespace Basestation_Software.Web.Core.Services;
 
 public class SwitchMonitorService : IHostedService, IDisposable
 {
-    private static readonly string SwitchUser = "admin";
-    private static readonly string SwitchPassword = "nandgate";
-    private static readonly string SwitchIP = RoveCommManifest.Devices["RoverSwitch"].Ip;
+    private static readonly string RoverSwitchUser = "admin";
+    private static readonly string RoverSwitchPassword = "nandgate";
+    private static readonly string RoverSwitchIP = RoveCommManifest.Devices["RoverSwitch"].Ip;
+    private static readonly string BasestationSwitchUser = "admin";
+    private static readonly string BasestationSwitchPassword = "nandgate";
+    private static readonly string BasestationSwitchIP = RoveCommManifest.Devices["BasestationSwitch"].Ip;
+
+    // A single JSON object entry
+
+    public class NetworkTraffic
+    {
+        public string Interface { get; set; } = "";
+        public InterfaceStatus Status { get; set; }
+        public TrafficInfo Traffic { get; set; } = new();
+    }
+
+    public class NetworkTrafficRecord
+    {
+        public DateTime Timestamp { get; set; }
+        public (double, double, double) RoverPos { get; set; }
+        public List<NetworkTraffic> Traffic { get; set; } = [];
+    }
+    public class NetworkTopologyRecord
+    {
+        public DateTime Timestamp { get; set; }
+        public (double, double, double) RoverPos { get; set; } 
+        public List<EigrpTopologyInfo> Topology { get; set; } = [];
+    }
+
+    private FileStream _logFile;
+
+    private Queue<List<NetworkTraffic>> _timeAverageSamples = [];
+    public static readonly TimeSpan TrafficAverageDelta = TimeSpan.FromSeconds(10);
 
     public event Action<List<InterfaceInfo>>? OnInterfaceUpdate;
     public event Action<List<EigrpTopologyInfo>>? OnEigrpTopologyUpdate;
@@ -47,6 +80,9 @@ public class SwitchMonitorService : IHostedService, IDisposable
             Alt = packet.Data[2];
             await Task.CompletedTask;
         });
+
+        // TODO: Exception handling
+        _logFile = File.Create($"NetworkSwitchMonitor_Log_{DateTime.Now:MM-dd-yyyy-hh:mm:tt}.txt");
     }
 
     public Task StartAsync(CancellationToken stop)
@@ -72,7 +108,7 @@ public class SwitchMonitorService : IHostedService, IDisposable
     public List<InterfaceInfo> GetInterfaces()
     {
         var interfaces = new List<InterfaceInfo>();
-        using var client = new SshClient(SwitchIP, SwitchUser, SwitchPassword);
+        using var client = new SshClient(RoverSwitchIP, RoverSwitchUser, RoverSwitchPassword);
         try
         {
             client.Connect();
@@ -171,6 +207,17 @@ public class SwitchMonitorService : IHostedService, IDisposable
         //     Console.WriteLine(info);
         // }
         OnInterfaceUpdate?.Invoke(interfaces);
+        var traffic = new List<NetworkTraffic>(interfaces.Count());
+        foreach (var inter in interfaces)
+        {
+            traffic.Add(new NetworkTraffic
+            {
+                Interface = inter.Name,
+                Status = inter.Status,
+                Traffic = inter.Traffic
+            });
+        }
+        _ = WriteNetworkTraffic(traffic);
         return interfaces;
     }
 
@@ -181,7 +228,7 @@ public class SwitchMonitorService : IHostedService, IDisposable
     public List<EigrpTopologyInfo> GetEigrpTopology()
     {
         var topology = new List<EigrpTopologyInfo>();
-        using var client = new SshClient(SwitchIP, SwitchUser, SwitchPassword);
+        using var client = new SshClient(BasestationSwitchIP, BasestationSwitchUser, BasestationSwitchPassword);
         try
         {
             client.Connect();
@@ -245,6 +292,7 @@ public class SwitchMonitorService : IHostedService, IDisposable
         //     Console.WriteLine(entry);
         // }
         OnEigrpTopologyUpdate?.Invoke(topology);
+        _ = WriteNetworkTopology(topology);
         return topology;
     }
 
@@ -265,7 +313,7 @@ public class SwitchMonitorService : IHostedService, IDisposable
     public List<PortStatus> GetPorts()
     {
         var ports = new List<PortStatus>();
-        using var client = new SshClient(SwitchIP, SwitchUser, SwitchPassword);
+        using var client = new SshClient(RoverSwitchIP, RoverSwitchUser, RoverSwitchPassword);
         try
         {
             client.Connect();
@@ -329,11 +377,38 @@ public class SwitchMonitorService : IHostedService, IDisposable
         return ports;
     }
 
+    private async Task WriteNetworkTraffic(List<NetworkTraffic> traffic)
+    {
+        var entry = new NetworkTrafficRecord
+        {
+            Timestamp = DateTime.Now,
+            RoverPos = (Lat, Lon, Alt),
+            Traffic = traffic
+        };
+        string jsonString = JsonSerializer.Serialize(entry);
+        byte[] bytes = new UTF8Encoding(true).GetBytes(jsonString);
+        await _logFile.WriteAsync(bytes);
+    }
+    private async Task WriteNetworkTopology(List<EigrpTopologyInfo> topology)
+    {
+        var entry = new NetworkTopologyRecord
+        {
+            Timestamp = DateTime.Now,
+            RoverPos = (Lat, Lon, Alt),
+            Topology = topology
+        };
+        string jsonString = JsonSerializer.Serialize(entry);
+        byte[] bytes = new UTF8Encoding(true).GetBytes(jsonString);
+        await _logFile.WriteAsync(bytes);
+    }
+
+
     public void Dispose()
     {
         _getInterfacesTimer?.Dispose();
         _getEigrpTopologyTimer?.Dispose();
         _getPortsTimer?.Dispose();
+        _logFile.Close();
     }
 
 }
