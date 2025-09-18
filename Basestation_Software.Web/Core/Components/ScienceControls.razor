@@ -1,4 +1,4 @@
-﻿@implements IDisposable
+@implements IDisposable
 @inject RoveCommService _RoveCommService
 
 <style>
@@ -63,6 +63,14 @@
                 <div class="btn-group d-flex justify-items-center" role="group">
                     <button class="btn btn-success" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "UVLED", [1]))>On</button>
                     <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "UVLED", [0]))>Off</button>
+                </div>
+            </div>
+
+            <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
+                <p style="width:auto; text-align: center"><b>WH LED</b></p>
+                <div class="btn-group d-flex justify-items-center" role="group">
+                    <button class="btn btn-success" @onclick=@(() => _RoveCommService.SendAsync<byte>(9009, [(byte)0b10], RoveCommManifest.Boards["Auger"].IP))>On</button>
+                    <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>(9009, [(byte)0b00], RoveCommManifest.Boards["Auger"].IP))>Off</button>
                 </div>
             </div>
 
@@ -160,7 +168,7 @@
 
             </div>
             <div class="controlBox">
-                <p>Invert Gimbal Pan</p>
+                <p>Invert Gimbal Roll</p>
                 <RadzenCheckBox TValue="bool" />
                 <div class="break"></div>
                 <select class="form-select-sm w-100" @bind=GimbalPanBind name="ControlBind">
@@ -239,9 +247,9 @@
     gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
     gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
     gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
-    gamepad.Buttons[6].Value - gamepad.Buttons[7].Value,
     gamepad.Axes[4] - gamepad.Axes[5],
-    gamepad.Buttons[12].Value - gamepad.Buttons[13].Value
+    gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
+    gamepad.Buttons[12].Value - gamepad.Buttons[13].Value,
         ];
 
         return gamepadInputs;
@@ -255,16 +263,16 @@
     private Timer UpdateTimer;
     private bool LastProcessGamepadInputOK = false;
     private double DeadZone = 0.5;
-    Bind AugerAxisBind = Bind.LSY;
-    Bind InstrumentsAxisBind = Bind.LSX;
+    Bind AugerAxisBind = Bind.RSY;
+    Bind InstrumentsAxisBind = Bind.LSY;
     Bind AugerBind = Bind.Bumpers;
     Bind MultiplexerServoBind = Bind.AB;
-    Bind GimbalPanBind = Bind.RSX;
-    Bind GimbalTiltBind = Bind.RSY;
+    Bind GimbalPanBind = Bind.DpadX;
+    Bind GimbalTiltBind = Bind.DpadY;
     double[] meterValues = [0d, 0d, 0d, 0d, 0d, 0d];
     // To be changed experimentally
-    private const short multiplexerMin = -90;
-    private const short _multiplexerMax = 90;
+    private const short multiplexerMin = 0;
+    private const short _multiplexerMax = 180;
 
     public void GamepadSelectionChanged()
     {
@@ -329,8 +337,8 @@
                             _ = _RoveCommService.SendAsync("Auger", "AugerAxis_OpenLoop", [(short)(bindedInputs[0] * 1000f * _augerAxisMult)]);
                             _ = _RoveCommService.SendAsync("Raman", "InstrumentsAxis_OpenLoop", [(short)(bindedInputs[1] * 1000f * _instrumentAxisMult)]);
                             _ = _RoveCommService.SendAsync("Auger", "Auger", [(short)(bindedInputs[2] * 1000f * _augerMult)]);
-                            _ = _RoveCommService.SendAsync("Auger", "MultiplexerServo", [(bindedInputs[3] < 0 ? multiplexerMin : _multiplexerMax)]);
-                            if (Math.Abs(bindedInputs[4]) > DeadZone || (Math.Abs(bindedInputs[5]) > DeadZone)) _ = _RoveCommService.SendAsync("Raman", "RamanGimbalIncrement", [(short)(bindedInputs[4]), (short)(bindedInputs[5])]);
+                            if (bindedInputs[3] != 0) _ = _RoveCommService.SendAsync("Auger", "AugerMultiplexerServo", [(bindedInputs[3] > 0 ? multiplexerMin : _multiplexerMax)]);
+                            if (Math.Abs(bindedInputs[4]) > DeadZone || (Math.Abs(bindedInputs[5]) > DeadZone)) _ = _RoveCommService.SendAsync("Raman", "RamanGimbalIncrement", [(short)(bindedInputs[4] * 4), (short)(bindedInputs[5] * 4)]);
                         }
                         break;
                     }
@@ -344,8 +352,8 @@
         }
     }
 
-    private float _augerMult = 1f;
-    private float _augerAxisMult = 0.4f;
+    private float _augerMult = -1f;
+    private float _augerAxisMult = -0.4f;
     private float _instrumentAxisMult = 0.4f;
 
     void IDisposable.Dispose() { }

@@ -98,6 +98,7 @@
                 MapContainer,
                 ObjectReference,
                 $"{baseUri.Scheme}://{baseUri.Host}:5000/api/MapTiles/{{z}}/{{y}}/{{x}}.png",
+                $"{baseUri.Scheme}://{baseUri.Host}:5000/api/LidarTiles/{{z}}/{{y}}/{{x}}.png",
                 InitialLat,
                 InitialLong,
                 InitialZoomLevel
@@ -126,7 +127,7 @@
                 waypoint.Longitude ?? 0,
                 waypoint.SearchRadius ?? 0,
                 ColorTranslator.ToHtml(Color.FromArgb(waypoint.WaypointColor ?? 0)),
-                waypoint.TagID ?? -1
+                waypoint.TagID ?? -99
             ]).AsTask();
         }));
     }
@@ -163,40 +164,36 @@
     public async Task OnZoomLevel(double lat, double lon, int zoom)
     {
 #if DEBUG
-    using HttpClient client = new HttpClient();
-    client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
-    client.DefaultRequestHeaders.Referrer = new Uri("http://mt1.google.com");
-
-    var tasks = new List<Task>();
-
-    // Convert geographic bounds to tile coordinates
-    int tileX = LonToTileX(lon, zoom);
-    int tileY = LatToTileY(lat, zoom);
-
-    for (int y = (tileY - 3); y < (tileY + 3); y++)
+    using (HttpClient client = new HttpClient())
     {
-        for (int x = (tileX - 3); x < (tileX + 3); x++)
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+        client.DefaultRequestHeaders.Referrer = new Uri("http://mt1.google.com");
+
+        var tasks = new List<Task>();
+
+        // Convert geographic bounds to tile coordinates
+        int tileX = LonToTileX(lon, zoom);
+        int tileY = LatToTileY(lat, zoom);
+
+        for (int y = (tileY - 3); y < (tileY + 3); y++)
         {
-            tasks.Add(Task.Run(async () => {
+            for (int x = (tileX - 3); x < (tileX + 3); x++)
+            {
                 MapTile? mapTile = await _MapTileService.GetMapTile(x, y, zoom);
                 if (mapTile is null)
                 {
-                    if (!_cachingMapTiles)
-                    {
-                        _cachingMapTiles = true;
-                        await InvokeAsync(StateHasChanged);
-                    }
                     string url = $"http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={zoom}";
-                    await DownloadAndSaveTile(client, url, x, y, zoom);
+                    tasks.Add(DownloadAndSaveTile(client, url, x, y, zoom));
+                    _cachingMapTiles = true;
                 }
-            }));
+            }
         }
-    }
 
     await Task.WhenAll(tasks);
     _cachingMapTiles = false;
+    }
 #else
-    await Task.CompletedTask;
+        await Task.CompletedTask;
 #endif
     }
 
@@ -216,7 +213,7 @@
         {
             await response.Content.CopyToAsync(memoryStream);
             byte[] imageBytes = memoryStream.ToArray();
-            await _MapTileService.AddMapTile(new MapTile { X = x, Y = y, Z = z, ImageData = imageBytes });
+            // await _MapTileService.AddMapTile(new MapTile { X = x, Y = y, Z = z, ImageData = imageBytes });
         }
     }
 

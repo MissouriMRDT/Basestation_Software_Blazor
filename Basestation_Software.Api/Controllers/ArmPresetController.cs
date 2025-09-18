@@ -1,4 +1,4 @@
-﻿using Basestation_Software.Api.Entities;
+using Basestation_Software.Api.Entities;
 using Basestation_Software.Models.Arm;
 using Microsoft.AspNetCore.Mvc;
 

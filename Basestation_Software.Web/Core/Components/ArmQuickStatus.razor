@@ -1,0 +1,77 @@
+﻿@inject RoveCommService _RoveCommService
+@inject ArmControlService _ArmControlService
+
+<style>
+    .box {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-radius: 5%;
+    padding: 0.75rem;
+    justify-content: center;
+    background-color: var(--bs-secondary-bg);
+    }
+
+    .box > p {
+    text-align: center;
+    }
+</style>
+
+<div class="card h-100">
+    <div class="card-header">
+        <h3>Arm Quick Status</h3>
+    </div>
+    <div class="card-body align-content-center">
+        <div class="d-flex justify-content-around" style="margin: auto">
+            <div class="box">
+                <p>X</p>
+                <p style="font-size: 2rem">@(_lastTelemetry[0].ToString("F"))</p>
+            </div>
+            <div class="box">
+                <p>J2</p>
+                <p style="font-size: 2rem">@(_lastTelemetry[1].ToString("F"))</p>
+            </div>
+            <div class="box">
+                <p>J4</p>
+                <p style="font-size: 2rem">@(_lastTelemetry[3].ToString("F"))</p>
+            </div>
+            <div class="box">
+                <p>PFG</p>
+                <p style="font-size: 2rem">@(_lastTelemetry[6].ToString("F"))&deg</p>
+            </div>
+            <div class="box">
+                <p>Gripper</p>
+                <p style="font-size: 2rem">@(_ArmControlService.IsAlternateGripper ? "Valk" : "Talos")</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<float> _lastTelemetry = new List<float>(new float[7]);
+    private float _ac = 0;
+    protected override async Task OnInitializedAsync()
+    {
+        _ArmControlService.SubscribeToGripperChanged(OnGripperChanged);
+        _RoveCommService.On<float>("Arm", "Positions", async (packet) =>
+        {
+
+            if (_lastTelemetry is null)
+            {
+                _lastTelemetry = new();
+            }
+
+            for (int i = 0; i < packet.DataCount; i++)
+            {
+                _lastTelemetry[i] = packet.Data[i];
+            }
+
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private async void OnGripperChanged(bool isAlternateGripper)
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+}

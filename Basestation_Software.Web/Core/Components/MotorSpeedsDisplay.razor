@@ -1,4 +1,4 @@
-﻿@inject RoveCommService _RoveCommService
+@inject RoveCommService _RoveCommService
 @inject IJSRuntime _IJSRuntime
 
 <style>
@@ -33,20 +33,26 @@
                 @foreach (MotorInfo? motor in _motorData)
                 {
                     <div class="d-flex flex-column fw-bold w-100 h-100">
-                        <div class="d-flex align-items-center flex-grow-1 h-100 @(motor.FaultCode == 0 ? "" : "bg-danger")" style="color: white;">
+                        <div class="d-flex align-items-center flex-grow-1 h-100 @(motor.FaultCode == 0 ? "" : "bg-danger")"
+                            style="color: white;">
                             <div class="col-3 text-center fw-bold p-1">@motor.DisplayName</div>
                             <div class="col d-flex flex-column h-100">
-                                <div class="small px-2 py-1 flex-grow-1" style="background-color: @(motor.InputCurrent is null ? "lightgray" : $"color-mix(in oklab, #ff0000 {Math.Clamp((double)motor.InputCurrent, 0, DANGER_INPUT_CURRENT)/DANGER_INPUT_CURRENT * 100}%, #00ff00)"); color: black;">
-                                    VESC Current: <span class="float-end">@(motor.InputCurrent is null ? "--" : $"{motor.InputCurrent:0.00}") A</span>
+                                <div class="small px-2 py-1 flex-grow-1"
+                                    style="background-color: @(motor.InputCurrent is null ? "lightgray" : $"color-mix(in oklab, #ff0000 {Math.Clamp((double)motor.InputCurrent, 0, DANGER_INPUT_CURRENT) / DANGER_INPUT_CURRENT * 100}%, #00ff00)"); color: black;">
+                                    VESC Current: <span class="float-end">@(motor.InputCurrent is null ? "--" :
+                                                                            $"{motor.InputCurrent:0.00}") A</span>
                                 </div>
-                                <div class="small px-2 py-1 flex-grow-1" style="background-color: @(motor.MotorCurrent is null ? "lightgray" : $"color-mix(in oklab, #ff0000 {Math.Clamp((double)motor.MotorCurrent, 0, DANGER_MOTOR_CURRENT)/DANGER_MOTOR_CURRENT * 100}%, #00ff00)"); color: black;">
-                                    Motor Current: <span class="float-end">@(motor.MotorCurrent is null ? "--" : $"{motor.MotorCurrent:0.00}") A</span>
+                                <div class="small px-2 py-1 flex-grow-1"
+                                    style="background-color: @(motor.MotorCurrent is null ? "lightgray" : $"color-mix(in oklab, #ff0000 {Math.Clamp((double)motor.MotorCurrent, 0, DANGER_MOTOR_CURRENT) / DANGER_MOTOR_CURRENT * 100}%, #00ff00)"); color: black;">
+                                    Motor Current: <span class="float-end">@(motor.MotorCurrent is null ? "--" :
+                                                                            $"{motor.MotorCurrent:0.00}") A</span>
                                 </div>
                             </div>
                         </div>
                         @if (motor.FaultCode != 0)
                         {
-                            <div class="bg-danger px-2 py-1 small" sytle="font-family: Consolas; color: black;">@(Enum.GetName<RoveComm.Boards.Core.VESCFaultCode>(motor.FaultCode))</div>
+                            <div class="bg-danger px-2 py-1 small" sytle="font-family: Consolas; color: black;">
+                                @(Enum.GetName<RoveComm.Boards.Core.VESCFaultCode>(motor.FaultCode))</div>
                         }
                     </div>
                 }

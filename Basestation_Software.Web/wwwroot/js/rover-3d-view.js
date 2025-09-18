@@ -1,4 +1,4 @@
-﻿// Used by Rover3DView.razor
+// Used by Rover3DView.razor
 
 import * as THREE from "./lib/three/three.js";
 import { STLLoader } from "./lib/three/STLLoader.js";
