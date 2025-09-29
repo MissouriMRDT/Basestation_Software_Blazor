@@ -83,7 +83,7 @@ Verify you have installed dotnet-ef with `dotnet ef`.
 
 ### Step 5: Initialize your local database file
 
-1. `cd Basestation_Software_Blazor/Basestation_Software_Blazor.Api`
+1. `cd Basestation_Software_Blazor/Basestation_Software.Api`
 2. Delete `Data/data.db` if it exists
 3. `dotnet ef database update --runtime <runtime>` where `<runtime>` is the identifier matching your platform which can be found at <https://learn.microsoft.com/en-us/dotnet/core/rid-catalog> (e.g, win-x64, linux-x64)
 
