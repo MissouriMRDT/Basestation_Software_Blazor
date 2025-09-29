@@ -7,7 +7,7 @@ using System.Net;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
 
 #pragma warning disable IDE0211 // Convert to 'Program.Main' style program
-ServicePointManager.ServerCertificateValidationCallback += (o, c, ch, er) => true;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure logging
@@ -46,6 +46,7 @@ builder.Services.AddSingleton<ArmControlService>();
 builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
 builder.Services.AddSingleton<LoggerService>();
+builder.Services.AddSingleton<RocketTelemetryService>();
 
 var app = builder.Build();
 

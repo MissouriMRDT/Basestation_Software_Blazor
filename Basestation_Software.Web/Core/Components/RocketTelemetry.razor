@@ -1,4 +1,4 @@
-﻿@* @inject RocketTelemetryService _RocketTelemetryService *@
+﻿@inject RocketTelemetryService _RocketTelemetryService
 
 <div class="card h-100">
     <div class="card-header">
@@ -14,13 +14,13 @@
                     <option value="@_i">@deviceData[_i].Name</option>
                 }
             </InputSelect>
-
             <label>Username</label>
             <InputText placeholder="Username" @bind-Value=@authUsername></InputText>
 
             <label>Password</label>
             <InputText placeholder="Password" type="password" @bind-Value=@authPassword></InputText>
             <button @onclick=@TryLogin>Login</button>
+            <button @onclick=@TryGet>Get</button>
         </div>
 
         @* Rocket telemetry graphs *@
@@ -79,8 +79,13 @@
         string request = string.Format(File.ReadAllText(Path.Combine("wwwroot/", "rocket-login-request.txt")), authUsername, authPassword);
         Console.WriteLine(request);
         // _ = _RocketTelemetryService.TryLogin(activeDeviceDatum.IP, request);
-        // await _RocketTelemetryService.TryLogin("192.168.1.20", request);
+        await _RocketTelemetryService.TryLogin("192.168.1.20", request);
 
+    }
+
+    private async void TryGet()
+    {
+        await _RocketTelemetryService.TryGet("192.168.1.20", "");
     }
 
     private string FormatAsReadableTime(object value)

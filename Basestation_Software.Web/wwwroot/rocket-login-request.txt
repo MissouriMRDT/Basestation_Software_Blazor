@@ -1,7 +1,7 @@
 ------geckoformboundaryff8b1bc7b31340d08bbc2849e38fc483
 Content-Disposition: form-data; name="uri"
 
-/
+/status.cgi
 ------geckoformboundaryff8b1bc7b31340d08bbc2849e38fc483
 Content-Disposition: form-data; name="username"
 
