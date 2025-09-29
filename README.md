@@ -107,7 +107,7 @@ Optionally, you can build and run from source with the following:
 ### Step 7: Run Basestation Software
 
 1. `cd Basestation_Software_Blazor`
-2. Start Basestation_Software_Blazor.Api, which provides an API to perform CRUD operations on your local database file with `dotnet run --project Basestation_Software.Api --urls 'http://localhost:5000`
+2. Start Basestation_Software_Blazor.Api, which provides an API to perform CRUD operations on your local database file with `dotnet run --project Basestation_Software.Api --urls http://localhost:5000`
 3. Start Basestation_Software_Blazor.Web, which hosts a webpage acting as a user interface to send commands to the rover and make database API calls with `dotnet run --project Basestation_Software.Web --urls http://localhost:8080`
 4. Open `http://localhost:8080` in any web browser (competition Basestation PC runs Firefox with 4 full-screen portrait 1080x1920 windows).
 
