@@ -1,4 +1,4 @@
-﻿// Used by RoverMap.razor
+// Used by RoverMap.razor
 
 // imported globally in App.razor
 //import L from "./lib/leaflet/leaflet.js";
@@ -15,27 +15,51 @@ export class RoverMap {
     roverIcon = null;
 
     // Create leaflet map.
-    constructor(container, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel) {
+    constructor(container, dotNetComponent, urlTemplate, urlTemplate2, initialLat, initialLong, initialZoomLevel) {
+
         this.container = container;
         this.dotNetComponent = dotNetComponent;
-        this.lMap = L.map(this.container, {
-            center: [initialLat, initialLong],
-            zoom: initialZoomLevel,
-            contextmenu: true,
-            contextmenuWidth: 140,
-            contextmenuItems: [{
-                text: "Add Waypoint",
-                callback: this.addWaypoint.bind(this)
-            }]
-        }).addLayer(L.tileLayer(urlTemplate, {
+
+        const satelliteLayer = L.tileLayer(urlTemplate, {
             attribution: "Basestation_Software.Api",
             maxNativeZoom: 18,
             maxZoom: 21,
             errorTileUrl: "js/lib/leaflet/images/tile-error.png",
-        })).addControl(L.control.scale({
+        });
+        const shadowLayer = L.tileLayer(urlTemplate2, {
+            attribution: "Basestation_Software.Api",
+            maxNativeZoom: 18,
+            maxZoom: 21,
+            errorTileUrl: "js/lib/leaflet/images/tile-error.png",
+        });
+
+        this.lMap = L.map(this.container, {
+            layers: [satelliteLayer],
+            center: [initialLat, initialLong],
+            zoom: initialZoomLevel,
+            contextmenu: true,
+            contextmenuWidth: 140,
+            contextmenuItems: [
+                {
+                    text: "Add Waypoint",
+                    callback: this.addWaypoint.bind(this)
+                },
+                {
+                    text: "Copy Latitude",
+                    callback: (e) => navigator.clipboard?.writeText(e.latlng.lat)
+                },
+                {
+                    text: "Copy Longitude",
+                    callback: (e) => navigator.clipboard?.writeText(e.latlng.lng)
+                }
+            ]
+        });
+
+        this.lMap.addControl(L.control.scale({
             metric: true,
             imperial: false
         }));
+
         this.lMap.on("zoomend", this.onZoomLevelChange.bind(this));
         this.lMap.on("moveend", this.onZoomLevelChange.bind(this));
         let Position = L.Control.extend({
@@ -43,12 +67,12 @@ export class RoverMap {
             options: {
                 position: "topright"
             },
-            onAdd: function(map) {
+            onAdd: function (map) {
                 this.positionDiv = L.DomUtil.create("div", "mouseposition");
                 this.positionDiv.style = "padding: 0.1em; color: red; background-color: rgba(255, 255, 0, 0.9);";
                 return this.positionDiv;
             },
-            updateHTML: function(lat, lng) {
+            updateHTML: function (lat, lng) {
                 this.positionDiv.innerHTML = `Latitude: ${lat.toFixed(6)} Longitiude: ${lng.toFixed(6)}`;
             }
         });
@@ -60,6 +84,22 @@ export class RoverMap {
         this.roverIcon = L.marker([37.951764, -91.778441], { icon: new L.divIcon({ className: "rover-map-icon", iconSize: [50, 50] }) }).addTo(this.lMap);
 
         this.waypointLayerGroup = L.layerGroup([]).addTo(this.lMap);
+        this.tagLayerGroup = L.layerGroup([]).addTo(this.lMap);
+        this.pathLayerGroup = L.layerGroup([]).addTo(this.lMap);
+
+        const baseMaps = {
+            "Satellite": satelliteLayer,
+            "Shadows": shadowLayer
+        };
+
+        const overlays = {
+            "Waypoints": this.waypointLayerGroup,
+            "Tags": this.tagLayerGroup,
+            "Rover": this.roverIcon,
+            "Path": this.pathLayerGroup,
+        };
+
+        this.lMap.addControl(L.control.layers(baseMaps, overlays));
     }
     // Call component.OnZoomLevel.
     onZoomLevelChange() {
@@ -90,8 +130,8 @@ export class RoverMap {
                 const r = 0.0001;
                 const o = 0.000015 * Math.max(radius, 15);
                 const svgBounds = [[lat + o - r, lng - r], [lat + o + r, lng + r]];
-                L.svgOverlay(svgElement, svgBounds, { interactive: false, zIndex: 0 }).addTo(this.waypointLayerGroup);
-                L.polyline([[lat, lng], [lat + o, lng]], { color: "white" }).addTo(this.waypointLayerGroup);
+                L.svgOverlay(svgElement, svgBounds, { interactive: false, zIndex: 0 }).addTo(this.tagLayerGroup);
+                L.polyline([[lat, lng], [lat + o, lng]], { color: "white" }).addTo(this.tagLayerGroup);
             });
         }
 
@@ -99,13 +139,35 @@ export class RoverMap {
     // Clear waypoint markers.
     clearWaypointMarkers() {
         this.waypointLayerGroup.clearLayers();
+        this.tagLayerGroup.clearLayers();
     }
     // Navigate to coordinate.
     panToCoordinates(lat, long) {
         this.lMap.panTo(new L.LatLng(lat, long));
     }
+    // Add a pin where the rover is.
+    addRoverIcon(lat, lng) {
+        this.roverIcon.setLatLng([lat, lng]);
+    }
+
+    displayPath(points) {
+        if (points.length == 0){
+            return;
+        }
+        this.pathLayerGroup.clearLayers();
+        var path = L.polyline(points, { color: "blue", weight: 5}).addTo(this.pathLayerGroup);
+
+        var lastPoint = points[points.length - 1];
+        L.marker([lastPoint[0], lastPoint[1]]).addTo(this.pathLayerGroup).bindTooltip("ETA: N/A", {direction: "top" });;
+        path.bindPopup("THIS IS A TEST POPUP! :)")
+        console.log("ADDED POINTS:", points)
+    }
+    
+    removePath() {
+        this.pathLayerGroup.clearLayers();
+    }
 }
 
-export function createRoverMap(container, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel) {
-    return new RoverMap(container, dotNetComponent, urlTemplate, initialLat, initialLong, initialZoomLevel);
+export function createRoverMap(container, dotNetComponent, urlTemplate, urlTemplate2, initialLat, initialLong, initialZoomLevel) {
+    return new RoverMap(container, dotNetComponent, urlTemplate, urlTemplate2, initialLat, initialLong, initialZoomLevel);
 }

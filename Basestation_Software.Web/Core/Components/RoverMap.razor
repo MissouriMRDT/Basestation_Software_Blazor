@@ -47,6 +47,12 @@
             <div @ref=MapContainer class="w-100 h-100" style="position: relative;"></div>
         }
     </div>
+    <button @onclick="() => DisplayPath(_points)">
+    ADD
+    </button>
+    <button @onclick="() => RemovePath()">
+    REMOVE
+    </button>
 </div>
 
 @code
@@ -58,6 +64,8 @@
     public double InitialLong { get; set; } = -91.778441;
     [Parameter]
     public int InitialZoomLevel { get; set; } = 18;
+    [Parameter]
+    public string ComponentId { get; set; } = Guid.NewGuid().ToString();
 
     // Declare page member variables.
     private float _heading = 0;
@@ -68,6 +76,13 @@
     // Flags.
     private bool _dataLoaded = false;
     private bool _cachingMapTiles = false;
+
+    public List<List<double>> _points = new List<List<double>> {
+        new List<double> { 38.405879, -110.792207},
+        new List<double> { 38.405979, -110.792207},
+        new List<double> { 38.406079, -110.792107},
+        new List<double> { 38.406179, -110.792190},
+    };
 
     protected override async Task OnInitializedAsync()
     {
@@ -82,6 +97,35 @@
         _RoveCommService.On<float>("Nav", "IMUData", async (packet) => 
         {
             _heading = packet.Data[1];
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<double>(11010, async (packet) => 
+        {
+            Console.WriteLine($"We got waypoint in component {ComponentId}!");
+            foreach (var value in packet.Data)
+            {
+                Console.WriteLine($"Lat: {value}");
+            }
+            List<List<double>> pairs = new List<List<double>>();
+
+            for (int i = 0; i < packet.Data.Count; i += 2)
+            {
+                if (i + 1 < packet.Data.Count)
+                {
+                    pairs.Add(new List<double> { packet.Data[i], packet.Data[i + 1] });
+                }
+            }
+
+            
+            for (int i = 0; i < pairs.Count; i++)
+            {
+                Console.WriteLine($"Pair {i}: Lat = {pairs[i][0]}, Lon = {pairs[i][1]}");
+            }
+
+
+            DisplayPath(pairs);
+
             await InvokeAsync(StateHasChanged);
         });
     }
@@ -108,6 +152,15 @@
             _GPSWaypointService.SubscribeToWaypointsChanges(OnWaypointSync);
             _GPSWaypointState.SubscribeToWaypointSelected(OnWaypointSelected);
         }
+    }
+
+    public async Task DisplayPath(List<List<double>> points) {
+        @* List<int> list = new List<int> { 1, 2, 3, 4, 5 }; *@
+        await jsRoverMap!.InvokeVoidAsync("displayPath", points);
+    }
+
+    public async Task RemovePath() {
+        await jsRoverMap!.InvokeVoidAsync("removePath");
     }
 
     private async Task OnWaypointSync()
