@@ -51,7 +51,7 @@
                                 x="0" y="0" width="9" height="11"
                                 @onmouseover=@(()=>ShowPortStats(index))
                                 @onclick=@(()=>ShowPortStats(index))
-                                style="fill-opacity: @(1 - 0.7 * Math.Exp(-(1/50.0) * (_portStats[index].Traffic.FiveMinuteInputRatePackets + _portStats[index].Traffic.FiveMinuteOutputRatePackets)))"/>
+                                style="fill-opacity: @(1 - 0.7 * Math.Exp(-(1/50.0) * (_portStats[index].Traffic.InputRatePackets + _portStats[index].Traffic.OutputRatePackets)))"/>
                             <rect class="@(_ports[i].Connected ? "connected" : "notconnect")" fill="none" x="0" y="0" width="9" height="11" />
                             <line class="@(_ports[i].Connected ? "connected" : "notconnect")" x1="0" y1="0" x2="9" y2="11" />
                             <line class="@(_ports[i].Connected ? "connected" : "notconnect")" x1="9" y1="0" x2="0" y2="11" />
@@ -149,23 +149,23 @@
         var m9 = Array.Find(_portStats, p => p.Description.Contains("900MHz"));
         if (m9 is not null)
         {
-            _signalTraffic[0].Traffic = m9.Traffic.FiveMinuteInputRatePackets + m9.Traffic.FiveMinuteOutputRatePackets;
+            _signalTraffic[0].Traffic = m9.Traffic.InputRatePackets + m9.Traffic.OutputRatePackets;
         }
         var m2 = Array.Find(_portStats, p => p.Description.Contains("2.4GHz"));
         if (m2 is not null)
         {
-            _signalTraffic[1].Traffic = m2.Traffic.FiveMinuteInputRatePackets + m2.Traffic.FiveMinuteOutputRatePackets;
+            _signalTraffic[1].Traffic = m2.Traffic.InputRatePackets + m2.Traffic.OutputRatePackets;
         }
         var m5 = Array.Find(_portStats, p => p.Description.Contains("5.8GHz"));
         if (m5 is not null)
         {
-            _signalTraffic[2].Traffic = m5.Traffic.FiveMinuteInputRatePackets + m5.Traffic.FiveMinuteOutputRatePackets;
+            _signalTraffic[2].Traffic = m5.Traffic.InputRatePackets + m5.Traffic.OutputRatePackets;
         }
 
         // VLANS cause why not
         for (int i = 0; i < 3; i++)
         {
-            _vlanTraffic[i].Traffic = _vlanStats[i+1].Traffic.FiveMinuteInputRatePackets + _vlanStats[i+1].Traffic.FiveMinuteOutputRatePackets;
+            _vlanTraffic[i].Traffic = _vlanStats[i+1].Traffic.InputRatePackets + _vlanStats[i+1].Traffic.OutputRatePackets;
         }
     }
 
@@ -210,10 +210,10 @@
         {
             var sb = new StringBuilder();
             sb.AppendLine("Input:");
-            sb.AppendLine($"    Last 5 Minutes: {_displayStats.Traffic.FiveMinuteInputRatePackets} packets ({_displayStats.Traffic.FiveMinuteInputRateBits} bits) per second");
+            sb.AppendLine($"    Rate: {_displayStats.Traffic.InputRatePackets} packets ({_displayStats.Traffic.InputRateBits} bits) per second");
             sb.AppendLine($"    Total: {_displayStats.Traffic.TotalInputPackets} packets ({_displayStats.Traffic.TotalInputBytes} bytes)");
             sb.AppendLine("Output:");
-            sb.AppendLine($"    Last 5 Minutes: {_displayStats.Traffic.FiveMinuteOutputRatePackets} packets ({_displayStats.Traffic.FiveMinuteOutputRateBits} bits) per second");
+            sb.AppendLine($"    Rate: {_displayStats.Traffic.OutputRatePackets} packets ({_displayStats.Traffic.OutputRateBits} bits) per second");
             sb.AppendLine($"    Total: {_displayStats.Traffic.TotalOutputPackets} packets ({_displayStats.Traffic.TotalOutputBytes} bytes)");
             return sb.ToString();
         }

@@ -32,16 +32,24 @@ public class SwitchMonitorService : IHostedService, IDisposable
         public TrafficInfo Traffic { get; set; } = new();
     }
 
+    public class RoverPosRecord
+    {
+        public double Lat { get; set; }
+        public double Lon { get; set; }
+        public double Alt { get; set; }
+    }
+
     public class NetworkTrafficRecord
     {
         public DateTime Timestamp { get; set; }
-        public (double, double, double) RoverPos { get; set; }
+        public RoverPosRecord RoverPos { get; set; } = new();
         public List<NetworkTraffic> Traffic { get; set; } = [];
     }
+
     public class NetworkTopologyRecord
     {
         public DateTime Timestamp { get; set; }
-        public (double, double, double) RoverPos { get; set; } 
+        public RoverPosRecord RoverPos { get; set; } = new();
         public List<EigrpTopologyInfo> Topology { get; set; } = [];
     }
 
@@ -68,16 +76,16 @@ public class SwitchMonitorService : IHostedService, IDisposable
 
     private readonly RoveCommService _roveCommService;
     // Nav board state. TODO: Move this to a service
-    private double Lat = 0, Lon = 0, Alt = 0;
+    private RoverPosRecord _roverPos = new();
 
     public SwitchMonitorService(RoveCommService roveCommService)
     {
         _roveCommService = roveCommService;
         _roveCommService.On<double>("Nav", "GPSLatLonAlt", async (packet) =>
         {
-            Lat = packet.Data[0];
-            Lon = packet.Data[1];
-            Alt = packet.Data[2];
+            _roverPos.Lat = packet.Data[0];
+            _roverPos.Lon = packet.Data[1];
+            _roverPos.Alt = packet.Data[2];
             await Task.CompletedTask;
         });
 
@@ -107,29 +115,31 @@ public class SwitchMonitorService : IHostedService, IDisposable
     /// <returns>A list of interfaces</returns>
     public List<InterfaceInfo> GetInterfaces()
     {
+        string result = "";
         var interfaces = new List<InterfaceInfo>();
         using var client = new SshClient(RoverSwitchIP, RoverSwitchUser, RoverSwitchPassword);
         try
         {
             client.Connect();
+            using SshCommand command = client.RunCommand("show interfaces");
+            result = command.Result;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Could not connect: {ex.Message}");
             return interfaces;
         }
-        using SshCommand command = client.RunCommand("show interfaces");
-        string result = command.Result;
         var interfaceEntryPattern = new Regex(@"([a-zA-Z0-9_\-/]+) is (up|down|administratively down), line protocol is (up|down)");
         var typePattern = new Regex(@"Hardware is (.+?),");
         var descriptionPattern = new Regex(@"Description: (.*?)[\r\n]");
         var ipPattern = new Regex(@"Internet address is (\d+\.\d+\.\d+\.\d+/\d+)");
-        var fiveMinutePattern = new Regex("""
+        var fiveMinuteRatePattern = new Regex("""
         ^\s*5 minute input rate (\d+) bits?/sec, (\d+) packets?/sec\s*$
         ^\s*5 minute output rate (\d+) bits?/sec, (\d+) packets?/sec\s*$
         """, RegexOptions.Multiline);
         var totalInputPattern = new Regex(@"(\d+) packets? input, (\d+) bytes?, \d+ no buffer");
         var totalOutputPattern = new Regex(@"(\d+) packets? output, (\d+) bytes?, \d+ underruns?");
+        var droppedPacketPattern = new Regex(@"(\d+) runts, (\d+) giants, (\d+) throttles\s*(\d+) input errors, (\d+) CRC, (\d+) frame, (\d+) overrun, (\d+) ignored");
 
         var interfaceMatch = interfaceEntryPattern.Match(result);
         while (interfaceMatch.Success)
@@ -175,21 +185,31 @@ public class SwitchMonitorService : IHostedService, IDisposable
             {
                 info.Ip = ipMatch.Groups[1].Value;
             }
-            var fiveMinuteMatch = fiveMinutePattern.Match(interfaceText);
+            var fiveMinuteRateMatch = fiveMinuteRatePattern.Match(interfaceText);
             var totalInputMatch = totalInputPattern.Match(interfaceText);
             var totalOutputMatch = totalOutputPattern.Match(interfaceText);
-            if (fiveMinuteMatch.Success && totalInputMatch.Success && totalOutputMatch.Success)
+            var droppedPacketMatch = droppedPacketPattern.Match(interfaceText);
+            int droppedPackets = 0;
+            if (droppedPacketMatch.Success)
+            {
+                for (int i = 0; i < 8; i++)
+                {
+                    droppedPackets += int.Parse(droppedPacketMatch.Groups[i+1].Value);
+                }
+            }
+            if (fiveMinuteRateMatch.Success && totalInputMatch.Success && totalOutputMatch.Success && droppedPacketMatch.Success)
             {
                 info.Traffic = new TrafficInfo
                 {
-                    FiveMinuteInputRateBits = int.Parse(fiveMinuteMatch.Groups[1].Value),
-                    FiveMinuteInputRatePackets = int.Parse(fiveMinuteMatch.Groups[2].Value),
-                    FiveMinuteOutputRateBits = int.Parse(fiveMinuteMatch.Groups[3].Value),
-                    FiveMinuteOutputRatePackets = int.Parse(fiveMinuteMatch.Groups[4].Value),
+                    InputRateBits = int.Parse(fiveMinuteRateMatch.Groups[1].Value),
+                    InputRatePackets = int.Parse(fiveMinuteRateMatch.Groups[2].Value),
+                    OutputRateBits = int.Parse(fiveMinuteRateMatch.Groups[3].Value),
+                    OutputRatePackets = int.Parse(fiveMinuteRateMatch.Groups[4].Value),
                     TotalInputPackets = int.Parse(totalInputMatch.Groups[1].Value),
                     TotalInputBytes = int.Parse(totalInputMatch.Groups[2].Value),
                     TotalOutputPackets = int.Parse(totalOutputMatch.Groups[1].Value),
                     TotalOutputBytes = int.Parse(totalOutputMatch.Groups[2].Value),
+                    DroppedPackets = droppedPackets
                 };
             }
             else
@@ -216,6 +236,11 @@ public class SwitchMonitorService : IHostedService, IDisposable
                 Status = inter.Status,
                 Traffic = inter.Traffic
             });
+        }
+        _timeAverageSamples.Enqueue(traffic);
+        while (_timeAverageSamples.Count > 30)
+        {
+            _timeAverageSamples.Dequeue();
         }
         _ = WriteNetworkTraffic(traffic);
         return interfaces;
@@ -327,13 +352,17 @@ public class SwitchMonitorService : IHostedService, IDisposable
         string result = command.Result;
         // Port      Name               Status       Vlan       Duplex  Speed Type 
         // Fa1/1     AutonomyAndSensorA notconnect   3            auto   auto 10/100BaseTX 
-        var headerMatch = Regex.Match(result, @"(Port)\s+(Name)\s+(Status)\s+(Vlan)\s+(Duplex)\s+(Speed)\s+(Type)");
+        var headerPattern = new Regex(@"(Port)\s+(Name)\s+(Status)\s+(Vlan)\s+(Duplex)\s+(Speed)\s+(Type)");
+        var headerMatch = headerPattern.Match(result);
         if (!headerMatch.Success)
         {
             return ports;
         }
+        string tableHeader = headerMatch.Groups[0].ToString();
+        headerMatch = headerPattern.Match(tableHeader);
         using (var reader = new StringReader(result))
         {
+            while (reader.Peek() >= 0 && !reader!.ReadLine()!.StartsWith("Port"));
             string? line;
             while ((line = reader.ReadLine()) != null)
             {
@@ -343,6 +372,10 @@ public class SwitchMonitorService : IHostedService, IDisposable
                     continue;
                 }
                 var headings = headerMatch.Groups;
+                if (line.Length < headings[7].Index)
+                {
+                    continue;
+                }
                 var port = new PortStatus
                 {
                     Port = line[headings[1].Index..headings[2].Index].Trim(),
@@ -382,26 +415,26 @@ public class SwitchMonitorService : IHostedService, IDisposable
         var entry = new NetworkTrafficRecord
         {
             Timestamp = DateTime.Now,
-            RoverPos = (Lat, Lon, Alt),
+            RoverPos = _roverPos,
             Traffic = traffic
         };
         string jsonString = JsonSerializer.Serialize(entry);
         byte[] bytes = new UTF8Encoding(true).GetBytes(jsonString);
         await _logFile.WriteAsync(bytes);
     }
+
     private async Task WriteNetworkTopology(List<EigrpTopologyInfo> topology)
     {
         var entry = new NetworkTopologyRecord
         {
             Timestamp = DateTime.Now,
-            RoverPos = (Lat, Lon, Alt),
+            RoverPos = _roverPos,
             Topology = topology
         };
         string jsonString = JsonSerializer.Serialize(entry);
         byte[] bytes = new UTF8Encoding(true).GetBytes(jsonString);
         await _logFile.WriteAsync(bytes);
     }
-
 
     public void Dispose()
     {
