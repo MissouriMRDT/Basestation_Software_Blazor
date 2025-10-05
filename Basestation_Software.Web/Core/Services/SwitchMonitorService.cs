@@ -10,7 +10,6 @@ using Microsoft.Extensions.Hosting;
 using System.Text;
 using System.Text.Json;
 using Basestation_Software.Models.Network;
-using OpenCvSharp.Dnn;
 
 namespace Basestation_Software.Web.Core.Services;
 
@@ -55,8 +54,8 @@ public class SwitchMonitorService : IHostedService, IDisposable
 
     private FileStream _logFile;
 
-    private Queue<List<NetworkTraffic>> _timeAverageSamples = [];
-    public static readonly TimeSpan TrafficAverageDelta = TimeSpan.FromSeconds(10);
+    private Queue<NetworkTrafficRecord> _timeAverageSamples = [];
+    public static readonly TimeSpan TimeAverageDelta = TimeSpan.FromSeconds(10);
 
     public event Action<List<InterfaceInfo>>? OnInterfaceUpdate;
     public event Action<List<EigrpTopologyInfo>>? OnEigrpTopologyUpdate;
@@ -106,6 +105,53 @@ public class SwitchMonitorService : IHostedService, IDisposable
         _getEigrpTopologyTimer?.Change(Timeout.Infinite, 0);
         _getPortsTimer?.Change(Timeout.Infinite, 0);
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Fill in input/output rate fields for a TrafficInfo based on previous
+    /// entries in _timeAverageSamples
+    /// </summary>
+    /// <param name="intName">Name of the interface</param>
+    /// <param name="dest">The TrafficInfo to fill in</param>
+    /// <returns>False if there are no entries to average</returns>
+    public bool CalculateTimeAveragedIORates(string intName, in TrafficInfo dest)
+    {
+        if (_timeAverageSamples.Count < 2)
+        {
+            return false;
+        }
+
+        NetworkTraffic? firstEntry = null, lastEntry = null;
+        DateTime? firstTime = null, lastTime = null;
+        foreach (var snapshot in _timeAverageSamples)
+        {
+            var inter = snapshot.Traffic.Find((inter) => inter.Interface == intName);
+            if (inter is not null)
+            {
+                if (firstEntry is null)
+                {
+                    firstEntry = inter;
+                    firstTime = snapshot.Timestamp;
+                }
+                else if (lastEntry is null)
+                {
+                    lastEntry = inter;
+                    lastTime = snapshot.Timestamp;
+                }
+            }
+        }
+
+        if (firstEntry is not null && lastEntry is not null && firstEntry != lastEntry)
+        {
+            TimeSpan delta = (TimeSpan)(lastTime! - firstTime!);
+            dest.InputRateBytes = (lastEntry.Traffic.TotalInputBytes - firstEntry.Traffic.TotalInputBytes) / delta.Seconds;
+            dest.InputRatePackets = (lastEntry.Traffic.TotalInputPackets - firstEntry.Traffic.TotalInputPackets) / delta.Seconds;
+            dest.OutputRateBytes = (lastEntry.Traffic.TotalOutputBytes - firstEntry.Traffic.TotalOutputBytes) / delta.Seconds;
+            dest.OutputRatePackets = (lastEntry.Traffic.TotalOutputPackets - firstEntry.Traffic.TotalOutputPackets) / delta.Seconds;
+            return true;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -185,7 +231,6 @@ public class SwitchMonitorService : IHostedService, IDisposable
             {
                 info.Ip = ipMatch.Groups[1].Value;
             }
-            var fiveMinuteRateMatch = fiveMinuteRatePattern.Match(interfaceText);
             var totalInputMatch = totalInputPattern.Match(interfaceText);
             var totalOutputMatch = totalOutputPattern.Match(interfaceText);
             var droppedPacketMatch = droppedPacketPattern.Match(interfaceText);
@@ -194,17 +239,13 @@ public class SwitchMonitorService : IHostedService, IDisposable
             {
                 for (int i = 0; i < 8; i++)
                 {
-                    droppedPackets += int.Parse(droppedPacketMatch.Groups[i+1].Value);
+                    droppedPackets += int.Parse(droppedPacketMatch.Groups[i + 1].Value);
                 }
             }
-            if (fiveMinuteRateMatch.Success && totalInputMatch.Success && totalOutputMatch.Success && droppedPacketMatch.Success)
+            if (totalInputMatch.Success && totalOutputMatch.Success && droppedPacketMatch.Success)
             {
                 info.Traffic = new TrafficInfo
                 {
-                    InputRateBits = int.Parse(fiveMinuteRateMatch.Groups[1].Value),
-                    InputRatePackets = int.Parse(fiveMinuteRateMatch.Groups[2].Value),
-                    OutputRateBits = int.Parse(fiveMinuteRateMatch.Groups[3].Value),
-                    OutputRatePackets = int.Parse(fiveMinuteRateMatch.Groups[4].Value),
                     TotalInputPackets = int.Parse(totalInputMatch.Groups[1].Value),
                     TotalInputBytes = int.Parse(totalInputMatch.Groups[2].Value),
                     TotalOutputPackets = int.Parse(totalOutputMatch.Groups[1].Value),
@@ -217,17 +258,36 @@ public class SwitchMonitorService : IHostedService, IDisposable
                 Console.WriteLine("Failed to read traffic info for {0}", info.Name);
             }
 
+            if (!CalculateTimeAveragedIORates(info.Name, info.Traffic))
+            {
+                // If there are no existing samples to average, just use five minute averages
+                var fiveMinuteRateMatch = fiveMinuteRatePattern.Match(interfaceText);
+                if (fiveMinuteRateMatch.Success)
+                {
+                    info.Traffic.InputRateBytes = int.Parse(fiveMinuteRateMatch.Groups[1].Value) / 8; // bits to bytes
+                    info.Traffic.InputRatePackets = int.Parse(fiveMinuteRateMatch.Groups[2].Value);
+                    info.Traffic.OutputRateBytes = int.Parse(fiveMinuteRateMatch.Groups[3].Value) / 8; // bits to bytes
+                    info.Traffic.OutputRatePackets = int.Parse(fiveMinuteRateMatch.Groups[4].Value);
+                }
+                else
+                {
+                    Console.WriteLine("Failed to read traffic info for {0}", info.Name);
+                }
+            }
+
             interfaces.Add(info);
 
             interfaceMatch = nextMatch;
         }
+
         // Console.WriteLine("==========SHOW INTERFACES==========");
         // foreach (var info in interfaces)
         // {
         //     Console.WriteLine(info);
         // }
+
         OnInterfaceUpdate?.Invoke(interfaces);
-        var traffic = new List<NetworkTraffic>(interfaces.Count());
+        var traffic = new List<NetworkTraffic>(interfaces.Count);
         foreach (var inter in interfaces)
         {
             traffic.Add(new NetworkTraffic
@@ -237,12 +297,10 @@ public class SwitchMonitorService : IHostedService, IDisposable
                 Traffic = inter.Traffic
             });
         }
-        _timeAverageSamples.Enqueue(traffic);
-        while (_timeAverageSamples.Count > 30)
-        {
-            _timeAverageSamples.Dequeue();
-        }
+
+        // Write to JSON and update _timeAverageSamples
         _ = WriteNetworkTraffic(traffic);
+
         return interfaces;
     }
 
@@ -418,6 +476,15 @@ public class SwitchMonitorService : IHostedService, IDisposable
             RoverPos = _roverPos,
             Traffic = traffic
         };
+
+        _timeAverageSamples.Enqueue(entry);
+        // Remove expired entries
+        var earliestTime = DateTime.Now - TimeAverageDelta;
+        while (_timeAverageSamples.Count > 0 && _timeAverageSamples.Peek().Timestamp < earliestTime)
+        {
+            _timeAverageSamples.Dequeue();
+        }
+
         string jsonString = JsonSerializer.Serialize(entry);
         byte[] bytes = new UTF8Encoding(true).GetBytes(jsonString);
         await _logFile.WriteAsync(bytes);

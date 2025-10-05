@@ -210,10 +210,10 @@
         {
             var sb = new StringBuilder();
             sb.AppendLine("Input:");
-            sb.AppendLine($"    Rate: {_displayStats.Traffic.InputRatePackets} packets ({_displayStats.Traffic.InputRateBits} bits) per second");
+            sb.AppendLine($"    Rate: {_displayStats.Traffic.InputRatePackets} packets ({_displayStats.Traffic.InputRateBits} bytes) per second");
             sb.AppendLine($"    Total: {_displayStats.Traffic.TotalInputPackets} packets ({_displayStats.Traffic.TotalInputBytes} bytes)");
             sb.AppendLine("Output:");
-            sb.AppendLine($"    Rate: {_displayStats.Traffic.OutputRatePackets} packets ({_displayStats.Traffic.OutputRateBits} bits) per second");
+            sb.AppendLine($"    Rate: {_displayStats.Traffic.OutputRatePackets} packets ({_displayStats.Traffic.OutputRateBits} bytes) per second");
             sb.AppendLine($"    Total: {_displayStats.Traffic.TotalOutputPackets} packets ({_displayStats.Traffic.TotalOutputBytes} bytes)");
             return sb.ToString();
         }

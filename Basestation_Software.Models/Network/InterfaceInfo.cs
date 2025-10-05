@@ -23,12 +23,12 @@ public enum InterfaceType
 
 public class TrafficInfo
 {
-    public int InputRateBits { get; set; }
-    public int InputRatePackets { get; set; }
+    public double InputRateBytes { get; set; }
+    public double InputRatePackets { get; set; }
     public int TotalInputBytes { get; set; }
     public int TotalInputPackets { get; set; }
-    public int OutputRateBits { get; set; }
-    public int OutputRatePackets { get; set; }
+    public double OutputRateBytes { get; set; }
+    public double OutputRatePackets { get; set; }
     public int TotalOutputBytes { get; set; }
     public int TotalOutputPackets { get; set; }
     public int DroppedPackets { get; set; }
@@ -49,10 +49,10 @@ public class InterfaceInfo
         return $"""
         Interface: {Name}, Type: {Type}, Description: {Description ?? "None"}, IP: {Ip ?? "Unspecified"}, Status: {Status}
             Input:
-            Rate: {Traffic.InputRatePackets} packets ({Traffic.InputRateBits} bits) per second
+            Rate: {Traffic.InputRatePackets} packets ({Traffic.InputRateBytes} bytes) per second
             Total: {Traffic.TotalInputPackets} packets ({Traffic.TotalInputBytes} bytes)
             Output:
-            Rate: {Traffic.OutputRatePackets} packets ({Traffic.OutputRateBits} bits) per second
+            Rate: {Traffic.OutputRatePackets} packets ({Traffic.OutputRateBytes} bytes) per second
             Total: {Traffic.TotalOutputPackets} packets ({Traffic.TotalOutputBytes} bytes)
         """;
     }
