@@ -23,14 +23,14 @@ public class REDDatabase : DbContext
         Configuration = configuration;
 
         // Attempt to form missing tables in data.db
-        try
-        {
-            (Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator).CreateTables();
-        }
-        catch
-        {
-            // CreateTables throws error if table already exists but we don't care
-        }
+        //try
+        //{
+        //    (Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator).CreateTables();
+        //}
+        //catch
+        //{
+        //    // CreateTables throws error if table already exists but we don't care
+        //}
     }
 
     /// <summary>
@@ -50,6 +50,8 @@ public class REDDatabase : DbContext
     public DbSet<ConfigEntity> Configs { get; set; }
     public DbSet<GPSWaypoint> Waypoints { get; set; }
     public DbSet<MapTile> MapTiles { get; set; }
+    public DbSet<LidarTile> LidarTiles { get; set; }
+
     public DbSet<ArmPresetEntity> ArmPresets { get; set; }
     public DbSet<ControlPreset> ControlPresets { get; set; }
 
@@ -165,7 +167,7 @@ public class REDDatabase : DbContext
                 //      was provided for the required property 'ID'. Please provide a value different from
                 //      '00000000-0000-0000-0000-000000000000'.
                 // Workaround: hardcode a default guid here and at the top of MainLayout.Razor.
-                ID = Guid.Parse("00000000-0000-0000-0000-000000000001"), 
+                ID = Guid.Parse("00000000-0000-0000-0000-000000000001"),
                 Data = System.Text.Json.JsonSerializer.Serialize(new Config { Name = "Default" })
             }
         );

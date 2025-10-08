@@ -1,4 +1,4 @@
-﻿@inject RoveCommService _RoveCommService
+@inject RoveCommService _RoveCommService
 @inject IJSRuntime _IJSRuntime
 @implements IAsyncDisposable
 
@@ -257,12 +257,13 @@
         await _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [-180, 0]);
         await Task.Delay(4000);
         TakePicture();
-        for (int i = 0; i < 4; i++)
+        await Task.Delay(40000);
+        for (int i = 0; i < 3; i++)
         {
-            await _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [90, 0]);
+            await _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [60, 0]);
             await Task.Delay(2000);
             TakePicture();
-            await Task.Delay(1000);
+            await Task.Delay(40000);
         }
     }
 

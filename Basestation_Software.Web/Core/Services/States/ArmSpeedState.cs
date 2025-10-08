@@ -30,7 +30,7 @@ public class ArmSpeedState
     public Dictionary<string, float> ArmSpeeds
     {
         get { return _armSpeeds; }
-        set 
+        set
         {
             Console.WriteLine("Set");
             _armSpeeds = value;

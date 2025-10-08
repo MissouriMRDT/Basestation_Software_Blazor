@@ -1,10 +1,11 @@
-﻿@inject RoveCommService _RoveCommService
+@inject RoveCommService _RoveCommService
+@inject OpService _OpService
 
 @* TODO: Look into why width style is getting inherited on p tags*@
 <style>
     p {
-        width: auto;
-        text-align: center;
+    width: auto;
+    text-align: center;
     }
 </style>
 
@@ -43,7 +44,7 @@
     private int delay = 0;
 
     // X and Pitch positional diffs based on Q
-        private Dictionary<char, List<float>> keys = new()
+    private Dictionary<char, List<float>> keys = new()
     {
         { 'Q', [0, 0f]},
         { 'W', [keydx * (1f/9f), 0f]},
@@ -72,43 +73,10 @@
         { 'N', [r2xo + keydx * (5f/9f), r2]},
         { 'M', [r2xo + keydx * (6f/9f), r2]},
     };
-    @* private Dictionary<char, List<float>> keys = new()
-    {
-        { 'Q', [0f, 0f]},
-        { 'W', [-0.771f, 0f]},
-        { 'E', [-1.52f, 0f]},
-        { 'R', [-2.289f, 0f]},
-        { 'T', [-3.045f, 0f]},
-        { 'Y', [-3.789f, 0f]},
-        { 'U', [-4.513f, 0f]},
-        { 'I', [-5.24f, 0f]},
-        { 'O', [-5.966f, 0f]},
-        { 'P', [-6.708f, 0f]},
-        { 'A', [-0.182f, r1]},
-        { 'S', [-0.938f, r1]},
-        { 'D', [-1.677f, r1]},
-        { 'F', [-2.448f, r1]},
-        { 'G', [-3.211f, r1]},
-        { 'H', [-3.949f, r1]},
-        { 'J', [-4.693f, r1]},
-        { 'K', [-5.427f, r1]},
-        { 'L', [-6.148f, r1]},
-        { 'Z', [-0.509f, r2]},
-        { 'X', [-1.289f, r2]},
-        { 'C', [-2.047f, r2]},
-        { 'V', [-2.811f, r2]},
-        { 'B', [-3.561f, r2]},
-        { 'N', [-4.312f, r2]},
-        { 'M', [-5.056f, r2]},
-    }; *@
-
-    protected override void OnInitialized()
-    {
-
-    }
 
     private async Task PlayPhrase()
     {
+        _OpService.SetAutonomy(); 
         List<float> totalOffset = [0f, 0f];
         for (int i = 0; i < _phrase.Length; i++)
         {
@@ -159,6 +127,8 @@
 
         _statusMessage = "Done";
         _ = InvokeAsync(StateHasChanged);
+        await Task.Delay(2000);
+        _OpService.SetTeleop();
     }
 
     private void Flip()

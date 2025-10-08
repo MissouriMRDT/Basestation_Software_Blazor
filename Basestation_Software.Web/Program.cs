@@ -33,6 +33,8 @@ builder.Services.AddSingleton<GPSWaypointService>();
 builder.Services.AddScoped<GPSWaypointState>();
 builder.Services.AddHttpClient<MapTileService>();
 builder.Services.AddSingleton<MapTileService>();
+builder.Services.AddHttpClient<LidarTileService>();
+builder.Services.AddSingleton<LidarTileService>();
 builder.Services.AddHttpClient<ConfigService>();
 builder.Services.AddSingleton<ConfigService>();
 builder.Services.AddSingleton<TaskTimerService>();

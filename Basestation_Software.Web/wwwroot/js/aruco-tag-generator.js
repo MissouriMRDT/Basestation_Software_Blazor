@@ -1,4 +1,4 @@
-﻿// Taken from: https://chev.me/arucogen/
+// Taken from: https://chev.me/arucogen/
 
 var arucoTagDict = null;
 

@@ -1,4 +1,4 @@
-﻿import {
+import {
 	Controls,
 	MOUSE,
 	Quaternion,

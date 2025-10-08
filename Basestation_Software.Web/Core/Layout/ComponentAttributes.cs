@@ -1,4 +1,4 @@
-﻿namespace Basestation_Software.Web.Core.Layout;
+namespace Basestation_Software.Web.Core.Layout;
 
 public static class ComponentAttributes
 {

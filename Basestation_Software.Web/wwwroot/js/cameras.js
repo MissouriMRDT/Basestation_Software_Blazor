@@ -1,4 +1,4 @@
-﻿let address = `ws://${window.location.hostname}:8085`;
+let address = `ws://${window.location.hostname}:8085`;
 let totalTracks = 8;
 let tracks = [];
 let pc = null;
@@ -73,7 +73,7 @@ export class CameraDisplay {
             return;
         }
 
-        this.n = n;        
+        this.n = n;
         this.videoDisplay = document.createElement(tracks[this.n].kind);
         this.videoDisplay.srcObject = new MediaStream([tracks[this.n]]);
         this.videoDisplay.autoplay = true;
