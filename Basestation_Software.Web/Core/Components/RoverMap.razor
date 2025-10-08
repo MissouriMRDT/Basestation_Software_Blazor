@@ -47,12 +47,7 @@
             <div @ref=MapContainer class="w-100 h-100" style="position: relative;"></div>
         }
     </div>
-    <button @onclick="() => DisplayPath(_points)">
-    ADD
-    </button>
-    <button @onclick="() => RemovePath()">
-    REMOVE
-    </button>
+
 </div>
 
 @code
@@ -76,13 +71,14 @@
     // Flags.
     private bool _dataLoaded = false;
     private bool _cachingMapTiles = false;
+    private bool _pathTrackingActive = false;
 
-    public List<List<double>> _points = new List<List<double>> {
-        new List<double> { 38.405879, -110.792207},
-        new List<double> { 38.405979, -110.792207},
-        new List<double> { 38.406079, -110.792107},
-        new List<double> { 38.406179, -110.792190},
-    };
+    private int _pathTrackingTimeout = 30000;
+
+    // Token to track when to clear paths after data stops being received
+    private CancellationTokenSource _pathCts = new CancellationTokenSource();
+
+    private List<List<double>> _roverPoints = new List<List<double>>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -126,6 +122,69 @@
 
             DisplayPath(pairs);
 
+            _pathCts.Cancel();
+            _pathCts = new CancellationTokenSource();
+
+            try {
+                await Task.Delay(_pathTrackingTimeout, _pathCts.Token);
+                _roverPoints.Clear();
+                RemoveRoverPath();
+                RemovePath();
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (TaskCanceledException) {
+                
+            }
+
+            await InvokeAsync(StateHasChanged);
+            
+        });
+
+        _RoveCommService.On<double>(11011, async (packet) => 
+        {
+            List<double> point = new List<double>();
+            foreach (var value in packet.Data)
+            {
+                Console.WriteLine($"Data: {value}");
+                point.Add(value);
+            }
+            @* List<List<double>> pairs = new List<List<double>>();
+
+            for (int i = 0; i < packet.Data.Count; i += 2)
+            {
+                if (i + 1 < packet.Data.Count)
+                {
+                    pairs.Add(new List<double> { packet.Data[i], packet.Data[i + 1] });
+                }
+            }
+
+            
+            for (int i = 0; i < pairs.Count; i++)
+            {
+                Console.WriteLine($"Pair {i}: Lat = {pairs[i][0]}, Lon = {pairs[i][1]}");
+            }
+
+
+            DisplayPath(pairs);
+
+            await InvokeAsync(StateHasChanged); *@
+            _roverPoints.Add(point);
+
+            DisplayRoverPath(_roverPoints);
+
+            _pathCts.Cancel();
+            _pathCts = new CancellationTokenSource();
+
+            try {
+                await Task.Delay(_pathTrackingTimeout, _pathCts.Token);
+                _roverPoints.Clear();
+                RemoveRoverPath();
+                RemovePath();
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (TaskCanceledException) {
+
+            }
             await InvokeAsync(StateHasChanged);
         });
     }
@@ -155,6 +214,10 @@
         }
     }
 
+    public async Task DisplayRoverPath(List<List<double>> points) {
+        await jsRoverMap!.InvokeVoidAsync("displayRoverPath", points);
+    }
+
     public async Task DisplayPath(List<List<double>> points) {
         @* List<int> list = new List<int> { 1, 2, 3, 4, 5 }; *@
         await jsRoverMap!.InvokeVoidAsync("displayPath", points);
@@ -163,6 +226,12 @@
     public async Task RemovePath() {
         await jsRoverMap!.InvokeVoidAsync("removePath");
     }
+
+    public async Task RemoveRoverPath() {
+        await jsRoverMap!.InvokeVoidAsync("removeRoverPath");
+    }
+
+    
 
     private async Task OnWaypointSync()
     {
