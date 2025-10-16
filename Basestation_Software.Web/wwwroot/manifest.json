@@ -582,14 +582,20 @@
           "dataCount": 1,
           "comments": "Request a reading of the humidity at the end of the auger"
         },
-        "UVLED": {
+        "RequestNPK": {
           "dataId": 9009,
+          "dataType": "UINT8_T",
+          "dataCount": 2,
+          "comments": "Request a reading of the NPK sensor data at the end of the auger"
+        },
+        "UVLED": {
+          "dataId": 9010,
           "dataType": "UINT8_T",
           "dataCount": 1,
           "comments": "Ultraviolet LED on AutoFluorescence (0-off, 1-on)"
         },
         "AugerGimbalIncrement": {
-          "dataId": 9010,
+          "dataId": 9011,
           "dataType": "INT16_T",
           "dataCount": 2,
           "comments": "[Pan, Tilt](degrees -180-180)"
@@ -625,6 +631,24 @@
           "dataType": "FLOAT_T",
           "dataCount": 1,
           "comments": "[Humidity] (relative humidity %)"
+        },
+        "Nitrogen": {
+          "dataId": 9105,
+          "dataType": "FLOAT_T",
+          "dataCount": 1,
+          "comments": "[Nitrogen] (mg/kg)"
+        },
+        "Phosphorus": {
+          "dataId": 9106,
+          "dataType": "FLOAT_T",
+          "dataCount": 1,
+          "comments": "[Phosphorus] (mg/kg)"
+        },
+        "Potassium": {
+          "dataId": 9107,
+          "dataType": "FLOAT_T",
+          "dataCount": 1,
+          "comments": "[Potassium] (mg/kg)"
         }
       },
       "Error": {

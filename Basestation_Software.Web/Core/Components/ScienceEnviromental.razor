@@ -26,15 +26,18 @@
                 <p>Temperature</p>
                 <p style="font-size: 2rem">@_temperature&deg</p>
                 <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "RequestTemperature", [1]))>Request</button>
-            </div>
-            <div class="box">
-                <p>Absolute Temperature</p>
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "RequestHumidity", [1]))>Request</button>
-            </div>            
+            </div>       
             <div class="box">
                 <p>Humidity</p>
                 <p style="font-size: 2rem">@_humidity%</p>
                 <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "RequestHumidity", [1]))>Request</button>
+            </div>
+            <div class="box">
+                <p>NPK Sensor Data</p>
+                <p style="font-size: 2rem">@_nitrogen%</p>
+                <p style="font-size: 2rem">@_phosphorus%</p>
+                <p style="font-size: 2rem">@_potassium%</p>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "RequestNPK", [1]))>Request</button>
             </div>
         </div>
     </div>
@@ -42,21 +45,37 @@
 
 @code {
     private float _temperature = -1;
-    private float _absolute_temperature = -1;
     private float _humidity = -1;
+    private float _nitrogen = -1;
+    private float _phosphorus = -1;
+    private float _potassium = -1;
 
     protected override async Task OnInitializedAsync()
     {
         _RoveCommService.On<float>("Auger", "Temperature", async (packet) =>
         {
             _temperature = (float) Math.Round(packet.Data[0], 2);
-            _absolute_temperature = _temperature + 273.15f;
             await InvokeAsync(StateHasChanged);
         });
 
         _RoveCommService.On<float>("Auger", "Humidity", async (packet) =>
         {
             _humidity = (float) Math.Round(packet.Data[0], 2);
+            await InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.On<float>("Auger", "Nitrogen", async (packet) =>
+        {
+            _nitrogen = (float) Math.Round(packet.Data[0], 2);
+            await InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.On<float>("Auger", "Phosphorus", async (packet) =>
+        {
+            _phosphorus = (float) Math.Round(packet.Data[0], 2);
+            await InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.On<float>("Auger", "Potassium", async (packet) =>
+        {
+            _potassium = (float) Math.Round(packet.Data[0], 2);
             await InvokeAsync(StateHasChanged);
         });
     }
