@@ -3,6 +3,7 @@ using Basestation_Software.Web.Core.Services;
 using Basestation_Software.Web.Core.Services.States;
 using Blazored.Toast;
 using Radzen;
+using RoveComm;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
 
 #pragma warning disable IDE0211 // Convert to 'Program.Main' style program
@@ -32,11 +33,17 @@ builder.Services.AddSingleton<GPSWaypointService>();
 builder.Services.AddScoped<GPSWaypointState>();
 builder.Services.AddHttpClient<MapTileService>();
 builder.Services.AddSingleton<MapTileService>();
+builder.Services.AddHttpClient<LidarTileService>();
+builder.Services.AddSingleton<LidarTileService>();
 builder.Services.AddHttpClient<ConfigService>();
 builder.Services.AddSingleton<ConfigService>();
 builder.Services.AddSingleton<TaskTimerService>();
 builder.Services.AddSingleton<PingService>();
 builder.Services.AddSingleton<OpService>();
+builder.Services.AddSingleton<ArmSpeedState>();
+builder.Services.AddHttpClient<ArmAngularService>();
+builder.Services.AddSingleton<ArmAngularService>();
+builder.Services.AddSingleton<ArmControlService>();
 builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
 //builder.Services.AddSingleton<LoggerService_Deprecated>();

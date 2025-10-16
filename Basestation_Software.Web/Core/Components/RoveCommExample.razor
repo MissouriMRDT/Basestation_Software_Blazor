@@ -1,4 +1,3 @@
-@implements IAsyncDisposable
 @inject RoveCommService _RoveCommService
 
 <div class="card h-100">
@@ -6,63 +5,64 @@
         <h3>RoveComm Test</h3>
     </div>
     <div class="card-body scrollable">
-        <div class="row">
-            <div class="col">
-                <button type="button" class="btn btn-primary" @onclick="SendPacketUDP">Send UDP Packet</button>
-                <button type="button" class="btn btn-primary" @onclick="SendPacketTCP">Send TCP Packet</button>
-                <br>
-                <button type="button" class="btn btn-primary" @onclick="SendManifestPacket">Send Packet from Manifest</button>
-                <button type="button" class="btn btn-primary" disabled="@_isDisabled" @onclick="ListenForPacket">Listen for Packet from Manifest</button>
-            </div>
-            <h3>@_message</h3>
-            @if (!_dataLoaded)
+        <h3>@_message</h3>
+        <ul>
+            @foreach(var message in _messages)
             {
-                <div class="row">
-                    <div class="spinner-border " role="status"></div>
-                    <div class="col">
-                        <h3>Waiting for packets...</h3>
-                    </div>
-                </div>
+                <li>@message</li>
             }
-            else
-            {
-                <ul>
-                    @foreach(var message in _messages)
-                    {
-                        <li>@message</li>
-                    }
-                </ul>
-            }
-        </div>
+        </ul>
     </div>
 </div>
 
 
 @code
 {
-    private bool _dataLoaded = false;
     private string? _message;
     private bool _isDisabled;
     private readonly List<string> _messages = [];
+    
+    enum VESCFaultCode {
+        FAULT_CODE_NONE = 0,
+        FAULT_CODE_OVER_VOLTAGE,
+        FAULT_CODE_UNDER_VOLTAGE,
+        FAULT_CODE_DRV,
+        FAULT_CODE_ABS_OVER_CURRENT,
+        FAULT_CODE_OVER_TEMP_FET,
+        FAULT_CODE_OVER_TEMP_MOTOR,
+        FAULT_CODE_GATE_DRIVER_OVER_VOLTAGE,
+        FAULT_CODE_GATE_DRIVER_UNDER_VOLTAGE,
+        FAULT_CODE_MCU_UNDER_VOLTAGE,
+        FAULT_CODE_BOOTING_FROM_WATCHDOG_RESET,
+        FAULT_CODE_ENCODER_SPI,
+        FAULT_CODE_ENCODER_SINCOS_BELOW_MIN_AMPLITUDE,
+        FAULT_CODE_ENCODER_SINCOS_ABOVE_MAX_AMPLITUDE,
+        FAULT_CODE_FLASH_CORRUPTION,
+        FAULT_CODE_HIGH_OFFSET_CURRENT_SENSOR_1,
+        FAULT_CODE_HIGH_OFFSET_CURRENT_SENSOR_2,
+        FAULT_CODE_HIGH_OFFSET_CURRENT_SENSOR_3,
+        FAULT_CODE_UNBALANCED_CURRENTS,
+        FAULT_CODE_BRK,
+        FAULT_CODE_RESOLVER_LOT,
+        FAULT_CODE_RESOLVER_DOS,
+        FAULT_CODE_RESOLVER_LOS,
+        FAULT_CODE_FLASH_CORRUPTION_APP_CFG,
+        FAULT_CODE_FLASH_CORRUPTION_MC_CFG,
+        FAULT_CODE_ENCODER_NO_MAGNET,
+        FAULT_CODE_ENCODER_MAGNET_TOO_STRONG,
+        FAULT_CODE_PHASE_FILTER
+    }
 
     protected override async Task OnInitializedAsync()
     {
-        // Subscribe to all DataIDs for each type.
-        _RoveCommService.On<sbyte>(0, AddMessage);
-        _RoveCommService.On<byte>(0, AddMessage);
-        _RoveCommService.On<short>(0, AddMessage);
-        _RoveCommService.On<ushort>(0, AddMessage);
-        _RoveCommService.On<int>(0, AddMessage);
-        _RoveCommService.On<uint>(0, AddMessage);
-        _RoveCommService.On<float>(0, AddMessage);
-        _RoveCommService.On<double>(0, AddMessage);
-        _RoveCommService.On<char>(0, AddMessage);
-
-        _RoveCommService.On<float>("Core", "DriveLeftRight", async (packet) =>
-        {
-            _messages.Add("Received DriveLeftRight packet.");
-            _dataLoaded = true;
-            await InvokeAsync(StateHasChanged);
+        _RoveCommService.On<byte>(6969, async (packet) => {
+            if (packet.Data.Any((value) => value != 0))
+            {
+                _messages.Insert(0, string.Join(", ", packet.Data.Select((value) => {
+                    return Enum.GetName((VESCFaultCode)value) ?? "unknown";
+                })));
+                await InvokeAsync(StateHasChanged);
+            }
         });
 
         await InvokeAsync(StateHasChanged);
@@ -78,45 +78,6 @@
         {
             _messages.Add($"Received Packet with unknown DataID {packet.DataID}. Data: {string.Join(", ", packet.Data)}");
         }
-        _dataLoaded = true;
         await InvokeAsync(StateHasChanged);
-    }
-
-    public async Task SendPacketTCP()
-    {
-        await _RoveCommService.SendAsync<int>(6969, [1, 2, 3], "127.0.0.1", reliable: true);
-    }
-    public async Task SendPacketUDP()
-    {
-        await _RoveCommService.SendAsync<int>(6969, [1, 2, 3], "127.0.0.1", reliable: false);
-    }
-    public async Task ListenForPacket()
-    {
-        _message = "Waiting...";
-        _isDisabled = true;
-        var result = await _RoveCommService.Listen<float>("Core", "DriveLeftRight", 3000);
-        if (result is not null)
-        {
-            _message = "Received!";
-        }
-        else
-        {
-            _message = "Timed out.";
-        }
-        _isDisabled = false;
-    }
-
-    public async Task SendManifestPacket()
-    {
-        await _RoveCommService.SendAsync<float>("Core", "DriveLeftRight", [5.5f, 5.5f]);
-        // For testing, also send a copy to the loopback address, since RoveComm will send the packet to 192.168.2.110.
-        RoveCommUtils.FindDataIDByName("Core", "DriveLeftRight", out var board, out var packet);
-        await _RoveCommService.SendAsync<float>(packet!.DataID, [5.5f, 5.5f], "127.0.0.1");
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        _RoveCommService.Clear<int>(AddMessage);
-        await Task.CompletedTask;
     }
 }

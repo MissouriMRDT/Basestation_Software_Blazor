@@ -1,8 +1,24 @@
-@implements IDisposable
+@implements IAsyncDisposable
 @inject MapTileService _MapTileService
 @inject GPSWaypointService _GPSWaypointService
+@inject GPSWaypointState _GPSWaypointState
 @inject NavigationManager _NavigationManager
 @inject IJSRuntime _IJSRuntime
+@inject RoveCommService _RoveCommService
+
+<style>
+    .rover-map-icon:after {
+        background-image: url(images/marker.png);
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 50px;
+        width: 50px;
+        content: "";
+        display: inline-block;
+        transform: rotateZ(@(_heading)deg);
+    }
+</style>
 
 <div class="card h-100">
     <div class="card-header">
@@ -16,7 +32,7 @@
             }
         </div>
     </div>
-    <div class="card-body" style="padding: 0;">
+    <div class="card-body p-0">
         @if (!_dataLoaded)
         {
             <div class="row">
@@ -28,17 +44,14 @@
         }
         else
         {
-            <div class="w-100 h-100 "id="@ID" style="position: relative;"></div>
+            <div @ref=MapContainer class="w-100 h-100" style="position: relative;"></div>
         }
     </div>
-    <div class="card-footer" id="cursorPosition"></div>
 </div>
 
 @code
 {
     // Component parameters.
-    [Parameter]
-    public string ID { get; set; } = "";
     [Parameter]
     public double InitialLat { get; set; } = 37.951764;
     [Parameter]
@@ -47,34 +60,45 @@
     public int InitialZoomLevel { get; set; } = 18;
 
     // Declare page member variables.
-    private string jsInteropName;
+    private float _heading = 0;
+    private ElementReference MapContainer;
+    private IJSObjectReference? jsRoverMap;
+    private DotNetObjectReference<RoverMap>? ObjectReference;
 
     // Flags.
     private bool _dataLoaded = false;
     private bool _cachingMapTiles = false;
-
-    protected override void OnInitialized()
-    {
-        this.jsInteropName = $"window.roverMaps.{ID}";
-    }
 
     protected override async Task OnInitializedAsync()
     {
         // Toggle component is done loading.
         _dataLoaded = true;
         await InvokeAsync(StateHasChanged);
+        _RoveCommService.On<double>("Nav", "GPSLatLonAlt", async (packet) =>
+        {
+            await jsRoverMap!.InvokeVoidAsync("addRoverIcon", [packet.Data[0], packet.Data[1]]);
+        });
+
+        _RoveCommService.On<float>("Nav", "IMUData", async (packet) => 
+        {
+            _heading = packet.Data[1];
+            await InvokeAsync(StateHasChanged);
+        });
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+            await using var jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-map.js");
             // Create leaflet map.
             Uri baseUri = new Uri(_NavigationManager.BaseUri);
-            await _IJSRuntime.InvokeVoidAsync($"createRoverMap", [
-                ID,
-                DotNetObjectReference.Create(this),
+            ObjectReference = DotNetObjectReference.Create(this);
+            jsRoverMap = await jsModule.InvokeAsync<IJSObjectReference>("createRoverMap", [
+                MapContainer,
+                ObjectReference,
                 $"{baseUri.Scheme}://{baseUri.Host}:5000/api/MapTiles/{{z}}/{{y}}/{{x}}.png",
+                $"{baseUri.Scheme}://{baseUri.Host}:5000/api/LidarTiles/{{z}}/{{y}}/{{x}}.png",
                 InitialLat,
                 InitialLong,
                 InitialZoomLevel
@@ -83,13 +107,14 @@
             // Plot waypoints and keep them updated.
             await PlotWaypoints();
             _GPSWaypointService.SubscribeToWaypointsChanges(OnWaypointSync);
+            _GPSWaypointState.SubscribeToWaypointSelected(OnWaypointSelected);
         }
     }
 
     private async Task OnWaypointSync()
     {
         // Update waypoint markers.
-        await _IJSRuntime.InvokeVoidAsync($"{jsInteropName}.clearWaypointMarkers");
+        await jsRoverMap!.InvokeVoidAsync("clearWaypointMarkers");
         await PlotWaypoints();
     }
 
@@ -97,11 +122,12 @@
     {
         await Task.WhenAll(_GPSWaypointService.GetGPSWaypoints().ConvertAll<Task>(waypoint =>
         {
-            return _IJSRuntime.InvokeVoidAsync($"{jsInteropName}.addWaypointMarker", [
-                waypoint.Latitude.GetValueOrDefault(0),
-                waypoint.Longitude.GetValueOrDefault(0),
-                waypoint.SearchRadius.GetValueOrDefault(0),
-                ColorTranslator.ToHtml(Color.FromArgb(waypoint.WaypointColor.GetValueOrDefault(0)))
+            return jsRoverMap!.InvokeVoidAsync("addWaypointMarker", [
+                waypoint.Latitude ?? 0,
+                waypoint.Longitude ?? 0,
+                waypoint.SearchRadius ?? 0,
+                ColorTranslator.ToHtml(Color.FromArgb(waypoint.WaypointColor ?? 0)),
+                waypoint.TagID ?? -99
             ]).AsTask();
         }));
     }
@@ -122,38 +148,52 @@
         });
     }
 
+    private async Task OnWaypointSelected(GPSWaypoint? waypoint)
+    {
+        if (waypoint is not null && waypoint.Latitude is not null && waypoint.Longitude is not null) {
+            await PanToCoordinates(waypoint.Latitude ?? 0, waypoint.Longitude ?? 0);
+        }
+    }
+
+    public async Task PanToCoordinates(double lat, double lon)
+    {
+        await jsRoverMap!.InvokeVoidAsync("panToCoordinates", [lat, lon]);
+    }
+
     [JSInvokable]
     public async Task OnZoomLevel(double lat, double lon, int zoom)
     {
 #if DEBUG
     using (HttpClient client = new HttpClient())
     {
-    client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
-    client.DefaultRequestHeaders.Referrer = new Uri("http://mt1.google.com");
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+        client.DefaultRequestHeaders.Referrer = new Uri("http://mt1.google.com");
 
-    var tasks = new List<Task>();
+        var tasks = new List<Task>();
 
-    // Convert geographic bounds to tile coordinates
-    int tileX = LonToTileX(lon, zoom);
-    int tileY = LatToTileY(lat, zoom);
+        // Convert geographic bounds to tile coordinates
+        int tileX = LonToTileX(lon, zoom);
+        int tileY = LatToTileY(lat, zoom);
 
-    for (int y = (tileY - 3); y < (tileY + 3); y++)
-    {
-    for (int x = (tileX - 3); x < (tileX + 3); x++)
-    {
-        MapTile? mapTile = await _MapTileService.GetMapTile(x, y, zoom);
-        if (mapTile is null)
+        for (int y = (tileY - 3); y < (tileY + 3); y++)
         {
-            string url = $"http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={zoom}";
-            tasks.Add(DownloadAndSaveTile(client, url, x, y, zoom));
-            _cachingMapTiles = true;
+            for (int x = (tileX - 3); x < (tileX + 3); x++)
+            {
+                MapTile? mapTile = await _MapTileService.GetMapTile(x, y, zoom);
+                if (mapTile is null)
+                {
+                    string url = $"http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={zoom}";
+                    tasks.Add(DownloadAndSaveTile(client, url, x, y, zoom));
+                    _cachingMapTiles = true;
+                }
+            }
         }
-    }
-    }
 
     await Task.WhenAll(tasks);
     _cachingMapTiles = false;
     }
+#else
+        await Task.CompletedTask;
 #endif
     }
 
@@ -173,7 +213,7 @@
         {
             await response.Content.CopyToAsync(memoryStream);
             byte[] imageBytes = memoryStream.ToArray();
-            await _MapTileService.AddMapTile(new MapTile { X = x, Y = y, Z = z, ImageData = imageBytes });
+            // await _MapTileService.AddMapTile(new MapTile { X = x, Y = y, Z = z, ImageData = imageBytes });
         }
     }
 
@@ -188,5 +228,33 @@
         return (int)Math.Floor((1.0 - Math.Log(Math.Tan(latRad) + 1.0 / Math.Cos(latRad)) / Math.PI) / 2.0 * Math.Pow(2.0, zoom));
     }
 
-    void IDisposable.Dispose() { }
+    [JSInvokable]
+    public async Task OnWaypointSelected(double lat, double lon)
+    {
+        // Find closest match by lat and lon
+        List<GPSWaypoint> waypoints = _GPSWaypointService.GetGPSWaypoints();
+        GPSWaypoint? closestWaypoint = waypoints.OrderBy(w => Math.Abs(((w.Latitude ?? 100) - lat)*((w.Longitude ?? 100) - lon))).FirstOrDefault();
+        if (closestWaypoint is not null)
+        {
+            _GPSWaypointState.SelectedWaypoint = closestWaypoint;
+        }
+        await Task.CompletedTask;
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        _GPSWaypointService.UnsubscribeFromWaypointsChanges(OnWaypointSync);
+        _GPSWaypointState.UnsubscribeFromWaypointSelected(OnWaypointSelected);
+        ObjectReference?.Dispose();
+        try
+        {
+            if (jsRoverMap is not null)
+            {
+                await jsRoverMap.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
 }

@@ -1,0 +1,56 @@
+@inject RoveCommService _RoveCommService
+@inject OpService _OpState;
+
+<style>
+    .pair {
+    display: flex;
+    gap: 0.3rem;
+    }
+
+    p {
+    align-self: center;
+    }
+</style>
+
+<div class="card full-height">
+    <div class="card-header">
+        <h3>Lighting</h3>
+    </div>
+    <div class="card-body">
+        <div style="display:flex; justify-content:center; gap: 0.75rem">
+            <div class="pair">
+                <p style="width: 20px; text-align: right">R</p>
+                <input type="number" Min="0" Max="255" Width="50%" @bind-value=@colorComponents[0] />
+            </div>
+
+            <div class="pair">
+                <p style="width: 20px; text-align: right">G</p>
+                <input type="number" Min="0" Max="255" @bind-value=@colorComponents[1] />
+            </div>        
+
+            <div class="pair">
+                <p style="width: 20px; text-align: right">B</p>
+                <input type="number" Min="0" Max="255" @bind-value=@colorComponents[2] />
+            </div>
+
+            <div class="pair">
+                <p style="width: 20px; text-align: right">A</p>
+                <input type="number" Min="0" Max="255" @bind-value=@brightness />
+            </div>
+            <button class="btn btn-primary" style="justify-self:center;" @onclick="Send">Send</button>
+            <div style="width: 50px; height: 50px; background-color: rgb(@colorComponents[0], @colorComponents[1], @colorComponents[2])"></div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<byte> colorComponents = [0, 0, 0];
+    private byte brightness = 0;
+
+    private async Task Send()
+    {
+        await _RoveCommService.SendAsync<byte>("Core", "LEDRGB", colorComponents);
+        await _RoveCommService.SendAsync<byte>("Core", "Brightness", [brightness]);
+        _OpState.OpColor = Color.FromArgb(colorComponents[0], colorComponents[1], colorComponents[2]);
+    }
+}

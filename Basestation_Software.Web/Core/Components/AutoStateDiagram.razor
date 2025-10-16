@@ -1,4 +1,4 @@
-﻿﻿@using System.Xml.Linq
+@using System.Xml.Linq
 @inject RoveCommService _RoveCommService
 
 <div class="card full-height">
@@ -44,7 +44,7 @@
     protected override async Task OnInitializedAsync()
     {
         // Load auto diagram as XElement
-        string diagramFilePath = "wwwroot/state-diagram.svg";
+        string diagramFilePath = "wwwroot/images/state-diagram.svg";
         diagramRoot = XElement.Load(diagramFilePath);
 
         for (int i = 0; i < _stateNames.Length; i++)

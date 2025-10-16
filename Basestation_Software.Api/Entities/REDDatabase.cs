@@ -1,8 +1,11 @@
 using Basestation_Software.Models.Geospatial;
 using Basestation_Software.Models.Config;
+using Basestation_Software.Models.Arm;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Xml.Linq;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace Basestation_Software.Api.Entities;
 
@@ -18,6 +21,16 @@ public class REDDatabase : DbContext
     {
         // Assign member variables.
         Configuration = configuration;
+
+        // Attempt to form missing tables in data.db
+        //try
+        //{
+        //    (Database.GetService<IDatabaseCreator>() as RelationalDatabaseCreator).CreateTables();
+        //}
+        //catch
+        //{
+        //    // CreateTables throws error if table already exists but we don't care
+        //}
     }
 
     /// <summary>
@@ -37,6 +50,10 @@ public class REDDatabase : DbContext
     public DbSet<ConfigEntity> Configs { get; set; }
     public DbSet<GPSWaypoint> Waypoints { get; set; }
     public DbSet<MapTile> MapTiles { get; set; }
+    public DbSet<LidarTile> LidarTiles { get; set; }
+
+    public DbSet<ArmPresetEntity> ArmPresets { get; set; }
+    public DbSet<ControlPreset> ControlPresets { get; set; }
 
     public void Configure(EntityTypeBuilder<ConfigEntity> modelBuilder)
     {
@@ -44,6 +61,32 @@ public class REDDatabase : DbContext
         modelBuilder.Property(x => x.ID)
             .HasColumnName(@"ID")
             .IsRequired()
+            ;
+    }
+
+    /// <summary>
+    /// Configure the primary key for the arm preset table.
+    /// </summary>
+    public void Configure(EntityTypeBuilder<ArmPresetEntity> modelBuilder)
+    {
+        modelBuilder.HasKey(x => x.ID);
+        modelBuilder.Property(x => x.ID)
+            .HasColumnName(@"ID")
+            .IsRequired()
+            .ValueGeneratedOnAdd()
+            ;
+    }
+
+    /// <summary>
+    /// Configure the primary key for the arm control preset table.
+    /// </summary>
+    public void Configure(EntityTypeBuilder<ControlPreset> modelBuilder)
+    {
+        modelBuilder.HasKey(x => x.ID);
+        modelBuilder.Property(x => x.ID)
+            .HasColumnName(@"ID")
+            .IsRequired()
+            .ValueGeneratedOnAdd()
             ;
     }
 
@@ -124,9 +167,30 @@ public class REDDatabase : DbContext
                 //      was provided for the required property 'ID'. Please provide a value different from
                 //      '00000000-0000-0000-0000-000000000000'.
                 // Workaround: hardcode a default guid here and at the top of MainLayout.Razor.
-                ID = Guid.Parse("00000000-0000-0000-0000-000000000001"), 
+                ID = Guid.Parse("00000000-0000-0000-0000-000000000001"),
                 Data = System.Text.Json.JsonSerializer.Serialize(new Config { Name = "Default" })
             }
         );
+
+        modelBuilder.Entity<ArmPresetEntity>().HasData(
+            new
+            {
+                ID = 1,
+                Name = "Default",
+            }
+        );
+
+        modelBuilder.Entity<ControlPreset>().HasData(
+            new
+            {
+                ID = 1,
+                Name = "Default",
+                jointInversions = new List<bool>([false, false, false, false, false, false]),
+                gamepadBinds = new List<int>([0, 1, 2, 3, 4, 5]),
+                jointSpeeds = new List<float>([0.12f, 1f, 1f, 1f, 5f, 5f, 5f, 0.05f]),
+
+            }
+        );
+
     }
 }
