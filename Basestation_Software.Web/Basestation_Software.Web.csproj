@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Basestation_Software.Models\Basestation_Software.Models.csproj" />
+    <ProjectReference Include="..\LoggerService\LoggerCore.csproj" />
     <ProjectReference Include="..\RoveComm_CSharp\RoveComm\RoveComm.csproj" />
   </ItemGroup>
 

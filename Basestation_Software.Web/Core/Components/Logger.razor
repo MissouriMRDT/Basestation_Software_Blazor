@@ -1,6 +1,4 @@
-﻿@inject LoggerService _LoggerService
-
-<div class="card full-height">
+﻿<div class="card full-height">
 	<div class="card-header">
 		<h3>Logger</h3>
 	</div>
@@ -13,7 +11,7 @@
 			<RadzenButton Style="background-color:#AA0000; margin:0px 0px 0px 8px;" Click="@(ClearLogs)">Clear</RadzenButton>
 		</div>
 		<div class="optionBarColumn">
-			<RadzenCheckBox TValue="bool" Style="margin:8px 0px 8px 8px;" Value="@(_LoggerService.autoExport)" Change="@(value => updateAutoExport(value))"></RadzenCheckBox>
+			<RadzenCheckBox TValue="bool" Style="margin:8px 0px 8px 8px;" Value="@(LoggerCore.LoggerService.autoExport)" Change="@(value => updateAutoExport(value))"></RadzenCheckBox>
 		</div>
 		<div class="optionBarColumn">
 			<label class="optionText">Auto Export</label>
@@ -22,7 +20,7 @@
 			<label class="optionText">Auto Export Size</label>
 		</div>
 		<div class="optionBarColumn optionTextBoxColumn">
-			<RadzenTextBox class="optionTextBox" Value="@(_LoggerService.autoExportSize.ToString())" ValueChanged="@(value => updateAutoExportSize(value))"></RadzenTextBox>
+			<RadzenTextBox class="optionTextBox" Value="@(LoggerCore.LoggerService.autoExportSize.ToString())" ValueChanged="@(value => updateAutoExportSize(value))"></RadzenTextBox>
 		</div>
 		<div class="optionBarColumn optionTextColumn">
 			<label class="optionText">Manual Export/Clear Range</label>
@@ -111,7 +109,7 @@
 	}
 	@for (int i = pageStartingIndex; i < Math.Min(pageEndingIndex + 1, logs_filtered.Count()); i++)
 	{
-		LoggerService.LogEntry log = logs_filtered[i];
+		LoggerCore.LoggerService.LogEntry log = logs_filtered[i];
 		<div class="logEntry">
 			<div class="logEntryColumn">
 				<label>@log.Message</label>
@@ -170,7 +168,7 @@
 
 	bool autoScroll = true;
 
-	List<LoggerService.LogEntry> logs_filtered = [];
+	List<LoggerCore.LoggerService.LogEntry> logs_filtered = [];
 
 	// private void addLogEntry() {
 
@@ -185,13 +183,13 @@
 	// Export Button Functionality
 	private async Task ExportLogs() {
 		if (exportRange_lowerLimit == null && exportRange_upperLimit == null) {
-			_LoggerService.ExportLogs();
+			LoggerCore.LoggerService.ExportLogs();
 		} else if (exportRange_lowerLimit == null) {
-			_LoggerService.ExportLogs(0, exportRange_upperLimit); // Issues with null values
+			LoggerCore.LoggerService.ExportLogs(0, exportRange_upperLimit); // Issues with null values
 		} else if (exportRange_upperLimit == null) {
-			_LoggerService.ExportLogs(exportRange_lowerLimit, _LoggerService.GetLogs().Count);
+			LoggerCore.LoggerService.ExportLogs(exportRange_lowerLimit, LoggerCore.LoggerService.GetLogs().Count);
 		} else  {
-			_LoggerService.ExportLogs(exportRange_lowerLimit, exportRange_upperLimit);
+			LoggerCore.LoggerService.ExportLogs(exportRange_lowerLimit, exportRange_upperLimit);
 		}
 		await InvokeAsync(StateHasChanged);
 	}
@@ -200,13 +198,13 @@
 	private async Task ClearLogs()
 	{
 		if (exportRange_lowerLimit == null && exportRange_upperLimit == null) {
-			_LoggerService.ClearActiveLogs();
+			LoggerCore.LoggerService.ClearActiveLogs();
 		} else if (exportRange_lowerLimit == null) {
-			_LoggerService.ClearActiveLogs(0, exportRange_upperLimit); // Issues with null values
+			LoggerCore.LoggerService.ClearActiveLogs(0, exportRange_upperLimit); // Issues with null values
 		} else if (exportRange_upperLimit == null) {
-			_LoggerService.ClearActiveLogs(exportRange_lowerLimit, _LoggerService.GetLogs().Count);
+			LoggerCore.LoggerService.ClearActiveLogs(exportRange_lowerLimit, LoggerCore.LoggerService.GetLogs().Count);
 		} else {
-			_LoggerService.ClearActiveLogs(exportRange_lowerLimit, exportRange_upperLimit);
+			LoggerCore.LoggerService.ClearActiveLogs(exportRange_lowerLimit, exportRange_upperLimit);
 		}
 		await InvokeAsync(StateHasChanged);
 	}
@@ -214,17 +212,17 @@
 	private async Task updateAutoExportSize(string value) {
 		try
 		{
-			_LoggerService.autoExportSize = int.Parse(value);
+			LoggerCore.LoggerService.autoExportSize = int.Parse(value);
 		}
 		catch
 		{
-			_LoggerService.autoExportSize = 25;
+			LoggerCore.LoggerService.autoExportSize = 25;
 		}
 		await InvokeAsync(StateHasChanged);
 	}
 
 	private async Task updateAutoExport(bool value) {
-		_LoggerService.autoExport = value;
+		LoggerCore.LoggerService.autoExport = value;
 		await InvokeAsync(StateHasChanged);
 	}
 
@@ -296,7 +294,7 @@
 
 	protected override async Task OnInitializedAsync()
 	{
-		_LoggerService.Subscribe(OnUpdateLog);
+		LoggerCore.LoggerService.Subscribe(OnUpdateLog);
 		filterLogs(search_message, search_source, search_timeStamp, search_channel, search_level, search_data);
 		pageEndingIndex = pageStartingIndex + pageSize - 1;
 
@@ -344,7 +342,7 @@
 	public void filterLogs(string? search_message, string? search_source, string? search_timeStamp, string? search_channel, string? search_level, string? search_data)
 	{
 		logs_filtered.Clear();
-		foreach (LoggerService.LogEntry log in _LoggerService.GetLogs())
+		foreach (LoggerCore.LoggerService.LogEntry log in LoggerCore.LoggerService.GetLogs())
 		{
 			if (((search_message == "") || (search_message == null) || (log.Message.Contains(search_message))) &&
 				((search_source == "") || (search_source == null) || (log.Source == null) || (log.Source.Contains(search_source))) &&
@@ -360,7 +358,6 @@
 		pageEndingIndex = pageStartingIndex + pageSize - 1;
 		return;
 	}
-
 
 }
 
