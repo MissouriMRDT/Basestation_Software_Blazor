@@ -97,7 +97,7 @@ export class RoverMap {
             "Waypoints": this.waypointLayerGroup,
             "Tags": this.tagLayerGroup,
             "Rover": this.roverIcon,
-            "Path": this.pathLayerGroup,
+            "Planned Path": this.pathLayerGroup,
             "Rover Path": this.roverPathLayerGroup,
         };
 
