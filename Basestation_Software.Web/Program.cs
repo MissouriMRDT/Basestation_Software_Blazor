@@ -47,6 +47,7 @@ builder.Services.AddSingleton<ArmControlService>();
 builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
 builder.Services.AddSingleton<LoggerService>();
+builder.Services.AddSingleton<FileReaderService>();
 
 var app = builder.Build();
 
