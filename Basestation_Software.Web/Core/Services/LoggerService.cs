@@ -1,49 +1,49 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 
 namespace Basestation_Software.Web.Core.Services
 {
-	public class LoggerService
-	{
-		// Logs are currently stored as a list of strings.
-		// It may make sense to create a log class to support features like timestamps and logging levels.
+    public class LoggerService
+    {
+        // Logs are currently stored as a list of strings.
+        // It may make sense to create a log class to support features like timestamps and logging levels.
         private List<LogEntry> logs = [];
         private List<LogEntry> logs_filtered = [];
 
-		private event Func<Task>? LogNotifier;
+        private event Func<Task>? LogNotifier;
 
         public bool autoExport = false;
         public int autoExportSize = 1000;
 
-		// Adds a message to the log list.
-		public void Log(string message, string? source = null, string? channel = null, string? level = null, string? data = null)
-		{
-			logs.Add(new LogEntry(message, source, channel, level, data));
+        // Adds a message to the log list.
+        public void Log(string message, string? source = null, string? channel = null, string? level = null, string? data = null)
+        {
+            logs.Add(new LogEntry(message, source, channel, level, data));
 
             if (autoExport && logs.Count > autoExportSize)
             {
                 ExportLogs(autoExportSize);
             }
 
-			// Trigger log event
-			LogNotifier?.Invoke();
-		}
+            // Trigger log event
+            LogNotifier?.Invoke();
+        }
 
-		public void Subscribe(Func<Task> listener)
-		{
-			LogNotifier += listener;
-		}
+        public void Subscribe(Func<Task> listener)
+        {
+            LogNotifier += listener;
+        }
 
-		public void Unsubscribe(Func<Task> listener)
-		{
-			LogNotifier -= listener;
-		}
+        public void Unsubscribe(Func<Task> listener)
+        {
+            LogNotifier -= listener;
+        }
 
-		public List<LogEntry> GetLogs()
-		{
-			return logs;
-		}
+        public List<LogEntry> GetLogs()
+        {
+            return logs;
+        }
 
         public List<LogEntry> GetLogs_Filtered()
         {

@@ -1,4 +1,4 @@
-﻿using Basestation_Software.Models.Arm;
+using Basestation_Software.Models.Arm;
 
 namespace Basestation_Software.Api.Entities;
 

@@ -38,77 +38,79 @@ This project is the frontend web application built using Blazor. Blazor is a fra
   - **Services**: Contain business logic and data access code, and are used to interact with the API.
   - **Models**: Used to define the structure of the data handled by the application.
 
-## Blazor: Server vs. Client-Side Rendering
-
-Blazor allows you to build rich web applications using C# and .NET. It supports two modes of rendering:
-
-### Blazor Server
-
-In Blazor Server, the application runs on the server. UI updates, event handling, and JavaScript calls are handled over a SignalR connection.
-
-- **Advantages**:
-  - Smaller download size as only HTML, CSS, and minimal JavaScript are sent to the client.
-  - Faster initial load time.
-  - Access to .NET Core server capabilities, such as server-side data access and authentication.
-
-- **Disadvantages**:
-  - Requires a constant connection to the server.
-  - Higher latency for UI updates, as every interaction goes to the server.
-
-### Blazor WebAssembly (WASM)
-
-In Blazor WASM, the application runs in the browser using WebAssembly. The entire application, including the .NET runtime, is downloaded to the client.
-
-- **Advantages**:
-  - Works offline after the initial load.
-  - Lower latency for UI updates, as interactions are handled locally in the browser.
-
-- **Disadvantages**:
-  - Larger download size due to the .NET runtime.
-  - Limited access to server resources and capabilities.
-
 ## 3rd Party Libraries
- - [Bootstrap (for premade icons and CSS classes)](https://getbootstrap.com/docs/5.3/getting-started/introduction/)
- - [Radzen (for premade components)](https://blazor.radzen.com/dashboard)
+
+- [Bootstrap](https://getbootstrap.com/docs/5.3/getting-started/introduction/) for icons and CSS classes
+- [Radzen](https://blazor.radzen.com/dashboard) for HTML components
+- [Leaflet](https://leafletjs.com/) for the interactive map
+- [three.js](https://threejs.org) for 3d rover
 
 ## Getting Started
 
-### Prerequisites
+### Step 1: Install Git
 
-- [.NET SDK](https://dotnet.microsoft.com/download) installed
-- [SQLite](https://www.sqlite.org/download.html) installed
+Git is the version control software we use to manage all the different versions of our codebase across multiple people and projects.
 
-### Setting Up the Project
+To install Git on Windows, download and run the installer for [Git For Windows](https://gitforwindows.org/).
 
-1. Clone the repository:
+To install Git on Linux, use your package manager. For example, using apt: `sudo apt install git`
 
-   ```sh
-   git clone https://github.com/MissouriMRDT/Basestation_Software_Blazor.git
-   cd Basestation_Software_Blazor
-   ```
+### Step 2: Install the Dotnet Framework SDK
 
-2. Install Git LFS (if not already installed) and pull LFS files:
+Microsoft .NET is the framework we use to develop Basestation Software. Specifically, we use .NET 8.0.
 
-   ```sh
-   git lfs install
-   git lfs pull
-   ```
+To install Dotnet on Windows, download the installer from [this page](https://dotnet.microsoft.com/en-us/download).
 
-3. Open the workspace.
+To install Dotnet on Debian, refer to [this guide](https://learn.microsoft.com/en-us/dotnet/core/install/linux-debian?tabs=dotnet8).
 
-4. Open in the Devcontainer.
+Make sure you install version 8.0 and not 9.0! To verify you have installed Dotnet successfully, open a terminal and run `dotnet --version`.
 
-### Running Basestation_Software
+### Step 3: Install the Entity Framework Core tools for .NET
 
-1) Once the devcontainer is open, navigate to the debug tool in the sidebar of VSCode.
-2) Click on the dropdown and select API, then click run.
-2) Click on the dropdown and select WEB, then click run.
+The Entity Framework Core tools, more commonly called dotnet-ef, is a set of tools for the Dotnet framework that we use to update and manage our database file. Note that we also need to install the 8.0 version of this tool.
 
-The wabapp will be automatically opened in a browser window.
+To install on Windows, open a terminal and run `dotnet tool install --global dotnet-ef --version 8.*`.
 
-The application will start and be accessible at `http://localhost:8080`.
-The API also hosts Swagger for easier development. It can be found at `http://localhost:5000/swagger/index.html`.
+To install on Debian, run `dotnet tool install --global dotnet-ef --version 8.*` Then add `export PATH="$PATH:$HOME/.dotnet/tools/"` to `~/.bashrc` before reloading with `source ~/.bashrc`.
 
-## Contributing
+Verify you have installed dotnet-ef with `dotnet ef`.
 
-Contributions are welcome! Please submit a pull request or open an issue to discuss any changes or improvements.
+### Step 4: Clone the Basestation_Software_Blazor repository
+
+1. Open a terminal and navigate to the directory you want to clone the repo. Then, run `git clone https://github.com/MissouriMRDT/Basestation_Software_Blazor.git`
+2. Navigate your terminal into the `Basestation_Software_Blazor` directory created in the previous step
+3. Initialize and update git submodules to the latest version with `git submodule update --init --recursive --remote`
+
+### Step 5: Initialize your local database file
+
+1. `cd Basestation_Software_Blazor/Basestation_Software.Api`
+2. Delete `Data/data.db` if it exists
+3. `dotnet ef database update --runtime <runtime>` where `<runtime>` is the identifier matching your platform which can be found at <https://learn.microsoft.com/en-us/dotnet/core/rid-catalog> (e.g, win-x64, linux-x64)
+
+This will create a new data.db with the appropriate columns and default data.
+
+### Step 6: Install and Run Basestation Camera Server
+
+A Rust server is used to receive UDP streams and serve them to Basestation clients over WebRTC.
+
+Recommended: Running from a release binary (linux/windows amd64)
+
+1. Download basestation_camera_server (linux) or basestation_camera_server.exe (windows) from <https://github.com/MissouriMRDT/basestation_camera_server/releases/latest> into an appropriate folder
+2. Execute the downloaded executable. The default configuration will be written to config.toml beside the executable and can be modified
+
+Optionally, you can build and run from source with the following:
+
+1. Open a terminal and navigate to the directory you want to clone the repo. Then, run `git clone https://github.com/MissouriMRDT/basestation_camera_server`
+2. Install Rust from <https://www.rust-lang.org/tools/install> if it does not exist on your machine
+3. Compile and run with `cargo run --release`, the default configuration will be written to config.toml beside the executable and can be modified
+
+### Step 7: Run Basestation Software
+
+1. `cd Basestation_Software_Blazor`
+2. Start Basestation_Software_Blazor.Api, which provides an API to perform CRUD operations on your local database file with `dotnet run --project Basestation_Software.Api --urls http://localhost:5000`
+3. Start Basestation_Software_Blazor.Web, which hosts a webpage acting as a user interface to send commands to the rover and make database API calls with `dotnet run --project Basestation_Software.Web --urls http://localhost:8080`
+4. Open `http://localhost:8080` in any web browser (competition Basestation PC runs Firefox with 4 full-screen portrait 1080x1920 windows).
+
+Basestation can be served to other devices on your network by replacing `--urls http://localhost:8080` with `--urls 'http://*:8080'`.
+
+*Note: The API also hosts Swagger at `http://localhost:5000/swagger/index.html`.*

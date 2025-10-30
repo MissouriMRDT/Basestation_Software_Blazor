@@ -1,4 +1,4 @@
-﻿namespace Basestation_Software.Models.Arm;
+namespace Basestation_Software.Models.Arm;
 
 public class ArmPreset
 {
