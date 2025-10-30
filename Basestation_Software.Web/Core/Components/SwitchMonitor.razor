@@ -10,7 +10,7 @@
     <div class="card-body">
         @* <button class="btn" @onclick=UpdateInterfaceStats>Test Command</button> *@
         <div class=row>
-            <div class="col-8">
+            <div class="col-6">
                 <svg viewBox="0 0 100 100">
                     <style>
                         .port {
@@ -59,7 +59,7 @@
                     }
                 </svg>
             </div>
-            <div class="col-4">
+            <div class="col-6">
                 <RadzenChart style="height: 100px">
                     <RadzenPieSeries Data="@_signalTraffic" Title="Signal Band Utilization" CategoryProperty="Band" ValueProperty="Traffic">
                         <RadzenSeriesDataLabels />
@@ -81,7 +81,6 @@
                     @_displayStats.Name;
                 </span>
             </h4>
-            <h4>Info</h4>
             <table class="table">
                 <thead>
                     <tr>
