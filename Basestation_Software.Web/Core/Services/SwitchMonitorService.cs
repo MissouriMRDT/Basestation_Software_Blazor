@@ -144,6 +144,12 @@ public class SwitchMonitorService : IHostedService, IDisposable
         if (firstEntry is not null && lastEntry is not null && firstEntry != lastEntry)
         {
             TimeSpan delta = (TimeSpan)(lastTime! - firstTime!);
+            // No divide by zero
+            if (delta.Seconds == 0)
+            {
+                return false;
+            }
+
             dest.InputRateBytes = (lastEntry.Traffic.TotalInputBytes - firstEntry.Traffic.TotalInputBytes) / delta.Seconds;
             dest.InputRatePackets = (lastEntry.Traffic.TotalInputPackets - firstEntry.Traffic.TotalInputPackets) / delta.Seconds;
             dest.OutputRateBytes = (lastEntry.Traffic.TotalOutputBytes - firstEntry.Traffic.TotalOutputBytes) / delta.Seconds;
@@ -268,6 +274,7 @@ public class SwitchMonitorService : IHostedService, IDisposable
                     info.Traffic.InputRatePackets = int.Parse(fiveMinuteRateMatch.Groups[2].Value);
                     info.Traffic.OutputRateBytes = int.Parse(fiveMinuteRateMatch.Groups[3].Value) / 8; // bits to bytes
                     info.Traffic.OutputRatePackets = int.Parse(fiveMinuteRateMatch.Groups[4].Value);
+                    Console.WriteLine($"Failed to compute time average for interface {info.Name}. Falling back on 5-minute average.");
                 }
                 else
                 {
@@ -310,19 +317,20 @@ public class SwitchMonitorService : IHostedService, IDisposable
     /// <returns>A list of EIGRP entries</returns>
     public List<EigrpTopologyInfo> GetEigrpTopology()
     {
+        string result = "";
         var topology = new List<EigrpTopologyInfo>();
         using var client = new SshClient(BasestationSwitchIP, BasestationSwitchUser, BasestationSwitchPassword);
         try
         {
             client.Connect();
+            using SshCommand command = client.RunCommand("show ip eigrp topology");
+            result = command.Result;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Could not connect: {ex.Message}");
             return topology;
         }
-        using SshCommand command = client.RunCommand("show ip eigrp topology");
-        string result = command.Result;
 
         var eigrpEntryPattern = new Regex(@"([PAUQRrs]) (\d+\.\d+\.\d+\.\d+/\d+), (\d+) successors, FD is (\d+)");
         var eigrpSuccessorPattern = new Regex(@"\s*via (Connected|\d+\.\d+\.\d+\.\d+) \((\d+)/(\d+)\), ([a-zA-Z0-9_\-/]+)");
@@ -395,19 +403,20 @@ public class SwitchMonitorService : IHostedService, IDisposable
     /// <returns>A list of port statuses</returns>
     public List<PortStatus> GetPorts()
     {
+        string result = "";
         var ports = new List<PortStatus>();
         using var client = new SshClient(RoverSwitchIP, RoverSwitchUser, RoverSwitchPassword);
         try
         {
             client.Connect();
+            using SshCommand command = client.RunCommand("show interface status");
+            result = command.Result;
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Could not connect: {ex.Message}");
             return ports;
         }
-        using SshCommand command = client.RunCommand("show interface status");
-        string result = command.Result;
         // Port      Name               Status       Vlan       Duplex  Speed Type 
         // Fa1/1     AutonomyAndSensorA notconnect   3            auto   auto 10/100BaseTX 
         var headerPattern = new Regex(@"(Port)\s+(Name)\s+(Status)\s+(Vlan)\s+(Duplex)\s+(Speed)\s+(Type)");
