@@ -49,6 +49,7 @@ builder.Services.AddBlazoredToast();
 builder.Services.AddSingleton<LoggerService>();
 builder.Services.AddSingleton<SwitchMonitorService>();
 builder.Services.AddHostedService((sp) => sp.GetRequiredService<SwitchMonitorService>());
+builder.Services.AddSingleton<FileReaderService>();
 
 var app = builder.Build();
 

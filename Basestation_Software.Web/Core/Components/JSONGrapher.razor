@@ -1,0 +1,83 @@
+@implements IDisposable
+@inject FileReaderService _FileReaderService
+@using System.Text.RegularExpressions
+@using Models.Network
+
+<div class="card h-100">
+    <div class="card-header">
+        <h3>JSON Grapher</h3>
+    </div>
+    <label>JSON Path: </label>
+    <input type="text" @bind=@jsonFilePath />
+    <label>Target Key: </label>
+    <input type="text" @bind=@targetKey />
+
+    <RadzenChart>
+        <RadzenLineSeries Data="@telemetrySteps" CategoryProperty="Timestamp" ValueProperty="Value">
+            <RadzenMarkers Visible="false" StrokeWidth="0" Size="2"/>
+            <RadzenSeriesDataLabels Visible="false" />
+        </RadzenLineSeries>
+
+        <RadzenValueAxis>
+            <RadzenAxisTitle Text="@targetKey" />
+        </RadzenValueAxis>
+    </RadzenChart>
+
+    @* @foreach(RocketTelemetryStep t in telemetrySteps) {
+        <p>@t.Value</p>
+    } *@
+</div>
+
+@code
+{
+    private Timer UpdateTimer;
+    public int UPDATE_INTERVAL = 1000; // ms
+
+    private string jsonFilePath = "";
+    private string targetKey = "";
+    private List<RocketTelemetryStep> telemetrySteps = new();
+
+    protected override void OnInitialized()
+    {
+        UpdateTimer = new Timer(Update);
+        UpdateTimer.Change(0, UPDATE_INTERVAL);
+    }
+
+    // Read from all data from json file and store in memory to graph
+    private void Update(object? _)
+    {
+        if (jsonFilePath == "" || targetKey == "") return;
+        telemetrySteps = new List<RocketTelemetryStep>();
+        // Try open json file
+        try {
+            string jsonString = _FileReaderService.Read(jsonFilePath).Result;
+
+            // get all values for target key
+            Regex rv = new Regex($"\"{targetKey}\": (.+),");
+            // get all values for time
+            Regex rt = new Regex($"\"time\": \"(.+)\",");
+            MatchCollection valueMatches = rv.Matches(jsonString);
+            MatchCollection timeMatches = rt.Matches(jsonString);
+            // Loop over all timestamp entries and add to list
+            for (int i = 0; i < valueMatches.Count; i++) {
+                Console.WriteLine(timeMatches[i]);
+                Console.WriteLine(i);
+                telemetrySteps.Add(new RocketTelemetryStep{
+                    Value = float.Parse(valueMatches[i].Groups[1].Value), 
+                    Timestamp = DateTime.ParseExact(timeMatches[i].Groups[1].Value, "yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture).AddMinutes(i)
+                    });
+            }
+        }
+        catch(Exception e) {
+            // Errors can be caused by incorrect file path, we don't care
+            Console.WriteLine(e);
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    void IDisposable.Dispose()
+    {
+
+    }
+}
