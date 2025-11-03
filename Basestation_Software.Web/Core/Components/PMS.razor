@@ -54,7 +54,7 @@
         <div style="grid-area: core-current; background-color: @Utils.ClampMap(PackCurrent - AuxCurrent, 7.2, 30, COLOR_OK, COLOR_ERROR)">Core Current<span>@($"{PackCurrent - AuxCurrent:0.00}") A</span></div>
         <div style="grid-area: aux-current; background-color: @Utils.ClampMap(AuxCurrent, 5, 15, COLOR_OK, COLOR_ERROR)">Aux Current<span>@($"{AuxCurrent:0.00}") A</span></div>
         <div style="grid-area: pack-current; background-color: @Utils.ClampMap(PackCurrent, 9.5, 45, COLOR_OK, COLOR_ERROR)">Pack Current<span>@($"{PackCurrent:0.00}") A</span></div>
-        <div style="grid-area: pack-capacity; background-color: @Utils.ClampMap(PackCapacity, 1, 2.3, COLOR_ERROR, COLOR_OK)">Pack Capactity<span>@($"{PackCapacity:0.00}") Wh</span></div>
+        <div style="grid-area: pack-capacity; background-color: @Utils.ClampMap(PackCapacity, 1, 2.3, COLOR_ERROR, COLOR_OK)">Pack Capactity<span>@($"{PackCapacity:0.00}") J</span></div>
         <div style="grid-area: cs1-current; background-color: #fff">CS1<span>@($"{MiscCurrent[0]:0.00}") A</span></div>
         <div style="grid-area: cs2-current; background-color: #fff">CS2<span>@($"{MiscCurrent[1]:0.00}") A</span></div>
         <div style="grid-area: cs3-current; background-color: #fff">CS3<span>@($"{MiscCurrent[2]:0.00}") A</span></div>
@@ -92,7 +92,7 @@
     private List<float> MiscCurrent = new List<float>() { 0, 0, 0 }; // CS1 ... CS3
     private System.Threading.Timer TelemetryWatchdog = null!;
     private double PackCapacity = 0;
-    
+
 
     protected override void OnInitialized()
     {
@@ -107,17 +107,24 @@
         _RoveCommService.On<float>("PMS", "PackVoltage", async (RoveCommPacket<float> packet) =>
         {
             PackVoltage = packet.Data[0];
-            double x = PackVoltage; 
-            if (x<3.51)
-                PackCapacity = -13.9822 * Math.Pow(x, 4) + 171.57201 * Math.Pow(x, 3) + -789.44267 * Math.Pow(x, 2) + 1613.72122 * x + -1233.76371;
+            double x = PackVoltage / 6;
+
+            if (x < 2.8)
+                PackCapacity = 0;
+            else if (x < 3.45)
+                PackCapacity = -144081.925 + 235284.736 * x - 153537.325 * x * x + 50048.2469 * x * x * x - 8149.57918 * x * x * x * x + 530.359797 * x * x * x * x * x;
+            else if (x < 3.81)
+                PackCapacity = 6198350.17 - 8453983.154 * x + 4610248.291 * x * x - 1256560.878 * x * x * x + 171177.5361 * x * x * x * x - 9324.159109 * x * x * x * x * x;
+            else if (x < 4.12)
+                PackCapacity = -2608191.44 + 3247156.22 * x - 1615884.19 * x * x + 401745.658 * x * x * x - 49900.4554 * x * x * x * x + 2477.08634 * x * x * x * x * x;
             else
-                PackCapacity = 10.2215 * Math.Pow(x, 4) + -159.53852 * Math.Pow(x, 3) + 934.64298 * Math.Pow(x, 2) + -2437.79423 * x + 2390.80978;
-            
+                PackCapacity = 30.453;
+
             ResetWatchdog();
             await InvokeAsync(StateHasChanged);
-            
+
         });
-       
+
         _RoveCommService.On<float>("PMS", "CellVoltage", async (RoveCommPacket<float> packet) =>
         {
             CellVoltage = packet.Data;
