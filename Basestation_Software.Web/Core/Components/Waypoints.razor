@@ -11,15 +11,17 @@
                 <RadzenButton ButtonStyle="ButtonStyle.Dark" Text="New Waypoint" Click="@InsertRow" />
 
             </div>
-            <div class ="col-6 d-flex justify-content-end">
+            <div class="col-6 d-flex justify-content-end">
                 <RadzenCheckBox TValue="bool" @bind-Value="@_showTagIDs" Name="TagIDVisToggle"></RadzenCheckBox>
                 <RadzenLabel Text="Show Tag IDs" Component="TagIdVisToggle" />
 
                 @if (_waypointsToUpdate.Count > 0 || _waypointsToInsert.Count > 0)
                 {
                     <div class="vr">&nbsp;</div>
-                    <RadzenButton ButtonStyle="ButtonStyle.Primary" Text="Save All" Click="@SaveAllEdits" style="margin-left: 10px; margin-right: 10px" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Text="Cancel All" Click="@CancelAllEdits" style="margin-right: 10px"  />
+                    <RadzenButton ButtonStyle="ButtonStyle.Primary" Text="Save All" Click="@SaveAllEdits"
+                        style="margin-left: 10px; margin-right: 10px" />
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Text="Cancel All" Click="@CancelAllEdits"
+                        style="margin-right: 10px" />
                 }
             </div>
         </div>
@@ -37,22 +39,11 @@
         else
         {
 
-            <RadzenDataGrid @ref="_waypointsDataGrid"
-            Data="@_waypointsInputTable"
-            EditMode="DataGridEditMode.Multiple"
-            TItem="GPSWaypointInput"
-            RowUpdate="@OnUpdateRow"
-            RowCreate="@OnCreateRow"
-            AllowSorting="true"
-            AllowMultiColumnSorting="true"
-            AllowVirtualization="false"
-            Density="Density.Compact"
-            AllowFiltering="false"
-            AllowColumnResize="true"
-            Style="height: 100%;"
-            SelectionMode="DataGridSelectionMode.Single"
-            CellRender="@OnCellRender"
-            RowClick="@OnRowClick">
+            <RadzenDataGrid @ref="_waypointsDataGrid" Data="@_waypointsInputTable" EditMode="DataGridEditMode.Multiple"
+                TItem="GPSWaypointInput" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" AllowSorting="true"
+                AllowMultiColumnSorting="true" AllowVirtualization="false" Density="Density.Compact" AllowFiltering="false"
+                AllowColumnResize="true" Style="height: 100%;" SelectionMode="DataGridSelectionMode.Single"
+                CellRender="@OnCellRender" RowClick="@OnRowClick">
                 <Columns>
                     @* <RadzenDataGridColumn Property="Timestamp" Title="Timestamp" /> *@
                     <RadzenDataGridColumn Property="Name" Title="Waypoint">
@@ -60,7 +51,8 @@
                             @waypoint.Name
                         </Template>
                         <EditTemplate Context="waypoint">
-                            <RadzenTextBox Name="Name" @bind-Value="waypoint.Name" class="form-control form-control-sm" placeholder="@waypoint.Name"/>
+                            <RadzenTextBox Name="Name" @bind-Value="waypoint.Name" class="form-control form-control-sm"
+                                placeholder="@waypoint.Name" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn Property="Latitude" Title="Latitude">
@@ -68,7 +60,8 @@
                             @waypoint.Latitude
                         </Template>
                         <EditTemplate Context="waypoint">
-                            <RadzenTextBox Placeholder="degrees [minutes [seconds]]" Name="Latitude" @bind-Value="waypoint.Latitude" class="form-control form-control-sm" style="z-index: 0;" />
+                            <RadzenTextBox Placeholder="degrees [minutes [seconds]]" Name="Latitude"
+                                @bind-Value="waypoint.Latitude" class="form-control form-control-sm" style="z-index: 0;" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn Property="Longitude" Title="Longitude">
@@ -76,7 +69,8 @@
                             @waypoint.Longitude
                         </Template>
                         <EditTemplate Context="waypoint">
-                            <RadzenTextBox Placeholder="degrees [minutes [seconds]]" Name="Longitude" @bind-Value="waypoint.Longitude" class="form-control form-control-sm" style="z-index: 0;" />
+                            <RadzenTextBox Placeholder="degrees [minutes [seconds]]" Name="Longitude"
+                                @bind-Value="waypoint.Longitude" class="form-control form-control-sm" style="z-index: 0;" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn Property="SearchRadius" Title="Search Radius">
@@ -84,38 +78,70 @@
                             @waypoint.SearchRadius
                         </Template>
                         <EditTemplate Context="waypoint">
-                            <RadzenNumeric Name="SearchRadius" @bind-Value="waypoint.SearchRadius" class="form-control form-control-sm" style="z-index: 0;" />
+                            <RadzenNumeric Name="SearchRadius" @bind-Value="waypoint.SearchRadius"
+                                class="form-control form-control-sm" style="z-index: 0;" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn Property="TagID" Title="Tag ID" Visible=@_showTagIDs>
                         <Template Context="waypoint">
                             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center">
                                 @waypoint.TagID
-                                @if (waypoint.TagID >= 0)
+                                @if (waypoint.TagID >= (int)RoveComm.Boards.Autonomy.AUTONOMYWAYPOINTTYPES.Tag0)
                                 {
                                     <ArucoTagDisplay ID="@waypoint.TagID" Scale="4" />
+                                }
+                                else if (waypoint.TagID == (int)RoveComm.Boards.Autonomy.AUTONOMYWAYPOINTTYPES.Any)
+                                {
+                                    <img class="waypoint-icon" src="/images/any.png" />
+                                }
+                                else if (waypoint.TagID == (int)RoveComm.Boards.Autonomy.AUTONOMYWAYPOINTTYPES.Mallet)
+                                {
+                                    <img class="waypoint-icon" src="/images/mallet.png" />
+                                }
+                                else if (waypoint.TagID == (int)RoveComm.Boards.Autonomy.AUTONOMYWAYPOINTTYPES.WaterBottle)
+                                {
+                                    <img class="waypoint-icon" src="/images/bottle.png" />
+                                }
+                                else if (waypoint.TagID == (int)RoveComm.Boards.Autonomy.AUTONOMYWAYPOINTTYPES.Pick)
+                                {
+                                    <img class="waypoint-icon" src="/images/pick.png" />
+                                }
+                                else if (waypoint.TagID ==
+                                (int)RoveComm.Boards.Autonomy.AUTONOMYWAYPOINTTYPES.ContinuousNavigate)
+                                {
+                                    <img class="waypoint-icon" src="/images/continuousNavigate.png" />
+                                }
+                                else
+                                {
+                                    <img class="waypoint-icon" src="/images/unknown.png" />
                                 }
                             </RadzenStack>
                         </Template>
                         <EditTemplate Context="waypoint">
-                            <RadzenNumeric Name="TagID" @bind-Value="waypoint.TagID" class="form-control form-control-sm" style="z-index: 0;" />
+                            <RadzenNumeric Name="TagID" @bind-Value="waypoint.TagID" class="form-control form-control-sm"
+                                style="z-index: 0;" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn Property="WaypointColor" Title="Color">
                         <Template Context="waypoint">
                         </Template>
                         <EditTemplate Context="waypoint">
-                            <RadzenColorPicker @bind-Value=@waypoint.WaypointColor ShowHSV="false" ShowRGBA="false" ShowColors="true" ShowButton="false" />
+                            <RadzenColorPicker @bind-Value=@waypoint.WaypointColor ShowHSV="false" ShowRGBA="false"
+                                ShowColors="true" ShowButton="false" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn Title="Actions" Sortable="false">
                         <Template Context="waypoint">
-                            <button class="btn btn-sm btn-warning" @onclick="async () => await EditRow(waypoint)" title="Edit Waypoint"><i class="bi bi-inline-text bi-pencil" /> </button>
+                            <button class="btn btn-sm btn-warning" @onclick="async () => await EditRow(waypoint)"
+                                title="Edit Waypoint"><i class="bi bi-inline-text bi-pencil" /> </button>
                         </Template>
                         <EditTemplate Context="waypoint">
-                            <button class="btn btn-sm btn-success" @onclick="async () => await SaveRow(waypoint)" title="Save Waypoint"><i class="bi bi-inline-text bi-save2" /> </button>
-                            <button class="btn btn-sm btn-warning" @onclick="async () => await CancelEdit(waypoint)" title="Cancel Changes"><i class="bi bi-inline-text bi-x-circle" /> </button>
-                            <button class="btn btn-sm btn-danger" @onclick="async () => await DeleteRow(waypoint)" title="Delete Waypoint"><i class="bi bi-inline-text bi-trash" /></button>
+                            <button class="btn btn-sm btn-success" @onclick="async () => await SaveRow(waypoint)"
+                                title="Save Waypoint"><i class="bi bi-inline-text bi-save2" /> </button>
+                            <button class="btn btn-sm btn-warning" @onclick="async () => await CancelEdit(waypoint)"
+                                title="Cancel Changes"><i class="bi bi-inline-text bi-x-circle" /> </button>
+                            <button class="btn btn-sm btn-danger" @onclick="async () => await DeleteRow(waypoint)"
+                                title="Delete Waypoint"><i class="bi bi-inline-text bi-trash" /></button>
                         </EditTemplate>
                     </RadzenDataGridColumn>
                 </Columns>
@@ -170,7 +196,8 @@
     /// Accepts absolutely ridiculous "DMS" values
     /// </summary>
     /// <example>
-    /// "-91.778441", "-91� 46' 42.3876"", "d-5506.70646", "d0m-330402.3876", and "-5,5206.7|0.32*4.056" all give the same value
+    /// "-91.778441", "-91� 46' 42.3876"", "d-5506.70646", "d0m-330402.3876", and "-5,5206.7|0.32*4.056" all give the same
+    /// value
     /// </example>
     /// <param name="dms">degree minute second deliminated by any non numeric</param>
     /// <returns>Degrees</returns>
@@ -179,7 +206,8 @@
         double degrees = 0, multiplier = 1, dcomponent;
         foreach (string scomponent in Regex.Split(dms, "[^-.\\d]+"))
         {
-            if (Double.TryParse(scomponent, out dcomponent)) {
+            if (Double.TryParse(scomponent, out dcomponent))
+            {
                 if (degrees >= 0) // Minus sign propagates
                     degrees += dcomponent * multiplier;
                 else
@@ -199,18 +227,18 @@
     {
         // Repack each value.
         GPSWaypoint convertedWaypoint = new GPSWaypoint()
-            {
-                ID = waypoint.ID,
-                Name = waypoint.Name,
-                Latitude = ConvertDMSToDegrees(waypoint.Latitude),
-                Longitude = ConvertDMSToDegrees(waypoint.Longitude),
-                Altitude = waypoint.Altitude,
-                Timestamp = DateTime.Parse(waypoint.Timestamp),
-                WaypointColor = ConvertRgbStringToColor(waypoint.WaypointColor).ToArgb(),
-                SearchRadius = waypoint.SearchRadius,
-                TagID = waypoint.TagID,
-                Type = Enum.Parse<WaypointType>(waypoint.Type)
-            };
+        {
+            ID = waypoint.ID,
+            Name = waypoint.Name,
+            Latitude = ConvertDMSToDegrees(waypoint.Latitude),
+            Longitude = ConvertDMSToDegrees(waypoint.Longitude),
+            Altitude = waypoint.Altitude,
+            Timestamp = DateTime.Parse(waypoint.Timestamp),
+            WaypointColor = ConvertRgbStringToColor(waypoint.WaypointColor).ToArgb(),
+            SearchRadius = waypoint.SearchRadius,
+            TagID = waypoint.TagID,
+            Type = Enum.Parse<WaypointType>(waypoint.Type)
+        };
 
         return convertedWaypoint;
     }
@@ -228,21 +256,21 @@
 
         // Repack each value.
         GPSWaypointInput convertedWaypointInput = new GPSWaypointInput()
-            {
-                ID = waypoint.ID ?? -1,
-                Name = waypoint.Name ?? "",
-                Latitude = (waypoint.Latitude ?? 0).ToString(),
-                Longitude = (waypoint.Longitude ?? 0).ToString(),
-                Altitude = waypoint.Altitude ?? 0,
-                Timestamp = waypoint.Timestamp.ToString() ?? DateTime.MinValue.ToString(),
-                WaypointColor = colorString,
-                SearchRadius = waypoint.SearchRadius ?? 0,
-                TagID = waypoint.TagID ?? -1,
-                Type = waypoint.Type.ToString() ?? WaypointType.Navigation.ToString()
-            };
+        {
+            ID = waypoint.ID ?? -1,
+            Name = waypoint.Name ?? "",
+            Latitude = (waypoint.Latitude ?? 0).ToString(),
+            Longitude = (waypoint.Longitude ?? 0).ToString(),
+            Altitude = waypoint.Altitude ?? 0,
+            Timestamp = waypoint.Timestamp.ToString() ?? DateTime.MinValue.ToString(),
+            WaypointColor = colorString,
+            SearchRadius = waypoint.SearchRadius ?? 0,
+            TagID = waypoint.TagID ?? -1,
+            Type = waypoint.Type.ToString() ?? WaypointType.Navigation.ToString()
+        };
 
         return convertedWaypointInput;
-    } 
+    }
 
     /// <summary>
     /// Convert Radzen's wacky ass color picker value to something useful.
@@ -397,7 +425,8 @@
     {
         // Creat a new empty waypoint input object.
         GPSWaypointInput waypoint = new GPSWaypointInput();
-        // Just to keep things civil, we are going to assign a negative ID to the waypoint based on the number of waypoints currently in the insert list.
+        // Just to keep things civil, we are going to assign a negative ID to the waypoint based on the number of waypoints
+        // currently in the insert list.
         // Add new waypoint to the table.
         _waypointsToInsert.Add(waypoint);
         _waypointsInputTable.Insert(0, waypoint);
@@ -551,7 +580,8 @@
 
     private async Task OnWaypointSelected(GPSWaypoint? waypoint)
     {
-        if (GetSelectedGPSWaypoint()?.ID == waypoint?.ID) {
+        if (GetSelectedGPSWaypoint()?.ID == waypoint?.ID)
+        {
             // This component probably emitted this event.
             return;
         }

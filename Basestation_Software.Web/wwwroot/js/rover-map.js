@@ -6,6 +6,9 @@
 
 import { generateArucoMarker } from "./aruco-tag-generator.js";
 
+const waypointIcons = [[-1, "/images/any.png"], [-2, "/images/mallet.png"], [-3, "/images/bottle.png"], [-4, "/images/pick.png"], [-99, "/images/continuousNavigate.png"]];
+const unknownWaypointIcon = "/images/unknown.png";
+
 export class RoverMap {
     container = null;
     lMap = null;
@@ -124,13 +127,17 @@ export class RoverMap {
                 .addTo(this.waypointLayerGroup);
         }
         if (id >= 0) {
-            generateArucoMarker(10, 4, 4, "4x4_1000", id).then((svgElement) => {
-                const r = 0.0001;
-                const o = 0.000015 * Math.max(radius, 15);
-                const svgBounds = [[lat + o - r, lng - r], [lat + o + r, lng + r]];
-                L.svgOverlay(svgElement, svgBounds, { interactive: false, zIndex: 0 }).addTo(this.tagLayerGroup);
-                L.polyline([[lat, lng], [lat + o, lng]], { color: "white" }).addTo(this.tagLayerGroup);
+            generateArucoMarker(4, 4, 4, "4x4_1000", id).then((svgElement) => {
+                L.marker([lat, lng], { icon: L.divIcon({ html: svgElement, iconSize: 10, iconAnchor: [15, 15] }) }).on("click", () => {
+                    this.dotNetComponent.invokeMethodAsync("OnWaypointSelected", lat, lng);
+                }).addTo(this.tagLayerGroup);
             });
+        } else {
+            const r = 0.0001;
+            const imageUrl = (waypointIcons.find(e => e[0] === id) ?? [0, unknownWaypointIcon])[1];
+            L.marker([lat, lng], { icon: L.icon({ iconUrl: imageUrl, iconSize: 25 }) }).on("click", () => {
+                this.dotNetComponent.invokeMethodAsync("OnWaypointSelected", lat, lng);
+            }).addTo(this.tagLayerGroup);
         }
 
     }
