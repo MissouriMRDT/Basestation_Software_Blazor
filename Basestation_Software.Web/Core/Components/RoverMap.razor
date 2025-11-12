@@ -73,12 +73,13 @@
     private bool _cachingMapTiles = false;
     private bool _pathTrackingActive = false;
 
-    private int _pathTrackingTimeout = 30000;
+    private int _pathTrackingTimeout = 120 * 1000;
 
     // Token to track when to clear paths after data stops being received
     private CancellationTokenSource _pathCts = new CancellationTokenSource();
 
     private List<List<double>> _roverPoints = new List<List<double>>();
+    private List<List<double>> _plannedPathPoints = new List<List<double>>();
 
     protected override async Task OnInitializedAsync()
     {
@@ -96,7 +97,7 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<double>("Nav", "GPSLatLonAlt", async (packet) =>
+        _RoveCommService.On<double>(11104, async (packet) => 
         {
             Console.WriteLine($"We got waypoint in component {ComponentId}!");
             foreach (var value in packet.Data)
@@ -119,6 +120,8 @@
                 Console.WriteLine($"Pair {i}: Lat = {pairs[i][0]}, Lon = {pairs[i][1]}");
             }
 
+            _plannedPathPoints.Clear();
+            _plannedPathPoints = pairs;
 
             DisplayPath(pairs);
 
@@ -128,6 +131,7 @@
             try {
                 await Task.Delay(_pathTrackingTimeout, _pathCts.Token);
                 _roverPoints.Clear();
+                _plannedPathPoints.Clear();
                 RemoveRoverPath();
                 RemovePath();
                 await InvokeAsync(StateHasChanged);
@@ -135,21 +139,16 @@
             catch (TaskCanceledException) {
                 
             }
-
             await InvokeAsync(StateHasChanged);
-            
         });
-        _RoveCommService.On<double>("Nav", "GPSLatLonAlt", async (packet) =>
+
+        _RoveCommService.On<int>(11105, async (packet) => 
         {
-            double lat = packet.Data[0];
-            double lon = packet.Data[1];
-
-            List<double> point = new List<double>();
-            point.Add(lat);
-            point.Add(lon);
-
+            int ETA = packet.Data[0];
+            SetETA(ETA);
             await InvokeAsync(StateHasChanged);
         });
+
 
         _RoveCommService.On<double>("Nav", "GPSLatLonAlt", async (packet) =>
         {
@@ -161,8 +160,9 @@
             point.Add(lon);
 
             _roverPoints.Add(point);
-
             DisplayRoverPath(_roverPoints);
+
+            
 
             _pathCts.Cancel();
             _pathCts = new CancellationTokenSource();
@@ -180,6 +180,8 @@
             await InvokeAsync(StateHasChanged);
         });
     }
+
+
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -206,12 +208,15 @@
         }
     }
 
+    public async Task SetETA(int ETA) {
+        await jsRoverMap!.InvokeVoidAsync("setETA", ETA);
+    } 
+
     public async Task DisplayRoverPath(List<List<double>> points) {
         await jsRoverMap!.InvokeVoidAsync("displayRoverPath", points);
     }
 
     public async Task DisplayPath(List<List<double>> points) {
-        @* List<int> list = new List<int> { 1, 2, 3, 4, 5 }; *@
         await jsRoverMap!.InvokeVoidAsync("displayPath", points);
     }
 

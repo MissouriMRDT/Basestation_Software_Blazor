@@ -87,6 +87,8 @@ export class RoverMap {
         this.tagLayerGroup = L.layerGroup([]).addTo(this.lMap);
         this.pathLayerGroup = L.layerGroup([]).addTo(this.lMap);
         this.roverPathLayerGroup = L.layerGroup([]).addTo(this.lMap);
+        this.currentPlannedPoints = []
+        this.eta = 0;
 
         const baseMaps = {
             "Satellite": satelliteLayer,
@@ -152,6 +154,7 @@ export class RoverMap {
         this.roverIcon.setLatLng([lat, lng]);
     }
 
+    // Display path rover has taken
     displayRoverPath(points) {
         if (points.length == 0) {
             return;
@@ -163,25 +166,37 @@ export class RoverMap {
 
     }
 
+    // Remove path rover has taken
     removeRoverPath() {
         this.roverPathLayerGroup.clearLayers();
     }
 
+    // Display planned Path
     displayPath(points) {
         if (points.length == 0){
             return;
         }
+        this.currentPlannedPoints = points;
         this.pathLayerGroup.clearLayers();
         var path = L.polyline(points, { color: "blue", weight: 5}).addTo(this.pathLayerGroup);
-
+        
         var lastPoint = points[points.length - 1];
-        L.marker([lastPoint[0], lastPoint[1]]).addTo(this.pathLayerGroup).bindTooltip("ETA: N/A", {direction: "top" });;
+        var timeDate = new Date(this.eta * 1000)
+        L.marker([lastPoint[0], lastPoint[1]]).addTo(this.pathLayerGroup).bindTooltip("ETA:" + timeDate.toString(), {direction: "top" });;
         path.bindPopup("THIS IS A TEST POPUP! :)")
         console.log("ADDED POINTS:", points)
     }
     
+    // Remove planned path
     removePath() {
         this.pathLayerGroup.clearLayers();
+        this.currentPlannedPoints = []
+    }
+
+    // Set estimated time of arrival (seconds since epoch)
+    setETA(eta) {
+        this.eta = eta;
+        this.displayPath(this.currentPlannedPoints);
     }
 }
 
