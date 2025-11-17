@@ -1,11 +1,14 @@
-@page "/{ConfigID:guid=00000000-0000-0000-0000-000000000001}"
-
-@using Basestation_Software.Models.Config
+@page "/{PageID:guid=00000000-0000-0000-0000-000000000001}"
+@implements IDisposable
+@using Basestation_Software.Web.Models
 @using System.Text.Json;
+@using Microsoft.EntityFrameworkCore
+@using System.Collections.ObjectModel
 @inherits LayoutComponentBase
 @inject IJSRuntime _IJSRuntime
 @inject NavigationManager _NavigationManager
-@inject ConfigService _ConfigService
+@inject DatabaseService _databaseService
+@inject IDbContextFactory<DatabaseContext> _dbContextFactory
 @inject NavigationManager UriHelper
 @inject CookieService _CookieService
 @inject RoveCommService _RoveCommService
@@ -14,27 +17,34 @@
 
 <style>
     #layout-grid {
-    display: grid;
-    grid-template-columns: repeat(@Config_.Columns, 1fr);
-    grid-template-rows: repeat(@Config_.Columns, 1fr);
-    /* width: @($"{Config_.Width}vw"); */
-    height: @($"{Config_.Height}vh");
-    padding-top: 75px;
-    gap: 0.5rem;
-    margin: 0.75rem;
+        display: grid;
+        grid-template-columns: repeat(
+                @Page_.Columns
+                , 1fr);
+        grid-template-rows: repeat(
+                @Page_.Columns
+                , 1fr);
+        /* width: @($"{Page_.Width}vw")
+        ;
+        */ height:
+            @($"{Page_.Height}vh")
+        ;
+        padding-top: 75px;
+        gap: 0.5rem;
+        margin: 0.75rem;
     }
 
     #copy-area {
-    position: fixed;
-    inset: 10vh 10vw 10vh 10vw;
-    z-index: 2000;
-    display: grid;
-    grid-template-rows: 9fr 1fr;
-    grid-template-columns: 1fr 1fr;
+        position: fixed;
+        inset: 10vh 10vw 10vh 10vw;
+        z-index: 2000;
+        display: grid;
+        grid-template-rows: 9fr 1fr;
+        grid-template-columns: 1fr 1fr;
     }
 
     #copy-area button {
-    font-size: 5vh;
+        font-size: 5vh;
     }
 </style>
 
@@ -44,26 +54,24 @@
     <nav class="navbar navbar-expand-sm border-bottom box-shadow mb-3 mat-glass shadow-sm fixed-top" style="padding: 8px 16px">
         <div class="navbar-nav">
             <img src="images/swoosh.svg" height="35" />
-            @if (ConfigID.Equals(_defaultGuid))
+            @if (PageID.Equals(_defaultGuid))
             {
                 <p class="text-warning bold">Warning: This default page is hardcoded and read-only.</p>
-            } else {
-                @NavLinks
             }
         </div>
         <div class="nav ms-auto me-e justify-content-end">
             <button class="btn btn-sm btn-primary" title="RoveComm Resubscribe All" style="margin-right: 3rem" @onclick="_RoveCommService.SubscribeAll">
-                <img src="/images/rovecomm-sil.png"/>
+                <img src="/images/rovecomm-sil.png" />
             </button>
-            <select id="configSelect" @onchange=@((ChangeEventArgs __e) => {if (Guid.TryParse(__e?.Value as string, out Guid guid)) Navigate(guid);})>
+            <select id="pageSelect" @onchange=@(async (ChangeEventArgs __e) => { if (Guid.TryParse(__e?.Value as string, out Guid guid)) await Navigate(guid); })>
                 @SelectOptions
             </select>
-            <button class="btn btn-sm btn-success" @onclick=NewConfig title="New Page"><i class="bi bi-inline-text bi-file-earmark-plus" /></button>
-            <button class="btn btn-sm btn-danger" @onclick=DeleteConfig title="Delete Page"><i class="bi bi-inline-text bi-trash" /></button>
+            <button class="btn btn-sm btn-success" @onclick=NewPage title="New Page"><i class="bi bi-inline-text bi-file-earmark-plus" /></button>
+            <button class="btn btn-sm btn-danger" @onclick=DeletePage title="Delete Page"><i class="bi bi-inline-text bi-trash" /></button>
             <button class="btn btn-sm btn-success" @onclick=OpenCopyArea title="Edit Page"><i class="bi bi-inline-text bi-pencil" /></button>
-            <button class="btn btn-sm btn-success" @onclick=SaveConfig title="Save Page"><i class="bi bi-inline-text bi-floppy" /></button>
+            <button class="btn btn-sm btn-success" @onclick=SavePage title="Save Page"><i class="bi bi-inline-text bi-floppy" /></button>
             <button class="btn btn-sm btn-success" @onclick=NewComponent title="New Component"><i class="bi bi-inline-text bi-node-plus" /></button>
-            <input class="nav ms-auto me-3 justify-content-end" type="checkbox" name="" id="checkbox" @bind="@IsDarkMode">
+            <input class="nav ms-auto me-3 justify-content-end" type="checkbox" name="" id="checkbox" checked="@(Page_.Dark ? "checked" : null)" @onchange="UpdateDarkMode">
         </div>
         <BlazoredToasts ShowProgressBar="true" Position=Blazored.Toast.Configuration.ToastPosition.TopRight DisableTimeout />
     </nav>
@@ -73,7 +81,7 @@
     @if (CopyAreaVisible)
     {
         <div id="copy-area">
-            <InputTextArea @ref="CopyArea" @bind-Value="@CopyAreaValue" style="grid-area: 1 / 1 / 2 / 3"/>
+            <InputTextArea @ref="CopyArea" @bind-Value="@CopyAreaValue" style="grid-area: 1 / 1 / 2 / 3" />
             <button @onclick="ImportConfig" class="btn btn-success" title="Save Page"><i class="bi bi-inline-text bi-floppy" /></button>
             <button @onclick="@(_ => CopyAreaVisible = false)" class="btn btn-warning" title="Close"><i class="bi bi-inline-text bi-x-circle" /></button>
         </div>
@@ -90,102 +98,89 @@
     private static readonly Guid _defaultGuid = new("00000000-0000-0000-0000-000000000001");
 
     // State
-    private RenderFragment? NavLinks { get; set; }
     private RenderFragment? CustomRender { get; set; }
     private RenderFragment? SelectOptions { get; set; }
-    private Guid ConfigID;
-    private Config Config_ = new Config();
+    private Guid PageID = _defaultGuid;
+    private Page Page_ = new Page();
     private InputTextArea? CopyArea;
     private string CopyAreaValue = "";
     private bool CopyAreaVisible = false;
     private string RadzenTheme = "dark.css";
-    private bool IsDarkMode {
-        get => Config_.Dark;
-        set
-        {
-            if (value != Config_.Dark) SetDarkMode(value);
-        }
-    }
 
     [CascadingParameter]
-    RouteData RouteData_ { get; set; }
+    RouteData RouteData_ { get; set; } = new(typeof(MainLayout), new ReadOnlyDictionary<string, object?>(new Dictionary<string, object?>()));
 
     protected override async Task OnInitializedAsync()
     {
-        // Get ConfigID from url as specified at @page "/{ConfigID:guid?}".
+        // Get PageID from url as specified at @page "/{PageID:guid?}".
         // This workaround depends on <CascadingValue Value="@routeData"> in Routes.razor.
-        // All because `[Parameter] ConfigID` wasn't updating ConfigID with the value from the url.
-        ConfigID = ((Guid?)RouteData_.RouteValues.GetValueOrDefault("ConfigID", null) ?? ConfigID);
+        // All because `[Parameter] PageID` wasn't updating PageID with the value from the url.
+        PageID = ((Guid?)RouteData_.RouteValues.GetValueOrDefault("PageID", null) ?? PageID);
 
-        _ConfigService.SubscribeToConfigChanges(ConfigChanged);
-        await _ConfigService.RefreshConfigs(); // We rely on RefreshConfigs calling ConfigChanged.
+        _databaseService.SubscribeToEntityChanges(typeof(Page), PageID, PageChanged);
+        _databaseService.SubscribeToEntityDeleted(typeof(Page), PageID, PageChanged);
+        _databaseService.SubscribeToTableChanges(typeof(Page), TableChanged);
+
+        await PageChanged();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            // Thes funcitons cannot be called from the first time ConfigChanged runs because of prerendering.
-            await _IJSRuntime.InvokeVoidAsync("eval", $"document.getElementById(\"configSelect\").value = \"{ConfigID}\";");
-            await SetDarkMode(IsDarkMode);
+            // Thes funcitons cannot be called from the first time PageChanged runs because of prerendering.
+            await _IJSRuntime.InvokeVoidAsync("eval", $"document.getElementById(\"pageSelect\").value = \"{PageID}\";");
+            await UpdateDarkMode();
         }
     }
 
     private async Task Navigate(Guid guid)
     {
-        ConfigID = guid;
-        _NavigationManager.NavigateTo($"/{ConfigID}");
-        await _ConfigService.RefreshConfigs(); // We rely on RefreshConfigs awaiting ConfigChanged.
-        await _IJSRuntime.InvokeVoidAsync("eval", $"document.getElementById(\"configSelect\").value = \"{ConfigID}\";");
-        await SetDarkMode(IsDarkMode); // Shall be called after ConfigChanged.
+        PageID = guid;
+        _NavigationManager.NavigateTo($"/{PageID}");
+        await PageChanged();
+        await _IJSRuntime.InvokeVoidAsync("eval", $"document.getElementById(\"pageSelect\").value = \"{PageID}\";");
     }
 
-    private async Task ConfigChanged()
+    private async Task TableChanged()
     {
-        NavLinks = CreateNavlinks();
         SelectOptions = CreateSelectOptions();
-
-        Config? config = _ConfigService.GetConfig(ConfigID);
-        if (config is not null)
-        {
-            Config_ = config;
-            CustomRender = CreateComponents();
-        }
-        else
-        {
-            _ToastService.ShowError($"Config with id={ConfigID} not found.");
-        }
-
         await InvokeAsync(StateHasChanged);
     }
 
-    private RenderFragment CreateNavlinks() => builder =>
+    private async Task PageChanged()
     {
-        builder.OpenRegion(0);
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
 
-        int i = 0;
-        foreach (KeyValuePair<Guid, string> link in Config_.Links)
+        Page? page = await databaseContext.Pages.FindAsync(PageID);
+        if (page == null)
         {
-            builder.OpenElement(i, "a"); // <a>
-            builder.AddAttribute(i + 1, "class", "nav-item nav-link bold");
-            builder.AddAttribute(i + 2, "href", $"/{link.Key}");
-            builder.AddContent(i + 3, link.Value);
-            builder.CloseElement(); // </a>
-            i += 10;
+            _ToastService.ShowError($"Config with id={PageID} not found.");
         }
-        builder.CloseRegion();
-    };
+        else
+        {
+            Page_ = page;
+            CustomRender = CreateComponents();
+        }
 
-    private RenderFragment CreateSelectOptions() => builder =>
+        await UpdateDarkMode();
+        await TableChanged();
+    }
+
+    private RenderFragment CreateSelectOptions() => async builder =>
     {
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        // Select.ToListAsync.Select.ToListAsync is neccesary because IQueryable does not support tuples.
+        List<(Guid, string)> pages = (await databaseContext.Pages.Select(x => new { x.ID, x.Name }).ToListAsync()).Select(x => (x.ID, x.Name)).ToList();
+
         builder.OpenRegion(0);
         int i = 0;
-        foreach (KeyValuePair<Guid, Config> config in _ConfigService.GetConfigs())
+        foreach ((Guid id, string name) in pages)
         {
             // <option value=config.Key>config.Value.Name</option>
             builder.OpenElement(i, "option");
-            builder.AddAttribute(i + 1, "value", config.Key.ToString());
-            builder.AddContent(i + 2, config.Value.Name);
+            builder.AddAttribute(i + 1, "value", id.ToString());
+            builder.AddContent(i + 2, name);
             builder.CloseElement();
             i += 10;
         }
@@ -200,10 +195,10 @@
         builder.OpenRegion(0); // so we can start i at 0
         int i = 0;
         int componentIndex = 0;
-        foreach (Component component in Config_.Components)
+        foreach (Component component in Page_.Components)
         {
             Type? componentType = Type.GetType("Basestation_Software.Web.Core.Components." + component.Type);
-            if (componentType is null)
+            if (componentType == null)
             {
                 _ToastService.ShowWarning($"Component type {component.Type} not found.");
                 continue;
@@ -217,32 +212,27 @@
 
             builder.OpenElement(i, "div"); // <div>
             builder.AddAttribute(i + 1, "style",
-                $"grid-area: {component.Y + 1} / {component.X + 1} / span {component.Height} / span {component.Width}; place-self: {component.PlaceSelf}"
-            );
+        $"grid-area: {component.Y + 1} / {component.X + 1} / span {component.Height} / span {component.Width}; place-self: {component.PlaceSelf}"
+        );
             builder.OpenComponent(i + 2, typeof(ComponentOptions)); // <ComponentOptions>
-            builder.AddComponentParameter(i + 3, "Components", Config_.Components);
+            builder.AddComponentParameter(i + 3, "Components", Page_.Components);
             builder.AddComponentParameter(i + 4, "ComponentIndex", componentIndex);
-            builder.AddAttribute(i + 5, "OnSaved", EventCallback.Factory.Create(this, SaveConfig)); // It was a lot of fun to find this solution /s
+            builder.AddAttribute(i + 5, "OnSaved", EventCallback.Factory.Create(this, SavePage)); // It was a lot of fun to find this solution /s
             builder.CloseComponent(); // </ComponentOptions>
 
             builder.OpenComponent(i + 6, componentType); // <componentType>
             if (componentType.GetMember("ID").Length > 0)
             {
-                // Component requires an ID.
-                if (component.ID.Length == 0)
+                // Component requires an ID, generate one.
+                string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+                char[] stringChars = new char[20];
+                Random random = new Random();
+                for (int j = 0; j < stringChars.Length; j++)
                 {
-                    // No ID was specified, generate one. Missing a required ID usually breaks the page.
-                    var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-                    var stringChars = new char[20];
-                    var random = new Random();
-
-                    for (int j = 0; j < stringChars.Length; j++)
-                    {
-                        stringChars[j] = chars[random.Next(chars.Length)];
-                    }
-                    component.ID = new String(stringChars);
+                    stringChars[j] = chars[random.Next(chars.Length)];
                 }
-                builder.AddComponentParameter(i + 7, "ID", component.ID);
+                string componentID = new String(stringChars);
+                builder.AddComponentParameter(i + 7, "ID", componentID);
             }
             builder.CloseComponent(); // </componentType>
             builder.CloseElement(); // </div>
@@ -254,60 +244,72 @@
         builder.CloseRegion();
     };
 
-    private async Task SetDarkMode(bool value)
+    private async Task UpdateDarkMode()
     {
-        Config_.Dark = value;
-        RadzenTheme = Config_.Dark ? "dark.css" : "default.css";
-        await _IJSRuntime.InvokeVoidAsync("document.documentElement.setAttribute", ["data-bs-theme", Config_.Dark ? "dark" : "light"]);
+        RadzenTheme = Page_.Dark ? "dark.css" : "default.css";
+        await _IJSRuntime.InvokeVoidAsync("document.documentElement.setAttribute", ["data-bs-theme", Page_.Dark ? "dark" : "light"]);
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task SaveConfig() => await _ConfigService.UpdateConfig(ConfigID, Config_);
-
-    private async Task NewConfig()
+    private async Task SavePage()
     {
-        Guid? newID = await _ConfigService.AddConfig(Config_);
-        if (newID is not null) {
-            await Navigate((Guid)newID);
-        }
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        databaseContext.Pages.Update(Page_);
+        await databaseContext.SaveChangesAsync(_databaseService);
     }
 
-    private async Task DeleteConfig()
+    private async Task NewPage()
     {
-        Guid guid = ConfigID;
-        ConfigID = new Guid("00000000-0000-0000-0000-000000000001");
-        await _ConfigService.DeleteConfig(guid);
-        await Navigate(ConfigID);
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        Guid newID = Guid.NewGuid();
+        Page_.ID = newID;
+        await databaseContext.Pages.AddAsync(Page_);
+        await databaseContext.SaveChangesAsync(_databaseService);
+        await Navigate(newID);
+    }
+
+    private async Task DeletePage()
+    {
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        Guid guid = PageID;
+        PageID = new Guid("00000000-0000-0000-0000-000000000001");
+        databaseContext.Pages.Remove(Page_);
+        await databaseContext.SaveChangesAsync(_databaseService);
+        await Navigate(PageID);
     }
 
     private async Task NewComponent()
     {
-        Config_.Components.Add(new Component
-            {
-                X = 5,
-                Y = 5,
-                Width = 20,
-                Height = 10,
-                Type = "Placeholder",
-                PlaceSelf = "stretch",
-                ID = null
-            }
+        Page_.Components.Add(new Component
+        {
+            X = 5,
+            Y = 5,
+            Width = 20,
+            Height = 10,
+            Type = "Placeholder",
+            PlaceSelf = "stretch"
+        }
         );
-        await SaveConfig(); // We rely on UpdateConfig awaiting ConfigChanged.
-        await SetDarkMode(IsDarkMode); // Shall be called after ConfigChanged.
+        await SavePage();
     }
 
     private void OpenCopyArea()
     {
-        CopyAreaValue = JsonSerializer.Serialize(Config_);
+        CopyAreaValue = JsonSerializer.Serialize(Page_);
         CopyAreaVisible = true;
     }
 
     private async Task ImportConfig()
     {
         CopyAreaVisible = false;
-        Config_ = JsonSerializer.Deserialize<Config?>(CopyAreaValue) ?? Config_;
-        await SaveConfig(); // We rely on UpdateConfig awaiting ConfigChanged.
-        await SetDarkMode(IsDarkMode); // Shall be called after ConfigChanged.
+        Page_ = JsonSerializer.Deserialize<Page?>(CopyAreaValue) ?? Page_;
+        await SavePage();
+    }
+
+    void IDisposable.Dispose()
+    {
+        _databaseService.UnsubscribeFromEntityChanges(typeof(Page), PageID, PageChanged);
+        _databaseService.UnsubscribeFromEntityDeleted(typeof(Page), PageID, PageChanged);
+        _databaseService.UnsubscribeFromTableChanges(typeof(Page), TableChanged);
     }
 }

@@ -74,14 +74,13 @@
 </div>
 
 @code {
-    private bool _prerendered = false;
     private int sourceIndex = 0;
     private ElementReference videoContainer;
     private IJSObjectReference? jsCameraDisplay;
 
     private async void Rotate()
     {
-        if (jsCameraDisplay is not null)
+        if (jsCameraDisplay != null)
         {
             await jsCameraDisplay.InvokeVoidAsync("rotate", 90);
         }
@@ -99,7 +98,7 @@
     {
         sourceIndex = newSourceIndex;
         StateHasChanged();
-        if (jsCameraDisplay is not null)
+        if (jsCameraDisplay != null)
         {
             await jsCameraDisplay.InvokeVoidAsync("setCamera", sourceIndex);
         }
@@ -109,7 +108,7 @@
     {
         try
         {
-            if (jsCameraDisplay is not null)
+            if (jsCameraDisplay != null)
             {
                 await jsCameraDisplay.DisposeAsync();
             }

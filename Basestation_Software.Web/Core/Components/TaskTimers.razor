@@ -3,8 +3,15 @@
 
 <style>
     @@keyframes flash {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0; }
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0;
+        }
     }
 
     .flash-animation {
@@ -17,6 +24,7 @@
     <Header>
         <center>Configure Timer Checkpoints</center>
     </Header>
+
     <Body>
         <p>Test</p>
     </Body>
@@ -27,7 +35,7 @@
 
 <div class="card h-100">
     <div class="card-header d-flex justify-content-between">
-            <h3>Task Timer</h3>
+        <h3>Task Timer</h3>
         <div class="col text-end">
             <RadzenDropDown @bind-Value=@TimerTaskType Data=@(Enum.GetValues(typeof(TaskType)))></RadzenDropDown>
         </div>
@@ -52,16 +60,16 @@
                     </button>
                 </div>
                 <div class="col text-end">
-                    @if (_currentTimer is not null && _currentTimer.IsFinished)
+                    @if (_currentTimer != null && _currentTimer.IsFinished)
                     {
                         <button class="btn btn-primary" @onclick="() => _currentTimer.Reset()">Reset</button>
                     }
-                    else if (_currentTimer is not null && (_currentTimer.IsPaused || _currentTimer.IsFinished || !_currentTimer.IsStarted))
+                    else if (_currentTimer != null && (_currentTimer.IsPaused || _currentTimer.IsFinished || !_currentTimer.IsStarted))
                     {
-                        <button class="@(_currentTimer is not null && _currentTimer.IsPaused ? "flash-animation btn btn-success" : "btn btn-success")" @onclick="() => _currentTimer.Start()">Start</button>
-                        <button class="btn btn-primary" @onclick="() => _currentTimer.Reset()">Reset</button>
+                        <button class="@(_currentTimer != null && _currentTimer.IsPaused ? "flash-animation btn btn-success" : "btn btn-success")" @onclick="() => _currentTimer?.Start()">Start</button>
+                        <button class="btn btn-primary" @onclick="() => _currentTimer?.Reset()">Reset</button>
                     }
-                    else if (_currentTimer is not null && _currentTimer.IsStarted)
+                    else if (_currentTimer != null && _currentTimer.IsStarted)
                     {
                         <button class="btn btn-danger" @onclick="() => _currentTimer.Stop()">Stop</button>
                         <button class="btn btn-primary" @onclick="() => _currentTimer.Reset()">Reset</button>
@@ -70,21 +78,17 @@
             </div>
             <br>
             <div class="row justify-content-evenly">
-                @if (_currentTimer is not null)
+                @if (_currentTimer != null)
                 {
                     // Loop through each checkpoint and build a row of progress bars next to each other with different colors.
                     @for (int i = 0; i < _currentTimer.CheckPoints.Count; i++)
                     {
                         int widthPercentage = (int)((_currentTimer.CheckPoints[_currentTimer.CheckPoints.Keys.ElementAt(i)].TotalSeconds / _currentTimer.EndPoint.TotalSeconds) * 100);
                         <div style="width: @(widthPercentage)%; margin-left: 0rem; margin-right: 0rem; padding-left: 0rem; padding-right: 0rem;">
-                            <center><h5>@_currentTimer.CheckPoints.ElementAt(i).Key</h5></center>
-                            <RadzenProgressBar 
-                                @bind-Value="@_elapsedTime" 
-                                Min="@(_currentTimer.CheckPoints.Values.Take(i).Select(checkpoint => checkpoint.TotalSeconds).Sum())" 
-                                Max="@(_currentTimer.CheckPoints.Values.Take(i + 1).Select(checkpoint => checkpoint.TotalSeconds).Sum() )" 
-                                ShowValue="false"
-                                ProgressBarStyle="@progressBarColors[i]"
-                                Style="margin-left: 0rem; margin-right: 0rem; padding-left: 0rem; padding-right: 0rem; height: 50px;" />
+                            <center>
+                                <h5>@_currentTimer.CheckPoints.ElementAt(i).Key</h5>
+                            </center>
+                            <RadzenProgressBar @bind-Value="@_elapsedTime" Min="@(_currentTimer.CheckPoints.Values.Take(i).Select(checkpoint => checkpoint.TotalSeconds).Sum())" Max="@(_currentTimer.CheckPoints.Values.Take(i + 1).Select(checkpoint => checkpoint.TotalSeconds).Sum())" ShowValue="false" ProgressBarStyle="@progressBarColors[i]" Style="margin-left: 0rem; margin-right: 0rem; padding-left: 0rem; padding-right: 0rem; height: 50px;" />
                             <center><small>(@(TaskTimer.TimeSpanToShortReadableString(_currentTimer.CheckPoints.ElementAt(i).Value)))</small></center>
                         </div>
                     }
@@ -92,8 +96,8 @@
             </div>
             <div class="row">
                 <center>
-                    <h4 class="@(_currentTimer is not null && _currentTimer.IsFinished ? "flash-animation" : "")" style="padding-top: 1rem;">
-                        Time Elapsed: @(_currentTimer is not null ? _currentTimer.ElapsedTime.ToString(@"hh\:mm\:ss\.f") : "TmrErr")
+                    <h4 class="@(_currentTimer != null && _currentTimer.IsFinished ? "flash-animation" : "")" style="padding-top: 1rem;">
+                        Time Elapsed: @(_currentTimer != null ? _currentTimer.ElapsedTime.ToString(@"hh\:mm\:ss\.f") : "TmrErr")
                     </h4>
                 </center>
             </div>
@@ -116,14 +120,14 @@
     private double _elapsedTime = 0;
     private TaskTimer? _currentTimer;
     private TaskType _timerTaskType = TaskType.Autonomy;
-    private TaskType TimerTaskType 
-    { 
-        get 
-        { 
+    private TaskType TimerTaskType
+    {
+        get
+        {
             return _timerTaskType;
-        } 
-        set 
-        { 
+        }
+        set
+        {
             // Remove the timer change event.
             _TaskTimerService.TimerTickNotifiers[_timerTaskType] -= TimerTick;
             // Update the timer task type.
@@ -143,13 +147,13 @@
 
     // Create a list of Radzen ProgressBarStyles to use for each checkpoint.
     List<ProgressBarStyle> progressBarColors = new List<ProgressBarStyle>
-    {
-        ProgressBarStyle.Primary,
-        ProgressBarStyle.Success,
-        ProgressBarStyle.Warning,
-        ProgressBarStyle.Info,
-        ProgressBarStyle.Danger
-    };
+{
+ProgressBarStyle.Primary,
+ProgressBarStyle.Success,
+ProgressBarStyle.Warning,
+ProgressBarStyle.Info,
+ProgressBarStyle.Danger
+};
 
     protected override void OnInitialized()
     {
@@ -160,11 +164,6 @@
 
         // Set data is loaded.
         _dataLoaded = true;
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        // Nothing to do yet.
     }
 
     void IDisposable.Dispose()

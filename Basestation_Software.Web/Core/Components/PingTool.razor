@@ -11,6 +11,7 @@
         overflow-y: auto;
         display: block;
     }
+
     .row {
         margin-block: 0.15rem;
     }
@@ -36,6 +37,7 @@
                 <Header>
                     <label><b>Networking Error: Poor Connection</b></label>
                 </Header>
+
                 <Body>
                     <label>Pings are failing to reach endpoint. Please check that all networking components are active and that signal strength is sufficient.</label>
                 </Body>
@@ -111,7 +113,8 @@
                         <div class="col" style="flex-grow:0">
                             <button onclick="@(() => RovePingBoard(@device, @device.Name))">Rove</button>
                         </div>
-                    } else
+                    }
+                    else
                     {
                         <!-- Works but shouldn't be necessary -->
                         <!-- For spacing purposes -->
@@ -132,7 +135,7 @@
     private string goodConnection_hightlight = "background-color:lightgreen";
     private string poorConnection_hightlight = "background-color:lightcoral";
 
-    private System.Timers.Timer? autoPingTimer;
+    private Timer autoPingTimer;
 
     private int autoPingDelay = 50;
     private int pingTimeout = 1000;
@@ -145,20 +148,19 @@
     // Flags.
     private bool _dataLoaded = true; // originally set to false
 
+    public PingTool()
+    {
+        autoPingTimer = new(AutoPing);
+    }
+
     protected override void OnInitialized()
     {
-        // Create some timers.
-        autoPingTimer = new System.Timers.Timer(50);
-        autoPingTimer.Elapsed += AutoPing;
-        autoPingTimer.AutoReset = true;
-        autoPingTimer.Enabled = true;
-
         // Pull network device IP Addresses from RoveComm Manifest
         foreach (string netDevice in RoveCommManifest.Devices.Keys)
         {
             devices.Add(new Device(
-                name: netDevice,
-                ipAddress: RoveCommManifest.Devices[netDevice].Ip
+            name: netDevice,
+            ipAddress: RoveCommManifest.Devices[netDevice].Ip
             ));
         }
 
@@ -166,16 +168,11 @@
         foreach (string board in RoveCommManifest.Boards.Keys)
         {
             devices.Add(new Device(
-                name: board,
-                ipAddress: RoveCommManifest.Boards[board].IP,
-                roveCapable: true
+            name: board,
+            ipAddress: RoveCommManifest.Boards[board].IP,
+            roveCapable: true
             ));
         }
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        //await PingIpAddress();
     }
 
     // Handles individual pinging of components (ICMP)
@@ -203,20 +200,20 @@
         }
         catch (Exception ex)
         {
-            Console.WriteLine(ex);
+            Console.WriteLine($"Error pinging IP: {ex.Message}");
         }
     }
 
     // Handles automatic ICMP pinging of components
     private bool AutoPingProcessRunning = false;
-    private async void AutoPing(object? sender, System.Timers.ElapsedEventArgs e)
+    private async void AutoPing(object? _)
     {
         if (!AutoPingProcessRunning) // Ensures that there is not already a process running
         {
             try
             {
                 AutoPingProcessRunning = true;
-                autoPingTimer.Enabled = false;
+                autoPingTimer.Change(Timeout.Infinite, autoPingDelay);
                 foreach (Device device in devices)
                 {
                     if (device.AutoPing == true)
@@ -237,11 +234,11 @@
                     }
                 }
                 AutoPingProcessRunning = false;
-                autoPingTimer.Enabled = true;
+                autoPingTimer.Change(autoPingDelay, autoPingDelay);
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex);
+                Console.WriteLine($"Error auto pinging: {ex}");
             }
         }
     }
@@ -299,7 +296,8 @@
         if (response != null)
         {
             device.PingStatus = $"Response in {latency.TotalSeconds.ToString()} seconds";
-        } else
+        }
+        else
         {
             device.PingStatus = "NoResponse";
         }
@@ -351,13 +349,13 @@
         {
             Name = name;
             IpAddress = ipAddress;
-            AutoPing = autoPing;
-            PingStatus = pingStatus;
+            this.autoPing = autoPing;
+            this.pingStatus = pingStatus;
             RoveCapable = roveCapable;
-            PingStatusHighlight = "background-color:lightcoral";
+            this.pingStatusHighlight = "background-color:lightcoral";
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
         protected void OnPropertyChanged(string propertyName)
         {

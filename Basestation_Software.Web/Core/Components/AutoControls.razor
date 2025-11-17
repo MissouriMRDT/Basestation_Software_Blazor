@@ -10,11 +10,11 @@
     <div class="card-body align-content-center h-100">
         <div class="button-header">
             <div class="d-inline-flex bg-body-secondary justify-content-center p-2 rounded gap-2">
-                <p><b>Selected:</b> @(_selectedWaypoint is not null ? _selectedWaypoint.Name : "None")</p>
+                <p><b>Selected:</b> @(_selectedWaypoint != null ? _selectedWaypoint.Name : "None")</p>
                 <div class="color-preview" style="background-color: @_selectedWaypoint?.WaypointColor"></div>
-                @if (_selectedWaypoint is not null && _selectedWaypoint.TagID is not null && _selectedWaypoint.TagID >= 0)
+                @if (_selectedWaypoint != null && _selectedWaypoint.TagID >= 0)
                 {
-                    <ArucoTagDisplay ID="@(_selectedWaypoint.TagID ?? 0)" Scale="10" />
+                    <ArucoTagDisplay ID="@_selectedWaypoint.TagID" Scale="10" />
                 }
             </div>
         </div>
@@ -40,9 +40,12 @@
         <div class="bg-body-secondary justify-content-center p-2 rounded gap-2 text-center">
             <label><b>GET ME OUTTA HERE!!</b></label>
             <div style="display: grid; grid-template-columns: auto auto; gap:0.5rem;">
-                <label>Enable: </label><InputCheckbox @bind-Value=@_doStuckRoutine style="align-self-right" />
-                <label>Speed: </label><InputNumber step="0.1" @bind-Value=@_unstuckSpeed />
-                <label>Time: </label><InputNumber step="100" @bind-Value=@_unstuckTime />
+                <label>Enable: </label>
+                <InputCheckbox @bind-Value=@_doStuckRoutine style="align-self-right" />
+                <label>Speed: </label>
+                <InputNumber step="0.1" @bind-Value=@_unstuckSpeed />
+                <label>Time: </label>
+                <InputNumber step="100" @bind-Value=@_unstuckTime />
             </div>
         </div>
 
@@ -94,54 +97,39 @@
 
     public async Task AddPositionLeg()
     {
-        if (_selectedWaypoint is not null
-            && _selectedWaypoint.Latitude is not null
-            && _selectedWaypoint.Longitude is not null)
+        if (_selectedWaypoint != null)
         {
-            // await _RoveCommService.SendAsync<double>("Autonomy", "AddPositionLeg", [_selectedWaypoint.Latitude ?? 0, _selectedWaypoint.Longitude ?? 0, _selectedWaypoint.TagID ?? -99]);
-            RoveCommBoardDesc board = RoveCommManifest.Boards["Autonomy"];
-            await _RoveCommService.SendAsync<double>(board.Commands["AddPositionLeg"].DataID, [_selectedWaypoint.Latitude ?? 0, _selectedWaypoint.Longitude ?? 0, _selectedWaypoint.TagID ?? -99], board.IP);
+            await _RoveCommService.SendAsync<double>("Autonomy", "AddPositionLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.TagID]);
         }
     }
 
     public async Task AddMarkerLeg()
     {
-        if (_selectedWaypoint != null
-            && _selectedWaypoint.Latitude is not null
-            && _selectedWaypoint.Longitude is not null
-            && _selectedWaypoint.TagID is not null && _selectedWaypoint.TagID >= 0
-            && _selectedWaypoint.SearchRadius is not null && _selectedWaypoint.SearchRadius >= 0)
+        if (_selectedWaypoint != null && _selectedWaypoint.TagID >= 0 && _selectedWaypoint.SearchRadius >= 0)
         {
-            await _RoveCommService.SendAsync<double>("Autonomy", "AddMarkerLeg", [_selectedWaypoint.Latitude ?? 0, _selectedWaypoint.Longitude ?? 0, _selectedWaypoint.TagID ?? 0, _selectedWaypoint.SearchRadius ?? 0]);
+            await _RoveCommService.SendAsync<double>("Autonomy", "AddMarkerLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.TagID, _selectedWaypoint.SearchRadius]);
         }
     }
 
     public async Task AddObjectLeg()
     {
-        if (_selectedWaypoint != null
-            && _selectedWaypoint.Latitude is not null
-            && _selectedWaypoint.Longitude is not null
-            && _selectedWaypoint.SearchRadius is not null && _selectedWaypoint.SearchRadius >= 0)
+        if (_selectedWaypoint != null && _selectedWaypoint.SearchRadius >= 0)
         {
-            await _RoveCommService.SendAsync<double>("Autonomy", "AddObjectLeg", [_selectedWaypoint.Latitude ?? 0, _selectedWaypoint.Longitude ?? 0, _selectedWaypoint.TagID ?? 0, _selectedWaypoint.SearchRadius ?? 0]);
+            await _RoveCommService.SendAsync<double>("Autonomy", "AddObjectLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.TagID, _selectedWaypoint.SearchRadius]);
         }
     }
 
     public async Task AddObstacle()
     {
-        if (_selectedWaypoint != null
-            && _selectedWaypoint.Latitude is not null
-            && _selectedWaypoint.Longitude is not null
-            && _selectedWaypoint.SearchRadius is not null && _selectedWaypoint.SearchRadius >= 0)
+        if (_selectedWaypoint != null && _selectedWaypoint.SearchRadius >= 0)
         {
-            await _RoveCommService.SendAsync<double>("Autonomy", "AddObstacle", [_selectedWaypoint.Latitude ?? 0, _selectedWaypoint.Longitude ?? 0, _selectedWaypoint.SearchRadius ?? 0]);
+            await _RoveCommService.SendAsync<double>("Autonomy", "AddObstacle", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.SearchRadius]);
         }
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         _GPSWaypointState.SubscribeToWaypointSelected(OnWaypointSelected);
-        await Task.CompletedTask;
     }
 
     private async Task OnWaypointSelected(GPSWaypoint? waypoint)
@@ -149,7 +137,7 @@
         _selectedWaypoint = waypoint;
         await InvokeAsync(StateHasChanged);
     }
-    
+
 
     void IDisposable.Dispose()
     {

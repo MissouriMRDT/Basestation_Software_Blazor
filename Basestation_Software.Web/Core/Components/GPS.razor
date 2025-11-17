@@ -1,7 +1,8 @@
-@implements IDisposable
+@using Microsoft.EntityFrameworkCore
 @inject IJSRuntime _IJSRuntime
 @inject RoveCommService _RoveCommService
-@inject GPSWaypointService _GPSWaypointService
+@inject DatabaseService _databaseService
+@inject IDbContextFactory<DatabaseContext> _dbContextFactory
 
 <style>
     .gps {
@@ -10,6 +11,7 @@
         grid-template-rows: repeat(11, 1fr) 210px;
         justify-items: center;
     }
+
     .gps p {
         margin: 0;
     }
@@ -17,43 +19,49 @@
 
 <div class="card h-100">
     <div class="card-header d-flex gap-2">
-        <h3>NAV</h3>
-        <button class="btn btn-primary btn-sm" @onclick=@(async () => {
-                await _GPSWaypointService.AddGPSWaypoint(new GPSWaypoint{
-                ID = -1,
-                Name = "NAV Waypoint",
-                Latitude = Lat,
-                Longitude = Lon,
-                Timestamp = DateTime.Now,
-                Altitude = -1,
-                SearchRadius = 0,
-                TagID = 0,
-                Type = 0,
-                });
-                })>
+        <h3>GPS</h3>
+        <button class="btn btn-primary btn-sm" @onclick=AddWaypoint>
             <i class="bi bi-sm bi-plus-circle" />
         </button>
     </div>
     <div class="card-body gps">
-        <p>Lat [&#176;]</p><p>Lon [&#176;]</p><p>Alt [m]</p>
-        <p>@($"{Lat:00.0000000}")</p><p>@($"{Lon:000.0000000}")</p><p>@($"{Alt:000.00}")</p>
-        <p>Satellites [&#176;]</p><p /><p>Heading [&#176;]</p>
-        <p>@($"{Satellites:00}")</p><p /><p>@($"{Heading:00.00000}")</p>
-        <p>Horiz [m]</p><p>Vert [m]</p><p>Hdg [&#176;]</p>
-        <p>@($"{AccurHor:0000.000}")</p><p>@($"{AccurVer:0000.000}")</p><p>@($"{AccurHdg:000.00000}")</p>
+        <p>Lat [&#176;]</p>
+        <p>Lon [&#176;]</p>
+        <p>Alt [m]</p>
+        <p>@($"{Lat:00.0000000}")</p>
+        <p>@($"{Lon:000.0000000}")</p>
+        <p>@($"{Alt:000.00}")</p>
+        <p>Satellites [&#176;]</p>
+        <p />
+        <p>Heading [&#176;]</p>
+        <p>@($"{Satellites:00}")</p>
+        <p />
+        <p>@($"{Heading:00.00000}")</p>
+        <p>Horiz [m]</p>
+        <p>Vert [m]</p>
+        <p>Hdg [&#176;]</p>
+        <p>@($"{AccurHor:0000.000}")</p>
+        <p>@($"{AccurVer:0000.000}")</p>
+        <p>@($"{AccurHdg:000.00000}")</p>
         <p style="grid-area: 7 / 1 / 8 / 4">@(FixType) Fix @if (IsDifferential == 1.0f)
-            {
+                        {
                 <span style="color: green">With Differential</span>
             }
-            else
+                        else
             {
                 <span style="color: red">Without Differential</span>
             }
         </p>
-        <p>Pitch [&#176;]</p><p>Yaw [&#176;]</p><p>Roll [&#176;]</p>
-        <p>@($"{Pitch:00.0}")</p><p>@($"{Yaw:00.0}")</p><p>@($"{Roll:00.0}")</p>
+        <p>Pitch [&#176;]</p>
+        <p>Yaw [&#176;]</p>
+        <p>Roll [&#176;]</p>
+        <p>@($"{Pitch:00.0}")</p>
+        <p>@($"{Yaw:00.0}")</p>
+        <p>@($"{Roll:00.0}")</p>
         <p style="grid-area: 10 / 1 / 11 / 4">XYZ Acceleration [ms&#8315;&#178;]</p>
-        <p>@($"{AccelX:00.0}")</p><p>@($"{AccelY:00.0}")</p><p>@($"{AccelZ:00.0}")</p>
+        <p>@($"{AccelX:00.0}")</p>
+        <p>@($"{AccelY:00.0}")</p>
+        <p>@($"{AccelZ:00.0}")</p>
         <svg id="@ID" style="grid-area: 12 / 1 / 13 / 4; place-self: stretch stretch;" viewBox="0 0 60 60">
             <style>
                 .elev {
@@ -330,10 +338,16 @@
                 default:
                     FixType = "Undefined";
                     break;
-            };
+            }
+        ;
             await InvokeAsync(StateHasChanged);
         });
     }
 
-    void IDisposable.Dispose() { }
+    async Task AddWaypoint()
+    {
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        await databaseContext.Waypoints.AddAsync(new() { ID = Guid.NewGuid(), Name = DateTime.Now.ToString(), Latitude = Lat, Longitude = Lon, TagID = 0 });
+        await databaseContext.SaveChangesAsync(_databaseService);
+    }
 }

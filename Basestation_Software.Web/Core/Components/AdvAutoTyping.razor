@@ -220,7 +220,7 @@
 
     private void OnPhraseChanged(ChangeEventArgs e)
     {
-        _phrase = e.Value.ToString().ToUpper();
+        _phrase = e.Value?.ToString()?.ToUpper() ?? "NULL";
         StateHasChanged();
     }
 }

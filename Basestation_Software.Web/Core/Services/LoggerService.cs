@@ -71,7 +71,6 @@ namespace Basestation_Software.Web.Core.Services
         public void ExportLogs()
         {
             string dateTime = DateTime.Now.ToString().Replace("\\", "_").Replace(":", "-").Replace("/", "_");
-            Debug.WriteLine(dateTime);
             using (StreamWriter writer = new StreamWriter($"logs {dateTime}.csv"))
             {
                 writer.WriteLine("Message,Source,TimeStamp,Channel,Level,Data");

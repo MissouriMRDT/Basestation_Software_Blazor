@@ -1,6 +1,5 @@
 @inject RoveCommService _RoveCommService
 @inject IJSRuntime _IJSRuntime
-@implements IAsyncDisposable
 
 <style>
     .camera-controls {
@@ -9,10 +8,10 @@
         grid-template-columns: 1fr 1fr 1fr 1fr;
         grid-template-rows: 30px min-content min-content min-content;
         grid-template-areas:
-        "source-buttons source-buttons source-buttons source-buttons"
-        "utilization-1 utilization-1 utilization-2 utilization-2"
-        "connect disconnect restart shutdown"
-        "screenshot save panorama arguments";
+            "source-buttons source-buttons source-buttons source-buttons"
+            "utilization-1 utilization-1 utilization-2 utilization-2"
+            "connect disconnect restart shutdown"
+            "screenshot save panorama arguments";
         place-items: stretch stretch;
     }
 
@@ -135,13 +134,9 @@
 
     private bool CameraArgumentsVisible = false;
     private String CameraArgumentsValue = "";
-
     private ElementReference videoContainer;
 
-    private IJSObjectReference? jsModule;
-    private IJSObjectReference? jsCameraDisplay;
-
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         TelemetryWatchdog1 = new System.Threading.Timer(WatchdogTimeout, 1, TELEMETRY_TIMEOUT, Timeout.Infinite);
         TelemetryWatchdog2 = new System.Threading.Timer(WatchdogTimeout, 2, TELEMETRY_TIMEOUT, Timeout.Infinite);
@@ -182,8 +177,6 @@
             ResetWatchdog(2);
             await InvokeAsync(StateHasChanged);
         });
-
-        await Task.CompletedTask;
     }
 
     async void WatchdogTimeout(object? pi)
@@ -207,7 +200,8 @@
         }
     }
 
-    private String GetClass(int i) {
+    private String GetClass(int i)
+    {
         if (i < 4)
         {
             return !connected1 ? "camera-disconnected" : i < streaming1 ? "camera-streaming" : i < available1 ? "camera-available" : "camera-none";
@@ -241,14 +235,13 @@
 
     private void SaveImage()
     {
-        Console.WriteLine("Write File");
         try
         {
             File.WriteAllBytes("CameraScreenshot_" + ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds() + ".png", Convert.FromBase64String("oiwebjfvdkhjgfdghjkwe"));
         }
-        catch(Exception)
+        catch (Exception e)
         {
-            Console.WriteLine("Wrong Format!");
+            Console.WriteLine($"Error saving image: {e.Message}");
         }
     }
 
@@ -286,19 +279,5 @@
         characters.Add('\x04');
         RoveCommBoardDesc board = RoveCommManifest.Boards[sourceIndex < 4 ? "Camera1" : "Camera2"];
         await _RoveCommService.SendAsync<char>(board.Commands["SetPictureArguments"].DataID, characters, board.IP);
-    }
-
-    async ValueTask IAsyncDisposable.DisposeAsync()
-    {
-        try
-        {
-            if (jsCameraDisplay is not null)
-            {
-                await jsCameraDisplay.DisposeAsync();
-            }
-        }
-        catch (JSDisconnectedException)
-        {
-        }
     }
 }

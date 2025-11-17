@@ -14,22 +14,22 @@
 </div>
 
 @code {
-    XElement? diagramRoot;
+    XElement diagramRoot = new("p");
     private byte _lastState = 0;
     private XElement?[] _stateElements = new XElement[11];
     // corresponds to rovecomm status
     private string[] _stateNames = [
     "Idle",
-    "Navigating",
-    "SearchPattern",
-    "ApproachingMarker",
-    "ApproachingObject",
-    "VerifyingGPS",
-    "VerifyingMarker",
-    "VerifyingObject",
-    "Avoidance",
-    "Reversing",
-    "Stuck"
+"Navigating",
+"SearchPattern",
+"ApproachingMarker",
+"ApproachingObject",
+"VerifyingGPS",
+"VerifyingMarker",
+"VerifyingObject",
+"Avoidance",
+"Reversing",
+"Stuck"
     ];
 
     private string _activeCol = "#10d010";
@@ -50,10 +50,10 @@
         for (int i = 0; i < _stateNames.Length; i++)
         {
             _stateElements[i] = (
-                from el in diagramRoot.Descendants()
-                where el.Attribute("id")?.Value == "path" + _stateNames[i]
-                select el
-                ).FirstOrDefault();
+            from el in diagramRoot.Descendants()
+            where el.Attribute("id")?.Value == "path" + _stateNames[i]
+            select el
+            ).FirstOrDefault();
         }
 
         _RoveCommService.On<byte>("Autonomy", "CurrentState", async (packet) =>

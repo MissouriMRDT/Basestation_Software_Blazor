@@ -26,7 +26,7 @@
     // Returns true if the button is pressed now and wasn't the last time this was called.
     public bool SoftwareDebounce(int buttonIndex)
     {
-        if (SelectedGamepad is null) return false;
+        if (SelectedGamepad == null) return false;
         if (buttonIndex < 0 || buttonIndex >= SelectedGamepad.Buttons.Count) return false;
         bool pressed = SelectedGamepad.Buttons[buttonIndex].Pressed;
         if (pressed && !LastPressed.GetValueOrDefault(buttonIndex, false))

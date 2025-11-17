@@ -1,4 +1,4 @@
-using Basestation_Software.Models.Timers;
+using Basestation_Software.Web.Models;
 
 namespace Basestation_Software.Web.Core.Services;
 
@@ -21,7 +21,7 @@ public class TaskTimerService
         {
             // Check if a task timer for the current type exists.
             TaskTimer? taskTimer = GetTaskTimer(TaskType);
-            // Check if the timer is null.
+            // Check if the timer == null.
             if (taskTimer == null)
             {
                 // Create a new timer.
@@ -95,7 +95,7 @@ public class TaskTimerService
     private async Task OnTimerTick(TaskType timerName, TimeSpan timeElapsed)
     {
         // Invoke the timer tick callback.
-        if (TimerTickNotifiers.ContainsKey(timerName) && TimerTickNotifiers[timerName] is not null)
+        if (TimerTickNotifiers.ContainsKey(timerName) && TimerTickNotifiers[timerName] != null)
         {
             await TimerTickNotifiers[timerName]!.Invoke(timeElapsed);
         }

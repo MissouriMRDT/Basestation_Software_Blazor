@@ -3,9 +3,7 @@
 <div class="card full-height">
     <div class="card-header d-flex">
         <h3>Autonomy Log</h3>
-        <button @onclick=@(() => {
-                logs.Add(new Log{message = "very very long messagevery very long messagevery very long messagevery very long messagevery very long messagevery very long messagevery very long messagevery very long message", timestamp = DateTime.Now});
-        })>Test Log</button>
+        <button @onclick=@(() => { logs.Add(new Log { message = "very very long messagevery very long messagevery very long messagevery very long messagevery very long messagevery very long messagevery very long messagevery very long message", timestamp = DateTime.Now }); })>Test Log</button>
     </div>
     <div class="card-body">
         <div class="d-flex">
@@ -42,19 +40,20 @@
     byte ll2 = 0;
     byte ll3 = 0;
 
-    struct Log {
+    struct Log
+    {
         public string message;
         public DateTime timestamp;
     }
     List<Log> logs = new();
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         _RoveCommService.On<char>("Autonomy", "CurrentLog", async (packet) =>
         {
             Log newLog = new Log
             {
-                message = packet.Data.ToString(),
+                message = packet.Data.ToString() ?? "null",
                 timestamp = DateTime.Now
             };
             logs.Add(newLog);
@@ -64,14 +63,14 @@
 
         _RoveCommService.On<byte>("Autonomy", "ReachedGoal", async (packet) =>
         {
-        Log newLog = new Log
+            Log newLog = new Log
             {
                 message = "Reached Goal!",
                 timestamp = DateTime.Now
             };
-        logs.Add(newLog);
+            logs.Add(newLog);
 
-        await InvokeAsync(StateHasChanged);
+            await InvokeAsync(StateHasChanged);
         });
     }
 }

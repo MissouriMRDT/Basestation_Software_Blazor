@@ -28,7 +28,7 @@
         color: #fff;
     }
 
-    .packet-tester > pre {
+    .packet-tester>pre {
         position: fixed;
         z-index: 1;
         top: 10vh;
@@ -39,20 +39,20 @@
         white-space: pre-wrap;
     }
 
-    .packet-tester > input[type=checkbox] {
+    .packet-tester>input[type=checkbox] {
         place-self: center center;
     }
 
-    .packet-tester > input:not([type=checkbox]) {
+    .packet-tester>input:not([type=checkbox]) {
         color: var(--bs-body-color);
         border: 2px solid var(--bs-border-color);
     }
 
-    .packet-tester > input[disabled] {
+    .packet-tester>input[disabled] {
         color: var(--bs-gray);
     }
 
-    .packet-tester > p {
+    .packet-tester>p {
         margin: 0;
         place-self: center left;
     }
@@ -73,7 +73,9 @@
         @if (Running)
         {
             <button style="grid-area: start" class="btn btn-sm btn-warning" @onclick=Pause><i class="bi bi-inline-text bi-pause" /></button>
-        } else {
+        }
+        else
+        {
             <button style="grid-area: start" class="btn btn-sm btn-success" @onclick=Start><i class="bi bi-inline-text bi-play" /></button>
         }
         <button style="grid-area: stop" class="btn btn-sm btn-danger" @onclick=Stop><i class="bi bi-inline-text bi-stop" /></button>
@@ -99,12 +101,12 @@
     private bool UseTCP = false;
     private List<string> Lines = new();
     private int Line = 0;
-    private Timer UpdateTimer;
+    private Timer _updateTimer;
     private string Info = "";
 
-    protected override void OnInitialized()
+    public PacketTester()
     {
-        UpdateTimer = new Timer(Step);
+        _updateTimer = new Timer(Step);
     }
 
     private void Start()
@@ -113,7 +115,7 @@
         Info = "";
         Lines.Clear();
         Lines.AddRange(TextAreaValue.Split("\n"));
-        UpdateTimer.Change(0, -1);
+        _updateTimer.Change(0, -1);
         InvokeAsync(StateHasChanged);
     }
 
@@ -127,7 +129,7 @@
     {
         Line = 0;
         Running = false;
-        UpdateTimer.Change(-1, -1);
+        _updateTimer.Change(-1, -1);
         InvokeAsync(StateHasChanged);
     }
 
@@ -140,23 +142,27 @@
             return;
         }
         string[] tokens = Lines[Line].Split(" ");
-        if (tokens.Length < 3) {
+        if (tokens.Length < 3)
+        {
             Info = $"Error line {Line}: Missing required argument(s).";
             Pause();
             return;
         }
-        if (!Int32.TryParse(tokens[0], out int postDelay)) {
+        if (!Int32.TryParse(tokens[0], out int postDelay))
+        {
             Info = $"Error line {Line}: Could not parse postDelay {tokens[0]} as an int.";
             Pause();
             return;
         }
         RoveCommUtils.FindDataIDByName(tokens[1], tokens[2], out var boardDesc, out var packetDesc);
-        if (boardDesc is null) {
+        if (boardDesc == null)
+        {
             Info = $"Error line {Line}: Board {tokens[1]} does not exist.";
             Pause();
             return;
         }
-        if (packetDesc is null) {
+        if (packetDesc == null)
+        {
             Info = $"Error line {Line}: Command {tokens[2]} does not exist for board {tokens[1]}.";
             Pause();
             return;
@@ -179,14 +185,15 @@
             RoveCommDataType.DOUBLE => ParseTokensAndSend<Double>(Double.TryParse, tokens, packetDesc.DataID, OverrideIP ? IP : boardDesc.IP),
             RoveCommDataType.CHAR => ParseTokensAndSend<Char>(Char.TryParse, tokens, packetDesc.DataID, OverrideIP ? IP : boardDesc.IP),
             _ => throw new Exception("Invalid RoveCommDataType in rovecomm manifest."),
-        })) {
+        }))
+        {
             Pause();
             return;
         }
 
         // Execute the next line after postDelay.
         Line++;
-        UpdateTimer.Change(postDelay, -1);
+        _updateTimer.Change(postDelay, -1);
         InvokeAsync(StateHasChanged);
     }
 

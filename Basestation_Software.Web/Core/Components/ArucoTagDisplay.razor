@@ -23,7 +23,7 @@
             jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/aruco-tag-generator.js");
             await jsModule.InvokeVoidAsync("appendArucoMarker", [_SVGContainer, Scale, 4, 4, "4x4_1000", ID]);
         }
-        else if (jsModule is not null)
+        else if (jsModule != null)
         {
             await jsModule.InvokeVoidAsync("updateArucoMarker", [_SVGContainer, Scale, 4, 4, "4x4_1000", ID]);
         }
@@ -33,7 +33,7 @@
     {
         try
         {
-            if (jsModule is not null)
+            if (jsModule != null)
             {
                 await jsModule.DisposeAsync();
             }

@@ -1,5 +1,8 @@
+@using Microsoft.EntityFrameworkCore
+@using System.Runtime.InteropServices
 @implements IDisposable
-@inject GPSWaypointService _GPSWaypointService
+@inject DatabaseService _databaseService
+@inject IDbContextFactory<DatabaseContext> _dbContextFactory
 @inject GPSWaypointState _GPSWaypointState
 
 <div class="card h-100">
@@ -11,7 +14,7 @@
                 <RadzenButton ButtonStyle="ButtonStyle.Dark" Text="New Waypoint" Click="@InsertRow" />
 
             </div>
-            <div class ="col-6 d-flex justify-content-end">
+            <div class="col-6 d-flex justify-content-end">
                 <RadzenCheckBox TValue="bool" @bind-Value="@_showTagIDs" Name="TagIDVisToggle"></RadzenCheckBox>
                 <RadzenLabel Text="Show Tag IDs" Component="TagIdVisToggle" />
 
@@ -19,7 +22,7 @@
                 {
                     <div class="vr">&nbsp;</div>
                     <RadzenButton ButtonStyle="ButtonStyle.Primary" Text="Save All" Click="@SaveAllEdits" style="margin-left: 10px; margin-right: 10px" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Text="Cancel All" Click="@CancelAllEdits" style="margin-right: 10px"  />
+                    <RadzenButton ButtonStyle="ButtonStyle.Danger" Text="Cancel All" Click="@CancelAllEdits" style="margin-right: 10px" />
                 }
             </div>
         </div>
@@ -37,22 +40,7 @@
         else
         {
 
-            <RadzenDataGrid @ref="_waypointsDataGrid"
-            Data="@_waypointsInputTable"
-            EditMode="DataGridEditMode.Multiple"
-            TItem="GPSWaypointInput"
-            RowUpdate="@OnUpdateRow"
-            RowCreate="@OnCreateRow"
-            AllowSorting="true"
-            AllowMultiColumnSorting="true"
-            AllowVirtualization="false"
-            Density="Density.Compact"
-            AllowFiltering="false"
-            AllowColumnResize="true"
-            Style="height: 100%;"
-            SelectionMode="DataGridSelectionMode.Single"
-            CellRender="@OnCellRender"
-            RowClick="@OnRowClick">
+            <RadzenDataGrid @ref="_waypointsDataGrid" Data="@_waypointsInputTable" EditMode="DataGridEditMode.Multiple" TItem="GPSWaypointInput" RowUpdate="@OnUpdateRow" RowCreate="@OnCreateRow" AllowSorting="true" AllowMultiColumnSorting="true" AllowVirtualization="false" Density="Density.Compact" AllowFiltering="false" AllowColumnResize="true" Style="height: 100%;" SelectionMode="DataGridSelectionMode.Single" CellRender="@OnCellRender" RowClick="@OnRowClick">
                 <Columns>
                     @* <RadzenDataGridColumn Property="Timestamp" Title="Timestamp" /> *@
                     <RadzenDataGridColumn Property="Name" Title="Waypoint">
@@ -60,7 +48,7 @@
                             @waypoint.Name
                         </Template>
                         <EditTemplate Context="waypoint">
-                            <RadzenTextBox Name="Name" @bind-Value="waypoint.Name" class="form-control form-control-sm" placeholder="@waypoint.Name"/>
+                            <RadzenTextBox Name="Name" @bind-Value="waypoint.Name" class="form-control form-control-sm" placeholder="@waypoint.Name" />
                         </EditTemplate>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn Property="Latitude" Title="Latitude">
@@ -128,7 +116,7 @@
 @code
 {
     // Declare page member variables.
-    private List<GPSWaypoint> _cachedWaypoints = new List<GPSWaypoint>();
+    private List<GPSWaypoint> _waypoints = new List<GPSWaypoint>();
     private List<GPSWaypointInput> _waypointsInputTable = new List<GPSWaypointInput>();
     private RadzenDataGrid<GPSWaypointInput>? _waypointsDataGrid;
     private List<GPSWaypointInput> _selectedWaypoints = new List<GPSWaypointInput>();
@@ -146,19 +134,20 @@
     protected override async Task OnInitializedAsync()
     {
         // Subscribe to the singleton service changes. This page's sync method will be called when the data changes.
-        _GPSWaypointService.SubscribeToWaypointsChanges(SyncCache);
+        _databaseService.SubscribeToTableChanges(typeof(GPSWaypoint), UpdateWaypoints);
         _GPSWaypointState.SubscribeToWaypointSelected(OnWaypointSelected);
-        await _GPSWaypointService.RefreshGPSWaypoints();
+        await UpdateWaypoints();
     }
 
-    private async Task SyncCache()
+    private async Task UpdateWaypoints()
     {
         // Don't update if table is still being edited.
         if (_waypointsToUpdate.Count <= 0 && _waypointsToInsert.Count <= 0)
         {
             // Update GPS list.
-            _cachedWaypoints = _GPSWaypointService.GetGPSWaypoints();
-            _waypointsInputTable = _cachedWaypoints.ConvertAll<GPSWaypointInput>(ConvertWaypointToWaypointInput);
+            using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+            _waypoints = await databaseContext.Waypoints.ToListAsync();
+            _waypointsInputTable = _waypoints.ConvertAll<GPSWaypointInput>(ConvertWaypointToWaypointInput);
             _dataLoaded = true;
             // Invoke state has changed for a rerender.
             await InvokeAsync(StateHasChanged);
@@ -179,7 +168,8 @@
         double degrees = 0, multiplier = 1, dcomponent;
         foreach (string scomponent in Regex.Split(dms, "[^-.\\d]+"))
         {
-            if (Double.TryParse(scomponent, out dcomponent)) {
+            if (Double.TryParse(scomponent, out dcomponent))
+            {
                 if (degrees >= 0) // Minus sign propagates
                     degrees += dcomponent * multiplier;
                 else
@@ -199,18 +189,15 @@
     {
         // Repack each value.
         GPSWaypoint convertedWaypoint = new GPSWaypoint()
-            {
-                ID = waypoint.ID,
-                Name = waypoint.Name,
-                Latitude = ConvertDMSToDegrees(waypoint.Latitude),
-                Longitude = ConvertDMSToDegrees(waypoint.Longitude),
-                Altitude = waypoint.Altitude,
-                Timestamp = DateTime.Parse(waypoint.Timestamp),
-                WaypointColor = ConvertRgbStringToColor(waypoint.WaypointColor).ToArgb(),
-                SearchRadius = waypoint.SearchRadius,
-                TagID = waypoint.TagID,
-                Type = Enum.Parse<WaypointType>(waypoint.Type)
-            };
+        {
+            ID = waypoint.ID,
+            Name = waypoint.Name,
+            Latitude = ConvertDMSToDegrees(waypoint.Latitude),
+            Longitude = ConvertDMSToDegrees(waypoint.Longitude),
+            WaypointColor = ConvertRgbStringToColor(waypoint.WaypointColor).ToArgb(),
+            SearchRadius = waypoint.SearchRadius,
+            TagID = waypoint.TagID,
+        };
 
         return convertedWaypoint;
     }
@@ -223,26 +210,23 @@
     private GPSWaypointInput ConvertWaypointToWaypointInput(GPSWaypoint waypoint)
     {
         // Build a radzen color string for use with the color picker.
-        Color convertedColor = Color.FromArgb(waypoint.WaypointColor ?? 0);
+        Color convertedColor = Color.FromArgb(waypoint.WaypointColor);
         string colorString = $"rgb({convertedColor.R}, {convertedColor.G}, {convertedColor.B})";
 
         // Repack each value.
         GPSWaypointInput convertedWaypointInput = new GPSWaypointInput()
-            {
-                ID = waypoint.ID ?? -1,
-                Name = waypoint.Name ?? "",
-                Latitude = (waypoint.Latitude ?? 0).ToString(),
-                Longitude = (waypoint.Longitude ?? 0).ToString(),
-                Altitude = waypoint.Altitude ?? 0,
-                Timestamp = waypoint.Timestamp.ToString() ?? DateTime.MinValue.ToString(),
-                WaypointColor = colorString,
-                SearchRadius = waypoint.SearchRadius ?? 0,
-                TagID = waypoint.TagID ?? -1,
-                Type = waypoint.Type.ToString() ?? WaypointType.Navigation.ToString()
-            };
+        {
+            ID = waypoint.ID,
+            Name = waypoint.Name,
+            Latitude = waypoint.Latitude.ToString(),
+            Longitude = waypoint.Longitude.ToString(),
+            WaypointColor = colorString,
+            SearchRadius = waypoint.SearchRadius,
+            TagID = waypoint.TagID,
+        };
 
         return convertedWaypointInput;
-    } 
+    }
 
     /// <summary>
     /// Convert Radzen's wacky ass color picker value to something useful.
@@ -280,7 +264,7 @@
     /// <returns></returns>
     private async Task SaveRow(GPSWaypointInput waypoint)
     {
-        if (_waypointsDataGrid is not null)
+        if (_waypointsDataGrid != null)
         {
             await _waypointsDataGrid.UpdateRow(waypoint);
         }
@@ -313,15 +297,15 @@
     /// <returns></returns>
     private async Task CancelEdit(GPSWaypointInput waypoint)
     {
-        if (_waypointsDataGrid is not null)
+        if (_waypointsDataGrid != null)
         {
             Reset(waypoint);
             _waypointsDataGrid.CancelEditRow(waypoint);
 
             // Use the input object ID to find the cached object.
-            GPSWaypoint? cachedWaypoint = _cachedWaypoints.FirstOrDefault(x => x.ID == waypoint.ID);
+            GPSWaypoint? cachedWaypoint = _waypoints.FirstOrDefault(x => x.ID == waypoint.ID);
             // Check if found.
-            if (cachedWaypoint is not null)
+            if (cachedWaypoint != null)
             {
                 // Convert the waypoint to a waypoint input.
                 GPSWaypointInput convertedWaypoint = ConvertWaypointToWaypointInput(cachedWaypoint);
@@ -335,7 +319,7 @@
                     // Get the value of the property from the incoming waypoint object
                     object? newValue = property.GetValue(convertedWaypoint);
 
-                    // If the new value is not null, update the property in the result object
+                    // If the new value != null, update the property in the result object
                     if (newValue != null)
                     {
                         property.SetValue(waypoint, newValue);
@@ -350,7 +334,7 @@
         }
 
         // Update cache.
-        await SyncCache();
+        await UpdateWaypoints();
     }
 
     ///. <summary>
@@ -385,7 +369,9 @@
         // Convert input to real object.
         GPSWaypoint newWaypoint = ConvertWaypointInputToWaypoint(waypoint);
         // Save the waypoint to the database.
-        await _GPSWaypointService.AddGPSWaypoint(newWaypoint);
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        await databaseContext.Waypoints.AddAsync(newWaypoint);
+        await databaseContext.SaveChangesAsync(_databaseService);
         await _waypointsDataGrid!.Reload();
     }
 
@@ -397,11 +383,12 @@
     {
         // Creat a new empty waypoint input object.
         GPSWaypointInput waypoint = new GPSWaypointInput();
+        waypoint.ID = Guid.NewGuid();
         // Just to keep things civil, we are going to assign a negative ID to the waypoint based on the number of waypoints currently in the insert list.
         // Add new waypoint to the table.
         _waypointsToInsert.Add(waypoint);
         _waypointsInputTable.Insert(0, waypoint);
-        if (_waypointsDataGrid is not null)
+        if (_waypointsDataGrid != null)
         {
             _waypointsDataGrid.Reset();
             await _waypointsDataGrid.InsertRow(waypoint);
@@ -421,7 +408,9 @@
         // Convert input to real object.
         GPSWaypoint updatedWaypoint = ConvertWaypointInputToWaypoint(waypoint);
         // Save the waypoint to the database.
-        await _GPSWaypointService.UpdateGPSWaypoint(updatedWaypoint);
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        databaseContext.Waypoints.Update(updatedWaypoint);
+        await databaseContext.SaveChangesAsync(_databaseService);
         await _waypointsDataGrid!.Reload();
     }
 
@@ -433,7 +422,7 @@
     private async Task EditRow(GPSWaypointInput waypoint)
     {
         _waypointsToUpdate.Add(waypoint);
-        if (_waypointsDataGrid is not null)
+        if (_waypointsDataGrid != null)
         {
             await _waypointsDataGrid.EditRow(waypoint);
         }
@@ -448,7 +437,7 @@
     private async Task DeleteRow(GPSWaypointInput waypoint)
     {
         // Check if the user wants to delete the waypoint.
-        if (_waypointsDataGrid is not null)
+        if (_waypointsDataGrid != null)
         {
             Reset(waypoint);
 
@@ -457,7 +446,9 @@
                 // Convert input to real object.
                 GPSWaypoint deletedWaypoint = ConvertWaypointInputToWaypoint(waypoint);
                 // Delete the waypoint from the database.
-                await _GPSWaypointService.DeleteGPSWaypoint(deletedWaypoint);
+                using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+                databaseContext.Waypoints.Remove(deletedWaypoint);
+                await databaseContext.SaveChangesAsync();
 
                 // Cancel the edit and remove the waypoint from the grid.
                 _waypointsDataGrid.CancelEditRow(waypoint);
@@ -485,7 +476,7 @@
         _waypointsToInsert.Clear();
         _waypointsToUpdate.Clear();
         _selectedWaypoints.Clear();
-        if (_GPSWaypointState.SelectedWaypoint is not null)
+        if (_GPSWaypointState.SelectedWaypoint != null)
         {
             _GPSWaypointState.SelectedWaypoint = null;
         }
@@ -499,7 +490,7 @@
     {
         _waypointsToInsert.Remove(waypoint);
         _waypointsToUpdate.Remove(waypoint);
-        if (_GPSWaypointState.SelectedWaypoint is not null && _GPSWaypointState.SelectedWaypoint.ID == waypoint.ID)
+        if (_GPSWaypointState.SelectedWaypoint != null && _GPSWaypointState.SelectedWaypoint.ID == waypoint.ID)
         {
             _selectedWaypoints.Clear();
             _GPSWaypointState.SelectedWaypoint = null;
@@ -551,26 +542,23 @@
 
     private async Task OnWaypointSelected(GPSWaypoint? waypoint)
     {
-        if (GetSelectedGPSWaypoint()?.ID == waypoint?.ID) {
+        if (GetSelectedGPSWaypoint()?.ID == waypoint?.ID)
+        {
             // This component probably emitted this event.
             return;
         }
 
-        if (waypoint is null)
+        if (waypoint == null)
         {
             _selectedWaypoints.Clear();
         }
         else
         {
             GPSWaypointInput? matchingRow = _waypointsInputTable.Find(selected => selected.ID == waypoint.ID);
-            if (matchingRow is not null)
+            if (matchingRow != null)
             {
                 _selectedWaypoints.Clear();
                 _selectedWaypoints.Add(matchingRow);
-            }
-            else
-            {
-                Console.WriteLine("Error: A waypoint was selected that does not correspond to a row in the table.");
             }
         }
 
@@ -595,8 +583,7 @@
 
     void IDisposable.Dispose()
     {
-        _GPSWaypointService.UnsubscribeFromWaypointsChanges(SyncCache);
+        _databaseService.UnsubscribeFromTableChanges(typeof(GPSWaypoint), UpdateWaypoints);
         _GPSWaypointState.UnsubscribeFromWaypointSelected(OnWaypointSelected);
     }
-
 }

@@ -11,14 +11,14 @@
 
 @code {
     // valid css color
-    private string _colorString;
+    private string _colorString = "rgb(0, 0, 0)";
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        _OpState.SubscribeToStateChanged((Color? c) => {
+        _OpState.SubscribeToStateChanged((Color? c) =>
+        {
             _colorString = String.Format("rgb({0}, {1}, {2})", c?.R, c?.G, c?.B);
             InvokeAsync(StateHasChanged);
-            // Console.WriteLine(_colorString);
         });
     }
 }

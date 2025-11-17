@@ -60,8 +60,6 @@ export class RoverMap {
             imperial: false
         }));
 
-        this.lMap.on("zoomend", this.onZoomLevelChange.bind(this));
-        this.lMap.on("moveend", this.onZoomLevelChange.bind(this));
         let Position = L.Control.extend({
             positionDiv: null,
             options: {
@@ -98,12 +96,6 @@ export class RoverMap {
         };
 
         this.lMap.addControl(L.control.layers(baseMaps, overlays));
-    }
-    // Call component.OnZoomLevel.
-    onZoomLevelChange() {
-        let center = this.lMap.getCenter();
-        let zoom = this.lMap.getZoom();
-        this.dotNetComponent.invokeMethodAsync("OnZoomLevel", center.lat, center.lng, zoom);
     }
     // Call component.AddWaypoint.
     addWaypoint(event) {

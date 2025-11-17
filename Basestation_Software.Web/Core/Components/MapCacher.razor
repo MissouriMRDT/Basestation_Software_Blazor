@@ -1,5 +1,6 @@
-﻿@inject MapTileService _MapTileService
-@inject LidarTileService _LidarTileService
+﻿@using Microsoft.EntityFrameworkCore
+@inject DatabaseService _databaseService
+@inject IDbContextFactory<DatabaseContext> _dbContextFactory
 
 <div class="card h-100">
     <div class="card-header">
@@ -18,57 +19,34 @@
         </div>
         <InputNumber TValue="int" @bind-Value="_startZoom" placeholder="Zoom" class="form-control mb-2" />
         <button @onclick=DoCacheRoutine>Go...</button>
-        <button @onclick=helper>helper</button>
         <p>@(Math.Pow(2d, ((double)_currentZoom - (double)_startZoom)))</p>
-        <p>@cachedCount</p>
+        <p>@_cachedCount</p>
     </div>
 </div>
 @code {
 
     private double _ilat = 38.405879;
-    private double _ilon = -110.792207; 
+    private double _ilon = -110.792207;
     private int _spread = 5;
     private int _startZoom = 7;
     private const int _maxZoom = 18;
     private int _currentZoom = 7;
-    private int cachedCount = 0;
-    private int _iTileX;
-    private int _fTileX;
-    private int _iTileY;
-    private int _fTileY;
-
-    private void helper()
-    {
-        Console.WriteLine("Lat Lon");
-        Console.WriteLine(TileYToLat(50578, 17));
-        Console.WriteLine(TileXToLon(32119, 17));
-
-        Console.WriteLine("Conversion");
-        Console.WriteLine(LatToEPSG3857(TileYToLat(50578, 17)));
-        Console.WriteLine(LonToEPSG3857(TileXToLon(32119, 17)));
-        Console.WriteLine(LatToEPSG3857(TileYToLat(50578 + 1, 17)));
-        Console.WriteLine(LonToEPSG3857(TileXToLon(32119 + 1, 17)));
-        string url = $"https://elevation.nationalmap.gov/arcgis/services/3DEPElevation/ImageServer/WMSServer?&service=WMS&request=GetMap&layers=3DEPElevation%3AHillshade%20Gray&styles=&format=image%2Fjpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG%3A3857&bbox={LonToEPSG3857(TileXToLon(32119, 17))},{LatToEPSG3857(TileYToLat(50578 + 1, 17))},{LonToEPSG3857(TileXToLon(32119 + 1, 17))},{LatToEPSG3857(TileYToLat(50578, 17))}";
-        Console.WriteLine(url);
-
-    }
+    private int _cachedCount = 0;
 
     private async Task DoCacheRoutine()
     {
-        cachedCount = 0;
-        Console.WriteLine("Map Cache Routine Starting");
+        _cachedCount = 0;
         for (int i = _startZoom; i <= _maxZoom; i++)
         {
-            Console.WriteLine("START ZOOM LEVEL " + i);
             _currentZoom = i;
             await InvokeAsync(StateHasChanged);
             await CacheTiles(i, _spread * (int)Math.Pow(2d, ((double)i - (double)_startZoom)));
         }
-        Console.WriteLine("Done");
     }
 
     public async Task CacheTiles(int zoom, int spread)
     {
+        DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
         using (HttpClient client = new HttpClient())
         {
             client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
@@ -82,32 +60,28 @@
             {
                 for (int x = tileX - spread; x < tileX + spread; x++)
                 {
-                    MapTile? mapTile = await _MapTileService.GetMapTile(x, y, zoom);
-                    if (mapTile is null)
+                    if (!await databaseContext.MapTiles.AnyAsync(e => e.X == x && e.Y == y && e.Z == zoom))
                     {
                         string url = $"http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={zoom}";
-                        await DownloadAndSaveTile(client, url, x, y, zoom);
+                        await DownloadAndSaveTile(databaseContext, client, url, x, y, zoom);
                     }
 
-                    LidarTile? lidarTile = await _LidarTileService.GetMapTile(x, y, zoom);
-                    if (lidarTile is null)
+                    if (!await databaseContext.LidarTiles.AnyAsync(e => e.X == x && e.Y == y && e.Z == zoom))
                     {
                         double lat1 = LatToEPSG3857(TileYToLat(y, zoom));
                         double lon1 = LonToEPSG3857(TileXToLon(x, zoom));
                         double lat2 = LatToEPSG3857(TileYToLat(y + 1, zoom));
                         double lon2 = LonToEPSG3857(TileXToLon(x + 1, zoom));
-                        Console.WriteLine(TileYToLat(y, zoom));
-                        Console.WriteLine(TileXToLon(x, zoom));
                         string url = $"https://elevation.nationalmap.gov/arcgis/services/3DEPElevation/ImageServer/WMSServer?&service=WMS&request=GetMap&layers=3DEPElevation%3AHillshade%20Gray&styles=&format=image%2Fjpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG%3A3857&bbox={lon1},{lat2},{lon2},{lat1}";
-                        Console.WriteLine(url);
-                        await DownloadAndSaveTile(client, url, x, y, zoom, true);
+                        await DownloadAndSaveTile(databaseContext, client, url, x, y, zoom, true);
                     }
                 }
             }
         }
+        await databaseContext.SaveChangesAsync(_databaseService);
     }
 
-    private async Task DownloadAndSaveTile(HttpClient client, string url, int x, int y, int z, bool isLidar = false)
+    private async Task DownloadAndSaveTile(DatabaseContext databaseContext, HttpClient client, string url, int x, int y, int z, bool isLidar = false)
     {
         var response = await client.GetAsync(url);
         try
@@ -116,22 +90,16 @@
         }
         catch (HttpRequestException e)
         {
-            Console.WriteLine($"An error occurred: {e.Message}");
+            Console.WriteLine($"Error downloading tile: {e.Message}");
             return;
         }
         using (var memoryStream = new MemoryStream())
         {
             await response.Content.CopyToAsync(memoryStream);
             byte[] imageBytes = memoryStream.ToArray();
-            if (isLidar)
-            {
-                await _LidarTileService.AddMapTile(new LidarTile { X = x, Y = y, Z = z, ImageData = imageBytes });
-            }
-            else 
-            {
-                await _MapTileService.AddMapTile(new MapTile { X = x, Y = y, Z = z, ImageData = imageBytes });
-            }
-            cachedCount++;
+            if (isLidar) await databaseContext.LidarTiles.AddAsync(new() { X = x, Y = y, Z = z, ImageData = imageBytes });
+            else await databaseContext.MapTiles.AddAsync(new() { X = x, Y = y, Z = z, ImageData = imageBytes });
+            _cachedCount++;
         }
     }
 

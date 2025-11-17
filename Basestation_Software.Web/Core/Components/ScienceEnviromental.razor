@@ -2,17 +2,17 @@
 
 <style>
     .box {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    border-radius: 5%;
-    padding: 0.75rem;
-    justify-content: center;
-    background-color: var(--bs-secondary-bg);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border-radius: 5%;
+        padding: 0.75rem;
+        justify-content: center;
+        background-color: var(--bs-secondary-bg);
     }
 
-    .box > p {
-    text-align: center;
+    .box>p {
+        text-align: center;
     }
 </style>
 
@@ -26,7 +26,7 @@
                 <p>Temperature</p>
                 <p style="font-size: 2rem">@_temperature&deg</p>
                 <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "RequestTemperature", [1]))>Request</button>
-            </div>            
+            </div>
             <div class="box">
                 <p>Humidity</p>
                 <p style="font-size: 2rem">@_humidity%</p>
@@ -40,17 +40,17 @@
     private float _temperature = -1;
     private float _humidity = -1;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         _RoveCommService.On<float>("Auger", "Temperature", async (packet) =>
         {
-            _temperature = (float) Math.Round(packet.Data[0], 2);
+            _temperature = (float)Math.Round(packet.Data[0], 2);
             await InvokeAsync(StateHasChanged);
         });
 
         _RoveCommService.On<float>("Auger", "Humidity", async (packet) =>
         {
-            _humidity = (float) Math.Round(packet.Data[0], 2);
+            _humidity = (float)Math.Round(packet.Data[0], 2);
             await InvokeAsync(StateHasChanged);
         });
     }

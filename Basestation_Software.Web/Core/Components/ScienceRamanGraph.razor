@@ -1,12 +1,16 @@
 ﻿@inject RoveCommService _RoveCommService
-@using Basestation_Software.Models.RamanGraph
 @using System;
 @using System.Linq;
 @using System.Numerics;
 
 <style>
     .rz-line-series.rz-series-0 path {
-    display: @(_showLines ? "auto" : "none");
+        display:
+            @(_showLines
+                        ?
+                        "auto" :
+                        "none")
+        ;
     }
 </style>
 
@@ -17,7 +21,7 @@
     <div class="card-body w-100">
         <RadzenChart>
             <RadzenLineSeries Data="@ramanGraph" CategoryProperty="Raman_Shift" ValueProperty="Intensity">
-                <RadzenMarkers Visible="@showMarkers" MarkerType="MarkerType.Circle" StrokeWidth="0" Size="@_dotSize"/>
+                <RadzenMarkers Visible="@showMarkers" MarkerType="MarkerType.Circle" StrokeWidth="0" Size="@_dotSize" />
                 <RadzenSeriesDataLabels Visible="@showDataLabels" />
             </RadzenLineSeries>
 
@@ -29,18 +33,18 @@
         <button class="btn btn-primary btn-sm" @onclick=Export> <i class="bi bi-filetype-csv"></i> </button>
         <div class="d-flex">
             <p>Integration Time:</p>
-            <input type="number" @bind=_integrationTime/>
+            <input type="number" @bind=_integrationTime />
         </div>
         <div class="d-flex">
             <p>Dot Size: </p>
-            <RadzenNumeric TValue="float" @bind-Value="@_dotSize"/>
+            <RadzenNumeric TValue="float" @bind-Value="@_dotSize" />
         </div>
         <div class="d-flex">
             <p>Show Lines: </p>
-            <RadzenCheckBox TValue="bool" @bind-Value="@_showLines"/>
+            <RadzenCheckBox TValue="bool" @bind-Value="@_showLines" />
         </div>
     </div>
-</div> 
+</div>
 
 
 @code {
@@ -61,17 +65,17 @@
 
     private void Export()
     {
-        File.WriteAllLines("RamanExport_" + ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds() + ".csv", ramanGraph.Select(x => string.Join(",", x.Intensity))); 
+        File.WriteAllLines("RamanExport_" + ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds() + ".csv", ramanGraph.Select(x => string.Join(",", x.Intensity)));
     }
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         // Initialize ramanGraph
         for (int i = 0; i < 2048; i++)
         {
-            ramanGraph.Add(new DataItem { Raman_Shift = i, Intensity = 1d});
+            ramanGraph.Add(new DataItem { RamanShift = i, Intensity = 1d });
         }
-            
+
         //Receiving RoveComm packets if they are sent in
         _RoveCommService.On<ushort>("Raman", "RamanReading_Part1", async (packet) =>
         {
@@ -79,7 +83,6 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        await Task.CompletedTask;
         _RoveCommService.On<ushort>("Raman", "RamanReading_Part2", async (packet) =>
         {
             for (int i = 0; i < 512; i++) ramanGraph[i + 512].Intensity = packet.Data[i];

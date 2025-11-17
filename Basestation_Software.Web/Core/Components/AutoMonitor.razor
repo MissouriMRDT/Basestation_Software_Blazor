@@ -2,7 +2,7 @@
 
 <style>
     p {
-    margin-bottom: 0;
+        margin-bottom: 0;
     }
 </style>
 
@@ -18,7 +18,7 @@
                 <div class="d-flex flex-column rounded p-2 bg-body-secondary justify-content-center align-content-center text-center">
                     <p>@_threadNames[_i]</p>
                     <p class="font-monospace fs-3"><b>@_fpsValues[_i] FPS</b></p>
-                    <hr style="border-color: color-mix(in oklab, green @(Math.Min(_fpsValues[_i], 60)/60f * 100)%, red) !important" class="border border-4 opacity-50 rounded-2" />
+                    <hr style="border-color: color-mix(in oklab, green @(Math.Min(_fpsValues[_i], 60) / 60f * 100)%, red) !important" class="border border-4 opacity-50 rounded-2" />
                 </div>
             }
         </div>
@@ -26,10 +26,10 @@
 </div>
 
 @code {
-    private uint[]_fpsValues = new uint[11];
+    private uint[] _fpsValues = new uint[11];
     private string[] _threadNames = Enum.GetNames(typeof(RoveComm.Boards.Autonomy.AUTONOMYTHREADS));
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         _RoveCommService.On<uint>("Autonomy", "ThreadFPS", async (packet) =>
         {

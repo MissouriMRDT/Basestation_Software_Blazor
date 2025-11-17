@@ -3,29 +3,28 @@
 
 <style>
     p {
-    width: 110px;
-    text-align: right;
-    margin-bottom: 0;
+        width: 110px;
+        text-align: right;
+        margin-bottom: 0;
     }
 
     .controlBox {
-    display: flex;
-    column-gap: 0.6rem;
-    row-gap: 0.1rem;
-    justify-items: center;
-    flex: 0 1 160px;
-    flex-wrap: wrap;
-    border-radius: 10px;
-    background-color: var(--bs-secondary-bg);
-    margin: 0.2rem;
-    padding: 0.3rem;
+        display: flex;
+        column-gap: 0.6rem;
+        row-gap: 0.1rem;
+        justify-items: center;
+        flex: 0 1 160px;
+        flex-wrap: wrap;
+        border-radius: 10px;
+        background-color: var(--bs-secondary-bg);
+        margin: 0.2rem;
+        padding: 0.3rem;
     }
 
     .break {
-    flex-basis: 100%;
-    height: 0;
+        flex-basis: 100%;
+        height: 0;
     }
-
 </style>
 
 <div class="card full-height">
@@ -39,7 +38,7 @@
                 <option value="@value">@value</option>
             }
         </InputSelect>
-        <GamepadSelector @ref=GamepadSelector_ ChangedCallback=GamepadSelectionChanged />
+        <GamepadSelector @ref=_gamepadSelector ChangedCallback=GamepadSelectionChanged />
     </div>
     <div class="card-body">
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
@@ -51,9 +50,9 @@
         </div>
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
             <p style="width:auto; text-align: center"><b>Speeds</b></p>
-            <label>Auger: <input type="number" step="0.1" @bind-value=@_augerMult/></label>
-            <label>Auger Axis: <input type="number" step="0.1" @bind-value=@_augerAxisMult/></label>
-            <label>Instruments: <input type="number" step="0.1" @bind-value=@_instrumentAxisMult/></label>
+            <label>Auger: <input type="number" step="0.1" @bind-value=@_augerMult /></label>
+            <label>Auger Axis: <input type="number" step="0.1" @bind-value=@_augerAxisMult /></label>
+            <label>Instruments: <input type="number" step="0.1" @bind-value=@_instrumentAxisMult /></label>
 
         </div>
 
@@ -226,10 +225,10 @@
 
     private void UpdateInterval()
     {
-        if (GamepadSelector_.SelectedGamepad == null)
-            UpdateTimer.Change(-1, -1);
+        if (_gamepadSelector?.SelectedGamepad == null)
+            _updateTimer.Change(-1, -1);
         else
-            UpdateTimer.Change(0, UPDATE_INTERVAL);
+            _updateTimer.Change(0, UPDATE_INTERVAL);
     }
 
     /// <summary>
@@ -240,27 +239,27 @@
     private double[] GetBindableGamepadInputs(Toolbelt.Blazor.Gamepad.Gamepad gamepad)
     {
         double[] gamepadInputs = [
-            gamepad.Axes[0],
-    gamepad.Axes[1],
-    gamepad.Axes[2],
-    gamepad.Axes[3],
-    gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
-    gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
-    gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
-    gamepad.Axes[4] - gamepad.Axes[5],
-    gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
-    gamepad.Buttons[12].Value - gamepad.Buttons[13].Value,
-        ];
+        gamepad.Axes[0],
+gamepad.Axes[1],
+gamepad.Axes[2],
+gamepad.Axes[3],
+gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
+gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
+gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
+gamepad.Axes[4] - gamepad.Axes[5],
+gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
+gamepad.Buttons[12].Value - gamepad.Buttons[13].Value,
+];
 
         return gamepadInputs;
     }
 
     // Member variables
     private bool OutputDisabled = false;
-    private GamepadSelector GamepadSelector_;
+    private GamepadSelector? _gamepadSelector;
     private Scheme SelectedScheme;
     public int UPDATE_INTERVAL = 100;
-    private Timer UpdateTimer;
+    private Timer _updateTimer;
     private bool LastProcessGamepadInputOK = false;
     private double DeadZone = 0.5;
     Bind AugerAxisBind = Bind.RSY;
@@ -274,18 +273,18 @@
     private const short multiplexerMin = 0;
     private const short _multiplexerMax = 180;
 
-    public void GamepadSelectionChanged()
-    {
-        if (GamepadSelector_.SelectedGamepad == null)
-            UpdateTimer.Change(-1, -1);
-        else
-            UpdateTimer.Change(0, UPDATE_INTERVAL);
-    }
-
-    protected override void OnInitialized()
+    public ScienceControls()
     {
         // Run update function every 100ms
-        UpdateTimer = new(Update);
+        _updateTimer = new(Update);
+    }
+
+    public void GamepadSelectionChanged()
+    {
+        if (_gamepadSelector?.SelectedGamepad == null)
+            _updateTimer.Change(-1, -1);
+        else
+            _updateTimer.Change(0, UPDATE_INTERVAL);
     }
 
     private void Update(object? _)
@@ -305,24 +304,24 @@
     {
         try
         {
-            if (GamepadSelector_.SelectedGamepad is null) return false;
+            if (_gamepadSelector?.SelectedGamepad == null) return false;
             switch (SelectedScheme)
             {
                 case Scheme.ScienceXbox:
                     {
                         // Controller check
-                        if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
+                        if (_gamepadSelector.SelectedGamepad.Axes.Count < 4 || _gamepadSelector.SelectedGamepad.Buttons.Count < 17) return false;
 
-                        double[] inputValues = GetBindableGamepadInputs(GamepadSelector_.SelectedGamepad);
+                        double[] inputValues = GetBindableGamepadInputs(_gamepadSelector.SelectedGamepad);
 
                         float[] bindedInputs = [
-                            (float)inputValues[(int)AugerAxisBind],
-                            (float)inputValues[(int)InstrumentsAxisBind],
-                            (float)inputValues[(int)AugerBind],
-                            (float)inputValues[(int)MultiplexerServoBind],
-                            (float)inputValues[(int)GimbalPanBind],
-                            (float)inputValues[(int)GimbalTiltBind],
-                        ];
+                        (float)inputValues[(int)AugerAxisBind],
+(float)inputValues[(int)InstrumentsAxisBind],
+(float)inputValues[(int)AugerBind],
+(float)inputValues[(int)MultiplexerServoBind],
+(float)inputValues[(int)GimbalPanBind],
+(float)inputValues[(int)GimbalTiltBind],
+];
 
                         // sanitize inputs
                         for (int i = 0; i < bindedInputs.Length; i++)
