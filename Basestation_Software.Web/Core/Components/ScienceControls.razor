@@ -43,6 +43,12 @@
     </div>
     <div class="card-body">
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
+            <p style="width:auto; text-align: center"<b>Auger Telemetry</b></p>
+            <label>Auger Speed: @_augerSpeed</label>
+            <label>Auger Depth: @_augerDepth</label>
+            <label>Auger Current: @_augerCurrent</label>
+        </div>
+        <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
             <p style="width:auto; text-align: center"><b>Calibration</b></p>
             <div class="btn-group d-flex justify-items-center gap-1" role="group">
                 <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "CalibrateEncoder", [1]))>AugerAxis</button>
@@ -286,6 +292,24 @@
     {
         // Run update function every 100ms
         UpdateTimer = new(Update);
+
+        _RoveCommService.Subscribe<float>("Auger", "AugerSpeed", val =>
+        {
+            _augerSpeed = (float) Math.Round(val.Data[0],2);
+            InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.Subscribe<float>("Auger", "AugerDepth", val =>
+        {
+            _augerDepth = (float) Math.Round(val.Data[0],2);
+            InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.Subscribe<float>("Auger", "AugerCurrent", val =>
+        {
+            _augerCurrent = (float) Math.Round(val.Data[0],2);
+            InvokeAsync(StateHasChanged);
+        });
     }
 
     private void Update(object? _)
@@ -355,6 +379,9 @@
     private float _augerMult = -1f;
     private float _augerAxisMult = -0.4f;
     private float _instrumentAxisMult = 0.4f;
+    private float _augerSpeed = -1;
+    private float _augerDepth = -1;
+    private float _augerCurrent = --1;
 
     void IDisposable.Dispose() { }
 }
