@@ -41,7 +41,7 @@
 <div class="page">
     <link rel="stylesheet" href="_content/Radzen.Blazor/css/default-base.css" />
     <link rel="stylesheet" href=themes/@RadzenTheme />
-    <nav class="navbar navbar-expand-sm border-bottom box-shadow mb-3 mat-glass shadow-sm fixed-top" style="padding: 8px 16px">
+    <nav class="navbar navbar-expand-sm border-bottom box-shadow mb-3 mat-glass shadow-sm fixed-top" style="padding: 8px 16px ; @(_RoveCommService.connectedToSim ? "background-color : orange" : "")" >
         <div class="navbar-nav">
             <img src="images/swoosh.svg" height="35" />
             @if (ConfigID.Equals(_defaultGuid))
@@ -116,7 +116,9 @@
         // This workaround depends on <CascadingValue Value="@routeData"> in Routes.razor.
         // All because `[Parameter] ConfigID` wasn't updating ConfigID with the value from the url.
         ConfigID = ((Guid?)RouteData_.RouteValues.GetValueOrDefault("ConfigID", null) ?? ConfigID);
-
+        _RoveCommService.ConnectedToSimChangedNotifier += async () => {
+            await InvokeAsync(StateHasChanged);
+        };
         _ConfigService.SubscribeToConfigChanges(ConfigChanged);
         await _ConfigService.RefreshConfigs(); // We rely on RefreshConfigs calling ConfigChanged.
     }

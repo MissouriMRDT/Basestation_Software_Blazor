@@ -1,0 +1,54 @@
+@inject RoveCommService _RoveCommService
+
+<div class="card h-200">
+    <div class="card-header">
+            <div class ="col-8 d-flex justify-content-end">
+                <RadzenButton ButtonStyle="ButtonStyle.Dark" Text="Connect to sim?" Click="@goAndConnectToSim" />
+
+                <RadzenLabel Text="Connect to sim instead (WORK IN PROGRESS)" Component="ConnecterToSim" />
+
+            </div>
+
+    </div>
+    <div class="card-body w-100">
+        @if (_RoveCommService.connectedToSim) {
+            <p>You are currently connected to the sim, do not expect the rover to do anything</p>
+            <div class ="col-8 d-flex justify-content-end">
+                <RadzenButton ButtonStyle="ButtonStyle.Dark" Text="send to a different computer" Click="@sendToAnotherComputer" />
+            </div>
+
+        } else {
+            <p> unconnected</p>
+        }
+
+
+    </div>
+</div>
+
+
+
+@code 
+{
+// files that will likly need editing
+// SimConnector.razor
+// RoveCommService.cs // needs port matching from Simulator
+public void goAndConnectToSim () {
+    _RoveCommService.connectedToSim = !_RoveCommService.connectedToSim;
+}
+public void sendToAnotherComputer() {
+    _RoveCommService.sendToOtherComputer = !_RoveCommService.sendToOtherComputer;
+}
+
+
+private void Update() 
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+protected override void OnInitialized() {
+    _RoveCommService.ConnectedToSimChangedNotifier += Update;
+}
+
+
+}
+
