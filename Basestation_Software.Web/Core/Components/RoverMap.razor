@@ -142,10 +142,18 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<int>(11105, async (packet) => 
+        _RoveCommService.On<double>(11105, async (packet) => 
         {
-            int ETA = packet.Data[0];
-            SetETA(ETA);
+            double timeRemaining = packet.Data[0];
+            double now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            double ETA = now + timeRemaining;
+
+            // Rover was not moving, so set ETA to -1 to signify that
+            if (timeRemaining == -1) {
+                ETA = -1;
+            }
+
+            await SetETA(ETA);
             await InvokeAsync(StateHasChanged);
         });
 
@@ -208,7 +216,7 @@
         }
     }
 
-    public async Task SetETA(int ETA) {
+    public async Task SetETA(double ETA) {
         await jsRoverMap!.InvokeVoidAsync("setETA", ETA);
     } 
 

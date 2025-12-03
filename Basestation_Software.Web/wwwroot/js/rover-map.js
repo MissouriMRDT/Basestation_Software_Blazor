@@ -181,10 +181,17 @@ export class RoverMap {
         var path = L.polyline(points, { color: "blue", weight: 5}).addTo(this.pathLayerGroup);
         
         var lastPoint = points[points.length - 1];
+
+        
         var timeDate = new Date(this.eta * 1000)
-        L.marker([lastPoint[0], lastPoint[1]]).addTo(this.pathLayerGroup).bindTooltip("ETA:" + timeDate.toString(), {direction: "top" });;
-        path.bindPopup("THIS IS A TEST POPUP! :)")
-        console.log("ADDED POINTS:", points)
+        var ETAString = "ETA: " + timeDate.toString()
+
+        // Do not show ETA if rover is not moving
+        if (this.eta < 0) {
+            ETAString = "Waiting for movement update..."
+        }
+
+        L.marker([lastPoint[0], lastPoint[1]]).addTo(this.pathLayerGroup).bindTooltip(ETAString, {direction: "top" });;
     }
     
     // Remove planned path
