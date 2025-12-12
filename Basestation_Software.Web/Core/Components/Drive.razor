@@ -136,6 +136,7 @@
         Flightstick,
         Xboxpower,
         Xboxtank,
+        SteamDeckTank,
     }
 
     // Constants
@@ -175,6 +176,7 @@
     /// commands to drive the left and right motors in tank drive.
     private void Update(object? _)
     {
+        Console.WriteLine("UPDATE");
         bool ProcessGamepadInputOK = ProcessGamepadInput();
         if (ProcessGamepadInputOK) {
             _OpService.SetTeleop();
@@ -187,7 +189,9 @@
 
     // Process gamepad input and return true if rovecomm packets were sent.
     private bool ProcessGamepadInput() {
+        Console.WriteLine("HANDLE INPUT");
         if (GamepadSelector_.SelectedGamepad is null) return false;
+        Console.WriteLine("READING GAMEPAD");
         switch (SelectedScheme)
         {
             case Scheme.Flightstick:
@@ -477,12 +481,97 @@
                     // _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed }, false);
                     break;
                 }
+            case Scheme.SteamDeckTank:
+                {
+                    Console.WriteLine("STEAM DECK INPUT");
+                    foreach (var axis in GamepadSelector_.SelectedGamepad.Axes) {
+                        Console.WriteLine($"{axis}");
+                    }
+                    // Axes:
+                    // 0: left-x: unused
+                    // 1: left-y [-1, 1]: left drive [DriveSpeed, -DriveSpeed]
+                    // 2: left trigger: unused
+                    // 3: right-x: unused
+                    // 4: right-y [-1, 1]: left drive [DriveSpeed, -DriveSpeed]
+                    // 5: right trigger: unused
+                    // 6: D-pad left/right: unused
+                    // 7: D-pad up/down: unused
+                    // Buttons:
+                    // 0: a
+                    // 1: b
+                    // 2: x
+                    // 3: y
+                    // 4: left bumper
+                    // 5: right bumper
+/*
+                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
+
+                    // Gimbal controls:
+                    if (GamepadSelector_.SoftwareDebounce(5)) SelectedGimbal = (SelectedGimbal + 1) % 6; // Next
+                    if (GamepadSelector_.SoftwareDebounce(4)) SelectedGimbal = (SelectedGimbal + 5) % 6; // Previous
+
+                    double x = GamepadSelector_.SelectedGamepad.Buttons[15].Value - GamepadSelector_.SelectedGamepad.Buttons[14].Value;
+                    double y = -GamepadSelector_.SelectedGamepad.Buttons[12].Value + GamepadSelector_.SelectedGamepad.Buttons[13].Value;
+                    // Clamp deadzone.
+                    Pan = (short)Utils.ClampMap(Math.Abs(x) > DeadZone ? x : 0, -1.0, 1.0, -GimbalSpeed, GimbalSpeed);
+                    Tilt = (short)Utils.ClampMap(Math.Abs(y) > DeadZone ? y : 0, -1.0, 1.0, -GimbalSpeed, GimbalSpeed);
+                    if (Math.Abs(Pan) > 0 || Math.Abs(Tilt) > 0)
+                    {
+                        switch (SelectedGimbal)
+                        {
+                            case 0:
+                                _RoveCommService.Send<short>("Core", "LeftDriveGimbalIncrement", new List<short>() { Tilt });
+                                break;
+                            case 1:
+                                _RoveCommService.Send<short>("Core", "RightDriveGimbalIncrement", new List<short>() { Tilt });
+                                break;
+                            case 2:
+                                _RoveCommService.Send<short>("Core", "LeftMainGimbalIncrement", new List<short>() { Tilt, Pan });
+                                break;
+                            case 3:
+                                _RoveCommService.Send<short>("Core", "RightMainGimbalIncrement", new List<short>() { Tilt, Pan });
+                                break;
+                            case 4:
+                                _RoveCommService.Send<short>("Core", "BackDriveGimbalIncrement", new List<short>() { Tilt });
+                                break;
+                            case 5:
+                                _RoveCommService.Send<short>("Raman", "RamanGimbalIncrement", new List<short>() { Pan, Tilt });
+                                break;
+                        }
+                    } */
+
+                    double left = -GamepadSelector_.SelectedGamepad.Axes[1];
+                    double right = -GamepadSelector_.SelectedGamepad.Axes[4];
+                    left = left > -DeadZone && left < DeadZone ? 0 : left;
+                    right = right > -DeadZone && right < DeadZone ? 0 : right;
+                    LeftSpeed = Utils.ClampMap(left, -1.0, 1.0, -DriveSpeed, DriveSpeed);
+                    RightSpeed = Utils.ClampMap(right, -1.0, 1.0, -DriveSpeed, DriveSpeed);
+                    bool isPT = Math.Sign(LeftSpeed) * Math.Sign(RightSpeed) < 0;
+                    double LM = isPT ? LeftSpeed * MidMult : LeftSpeed;
+                    double RM = isPT ? RightSpeed * MidMult : RightSpeed;
+                    LeftSpeed = isPT ? LeftSpeed * OutMult : LeftSpeed;
+                    RightSpeed = isPT ? RightSpeed * OutMult : RightSpeed;
+                    Console.WriteLine($"Left: {LeftSpeed} Right: {RightSpeed}");
+
+                    if (!OutputDisabled) RoveComm.Boards.Core.DriveIndividual(
+                        _RoveCommService, 
+                        (float)LeftSpeed, 
+                        (float)LM,
+                        (float)LeftSpeed,
+                        (float)RightSpeed,
+                        (float)RM,
+                        (float)RightSpeed
+                    );
+                    // _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed }, false);
+                    break;
+                }
         }
         return true;
     }
 
     public void GamepadSelectionChanged()
     {
+        Console.WriteLine("GAMEPAD CHANGE");
         if (GamepadSelector_.SelectedGamepad == null)
             UpdateTimer.Change(-1, -1);
         else

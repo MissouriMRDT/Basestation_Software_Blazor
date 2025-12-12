@@ -85,6 +85,7 @@ export class RoverMap {
 
         this.waypointLayerGroup = L.layerGroup([]).addTo(this.lMap);
         this.tagLayerGroup = L.layerGroup([]).addTo(this.lMap);
+        this.pathLayerGroup = L.layerGroup([]).addTo(this.lMap);
 
         const baseMaps = {
             "Satellite": satelliteLayer,
@@ -94,7 +95,8 @@ export class RoverMap {
         const overlays = {
             "Waypoints": this.waypointLayerGroup,
             "Tags": this.tagLayerGroup,
-            "Rover": this.roverIcon
+            "Rover": this.roverIcon,
+            "Planned Path": this.pathLayerGroup,
         };
 
         this.lMap.addControl(L.control.layers(baseMaps, overlays));
@@ -146,6 +148,23 @@ export class RoverMap {
     // Add a pin where the rover is.
     addRoverIcon(lat, lng) {
         this.roverIcon.setLatLng([lat, lng]);
+    }
+
+    displayPath(points) {
+        if (points.length == 0){
+            return;
+        }
+        this.pathLayerGroup.clearLayers();
+        var path = L.polyline(points, { color: "blue", weight: 5}).addTo(this.pathLayerGroup);
+
+        var lastPoint = points[points.length - 1];
+        L.marker([lastPoint[0], lastPoint[1]]).addTo(this.pathLayerGroup).bindTooltip("ETA: N/A", {direction: "top" });;
+        path.bindPopup("THIS IS A TEST POPUP! :)")
+        console.log("ADDED POINTS:", points)
+    }
+    
+    removePath() {
+        this.pathLayerGroup.clearLayers();
     }
 }
 

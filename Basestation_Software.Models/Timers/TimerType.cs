@@ -5,5 +5,6 @@ public enum TaskType
     Autonomy,
     Science,
     ExtremeDelivery,
-    EquipmentServicing
+    EquipmentServicing,
+    STEMDay,
 }

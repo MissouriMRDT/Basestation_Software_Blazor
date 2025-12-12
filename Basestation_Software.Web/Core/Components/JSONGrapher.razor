@@ -53,7 +53,7 @@
             string jsonString = _FileReaderService.Read(jsonFilePath).Result;
 
             // get all values for target key
-            Regex rv = new Regex($"\"{targetKey}\": (.+),");
+            Regex rv = new Regex($"\"{targetKey}\": \"?(.+)\"?,");
             // get all values for time
             Regex rt = new Regex($"\"time\": \"(.+)\",");
             MatchCollection valueMatches = rv.Matches(jsonString);

@@ -242,7 +242,7 @@
     /// <returns></returns>
     private double[] GetBindableGamepadInputs(Toolbelt.Blazor.Gamepad.Gamepad gamepad)
     {
-        double[] gamepadInputs = [
+        /*double[] gamepadInputs = [
             gamepad.Axes[0],
         gamepad.Axes[1],
         gamepad.Axes[2],
@@ -253,6 +253,20 @@
         gamepad.Axes[4] - gamepad.Axes[5],
         gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
         gamepad.Buttons[12].Value - gamepad.Buttons[13].Value,
+        gamepad.Buttons[9].Value - gamepad.Buttons[8].Value,
+        0d,
+    ];*/
+    double[] gamepadInputs = [
+        gamepad.Axes[0],
+        gamepad.Axes[1],
+        gamepad.Axes[3],
+        gamepad.Axes[4],
+        gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
+        gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
+        gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
+        gamepad.Axes[2] - gamepad.Axes[5],
+        gamepad.Axes[6],
+        gamepad.Axes[7],
         gamepad.Buttons[9].Value - gamepad.Buttons[8].Value,
         0d,
     ];
@@ -401,7 +415,7 @@
             case Scheme.XboxTargetAngles:
                 {
                     // Controller check
-                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
+                    // if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
 
 
                     double[] inputValues = GetBindableGamepadInputs(GamepadSelector_.SelectedGamepad);
@@ -449,7 +463,7 @@
             case Scheme.InverseKinematics:
                 {
                     // Controller check
-                    if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
+                    // if (GamepadSelector_.SelectedGamepad.Axes.Count < 4 || GamepadSelector_.SelectedGamepad.Buttons.Count < 17) return false;
 
 
                     double[] inputValues = GetBindableGamepadInputs(GamepadSelector_.SelectedGamepad);

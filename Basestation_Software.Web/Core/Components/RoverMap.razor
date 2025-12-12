@@ -79,9 +79,11 @@
             await jsRoverMap!.InvokeVoidAsync("addRoverIcon", [packet.Data[0], packet.Data[1]]);
         });
 
-        _RoveCommService.On<float>("Nav", "IMUData", async (packet) => 
+        _RoveCommService.On<float>("Nav", "CompassData", async (packet) => 
         {
-            _heading = packet.Data[1];
+            Console.WriteLine("abebebebe");
+            Console.WriteLine(packet.Data[0]);
+            _heading = packet.Data[0];
             await InvokeAsync(StateHasChanged);
         });
     }

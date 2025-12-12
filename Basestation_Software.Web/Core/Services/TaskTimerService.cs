@@ -73,6 +73,13 @@ public class TaskTimerService
                             { "PackUp", TimeSpan.FromMinutes(10) },
                         };
                         break;
+                    case TaskType.STEMDay:
+                        newTimer.EndPoint = TimeSpan.FromMinutes(10);
+                        newTimer.CheckPoints = new Dictionary<string, TimeSpan>
+                        {
+                            {"Task Time", TimeSpan.FromMinutes(10)}
+                        };
+                        break;
                     default:
                         newTimer.EndPoint = TimeSpan.FromMinutes(1);
                         break;

@@ -94,16 +94,16 @@ public class SwitchMonitorService : IHostedService, IDisposable
 
     public Task StartAsync(CancellationToken stop)
     {
-        _getInterfacesTimer = new Timer(state => GetInterfaces(), null, TimeSpan.Zero, TimeSpan.FromSeconds(2));
-        _getEigrpTopologyTimer = new Timer(state => GetEigrpTopology(), null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
-        _getPortsTimer = new Timer(state => GetPorts(), null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
+        // _getInterfacesTimer = new Timer(state => GetInterfaces(), null, TimeSpan.Zero, TimeSpan.FromSeconds(2));
+        // _getEigrpTopologyTimer = new Timer(state => GetEigrpTopology(), null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
+        // _getPortsTimer = new Timer(state => GetPorts(), null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
         return Task.CompletedTask;
     }
     public Task StopAsync(CancellationToken stop)
     {
-        _getInterfacesTimer?.Change(Timeout.Infinite, 0);
-        _getEigrpTopologyTimer?.Change(Timeout.Infinite, 0);
-        _getPortsTimer?.Change(Timeout.Infinite, 0);
+        // _getInterfacesTimer?.Change(Timeout.Infinite, 0);
+        // _getEigrpTopologyTimer?.Change(Timeout.Infinite, 0);
+        // _getPortsTimer?.Change(Timeout.Infinite, 0);
         return Task.CompletedTask;
     }
 
