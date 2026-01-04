@@ -45,20 +45,20 @@
 </style>
 
 <div style="display: flex; position: absolute;">
-    <button @onclick=Open class="component-options-open" title="Component Options"><i class="bi bi-inline-text bi-pencil"></i></button>
+    <button @onclick=Open class="component-options-open" title="Component Options"><img src="/icons/pencil.svg"></button>
 
 </div>
 @if (Visible)
 {
     <div class="component-options">
         <p>X</p>
-        <InputNumber @bind-Value=X></InputNumber>
+        <input @bind=X>
         <p>Y</p>
-        <InputNumber @bind-Value=Y></InputNumber>
+        <input @bind=Y>
         <p>Width</p>
-        <InputNumber @bind-Value=Width></InputNumber>
+        <input @bind=Width>
         <p>Height</p>
-        <InputNumber @bind-Value=Height></InputNumber>
+        <input @bind=Height>
         <p>Type</p>
         <select @bind="@Type_">
             @foreach (var typename in GetComponentTypeNames())
@@ -67,9 +67,9 @@
             }
         </select>
         <p>PlaceSelf</p>
-        <InputText @bind-Value=PlaceSelf></InputText>
-        <button @onclick=Delete class="btn btn-danger" title="Delete Component"><i class="bi bi-inline-text bi-trash" /></button>
-        <button @onclick=Save class="btn btn-success" title="Save"><i class="bi bi-inline-text bi-floppy" /></button>
+        <input @bind=PlaceSelf>
+        <button @onclick=Delete class="btn btn-danger" title="Delete Component"><img src="icons/trash.svg"></button>
+        <button @onclick=Save class="btn btn-success" title="Save"><img src="icons/floppy.svg"></button>
     </div>
 }
 

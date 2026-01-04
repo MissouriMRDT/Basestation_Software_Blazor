@@ -92,7 +92,7 @@
 	<div class="navBar">
 		<div class="navBarColumn_left">
 			<RadzenButton class="navBarButton" Click="@(previousPage)">
-				<img src="/images/leftArrow.png" width="16" height="16"/>
+				<img src="/icons/chevron-left.svg" width="16" height="16" />
 			</RadzenButton>
 		</div>
 		<div class="navBarColumn_center">
@@ -100,12 +100,13 @@
 		</div>
 		<div class="navBarColumn_right">
 			<RadzenButton class="navBarButton" Click="@(nextPage)">
-				<img src="/images/rightArrow.png" width="16" height="16" />
+				<img src="/icons/chevron-right.svg" width="16" height="16" />
 			</RadzenButton>
 		</div>
 	</div>
 
-	@if (autoScroll) {
+	@if (autoScroll)
+	{
 		pageEndingIndex = logs_filtered.Count() - 1;
 		pageStartingIndex = Math.Max(pageEndingIndex - pageSize, 0);
 	}
@@ -137,7 +138,7 @@
 	<div class="navBar">
 		<div class="navBarColumn_left">
 			<RadzenButton class="navBarButton" Click="@(previousPage)">
-				<img src="/images/leftArrow.png" width="16" height="16" />
+				<img src="/icons/chevron-left.svg" width="16" height="16" />
 			</RadzenButton>
 		</div>
 		<div class="navBarColumn_center">
@@ -145,7 +146,7 @@
 		</div>
 		<div class="navBarColumn_right">
 			<RadzenButton class="navBarButton" Click="@(nextPage)">
-				<img src="/images/rightArrow.png" width="16" height="16" />
+				<img src="/icons/chevron-right.svg" width="16" height="16" />
 			</RadzenButton>
 		</div>
 	</div>
@@ -183,14 +184,22 @@
 	}
 
 	// Export Button Functionality
-	private async Task ExportLogs() {
-		if (exportRange_lowerLimit == null && exportRange_upperLimit == null) {
+	private async Task ExportLogs()
+	{
+		if (exportRange_lowerLimit == null && exportRange_upperLimit == null)
+		{
 			_LoggerService.ExportLogs();
-		} else if (exportRange_lowerLimit == null) {
+		}
+		else if (exportRange_lowerLimit == null)
+		{
 			_LoggerService.ExportLogs(0, exportRange_upperLimit); // Issues with null values
-		} else if (exportRange_upperLimit == null) {
+		}
+		else if (exportRange_upperLimit == null)
+		{
 			_LoggerService.ExportLogs(exportRange_lowerLimit, _LoggerService.GetLogs().Count);
-		} else  {
+		}
+		else
+		{
 			_LoggerService.ExportLogs(exportRange_lowerLimit, exportRange_upperLimit);
 		}
 		await InvokeAsync(StateHasChanged);
@@ -199,19 +208,27 @@
 	// Clear Button Functionality
 	private async Task ClearLogs()
 	{
-		if (exportRange_lowerLimit == null && exportRange_upperLimit == null) {
+		if (exportRange_lowerLimit == null && exportRange_upperLimit == null)
+		{
 			_LoggerService.ClearActiveLogs();
-		} else if (exportRange_lowerLimit == null) {
+		}
+		else if (exportRange_lowerLimit == null)
+		{
 			_LoggerService.ClearActiveLogs(0, exportRange_upperLimit); // Issues with null values
-		} else if (exportRange_upperLimit == null) {
+		}
+		else if (exportRange_upperLimit == null)
+		{
 			_LoggerService.ClearActiveLogs(exportRange_lowerLimit, _LoggerService.GetLogs().Count);
-		} else {
+		}
+		else
+		{
 			_LoggerService.ClearActiveLogs(exportRange_lowerLimit, exportRange_upperLimit);
 		}
 		await InvokeAsync(StateHasChanged);
 	}
 
-	private async Task updateAutoExportSize(string value) {
+	private async Task updateAutoExportSize(string value)
+	{
 		try
 		{
 			_LoggerService.autoExportSize = int.Parse(value);
@@ -223,30 +240,40 @@
 		await InvokeAsync(StateHasChanged);
 	}
 
-	private async Task updateAutoExport(bool value) {
+	private async Task updateAutoExport(bool value)
+	{
 		_LoggerService.autoExport = value;
 		await InvokeAsync(StateHasChanged);
 	}
 
-	private async Task updateAutoScroll(bool value) {
+	private async Task updateAutoScroll(bool value)
+	{
 		autoScroll = value;
 		await InvokeAsync(StateHasChanged);
 	}
 
 	// Update Export/Clear Range
-	private async Task updateExportRange_lowerLimit(string value) {
-		try {
+	private async Task updateExportRange_lowerLimit(string value)
+	{
+		try
+		{
 			exportRange_lowerLimit = int.Parse(value);
-		} catch {
+		}
+		catch
+		{
 			exportRange_lowerLimit = null;
 		}
 		await InvokeAsync(StateHasChanged);
 	}
 
-	private async Task updateExportRange_upperLimit(string value) {
-		try {
+	private async Task updateExportRange_upperLimit(string value)
+	{
+		try
+		{
 			exportRange_upperLimit = int.Parse(value);
-		} catch {
+		}
+		catch
+		{
 			exportRange_upperLimit = null;
 		}
 		await InvokeAsync(StateHasChanged);
@@ -267,7 +294,8 @@
 		await InvokeAsync(StateHasChanged);
 	}
 
-	private async Task updateSearch_timeStamp(string value) {
+	private async Task updateSearch_timeStamp(string value)
+	{
 		search_timeStamp = value;
 		filterLogs(search_message, search_source, search_timeStamp, search_channel, search_level, search_data);
 		await InvokeAsync(StateHasChanged);
@@ -303,8 +331,10 @@
 		await InvokeAsync(StateHasChanged);
 	}
 
-	private async void onPageSizeUpdate(string newPageSize) {
-		if (newPageSize.All(char.IsDigit)) {
+	private async void onPageSizeUpdate(string newPageSize)
+	{
+		if (newPageSize.All(char.IsDigit))
+		{
 			try
 			{
 				pageSize = int.Parse(newPageSize);
@@ -313,7 +343,9 @@
 			{
 				pageSize = 25;
 			}
-		} else {
+		}
+		else
+		{
 			pageSize = 25;
 		}
 		pageEndingIndex = pageStartingIndex + pageSize - 1;
@@ -321,19 +353,23 @@
 		await InvokeAsync(StateHasChanged);
 	}
 
-	private async void nextPage() {
-		if (pageStartingIndex + pageSize < logs_filtered.Count()) {
+	private async void nextPage()
+	{
+		if (pageStartingIndex + pageSize < logs_filtered.Count())
+		{
 			pageStartingIndex += pageSize;
 			pageEndingIndex = Math.Min(pageStartingIndex + pageSize - 1, logs_filtered.Count() - 1);
 		}
 		await InvokeAsync(StateHasChanged);
 	}
 
-	private async void previousPage() {
+	private async void previousPage()
+	{
 		if (pageStartingIndex > 0)
 		{
 			pageStartingIndex -= pageSize;
-			if (pageStartingIndex < 0) {
+			if (pageStartingIndex < 0)
+			{
 				pageStartingIndex = 0;
 			}
 			pageEndingIndex = pageStartingIndex + pageSize - 1;
@@ -347,11 +383,11 @@
 		foreach (LoggerService.LogEntry log in _LoggerService.GetLogs())
 		{
 			if (((search_message == "") || (search_message == null) || (log.Message.Contains(search_message))) &&
-				((search_source == "") || (search_source == null) || (log.Source == null) || (log.Source.Contains(search_source))) &&
-				((search_timeStamp == "") || (search_timeStamp == null) || (log.TimeStamp.ToString().Contains(search_timeStamp))) &&
-				((search_channel == "") || (search_channel == null) || (log.Channel == null) || (log.Channel.Contains(search_channel))) &&
-				((search_level == "") || (search_level == null) || (log.Level == null) || (log.Level.Contains(search_level))) &&
-				((search_data == "") || (search_data == null) || (log.Data == null) || (log.Data.Contains(search_data))))
+			((search_source == "") || (search_source == null) || (log.Source == null) || (log.Source.Contains(search_source))) &&
+			((search_timeStamp == "") || (search_timeStamp == null) || (log.TimeStamp.ToString().Contains(search_timeStamp))) &&
+			((search_channel == "") || (search_channel == null) || (log.Channel == null) || (log.Channel.Contains(search_channel))) &&
+			((search_level == "") || (search_level == null) || (log.Level == null) || (log.Level.Contains(search_level))) &&
+			((search_data == "") || (search_data == null) || (log.Data == null) || (log.Data.Contains(search_data))))
 			{
 				logs_filtered.Add(log);
 			}
@@ -365,10 +401,9 @@
 }
 
 <style>
-
 	.optionBar {
 		display: flex;
-		flex-wrap:wrap;
+		flex-wrap: wrap;
 		background-color: var(--bs-secondary-bg);
 		margin: 4px;
 		padding: 4px;
@@ -377,74 +412,73 @@
 	.optionBarColumn {
 		display: flex;
 		background-color: var(--bs-secondary-bg);
-		align-items:center;
+		align-items: center;
 	}
 
 	.optionTextColumn {
-		flex-grow:1;
-		flex-direction:row-reverse;
+		flex-grow: 1;
+		flex-direction: row-reverse;
 	}
 
 	.optionText {
-		width:max-content;
-		margin:8px;
+		width: max-content;
+		margin: 8px;
 	}
 
 	.optionTextBoxColumn {
-		flex-shrink:1;
-		width:min-content;
+		flex-shrink: 1;
+		width: min-content;
 	}
 
 	.optionTextBox {
-		width:64px;
+		width: 64px;
 	}
 
 	.logEntry {
-		display:flex;
+		display: flex;
 		background-color: var(--bs-secondary-bg);
-		margin:4px;
-		padding:4px;
+		margin: 4px;
+		padding: 4px;
 	}
 
 	.logEntryColumn {
-		display:flex;
-		flex-grow:1;
-		flex-basis:0;
-		overflow:hidden;
+		display: flex;
+		flex-grow: 1;
+		flex-basis: 0;
+		overflow: hidden;
 	}
 
 	.navBar {
-		display:flex;
+		display: flex;
 		background-color: var(--bs-secondary-bg);
-		margin:4px;
-		padding:4px;
+		margin: 4px;
+		padding: 4px;
 	}
 
 	.navBarColumn_left {
-		display:flex;
+		display: flex;
 		background-color: var(--bs-secondary-bg);
-		flex-shrink:1;
-		flex-basis:0;
+		flex-shrink: 1;
+		flex-basis: 0;
 	}
 
 	.navBarColumn_center {
-		display:flex;
+		display: flex;
 		background-color: var(--bs-secondary-bg);
-		flex-grow:1;
-		flex-basis:0;
-		align-items:center;
-		justify-content:center;
+		flex-grow: 1;
+		flex-basis: 0;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.navBarColumn_right {
-		display:flex;
+		display: flex;
 		background-color: var(--bs-secondary-bg);
-		flex-shrink:1;
-		flex-basis:0;
+		flex-shrink: 1;
+		flex-basis: 0;
 	}
 
 	.navBarButton {
-		background-color:#f7f7f7 !important;
+		background-color: #f7f7f7 !important;
 	}
-
 </style>
