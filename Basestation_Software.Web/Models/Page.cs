@@ -8,7 +8,6 @@ public class Page
     [Key]
     public Guid ID { get; set; }
     public string Name { get; set; } = "";
-    public bool Dark { get; set; } = true; // correct option
     public List<Component> Components { get; set; } = [];
     public uint Columns { get; set; } = 60; // 4th superior highly composite number
     public uint Rows { get; set; } = 60; // 4th superior highly composite number
@@ -32,6 +31,6 @@ public class Component
     public uint Y { get; set; } = 0;
     public uint Width { get; set; } = 0; // in grid columns
     public uint Height { get; set; } = 0; // in grid rows
-    public String Type { get; set; } = ""; // razor component type name
-    public String PlaceSelf { get; set; } = "stretch"; // css place-self
+    public string Type { get; set; } = ""; // razor component type name
+    public string PlaceSelf { get; set; } = "stretch"; // css place-self
 }

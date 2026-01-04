@@ -61,9 +61,9 @@
         <InputNumber @bind-Value=Height></InputNumber>
         <p>Type</p>
         <select @bind="@Type_">
-            @foreach (var typename in GetComponentTypes())
+            @foreach (var typename in GetComponentTypeNames())
             {
-                <option value="@typename.Name">@typename.Name</option>
+                <option value="@typename">@typename</option>
             }
         </select>
         <p>PlaceSelf</p>
@@ -117,19 +117,24 @@
         if (Y >= 0) Components[ComponentIndex].Y = (uint)Y;
         if (Width >= 0) Components[ComponentIndex].Width = (uint)Width;
         if (Height >= 0) Components[ComponentIndex].Height = (uint)Height;
+        Components[ComponentIndex].Type = Type_;
         Components[ComponentIndex].PlaceSelf = PlaceSelf;
         Visible = false;
         await OnSaved.InvokeAsync();
         await InvokeAsync(StateHasChanged);
     }
 
-    private static IEnumerable<Type> GetComponentTypes()
+    private static List<string> GetComponentTypeNames()
     {
-        return Assembly.GetExecutingAssembly()
+        List<string> names = Assembly.GetExecutingAssembly()
         .GetTypes()
-        .Where(type => type.Namespace == "Basestation_Software.Web.Core.Components"
+        .Where(
+        type => type.FullName != null && type.FullName.StartsWith("Basestation_Software.Web.Core.Components")
         && type.IsSubclassOf(typeof(ComponentBase))
-        && !type.IsDefined(typeof(ComponentAttributes.Ignore)));
+        && !type.IsDefined(typeof(ComponentAttributes.Ignore))
+        ).Select(type => type.FullName!.Substring("Basestation_Software.Web.Core.Components".Length + 1)).ToList();
+        names.Sort();
+        return names;
     }
 
     void IDisposable.Dispose() { }

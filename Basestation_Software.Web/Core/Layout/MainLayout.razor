@@ -50,20 +50,16 @@
 
 <div class="page">
     <link rel="stylesheet" href="_content/Radzen.Blazor/css/default-base.css" />
-    <link rel="stylesheet" href=themes/@RadzenTheme />
+    <link rel="stylesheet" href=themes/default.css />
     <nav class="navbar navbar-expand-sm border-bottom box-shadow mb-3 mat-glass shadow-sm fixed-top" style="padding: 8px 16px">
         <div class="navbar-nav">
             <img src="images/swoosh.svg" height="35" />
-            @if (PageID.Equals(_defaultGuid))
-            {
-                <p class="text-warning bold">Warning: This default page is hardcoded and read-only.</p>
-            }
         </div>
         <div class="nav ms-auto me-e justify-content-end">
             <button class="btn btn-sm btn-primary" title="RoveComm Resubscribe All" style="margin-right: 3rem" @onclick="_RoveCommService.SubscribeAll">
                 <img src="/images/rovecomm-sil.png" />
             </button>
-            <select id="pageSelect" @onchange=@(async (ChangeEventArgs __e) => { if (Guid.TryParse(__e?.Value as string, out Guid guid)) await Navigate(guid); })>
+            <select id="pageSelect" value="@PageID" @onchange=@(async (ChangeEventArgs __e) => { if (Guid.TryParse(__e?.Value as string, out Guid guid)) await Navigate(guid); })>
                 @SelectOptions
             </select>
             <button class="btn btn-sm btn-success" @onclick=NewPage title="New Page"><i class="bi bi-inline-text bi-file-earmark-plus" /></button>
@@ -71,7 +67,6 @@
             <button class="btn btn-sm btn-success" @onclick=OpenCopyArea title="Edit Page"><i class="bi bi-inline-text bi-pencil" /></button>
             <button class="btn btn-sm btn-success" @onclick=SavePage title="Save Page"><i class="bi bi-inline-text bi-floppy" /></button>
             <button class="btn btn-sm btn-success" @onclick=NewComponent title="New Component"><i class="bi bi-inline-text bi-node-plus" /></button>
-            <input class="nav ms-auto me-3 justify-content-end" type="checkbox" name="" id="checkbox" checked="@(Page_.Dark ? "checked" : null)" @onchange="UpdateDarkMode">
         </div>
         <BlazoredToasts ShowProgressBar="true" Position=Blazored.Toast.Configuration.ToastPosition.TopRight DisableTimeout />
     </nav>
@@ -95,17 +90,14 @@
 </div>
 
 @code {
-    private static readonly Guid _defaultGuid = new("00000000-0000-0000-0000-000000000001");
-
     // State
     private RenderFragment? CustomRender { get; set; }
     private RenderFragment? SelectOptions { get; set; }
-    private Guid PageID = _defaultGuid;
+    private Guid PageID = new();
     private Page Page_ = new Page();
     private InputTextArea? CopyArea;
     private string CopyAreaValue = "";
     private bool CopyAreaVisible = false;
-    private string RadzenTheme = "dark.css";
 
     [CascadingParameter]
     RouteData RouteData_ { get; set; } = new(typeof(MainLayout), new ReadOnlyDictionary<string, object?>(new Dictionary<string, object?>()));
@@ -124,22 +116,11 @@
         await PageChanged();
     }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            // Thes funcitons cannot be called from the first time PageChanged runs because of prerendering.
-            await _IJSRuntime.InvokeVoidAsync("eval", $"document.getElementById(\"pageSelect\").value = \"{PageID}\";");
-            await UpdateDarkMode();
-        }
-    }
-
     private async Task Navigate(Guid guid)
     {
         PageID = guid;
         _NavigationManager.NavigateTo($"/{PageID}");
         await PageChanged();
-        await _IJSRuntime.InvokeVoidAsync("eval", $"document.getElementById(\"pageSelect\").value = \"{PageID}\";");
     }
 
     private async Task TableChanged()
@@ -163,7 +144,6 @@
             CustomRender = CreateComponents();
         }
 
-        await UpdateDarkMode();
         await TableChanged();
     }
 
@@ -244,13 +224,6 @@
         builder.CloseRegion();
     };
 
-    private async Task UpdateDarkMode()
-    {
-        RadzenTheme = Page_.Dark ? "dark.css" : "default.css";
-        await _IJSRuntime.InvokeVoidAsync("document.documentElement.setAttribute", ["data-bs-theme", Page_.Dark ? "dark" : "light"]);
-        await InvokeAsync(StateHasChanged);
-    }
-
     private async Task SavePage()
     {
         using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
@@ -286,7 +259,7 @@
             Y = 5,
             Width = 20,
             Height = 10,
-            Type = "Placeholder",
+            Type = "Other.Placeholder",
             PlaceSelf = "stretch"
         }
         );
