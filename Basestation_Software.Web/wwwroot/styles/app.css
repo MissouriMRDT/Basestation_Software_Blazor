@@ -3,3 +3,118 @@ body {
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     margin: 0rem;
 }
+
+button {
+    color: var(--btn-color);
+    background-color: var(--btn-bg);
+    padding: 5px 7px;
+    border: none;
+    border-radius: 3px;
+    --btn-color: #fff;
+    --btn-bg: #0d6efd;
+    --btn-hover-bg: #0b5ed7;
+    --btn-active-bg: #0a58ca;
+    --btn-disabled-bg: #0d6efd;
+}
+
+button:hover {
+    background-color: var(--btn-hover-bg);
+}
+
+button:active {
+    background-color: var(--btn-active-bg);
+}
+
+button:disabled {
+    background-color: var(--btn-disabled-bg);
+}
+
+button.secondary {
+    --btn-bg: #0d6efd;
+    --btn-hover-bg: #0b5ed7;
+    --btn-active-bg: #0a58ca;
+    --btn-disabled-bg: #0d6efd;
+}
+
+button.success {
+    --btn-bg: #198754;
+    --btn-hover-bg: #157347;
+    --btn-active-bg: #146c43;
+    --btn-disabled-bg: #198754;
+}
+
+button.info {
+    --btn-color: #000;
+    --btn-bg: #0dcaf0;
+    --btn-hover-bg: #31d2f2;
+    --btn-active-bg: #3dd5f3;
+    --btn-disabled-bg: #0dcaf0;
+}
+
+button.warning {
+    --btn-color: #000;
+    --btn-bg: #ffc107;
+    --btn-hover-bg: #ffca2c;
+    --btn-active-bg: #ffcd39;
+    --btn-disabled-bg: #ffc107;
+}
+
+button.danger {
+    --btn-bg: #dc3545;
+    --btn-hover-bg: #bb2d3b;
+    --btn-active-bg: #b02a37;
+    --btn-disabled-bg: #dc3545;
+}
+
+.component {
+    border: 1px solid #000;
+    overflow: hidden;
+}
+
+.component-header {
+    padding-left: 57px;
+    color: #fff;
+    background-color: #000;
+}
+
+.component-header>h3 {
+    margin: 0;
+}
+
+.component-body {}
+
+.component-move {
+    position: absolute;
+    color: #fff;
+    padding: 2px 1px 4px 5px;
+    touch-action: none;
+    user-select: none;
+    z-index: 5;
+    left: 0;
+    top: 0;
+    width: 20px;
+    height: 20px;
+    cursor: move;
+}
+
+.component-resize {
+    position: absolute;
+    touch-action: none;
+    user-select: none;
+    z-index: 5;
+    right: 0;
+    bottom: 0;
+    width: 20px;
+    height: 20px;
+    cursor: se-resize;
+}
+
+.component-delete {
+    position: absolute;
+    color: #fff;
+    touch-action: none;
+    user-select: none;
+    z-index: 5;
+    left: 27px;
+    top: 0;
+}

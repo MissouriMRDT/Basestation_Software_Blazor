@@ -7,10 +7,11 @@
     <base href="/" />
     <link rel="stylesheet" href="Basestation_Software.Web.styles.css" />
 
-    <link rel="stylesheet" href="js/lib/leaflet/leaflet.css" />
-    <link rel="stylesheet" href="js/lib/leaflet-contextmenu/leaflet.contextmenu.min.css" />
+    <link rel="stylesheet" href="/js/lib/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="/js/lib/leaflet-contextmenu/leaflet.contextmenu.min.css" />
 
-    <link rel="stylesheet" href="styles/app.css?version=0.1" />
+    <link rel="stylesheet" href="/styles/app.css" />
+    <link rel="stylesheet" href="/icons/bootstrap-icons.css" />
 
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet />
@@ -27,6 +28,8 @@
     <script type="module">
         import * as cameras from "/js/cameras.js";
         window.cameras = cameras;
+        import * as components from "/js/components.js";
+        window.components = components;
     </script>
 
     <!-- three.js and rover javascript code is imported with modules, so does not require a script tag -->

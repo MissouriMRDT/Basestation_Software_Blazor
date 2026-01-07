@@ -21,8 +21,6 @@ public class DatabaseContext : DbContext
                 x => JsonSerializer.Serialize(x, (JsonSerializerOptions?)null),
                 x => JsonSerializer.Deserialize<List<Component>>(x, (JsonSerializerOptions?)null) ?? new()
             );
-
-        modelBuilder.Entity<Page>().HasData(Page.Default());
     }
 
     public async Task<int> SaveChangesAsync(DatabaseService databaseService, bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
