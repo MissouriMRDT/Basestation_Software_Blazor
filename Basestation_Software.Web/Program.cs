@@ -40,7 +40,8 @@ builder.Services.AddSingleton<DatabaseService>();
 builder.Services.AddDbContextFactory<DatabaseContext>();
 builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
-builder.Services.AddSingleton<LoggerService>();
+//builder.Services.AddSingleton<LoggerService_Deprecated>();
+//builder.Services.AddSingleton<LoggerCore.LoggerService>();
 
 var app = builder.Build();
 
