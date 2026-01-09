@@ -1,44 +1,32 @@
-﻿@inject RoveCommService _RoveCommService
+@inject RoveCommService _RoveCommService
 
 <div class="card full-height">
     <div class="card-header">
         <h3>Autonomy Drive Power</h3>
     </div>
-    <div class="card-body">
+    <div class="card-body auto-drive-power">
+        <p style="margin: 0">Max Speed</p>
+        <p style="width: 60px; margin: 0">@(_maxSpeed * 100)%</p>
+        <input @bind="_maxSpeed" type="range" min="0" max="1" step="0.01">
+        <button class="btn btn-sm btn-success" @onclick="() => RoveComm.Boards.Autonomy.SetMaxSpeed(_RoveCommService, _maxSpeed)"><i class="bi bi-send"></i></button>
 
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.Center">
-            <p style="margin: 0">Max Speed</p>
-            <p style="width: 60px; margin: 0">@(_maxSpeed / 10f)%</p>
-            <RadzenSlider TValue="int" Value=@_maxSpeed Change="@(v => _maxSpeed = v)" Min="0" Max="1000" />
-            <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="SendSpeed">Submit</RadzenButton>
-        </RadzenStack>
-        <div class="row-container">
-            <RadzenButton ButtonStyle="ButtonStyle.Warning" 
-            Icon=@(_watchdogPanelCollapsed ? "arrow_right" : "arrow_drop_down") 
-            Size="ButtonSize.ExtraSmall" 
-            Click="() => _watchdogPanelCollapsed = !_watchdogPanelCollapsed">
-            </RadzenButton>
-            <hr style="width:100%" />
-        </div>
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="1rem" JustifyContent="JustifyContent.Center" Visible=@(!_watchdogPanelCollapsed)>
-            <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="() => SetWatchdogMode(0)">Teleop Watchdog</RadzenButton>
-            <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="() => SetWatchdogMode(1)">Autonomy Watchdog</RadzenButton>
-        </RadzenStack>
+        <p style="margin: 0">Min Traversal Score</p>
+        <p style="width: 60px; margin: 0">@(_minTravScore * 100)%</p>
+        <input @bind="_minTravScore" type="range" min="0" max="1" step="0.01">
+        <button class="btn btn-sm btn-success" @onclick="() => RoveComm.Boards.Autonomy.SetMinTravScore(_RoveCommService, _minTravScore)"><i class="bi bi-send"></i></button>
 
+        <p style="margin: 0">Beta Bias</p>
+        <p style="width: 60px; margin: 0">@(_betaBias * 100)%</p>
+        <input @bind="_betaBias" type="range" min="0" max="1" step="0.01">
+        <button class="btn btn-sm btn-success" @onclick="() => RoveComm.Boards.Autonomy.SetBetaBias(_RoveCommService, _betaBias)"><i class="bi bi-send"></i></button>
+
+        <button style="grid-column: 1 / span 2" class="btn btn-sm btn-secondary" @onclick="() => RoveComm.Boards.Core.SetWatchdogMode(_RoveCommService, 0)">Teleop Watchdog</button>
+        <button style="grid-column: 3" class="btn btn-sm btn-secondary" @onclick="() => RoveComm.Boards.Core.SetWatchdogMode(_RoveCommService, 1)">Autonomy Watchdog</button>
     </div>
 </div>
 
 @code {
-    private int _maxSpeed = 0;
-    private bool _watchdogPanelCollapsed = true;
-
-    private void SendSpeed()
-    {
-        _ = _RoveCommService.SendAsync<float>("Autonomy", "SetMaxSpeed", [_maxSpeed / 1000f]);
-    }
-
-    private void SetWatchdogMode(byte mode)
-    {
-        _ = _RoveCommService.SendAsync<byte>("Core", "SetWatchdogMode", [mode]);
-    }
+    private float _maxSpeed = 0;
+    private float _minTravScore = 0;
+    private float _betaBias = 0;
 }

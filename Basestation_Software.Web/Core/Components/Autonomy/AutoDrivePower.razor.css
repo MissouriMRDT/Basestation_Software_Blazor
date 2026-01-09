@@ -1,4 +1,4 @@
-﻿.row-container {
+.row-container {
     display: flex;
     align-content: center;
     align-items: center;
@@ -6,3 +6,8 @@
     margin-block: 1%;
 }
 
+.auto-drive-power {
+    display: grid;
+    grid-template-rows: repeat(4, 1fr);
+    grid-template-columns: 2fr min-content 5fr min-content;
+}
