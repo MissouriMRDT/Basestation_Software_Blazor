@@ -43,8 +43,8 @@
     <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
         <p style="width:auto; text-align: center"><b>Calibration</b></p>
         <div class="btn-group d-flex justify-items-center gap-1" role="group">
-            <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "CalibrateEncoder", [1]))>AugerAxis</button>
-            <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Raman", "CalibrateEncoder", [1]))>InstrumentsAxis</button>
+            <button class="secondary" @onclick=@(() => _RoveCommService.Boards.Auger.CalibrateEncoder(1))>AugerAxis</button>
+            <button class="secondary" @onclick=@(() => _RoveCommService.Boards.Raman.CalibrateEncoder(1))>InstrumentsAxis</button>
         </div>
     </div>
     <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
@@ -58,32 +58,32 @@
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
             <p style="width:auto; text-align: center"><b>UV LED</b></p>
             <div class="btn-group d-flex justify-items-center" role="group">
-                <button class="btn btn-success" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "UVLED", [1]))>On</button>
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "UVLED", [0]))>Off</button>
+                <button class="success" @onclick=@(() => _RoveCommService.Boards.Auger.UVLED(1))>On</button>
+                <button @onclick=@(() => _RoveCommService.Boards.Auger.UVLED(0))>Off</button>
             </div>
         </div>
 
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
             <p style="width:auto; text-align: center"><b>WH LED</b></p>
             <div class="btn-group d-flex justify-items-center" role="group">
-                <button class="btn btn-success" @onclick=@(() => _RoveCommService.SendAsync<byte>(9009, [(byte)0b10], RoveCommManifest.Boards["Auger"].IP))>On</button>
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>(9009, [(byte)0b00], RoveCommManifest.Boards["Auger"].IP))>Off</button>
+                <button class="success" @onclick=@(() => _RoveCommService.Boards.Auger.UVLED(0b10))>On</button>
+                <button @onclick=@(() => _RoveCommService.Boards.Auger.UVLED(0b00))>Off</button>
             </div>
         </div>
 
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
             <p style="width:auto; text-align: center"><b>Laser</b></p>
             <div class="btn-group d-flex justify-items-center" role="group">
-                <button class="btn btn-success" @onclick=@(() => _RoveCommService.SendAsync<byte>("Raman", "Laser", [1]))>On</button>
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Raman", "Laser", [0]))>Off</button>
+                <button class="success" @onclick=@(() => _RoveCommService.Boards.Raman.Laser(1))>On</button>
+                <button @onclick=@(() => _RoveCommService.Boards.Raman.Laser(0))>Off</button>
             </div>
         </div>
 
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
             <p style="width:auto; text-align: center"><b>Watchdog</b></p>
             <div class="btn-group d-flex justify-items-center" role="group">
-                <button class="btn btn-success" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "WatchdogOverride", [1]))>On</button>
-                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "WatchdogOverride", [0]))>Off</button>
+                <button class="success" @onclick=@(() => _RoveCommService.Boards.Auger.WatchdogOverride(1))>On</button>
+                <button @onclick=@(() => _RoveCommService.Boards.Auger.WatchdogOverride(0))>Off</button>
             </div>
         </div>
     </div>
@@ -290,7 +290,7 @@ gamepad.Buttons[12].Value - gamepad.Buttons[13].Value,
         if (ProcessGamepadInputOK)
         {
             // set teleop if controller being used
-            _RoveCommService.Send<byte>("Core", "StateDisplay", new List<byte>() { 0 });
+            _RoveCommService.Boards.Core.StateDisplay(0);
         }
         LastProcessGamepadInputOK = ProcessGamepadInputOK;
         InvokeAsync(StateHasChanged);

@@ -30,12 +30,12 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task EStopArm()
+    private void EStopArm()
     {
-        await _RoveCommService.SendAsync<byte>("Arm", "EStop", [1]);
+        _RoveCommService.Boards.Arm.EStop(1);
     }
-    private async Task UnEStopArm()
+    private void UnEStopArm()
     {
-        await _RoveCommService.SendAsync<byte>("Arm", "ClosedLoopOverride", [0]);
+        _RoveCommService.Boards.Arm.ClosedLoopOverride(0);
     }
 }

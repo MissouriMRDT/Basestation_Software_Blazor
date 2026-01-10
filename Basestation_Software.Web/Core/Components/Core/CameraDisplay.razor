@@ -15,7 +15,7 @@
         {
             // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
             var _i = i;
-            <button class="@("btn btn-secondary " + ((sourceIndex == _i) ? "camera-selected" : ""))" @onclick=@(() => SetSource(_i))>@_i</button>
+            <button class="@("secondary " + ((sourceIndex == _i) ? "camera-selected" : ""))" @onclick=@(() => SetSource(_i))>@_i</button>
         }
     </div>
     <button class="camera-display-rotate" @onclick=Rotate><i class="bi-arrow-clockwise"></i></button>

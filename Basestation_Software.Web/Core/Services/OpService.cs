@@ -49,31 +49,29 @@ public class OpService
     public void SetTeleop()
     {
         OpColor = Color.Blue;
-        _ = _RoveCommService.SendAsync<byte>("Core", "Brightness", [(byte)255]);
-        _ = _RoveCommService.SendAsync<byte>("Core", "StateDisplay", [(byte)RoveComm.Boards.Core.DisplayState.TELEOP]);
+        _RoveCommService.Boards.Core.Brightness((byte)255);
+        _RoveCommService.Boards.Core.StateDisplay((byte)RoveComm.Boards.Core.DisplayState.TELEOP);
 
     }
 
     public void SetAutonomy()
     {
         OpColor = Color.Red;
-        _ = _RoveCommService.SendAsync<byte>("Core", "Brightness", [(byte)255]);
-        _ = _RoveCommService.SendAsync<byte>("Core", "StateDisplay", [(byte)RoveComm.Boards.Core.DisplayState.AUTONOMY]);
+        _RoveCommService.Boards.Core.Brightness((byte)255);
+        _RoveCommService.Boards.Core.StateDisplay((byte)RoveComm.Boards.Core.DisplayState.AUTONOMY);
     }
 
     public void SetReachedGoal()
     {
         OpColor = Color.Green;
-        _ = _RoveCommService.SendAsync<byte>("Core", "Brightness", [(byte)255]);
-        _ = _RoveCommService.SendAsync<byte>("Core", "StateDisplay", [(byte)RoveComm.Boards.Core.DisplayState.REACHED_GOAL]);
+        _RoveCommService.Boards.Core.Brightness((byte)255);
+        _RoveCommService.Boards.Core.StateDisplay((byte)RoveComm.Boards.Core.DisplayState.REACHED_GOAL);
     }
 
     public void SetNone()
     {
         OpColor = Color.Black;
-        _ = _RoveCommService.SendAsync<byte>("Core", "Brightness", [(byte)0]);
-
-
+        _RoveCommService.Boards.Core.Brightness(0);
     }
 
 }

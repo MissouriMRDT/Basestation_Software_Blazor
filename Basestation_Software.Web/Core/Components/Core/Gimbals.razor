@@ -154,7 +154,7 @@ gamepad.Buttons[12].Value - gamepad.Buttons[13].Value,
         if (ProcessGamepadInputOK)
         {
             // set teleop if controller being used
-            _RoveCommService.Send<byte>("Core", "StateDisplay", new List<byte>() { 0 });
+            _RoveCommService.Boards.Core.StateDisplay(0);
         }
         InvokeAsync(StateHasChanged);
     }
@@ -188,12 +188,11 @@ gamepad.Buttons[12].Value - gamepad.Buttons[13].Value,
 
                     if (!OutputDisabled)
                     {
-                        if (Math.Abs(bindedInputs[0]) > 0) RoveComm.Boards.Core.LeftDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[0]);
-                        if (Math.Abs(bindedInputs[1]) > 0) RoveComm.Boards.Core.RightDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[1]);
-                        if (Math.Abs(bindedInputs[2]) > 0 || Math.Abs(bindedInputs[3]) > 0) RoveComm.Boards.Core.LeftMainGimbalIncrement(_RoveCommService, (short)bindedInputs[2], (short)bindedInputs[3]);
-                        if (Math.Abs(bindedInputs[4]) > 0 || Math.Abs(bindedInputs[5]) > 0) RoveComm.Boards.Core.RightMainGimbalIncrement(_RoveCommService, (short)bindedInputs[4], (short)bindedInputs[5]);
-                        if (Math.Abs(bindedInputs[6]) > 0) RoveComm.Boards.Core.BackDriveGimbalIncrement(_RoveCommService, (short)bindedInputs[6]);
-
+                        if (Math.Abs(bindedInputs[0]) > 0) _RoveCommService.Boards.Core.LeftDriveGimbalIncrement((short)bindedInputs[0]);
+                        if (Math.Abs(bindedInputs[1]) > 0) _RoveCommService.Boards.Core.RightDriveGimbalIncrement((short)bindedInputs[1]);
+                        if (Math.Abs(bindedInputs[2]) > 0 || Math.Abs(bindedInputs[3]) > 0) _RoveCommService.Boards.Core.LeftMainGimbalIncrement((short)bindedInputs[2], (short)bindedInputs[3]);
+                        if (Math.Abs(bindedInputs[4]) > 0 || Math.Abs(bindedInputs[5]) > 0) _RoveCommService.Boards.Core.RightMainGimbalIncrement((short)bindedInputs[4], (short)bindedInputs[5]);
+                        if (Math.Abs(bindedInputs[6]) > 0) _RoveCommService.Boards.Core.BackDriveGimbalIncrement((short)bindedInputs[6]);
                     }
                     break;
                 }

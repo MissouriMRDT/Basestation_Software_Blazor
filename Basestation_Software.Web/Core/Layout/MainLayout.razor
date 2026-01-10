@@ -84,7 +84,7 @@
 {
     <div id="copy-area">
         <InputTextArea @ref="CopyArea" @bind-Value="@CopyAreaValue" style="grid-area: 1 / 1 / 2 / 3" />
-        <button @onclick="ImportPage" class="btn btn-success" title="Save Page"><i class="bi-floppy" /></button>
+        <button @onclick="ImportPage" class="success" title="Save Page"><i class="bi-floppy" /></button>
         <button @onclick="@(_ => CopyAreaVisible = false)" class="warning" title="Close"><i class="bi-x-circle" /></button>
     </div>
 }

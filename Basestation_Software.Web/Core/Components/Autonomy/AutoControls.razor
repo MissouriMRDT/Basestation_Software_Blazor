@@ -53,52 +53,52 @@
             // Send drive packets every 100ms to avoid triggering watchdog
             for (int i = 0; i < _unstuckTime; i += 100)
             {
-                RoveComm.Boards.Core.DriveLeftRight(_RoveCommService, -_unstuckSpeed, -_unstuckSpeed);
+                _RoveCommService.Boards.Core.DriveLeftRight(-_unstuckSpeed, -_unstuckSpeed);
                 await Task.Delay(100);
             }
         }
-        await _RoveCommService.SendAsync<byte>("Autonomy", "StartAutonomy", [0]);
+        _RoveCommService.Boards.Autonomy.StartAutonomy(0);
         _OpService.SetAutonomy();
     }
 
-    public async Task StopAutonomy()
+    public void StopAutonomy()
     {
-        await _RoveCommService.SendAsync<byte>("Autonomy", "DisableAutonomy", [0]);
+        _RoveCommService.Boards.Autonomy.DisableAutonomy(0);
         _OpService.SetNone();
     }
 
-    public async Task ClearWaypoints()
+    public void ClearWaypoints()
     {
-        await _RoveCommService.SendAsync<byte>("Autonomy", "ClearWaypoints", [0]);
+        _RoveCommService.Boards.Autonomy.ClearWaypoints(0);
     }
 
-    public async Task ClearObstacles()
+    public void ClearObstacles()
     {
-        await _RoveCommService.SendAsync<byte>("Autonomy", "ClearObstacles", [0]);
+        _RoveCommService.Boards.Autonomy.ClearObstacles(0);
     }
 
-    public async Task AddPositionLeg()
+    public void AddPositionLeg()
     {
         if (_selectedWaypoint != null)
-            await _RoveCommService.SendAsync<double>("Autonomy", "AddPositionLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.TagID]);
+            _RoveCommService.Boards.Autonomy.AddPositionLeg(_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.TagID);
     }
 
-    public async Task AddMarkerLeg()
+    public void AddMarkerLeg()
     {
         if (_selectedWaypoint != null && _selectedWaypoint.TagID >= 0 && _selectedWaypoint.SearchRadius >= 0)
-            await _RoveCommService.SendAsync<double>("Autonomy", "AddMarkerLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.TagID, _selectedWaypoint.SearchRadius]);
+            _RoveCommService.Boards.Autonomy.AddMarkerLeg(_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.TagID, _selectedWaypoint.SearchRadius);
     }
 
-    public async Task AddObjectLeg()
+    public void AddObjectLeg()
     {
         if (_selectedWaypoint != null && _selectedWaypoint.SearchRadius >= 0)
-            await _RoveCommService.SendAsync<double>("Autonomy", "AddObjectLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.TagID, _selectedWaypoint.SearchRadius]);
+            _RoveCommService.Boards.Autonomy.AddObjectLeg(_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.TagID, _selectedWaypoint.SearchRadius);
     }
 
-    public async Task AddObstacle()
+    public void AddObstacle()
     {
         if (_selectedWaypoint != null && _selectedWaypoint.SearchRadius >= 0)
-            await _RoveCommService.SendAsync<double>("Autonomy", "AddObstacle", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.SearchRadius]);
+            _RoveCommService.Boards.Autonomy.AddObstacle(_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.SearchRadius);
     }
 
     protected override void OnInitialized()

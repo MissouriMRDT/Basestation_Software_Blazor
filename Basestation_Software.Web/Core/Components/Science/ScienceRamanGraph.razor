@@ -5,8 +5,8 @@
     </div>
     <div class="card-body w-100">
         <p style="color: #f00">TODO: Graph</p>
-        <button @onclick=@(async () => await _RoveCommService.SendAsync<uint>("Raman", "RequestRamanReading", [_integrationTime]))>Request Data</button>
-        <button @onclick=Export> <i class="bi bi-filetype-csv"></i> </button>
+        <button @onclick=@(() => _RoveCommService.Boards.Raman.RequestRamanReading(_integrationTime))>Request Data</button>
+        <button @onclick=Export> <i class="bi-filetype-csv"></i> </button>
         <div class="d-flex">
             <p>Integration Time:</p>
             <input type="number" @bind=_integrationTime>

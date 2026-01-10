@@ -1,4 +1,4 @@
-﻿@inject RoveCommService _RoveCommService
+@inject RoveCommService _RoveCommService
 @using static RoveComm.Boards.Autonomy
 
 <div class="component-header">
@@ -24,7 +24,7 @@
             <option value=@level>@level</option>
         }
     </select>
-    <button class="success" @onclick=@(() => _RoveCommService.SendAsync<byte>("Autonomy", "SetLoggingLevels", [(byte)ll1, (byte)ll2, (byte)ll3]))><i class="bi-send"></i></button>
+    <button class="success" @onclick=@(() => _RoveCommService.Boards.Autonomy.SetLoggingLevels((byte)ll1, (byte)ll2, (byte)ll3))><i class="bi-send"></i></button>
     <table style="grid-column: 1 / 6">
         @foreach (Log log in logs)
         {

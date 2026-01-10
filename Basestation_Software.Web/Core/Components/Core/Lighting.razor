@@ -6,25 +6,25 @@
 </div>
 <div class="component-body" style="display: flex; align-items: center">
     <p>R</p>
-    <input style="width: 20px" @bind=colorComponents[0] />
+    <input style="width: 20px" @bind=r />
     <p>G</p>
-    <input style="width: 20px" @bind=colorComponents[1] />
+    <input style="width: 20px" @bind=g />
     <p>B</p>
-    <input style="width: 20px" @bind=colorComponents[2] />
+    <input style="width: 20px" @bind=b />
     <p>A</p>
     <input style="width: 20px" @bind=brightness />
-    <button class="btn btn-primary" style="justify-self:center;" @onclick=Send>Send</button>
-    <div style="width: 24px; height: 24px; background-color: rgb(@colorComponents[0], @colorComponents[1], @colorComponents[2])"></div>
+    <button style="justify-self:center;" @onclick=Send>Send</button>
+    <div style="width: 24px; height: 24px; background-color: rgb(@r, @g, @b)"></div>
 </div>
 
 @code {
-    private List<byte> colorComponents = [0, 0, 0];
+    private byte r, g, b;
     private byte brightness = 0;
 
-    private async Task Send()
+    private void Send()
     {
-        await _RoveCommService.SendAsync<byte>("Core", "LEDRGB", colorComponents);
-        await _RoveCommService.SendAsync<byte>("Core", "Brightness", [brightness]);
-        _OpState.OpColor = Color.FromArgb(colorComponents[0], colorComponents[1], colorComponents[2]);
+        _RoveCommService.Boards.Core.LEDRGB(r, g, b);
+        _RoveCommService.Boards.Core.Brightness(brightness);
+        _OpState.OpColor = Color.FromArgb(r, g, b);
     }
 }

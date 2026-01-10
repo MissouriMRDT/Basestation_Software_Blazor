@@ -131,30 +131,30 @@
         TelemetryWatchdog.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
     }
 
-    async Task toggleBus(int i)
+    void toggleBus(int i)
     {
         if (BusStatus[i] == BusState.Disabled)
-            await _RoveCommService.SendAsync<byte>("PMS", "EnableBus", [(byte)(1 << i)]);
+            _RoveCommService.Boards.PMS.EnableBus((byte)(1 << i));
         else if (BusStatus[i] == BusState.Enabled)
-            await _RoveCommService.SendAsync<byte>("PMS", "DisableBus", [(byte)(1 << i)]);
+            _RoveCommService.Boards.PMS.DisableBus((byte)(1 << i));
         BusStatus[i] = BusState.Unknown;
     }
 
     async Task Reboot()
     {
         if (await _IJSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to do this? It will take a few minutes to reboot the network switch."))
-            await _RoveCommService.SendAsync<byte>("PMS", "Reboot", [1]);
+            _RoveCommService.Boards.PMS.Reboot(1);
     }
 
-    async Task EStop()
+    void EStop()
     {
-        await _RoveCommService.SendAsync<byte>("PMS", "EStop", [1]);
+        _RoveCommService.Boards.PMS.EStop(1);
     }
 
     async Task Suicide()
     {
         if (await _IJSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to do this? You must pull the physical E Stop to turn the rover on again!"))
-            await _RoveCommService.SendAsync<byte>("PMS", "Suicide", [1]);
+            _RoveCommService.Boards.PMS.Suicide(1);
     }
 
     void IDisposable.Dispose() { }

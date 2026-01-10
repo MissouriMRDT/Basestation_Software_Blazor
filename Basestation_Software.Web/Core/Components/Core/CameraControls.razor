@@ -10,15 +10,15 @@
         {
             // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
             var _i = i;
-            <button class="btn btn-secondary @(sourceIndex == _i ? "camera-selected" : "") @(GetClass(_i))" @onclick=@(() => SetSource(_i))>@_i</button>
+            <button class="secondary @(sourceIndex == _i ? "camera-selected" : "") @(GetClass(_i))" @onclick=@(() => SetSource(_i))>@_i</button>
         }
     </div>
     <p style="grid-area: utilization-1">@utilization1</p>
     <p style="grid-area: utilization-2">@utilization2</p>
     <button style="grid-area: connect" @onclick=ConnectCameras>Connect</button>
     <button style="grid-area: disconnect" @onclick=DisconnectCameras>Disconnect</button>
-    <button style="grid-area: restart" @onclick=@(async () => await ToggleSource(sourceIndex, true))>Restart Camera</button>
-    <button style="grid-area: shutdown" @onclick=@(async () => await ToggleSource(sourceIndex, false))>Shutdown Camera</button>
+    <button style="grid-area: restart" @onclick=@(() => ToggleSource(sourceIndex, true))>Restart Camera</button>
+    <button style="grid-area: shutdown" @onclick=@(() => ToggleSource(sourceIndex, false))>Shutdown Camera</button>
     <button style="grid-area: screenshot" @onclick=TakePicture>Take Picture</button>
     <button style="grid-area: save" @onclick=SaveImage>Save Image</button>
     <button style="grid-area: panorama" @onclick=TakePano>Take Pano</button>
@@ -148,7 +148,10 @@
 
     private void TakePicture()
     {
-        _ = _RoveCommService.SendAsync<byte>(sourceIndex < 4 ? "Camera1" : "Camera2", "TakePicture", [(byte)(sourceIndex % 4), 1]);
+        if (sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.TakePicture((byte)(sourceIndex % 4), 1);
+        else
+            _RoveCommService.Boards.Camera2.TakePicture((byte)(sourceIndex % 4), 1);
     }
 
     private void SaveImage()
@@ -165,37 +168,42 @@
 
     private async Task TakePano()
     {
-        await _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [-180, 0]);
+        _RoveCommService.Boards.Core.LeftMainGimbalIncrement(-180, 0);
         await Task.Delay(4000);
         TakePicture();
         await Task.Delay(40000);
         for (int i = 0; i < 3; i++)
         {
-            await _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [60, 0]);
+            _RoveCommService.Boards.Core.LeftMainGimbalIncrement(60, 0);
             await Task.Delay(2000);
             TakePicture();
             await Task.Delay(40000);
         }
     }
 
-    private async Task ToggleSource(int source, bool restartStream)
+    private void ToggleSource(int source, bool restartStream)
     {
-        await _RoveCommService.SendAsync<byte>(sourceIndex < 4 ? "Camera1" : "Camera2", "ToggleStream", [(byte)(sourceIndex % 4), restartStream ? (byte)1 : (byte)0]);
+        if (sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.ToggleStream((byte)(sourceIndex % 4), (byte)(restartStream ? 1 : 0));
+        else
+            _RoveCommService.Boards.Camera2.ToggleStream((byte)(sourceIndex % 4), (byte)(restartStream ? 1 : 0));
     }
 
-    private async Task SetFFMPEGArguments()
+    private void SetFFMPEGArguments()
     {
-        List<char> characters = String.Join("\x1f", CameraArgumentsValue.Split("\n")).ToList();
-        characters.Add('\x04');
-        RoveCommBoardDesc board = RoveCommManifest.Boards[sourceIndex < 4 ? "Camera1" : "Camera2"];
-        await _RoveCommService.SendAsync<char>(board.Commands["SetFFMPEGArguments"].DataID, characters, board.IP);
+        char[] characters = (String.Join("\x1f", CameraArgumentsValue.Split("\n")) + '\x04').ToCharArray();
+        if (sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.SetFFMPEGArguments(characters);
+        else
+            _RoveCommService.Boards.Camera2.SetFFMPEGArguments(characters);
     }
 
-    private async Task SetPictureArguments()
+    private void SetPictureArguments()
     {
-        List<char> characters = String.Join("\x1f", CameraArgumentsValue.Split("\n")).ToList();
-        characters.Add('\x04');
-        RoveCommBoardDesc board = RoveCommManifest.Boards[sourceIndex < 4 ? "Camera1" : "Camera2"];
-        await _RoveCommService.SendAsync<char>(board.Commands["SetPictureArguments"].DataID, characters, board.IP);
+        char[] characters = (String.Join("\x1f", CameraArgumentsValue.Split("\n")) + '\x04').ToCharArray();
+        if (sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.SetPictureArguments(characters);
+        else
+            _RoveCommService.Boards.Camera2.SetPictureArguments(characters);
     }
 }

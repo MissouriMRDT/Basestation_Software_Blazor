@@ -8,7 +8,7 @@
 <div class="component-body">
     <div style="display: flex; flex-direction: column; justify-content: center; align-items: center">
         <p class="font-monospace fs-3">@_phrase</p>
-        <p class="">@_statusMessage</p>
+        <p>@_statusMessage</p>
         <p>@(delay * 10)ms</p>
         <progress max="5000" value=@_charStatusMeter class="progress"></progress>
     </div>
@@ -82,18 +82,10 @@
             if (pos != null)
             {
                 // X
-                _RoveCommService.Send<float>(
-                "Arm",
-                "IncrementJointTargetAngle",
-                [0, pos[0] - totalOffset[0]]
-                );
+                _RoveCommService.Boards.Arm.IncrementJointTargetAngle(0, pos[0] - totalOffset[0]);
 
                 // Pitch
-                _RoveCommService.Send<float>(
-                "Arm",
-                "IncrementJointTargetAngle",
-                [4, pos[1] - totalOffset[1]]
-                );
+                _RoveCommService.Boards.Arm.IncrementJointTargetAngle(4, pos[1] - totalOffset[1]);
 
                 delay = (int)Math.Ceiling(Math.Abs(pos[0] - totalOffset[0])) * 100 + 100;
 
@@ -111,9 +103,9 @@
 
             _statusMessage = "Running solenoid";
             _ = InvokeAsync(StateHasChanged);
-            await _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [1]);
+            _RoveCommService.Boards.Arm.Solenoid(1);
             await Task.Delay(100);
-            await _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [0]);
+            _RoveCommService.Boards.Arm.Solenoid(0);
             await Task.Delay(100);
         }
 
@@ -125,7 +117,7 @@
 
     private void Flip()
     {
-        RoveComm.Boards.Arm.IncrementIndividualTargetAngles(_RoveCommService, 0, 0, 0, 0, 180f, 0);
+        _RoveCommService.Boards.Arm.IncrementIndividualTargetAngles(0, 0, 0, 0, 180f, 0);
     }
 
     private void OnPhraseChanged(ChangeEventArgs e)

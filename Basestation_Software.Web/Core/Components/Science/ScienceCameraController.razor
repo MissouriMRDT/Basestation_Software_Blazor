@@ -11,7 +11,7 @@
         <label>Pano Index: </label>
         <input @bind=_panoIndex>
     </div>
-    <button @onclick=TakePano class="btn btn-primary">Take Pano</button>
+    <button @onclick=TakePano>Take Pano</button>
     <div style="display: grid; grid-template-columns: repeat(7, auto); gap: 2px">
         @for (int i = 0; i < 8; i++)
         {
@@ -61,37 +61,47 @@ pictures/{0}.png";
 
     private async Task TakePicture(int cameraIndex, string pictureName, int fontSize = 22, string titleAppendix = "$position")
     {
-        var board = RoveCommManifest.Boards[cameraIndex < 4 ? "Camera1" : "Camera2"];
-        if (cameraIndex >= 4) cameraIndex -= 4;
-        await _RoveCommService.SendAsync<byte>(board.Commands["ToggleStream"].DataID, [(byte)cameraIndex, 0], board.IP);
-        // Arbitrary delay to ensure packet is recieved
-        await Task.Delay(1000);
+        if (cameraIndex < 4)
+        {
+            _RoveCommService.Boards.Camera1.ToggleStream((byte)cameraIndex, 0);
+            // Arbitrary delay to ensure packet is recieved
+            await Task.Delay(1000);
 
-        await _RoveCommService.SendAsync<char>(board.Commands["SetPictureArguments"].DataID, GeneratePictureArgs(pictureName, fontSize, titleAppendix), board.IP);
-        await Task.Delay(1000);
+            _RoveCommService.Boards.Camera1.SetPictureArguments(GeneratePictureArgs(pictureName, fontSize, titleAppendix));
+            await Task.Delay(1000);
 
-        // await RoveComm.Boards.Camera1.TakePicture(_RoveCommService, (byte)cameraIndex, (byte)1);
-        await _RoveCommService.SendAsync<byte>(board.Commands["TakePicture"].DataID, [(byte)cameraIndex, 1], board.IP);
+            _RoveCommService.Boards.Camera1.TakePicture((byte)cameraIndex, 1);
+        }
+        else
+        {
+            cameraIndex -= 4;
+            _RoveCommService.Boards.Camera1.ToggleStream((byte)cameraIndex, 0);
+            // Arbitrary delay to ensure packet is recieved
+            await Task.Delay(1000);
+
+            _RoveCommService.Boards.Camera1.SetPictureArguments(GeneratePictureArgs(pictureName, fontSize, titleAppendix));
+            await Task.Delay(1000);
+
+            _RoveCommService.Boards.Camera1.TakePicture((byte)cameraIndex, 1);
+        }
     }
 
     private async Task TakePano()
     {
-        await _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [-180, 0]);
+        _RoveCommService.Boards.Core.LeftMainGimbalIncrement(-180, 0);
         await Task.Delay(3000);
         for (int i = 0; i < 3; i++)
         {
             await TakePicture(_panoIndex, panoSegmentNames[i], 40, "");
             await Task.Delay(20000);
-            await _RoveCommService.SendAsync<short>("Core", "LeftMainGimbalIncrement", [90, 0]);
+            _RoveCommService.Boards.Core.LeftMainGimbalIncrement(90, 0);
             await Task.Delay(2000);
         }
     }
 
-    private List<char> GeneratePictureArgs(string filename, int fontSize, string titleAppendix)
+    private char[] GeneratePictureArgs(string filename, int fontSize, string titleAppendix)
     {
         string fullName = _siteName + "_" + filename;
-        List<char> characters = String.Join("\x1f", String.Format(_optionsTemplate, fullName, fontSize, titleAppendix).Split("\n")).ToList();
-        characters.Add('\x04');
-        return characters;
+        return (String.Join("\x1f", String.Format(_optionsTemplate, fullName, fontSize, titleAppendix).Split("\n")) + '\x04').ToCharArray();
     }
 }

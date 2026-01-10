@@ -1,4 +1,4 @@
-﻿@implements IDisposable
+@implements IDisposable
 @inject RoveCommService _RoveCommService
 
 <style>
@@ -61,7 +61,7 @@
 <div class="card h-100">
     <div class="card-header">
         <h3>Packet Tester</h3>
-        <button style="position: absolute; right: 5px; top: 5px" class="btn btn-sm btn-info" @onclick=@(_ => Help ^= true)><i class="bi bi-inline-text bi-question-circle"></i></button>
+        <button style="position: absolute; right: 5px; top: 5px" class="info" @onclick=@(_ => Help ^= true)><i class="bi-inline-text bi-question-circle"></i></button>
     </div>
     <div class="card-body packet-tester">
         @if (Help)
@@ -72,13 +72,13 @@
         <InputTextArea style="grid-area: code; resize: none" @bind-Value="TextAreaValue" autocomplete="off" autocorrect="off" wrap="off" autocapitalize="off" />
         @if (Running)
         {
-            <button style="grid-area: start" class="btn btn-sm btn-warning" @onclick=Pause><i class="bi bi-inline-text bi-pause" /></button>
+            <button style="grid-area: start" class="warning" @onclick=Pause><i class="bi-inline-text bi-pause" /></button>
         }
         else
         {
-            <button style="grid-area: start" class="btn btn-sm btn-success" @onclick=Start><i class="bi bi-inline-text bi-play" /></button>
+            <button style="grid-area: start" class="success" @onclick=Start><i class="bi-inline-text bi-play" /></button>
         }
-        <button style="grid-area: stop" class="btn btn-sm btn-danger" @onclick=Stop><i class="bi bi-inline-text bi-stop" /></button>
+        <button style="grid-area: stop" class="danger" @onclick=Stop><i class="bi-inline-text bi-stop" /></button>
         <p style="grid-area: line">L@(Line)</p>
         <p style="grid-area: info">@Info</p>
         <p style="grid-area: ip-label">Override IP:</p>

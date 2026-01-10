@@ -125,10 +125,7 @@
             _currentKeyframeIndex = i;
             ArmAngularPosition k = _keyframes[i];
             _keyframeStatusMeter = 0;
-            _ = _RoveCommService.SendAsync<float>(
-            "Arm",
-            "SetIKPosition",
-            [k[JointNames.X], 0f, 0f, 0f, k[JointNames.Pitch], 0f]);
+            _RoveCommService.Boards.Arm.SetIKPosition(k[JointNames.X], 0f, 0f, 0f, k[JointNames.Pitch], 0);
 
             await InvokeAsync(StateHasChanged);
             for (int j = 0; j < 100; j++)
@@ -141,9 +138,9 @@
                 _ = InvokeAsync(StateHasChanged);
                 await Task.Delay(50);
             }
-            await _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [1]);
+            _RoveCommService.Boards.Arm.Solenoid(1);
             await Task.Delay(100);
-            await _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [0]);
+            _RoveCommService.Boards.Arm.Solenoid(0);
             await Task.Delay(100);
         }
     }
@@ -173,28 +170,15 @@
     {
         SetSingle(JointNames.X);
         SetSingle(JointNames.Pitch);
-        // if (!_isIKMode)
-        // {
-        // _ = _RoveCommService.SendAsync<float>(
-        // "Arm",
-        // "SetIndividualTargetAngles",
-        // _activeJointValues.ToList());
-        // }
+        // if (_isIKMode)
+        // _RoveCommService.Boards.Arm.SetIKPosition(_activeJointValues.X, _activeJointValues.J2, _activeJointValues.J3, _activeJointValues.J4, _activeJointValues.Pitch, _activeJointValues.Roll);
         // else
-        // {
-        // _ = _RoveCommService.SendAsync<float>(
-        // "Arm",
-        // "SetIKPosition",
-        // _activeJointValues.ToList());
-        // }
+        // _RoveCommService.Boards.Arm.SetIndividualTargetAngles(_activeJointValues.X, _activeJointValues.J2, _activeJointValues.J3, _activeJointValues.J4, _activeJointValues.Pitch, _activeJointValues.Roll);
     }
 
     private void SetSingle(JointNames joint)
     {
-        _ = _RoveCommService.SendAsync<float>(
-        "Arm",
-        "SetJointTargetAngle",
-        [(int)joint, _activeJointValues[joint]]);
+        _RoveCommService.Boards.Arm.SetJointTargetAngle((int)joint, _activeJointValues[joint]);
     }
 
     private void GetAll()

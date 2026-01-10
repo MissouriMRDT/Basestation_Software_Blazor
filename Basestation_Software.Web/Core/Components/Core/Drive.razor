@@ -127,7 +127,7 @@
         }
         else if (LastProcessGamepadInputOK)
         {
-            _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { 0f, 0f }, false);
+            _RoveCommService.Boards.Core.DriveLeftRight(0, 0);
         }
         LastProcessGamepadInputOK = ProcessGamepadInputOK;
         InvokeAsync(StateHasChanged);
@@ -169,14 +169,14 @@
                         // Bump forward.
                         LeftSpeed = finalBumpSpeed;
                         RightSpeed = finalBumpSpeed;
-                        if (!OutputDisabled) _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed });
+                        if (!OutputDisabled) _RoveCommService.Boards.Core.DriveLeftRight((float)LeftSpeed, (float)RightSpeed);
                     }
                     else if (_gamepadSelector.SelectedGamepad.Buttons[2].Pressed)
                     {
                         // Bump backward.
                         LeftSpeed = -finalBumpSpeed;
                         RightSpeed = -finalBumpSpeed;
-                        if (!OutputDisabled) _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed });
+                        if (!OutputDisabled) _RoveCommService.Boards.Core.DriveLeftRight((float)LeftSpeed, (float)RightSpeed);
                     }
                     else if (_gamepadSelector.SelectedGamepad.Buttons[3].Pressed)
                     {
@@ -184,7 +184,7 @@
                         // Bump backward.
                         LeftSpeed = finalBumpSpeed * 2f;
                         RightSpeed = -finalBumpSpeed * 2f;
-                        if (!OutputDisabled) _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed });
+                        if (!OutputDisabled) _RoveCommService.Boards.Core.DriveLeftRight((float)LeftSpeed, (float)RightSpeed);
                     }
                     else if (_gamepadSelector.SelectedGamepad.Buttons[5].Pressed)
                     {
@@ -192,7 +192,7 @@
                         // Bump backward.
                         LeftSpeed = -finalBumpSpeed * 2f;
                         RightSpeed = finalBumpSpeed * 2f;
-                        if (!OutputDisabled) _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed });
+                        if (!OutputDisabled) _RoveCommService.Boards.Core.DriveLeftRight((float)LeftSpeed, (float)RightSpeed);
                     }
                     else
                     {
@@ -207,7 +207,7 @@
                         LeftSpeed = Utils.ClampMap(LeftSpeed, -1, 1, -DriveSpeed, DriveSpeed) * throttle;
                         RightSpeed = Utils.ClampMap(RightSpeed, -1, 1, -DriveSpeed, DriveSpeed) * throttle;
 
-                        if (!OutputDisabled) _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed });
+                        if (!OutputDisabled) _RoveCommService.Boards.Core.DriveLeftRight((float)LeftSpeed, (float)RightSpeed);
                     }
 
                     // Gimbal controls:
@@ -223,22 +223,22 @@
                         switch (SelectedGimbal)
                         {
                             case 0:
-                                _RoveCommService.Send<short>("Core", "LeftDriveGimbalIncrement", new List<short>() { Tilt });
+                                _RoveCommService.Boards.Core.LeftDriveGimbalIncrement(Tilt);
                                 break;
                             case 1:
-                                _RoveCommService.Send<short>("Core", "RightDriveGimbalIncrement", new List<short>() { Tilt });
+                                _RoveCommService.Boards.Core.RightDriveGimbalIncrement(Tilt);
                                 break;
                             case 2:
-                                _RoveCommService.Send<short>("Core", "LeftMainGimbalIncrement", new List<short>() { Pan, Tilt });
+                                _RoveCommService.Boards.Core.LeftMainGimbalIncrement(Pan, Tilt);
                                 break;
                             case 3:
-                                _RoveCommService.Send<short>("Core", "RightMainGimbalIncrement", new List<short>() { Pan, Tilt });
+                                _RoveCommService.Boards.Core.RightMainGimbalIncrement(Pan, Tilt);
                                 break;
                             case 4:
-                                _RoveCommService.Send<short>("Core", "BackDriveGimbalIncrement", new List<short>() { Tilt });
+                                _RoveCommService.Boards.Core.BackDriveGimbalIncrement(Tilt);
                                 break;
                             case 5:
-                                _RoveCommService.Send<short>("Raman", "RamanGimbalIncrement", new List<short>() { Pan, Tilt });
+                                _RoveCommService.Boards.Raman.RamanGimbalIncrement(Pan, Tilt);
                                 break;
                         }
                     }
@@ -280,14 +280,14 @@
                         // Bump forward.
                         LeftSpeed = BUMP_SPEED;
                         RightSpeed = BUMP_SPEED;
-                        if (!OutputDisabled) _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed });
+                        if (!OutputDisabled) _RoveCommService.Boards.Core.DriveLeftRight((float)LeftSpeed, (float)RightSpeed);
                     }
                     else if (_gamepadSelector.SelectedGamepad.Buttons[13].Pressed)
                     {
                         // Bump backward.
                         LeftSpeed = -BUMP_SPEED;
                         RightSpeed = -BUMP_SPEED;
-                        if (!OutputDisabled) _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed });
+                        if (!OutputDisabled) _RoveCommService.Boards.Core.DriveLeftRight((float)LeftSpeed, (float)RightSpeed);
                     }
                     else
                     {
@@ -300,7 +300,7 @@
                         LeftSpeed = Utils.ClampMap(LeftSpeed, -1, 1, -DriveSpeed, DriveSpeed);
                         RightSpeed = Utils.ClampMap(RightSpeed, -1, 1, -DriveSpeed, DriveSpeed);
 
-                        if (!OutputDisabled) _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed }, false);
+                        if (!OutputDisabled) _RoveCommService.Boards.Core.DriveLeftRight((float)LeftSpeed, (float)RightSpeed);
                     }
 
                     // Gimbal controls:
@@ -318,22 +318,22 @@
                         switch (SelectedGimbal)
                         {
                             case 0:
-                                _RoveCommService.Send<short>("Core", "LeftDriveGimbalIncrement", new List<short>() { Tilt });
+                                _RoveCommService.Boards.Core.LeftDriveGimbalIncrement(Tilt);
                                 break;
                             case 1:
-                                _RoveCommService.Send<short>("Core", "RightDriveGimbalIncrement", new List<short>() { Tilt });
+                                _RoveCommService.Boards.Core.RightDriveGimbalIncrement(Tilt);
                                 break;
                             case 2:
-                                _RoveCommService.Send<short>("Core", "LeftMainGimbalIncrement", new List<short>() { Pan, Tilt });
+                                _RoveCommService.Boards.Core.LeftMainGimbalIncrement(Pan, Tilt);
                                 break;
                             case 3:
-                                _RoveCommService.Send<short>("Core", "RightMainGimbalIncrement", new List<short>() { Pan, Tilt });
+                                _RoveCommService.Boards.Core.RightMainGimbalIncrement(Pan, Tilt);
                                 break;
                             case 4:
-                                _RoveCommService.Send<short>("Core", "BackDriveGimbalIncrement", new List<short>() { Tilt });
+                                _RoveCommService.Boards.Core.BackDriveGimbalIncrement(Tilt);
                                 break;
                             case 5:
-                                _RoveCommService.Send<short>("Raman", "RamanGimbalIncrement", new List<short>() { Pan, Tilt });
+                                _RoveCommService.Boards.Raman.RamanGimbalIncrement(Pan, Tilt);
                                 break;
                         }
                     }
@@ -382,22 +382,22 @@
                         switch (SelectedGimbal)
                         {
                             case 0:
-                                _RoveCommService.Send<short>("Core", "LeftDriveGimbalIncrement", new List<short>() { Tilt });
+                                _RoveCommService.Boards.Core.LeftDriveGimbalIncrement(Tilt);
                                 break;
                             case 1:
-                                _RoveCommService.Send<short>("Core", "RightDriveGimbalIncrement", new List<short>() { Tilt });
+                                _RoveCommService.Boards.Core.RightDriveGimbalIncrement(Tilt);
                                 break;
                             case 2:
-                                _RoveCommService.Send<short>("Core", "LeftMainGimbalIncrement", new List<short>() { Tilt, Pan });
+                                _RoveCommService.Boards.Core.LeftMainGimbalIncrement(Pan, Tilt);
                                 break;
                             case 3:
-                                _RoveCommService.Send<short>("Core", "RightMainGimbalIncrement", new List<short>() { Tilt, Pan });
+                                _RoveCommService.Boards.Core.RightMainGimbalIncrement(Pan, Tilt);
                                 break;
                             case 4:
-                                _RoveCommService.Send<short>("Core", "BackDriveGimbalIncrement", new List<short>() { Tilt });
+                                _RoveCommService.Boards.Core.BackDriveGimbalIncrement(Tilt);
                                 break;
                             case 5:
-                                _RoveCommService.Send<short>("Raman", "RamanGimbalIncrement", new List<short>() { Pan, Tilt });
+                                _RoveCommService.Boards.Raman.RamanGimbalIncrement(Pan, Tilt);
                                 break;
                         }
                     }
@@ -414,16 +414,7 @@
                     LeftSpeed = isPT ? LeftSpeed * OutMult : LeftSpeed;
                     RightSpeed = isPT ? RightSpeed * OutMult : RightSpeed;
 
-                    if (!OutputDisabled) RoveComm.Boards.Core.DriveIndividual(
-                    _RoveCommService,
-                    (float)LeftSpeed,
-                    (float)LM,
-                    (float)LeftSpeed,
-                    (float)RightSpeed,
-                    (float)RM,
-                    (float)RightSpeed
-                    );
-                    // _RoveCommService.Send<float>("Core", "DriveLeftRight", new List<float>() { (float)LeftSpeed, (float)RightSpeed }, false);
+                    if (!OutputDisabled) _RoveCommService.Boards.Core.DriveIndividual((float)LeftSpeed, (float)LM, (float)LeftSpeed, (float)RightSpeed, (float)RM, (float)RightSpeed);
                     break;
                 }
         }
