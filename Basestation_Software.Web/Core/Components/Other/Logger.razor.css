@@ -6,3 +6,84 @@ ul {
 li:nth-child(2n) {
     background-color: lightgray;
 }
+
+.optionBar {
+    display: flex;
+    flex-wrap: wrap;
+    background-color: var(--secondary-bg);
+    margin: 4px;
+    padding: 4px;
+}
+
+.optionBarColumn {
+    display: flex;
+    background-color: var(--secondary-bg);
+    align-items: center;
+}
+
+.optionTextColumn {
+    flex-grow: 1;
+    flex-direction: row-reverse;
+}
+
+.optionText {
+    width: max-content;
+    margin: 8px;
+}
+
+.optionTextBoxColumn {
+    flex-shrink: 1;
+    width: min-content;
+}
+
+.optionTextBox {
+    width: 64px;
+}
+
+.logEntry {
+    display: flex;
+    background-color: var(--secondary-bg);
+    margin: 4px;
+    padding: 4px;
+}
+
+.logEntryColumn {
+    display: flex;
+    flex-grow: 1;
+    flex-basis: 0;
+    overflow: hidden;
+}
+
+.navBar {
+    display: flex;
+    background-color: var(--secondary-bg);
+    margin: 4px;
+    padding: 4px;
+}
+
+.navBarColumn_left {
+    display: flex;
+    background-color: var(--secondary-bg);
+    flex-shrink: 1;
+    flex-basis: 0;
+}
+
+.navBarColumn_center {
+    display: flex;
+    background-color: var(--secondary-bg);
+    flex-grow: 1;
+    flex-basis: 0;
+    align-items: center;
+    justify-content: center;
+}
+
+.navBarColumn_right {
+    display: flex;
+    background-color: var(--secondary-bg);
+    flex-shrink: 1;
+    flex-basis: 0;
+}
+
+.navBarButton {
+    background-color: #f7f7f7 !important;
+}

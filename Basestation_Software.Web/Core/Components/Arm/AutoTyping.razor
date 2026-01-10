@@ -1,30 +1,22 @@
 @inject RoveCommService _RoveCommService
 @inject OpService _OpService
 
-@* TODO: Look into why width style is getting inherited on p tags*@
-<style>
-    p {
-        width: auto;
-        text-align: center;
-    }
-</style>
+<div class="component-header">
+    <h3>Autonomous Typing</h3>
+</div>
 
-<div class="card h-100">
-    <div class="card-header">
-        <h3>Autonomous Typing</h3>
-    </div>
-
-    <div class="d-flex flex-column justify-content-center align-content-center rounded p-2 bg-body-secondary text-center">
-        <p class="font-monospace fs-3">@(_phrase != "" ? _phrase : "_")</p>
+<div class="component-body">
+    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center">
+        <p class="font-monospace fs-3">@_phrase</p>
         <p class="">@_statusMessage</p>
         <p>@(delay * 10)ms</p>
         <progress max="5000" value=@_charStatusMeter class="progress"></progress>
     </div>
 
-    <div class="d-flex gap-2 justify-content-center">
-        <InputText class="form-text" @bind-Value="@_phrase" @oninput="OnPhraseChanged" />
-        <button class="btn btn-primary" @onclick="@PlayPhrase">Start</button>
-        <button class="btn btn-primary" @onclick="@Flip">180 Pitch</button>
+    <div style="display: flex; gap: 2px; justify-content: center">
+        <input @bind:get=_phrase @bind:set=@(value => { _phrase = value.ToUpper(); }) />
+        <button @onclick=PlayPhrase>Start</button>
+        <button @onclick=Flip>180 Pitch</button>
     </div>
 </div>
 

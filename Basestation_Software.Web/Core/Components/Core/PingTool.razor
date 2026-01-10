@@ -5,148 +5,58 @@
 @inject PingService PingService
 @inject RoveCommService RoveCommService
 
-<style>
-    .scrollable {
-        max-height: 50vh;
-        overflow-y: auto;
-        display: block;
-    }
-
-    .row {
-        margin-block: 0.15rem;
-    }
-</style>
-
-<div class="card h-100">
-    <div class="card-header">
-        <h3>Ping Tool</h3>
-    </div>
-    <div class="card-body scrollable">
-        @if (!_dataLoaded)
+<div class="component-header">
+    <h3>Ping Tool</h3>
+</div>
+<div class="component-body ping-tool">
+    <p style="grid-column: 1 / 5">Auto Ping Delay (ms): </p>
+    <input style="grid-column: 5 / 7" @bind=autoPingDelay>
+    <p style="grid-column: 1 / 5">Ping Timeout (ms): </p>
+    <input style="grid-column: 5 / 7" @bind=pingTimeout>
+    <input type="checkbox" @bind=autoPingAll @bind:after=@(() => { foreach (Device device in devices) device.AutoPing = autoPingAll; })>
+    <p style="grid-column: 2 / 7">Auto Ping All</p>
+    <input type="checkbox" @bind=warnOfPoorConnection>
+    <p style="grid-column: 2 / 3">Connection Warning</p>
+    <div style="grid-column: 1 / 7; background-color: #000; height: 1px"></div>
+    @foreach (Device device in devices)
+    {
+        <input type="checkbox" @bind=device.AutoPing>
+        <p style=@device.PingStatusHighlight>@device.Name</p>
+        <p style=@device.PingStatusHighlight>@device.IpAddress</p>
+        <p style=@device.PingStatusHighlight>@device.PingStatus</p>
+        <button @onclick=@(async () => await PingIpAddressAsync(device, device.IpAddress))>ICMP</button>
+        @if (device.RoveCapable)
         {
-            <div class="row">
-                <div class="spinner-border " role="status"></div>
-                <div class="col">
-                    <h3>Loading...</h3>
-                </div>
-            </div>
+            <button @onclick=@(() => RovePingBoard(device, device.Name))>Rove</button>
         }
         else
         {
-            <Modal @ref="poorConnection_Modal">
-                <Header>
-                    <label><b>Networking Error: Poor Connection</b></label>
-                </Header>
-
-                <Body>
-                    <label>Pings are failing to reach endpoint. Please check that all networking components are active and that signal strength is sufficient.</label>
-                </Body>
-            </Modal>
-
-            <!-- Ping Delay Field -->
-            <div class="row">
-                <div class="col" style="display:flex; flex-grow:0; flex-basis:content; align-items:center">
-                    <label>AutoPing Delay (ms): </label>
-                </div>
-                <div class="col" style="">
-                    <RadzenTextBox style="min-width:15%" Value="50" ValueChanged="@((string value) => UpdateAutoPingDelay(value))"></RadzenTextBox>
-                </div>
-            </div>
-
-            <!-- Ping Timeout Field -->
-            <div class="row">
-                <div class="col" style="display:flex; flex-grow:0; flex-basis:content; align-items:center">
-                    <label>Ping Timeout (seconds): </label>
-                </div>
-                <div class="col" style="">
-                    <RadzenTextBox style="min-width:15%" Value="1" ValueChanged="@((string value) => UpdatePingTimeout(value))"></RadzenTextBox>
-                </div>
-            </div>
-
-            <!-- Autoping All Checkbox -->
-            <div class="row">
-                <div class="col" style="display:flex; flex-grow:0; flex-basis:content; align-items:center">
-                    <RadzenCheckBox Name="AutoPingAll_CheckBox" TValue="bool" ValueChanged="@((bool value) => AutoPingAll(value))"></RadzenCheckBox>
-                </div>
-                <div class="col">
-                    <label>AutoPing All</label>
-                </div>
-            </div>
-
-            <!-- For Spacing -->
-            <div class="row" style="height:16px" />
-
-            <div class="row">
-                <div class="col" style="display:flex; flex-grow:0; flex-basis:content; align-items:center">
-                    <RadzenCheckBox Name="PoorConnectionWarning_CheckBox" TValue="bool" ValueChanged="@((bool value) => UpdateWarnOfPoorConnection(value))"></RadzenCheckBox>
-                </div>
-                <div class="col">
-                    <label>Warn of Poor Connection</label>
-                </div>
-            </div>
-
-            <!-- For Spacing -->
-            <div class="row" style="height:16px" />
-
-            @foreach (var device in devices)
-            {
-                <div class="row">
-                    <div class="col" style="flex-grow:0; align-content:center;">
-                        <RadzenCheckBox TValue="bool" @bind-Value="@device.AutoPing"></RadzenCheckBox>
-                    </div>
-                    <div class="col" style="display:flex; justify-content:flex-start; @device.PingStatusHighlight; min-width:40%; border-radius: 5px;">
-                        <div class="col" style="margin:4px">
-                            <label>@device.Name</label>
-                        </div>
-                        <div class="col" style="margin:4px">
-                            <label>@device.IpAddress</label>
-                        </div>
-                        <div class="col" style="margin:4px; flex-grow:0">
-                            <label>@device.PingStatus</label>
-                        </div>
-                    </div>
-                    <div class="col" style="flex-grow:0;">
-                        <button onclick="@(() => PingIpAddressAsync(@device, @device.IpAddress))">ICMP</button>
-                    </div>
-                    @if (device.RoveCapable)
-                    {
-                        <div class="col" style="flex-grow:0">
-                            <button onclick="@(() => RovePingBoard(@device, @device.Name))">Rove</button>
-                        </div>
-                    }
-                    else
-                    {
-                        <!-- Works but shouldn't be necessary -->
-                        <!-- For spacing purposes -->
-                        <div class="col" style="flex-grow:0">
-                            <button style="visibility:hidden">Rove</button>
-                        </div>
-                    }
-                </div>
-            }
+            <p></p>
         }
-    </div>
+    }
 </div>
+<Modal @ref="PoorConnectionModal">
+    <Header>
+        <p><b>Networking Error: Poor Connection</b></p>
+    </Header>
 
+    <Body>
+        <p>Pings are failing to reach endpoint. Please check that all networking components are active and that signal strength is sufficient.</p>
+    </Body>
+</Modal>
 
 @code
 {
-    // Declare page member variables.
-    private string goodConnection_hightlight = "background-color:lightgreen";
-    private string poorConnection_hightlight = "background-color:lightcoral";
-
     private Timer autoPingTimer;
 
+    private bool autoPingAll = false;
     private int autoPingDelay = 50;
     private int pingTimeout = 1000;
 
     private List<Device> devices = new List<Device> { };
 
-    private Modal poorConnection_Modal = new();
+    private Modal PoorConnectionModal = new();
     private bool warnOfPoorConnection = false;
-
-    // Flags.
-    private bool _dataLoaded = true; // originally set to false
 
     public PingTool()
     {
@@ -187,12 +97,12 @@
             // Set PingStatusHighlight
             if (reply.Status == IPStatus.Success)
             {
-                device.PingStatusHighlight = goodConnection_hightlight;
+                device.PingStatusHighlight = "background-color:#198754";
                 failedPings = 0;
             }
             else
             {
-                device.PingStatusHighlight = poorConnection_hightlight;
+                device.PingStatusHighlight = "background-color:#dc3545";
                 failedPings += 1;
             }
 
@@ -224,7 +134,7 @@
                         {
                             if (warnOfPoorConnection)
                             {
-                                await InvokeAsync(poorConnection_Modal.Open);
+                                await InvokeAsync(PoorConnectionModal.Open);
                             }
                             failedPings = 0;
                         }
@@ -240,45 +150,6 @@
             {
                 Console.WriteLine($"Error auto pinging: {ex}");
             }
-        }
-    }
-
-    // Sets all components to be pinged automatically.
-    private void AutoPingAll(bool value)
-    {
-        foreach (Device device in devices)
-        {
-            device.AutoPing = value;
-        }
-    }
-
-    // Updates whether ping tool should warn user of a poor connection
-    private void UpdateWarnOfPoorConnection(bool value)
-    {
-        warnOfPoorConnection = value;
-    }
-
-    private void UpdateAutoPingDelay(string delay)
-    {
-        try
-        {
-            autoPingDelay = int.Parse(delay);
-        }
-        catch
-        {
-            autoPingDelay = 5000;
-        }
-    }
-
-    private void UpdatePingTimeout(string timeout)
-    {
-        try
-        {
-            pingTimeout = int.Parse(timeout) * 1000;
-        }
-        catch
-        {
-            pingTimeout = 1000;
         }
     }
 
@@ -352,7 +223,7 @@
             this.autoPing = autoPing;
             this.pingStatus = pingStatus;
             RoveCapable = roveCapable;
-            this.pingStatusHighlight = "background-color:lightcoral";
+            this.pingStatusHighlight = "background-color:#dc3545";
         }
 
         public event PropertyChangedEventHandler? PropertyChanged;

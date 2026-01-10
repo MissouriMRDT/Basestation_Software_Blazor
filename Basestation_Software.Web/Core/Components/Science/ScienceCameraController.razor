@@ -1,35 +1,29 @@
 ﻿@inject RoveCommService _RoveCommService
 @inject OpService _OpState;
 
-<div class="card full-height">
-    <div class="card-header">
-        <h3>Science Camera Controls</h3>
+<div class="component-header">
+    <h3>Science Camera Controls</h3>
+</div>
+<div class="component-body">
+    <div style="display: grid; grid-template-columns: auto auto">
+        <label>Site Name: </label>
+        <input @bind=_siteName>
+        <label>Pano Index: </label>
+        <input @bind=_panoIndex>
     </div>
-    <div class="card-body">
-        <div style="display: grid; grid-template-columns: auto auto">
-            <label>Site Name: </label>
-            <input @bind="@_siteName" type="text" />
-            <label>Pano Index: </label>
-            <input @bind=@_panoIndex type="number" />
-        </div>
-        <button @onclick=@TakePano class="btn btn-primary">Take Pano</button>
-        <div class="d-flex flex-column gap-2">
-            @for (int i = 0; i < 8; i++)
-            {
-                int _i = i;
-                <div class="bg-body-secondary p-2 d-flex justify-content-around rounded-2">
-                    <label class="font-monospace align-self-center">Cam @i</label>
-                    <div class="btn-group" role="group">
-                        <button @onclick=@(() => TakePicture(_i, "pic")) class="btn btn-primary">Picture</button>
-                        <button @onclick=@(() => TakePicture(_i, "autoFl")) class="btn btn-primary">AutoFl</button>
-                        <button @onclick=@(() => TakePicture(_i, "strat")) class="btn btn-primary">Strat</button>
-                        <button @onclick=@(() => TakePicture(_i, "micro")) class="btn btn-primary">Micro</button>
-                        <button @onclick=@(() => TakePicture(_i, "overall")) class="btn btn-primary">Overall</button>
-                        <button @onclick=@(() => TakePicture(_i, "rock")) class="btn btn-primary">Rock</button>
-                    </div>
-                </div>
-            }
-        </div>
+    <button @onclick=TakePano class="btn btn-primary">Take Pano</button>
+    <div style="display: grid; grid-template-columns: repeat(7, auto); gap: 2px">
+        @for (int i = 0; i < 8; i++)
+        {
+            int _i = i;
+            <label class="font-monospace align-self-center">C@(i)</label>
+            <button @onclick=@(() => TakePicture(_i, "pic"))>Picture</button>
+            <button @onclick=@(() => TakePicture(_i, "autoFl"))>AutoFl</button>
+            <button @onclick=@(() => TakePicture(_i, "strat"))>Strat</button>
+            <button @onclick=@(() => TakePicture(_i, "micro"))>Micro</button>
+            <button @onclick=@(() => TakePicture(_i, "overall"))>Overall</button>
+            <button @onclick=@(() => TakePicture(_i, "rock"))>Rock</button>
+        }
     </div>
 </div>
 

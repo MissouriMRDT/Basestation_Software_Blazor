@@ -1,54 +1,36 @@
-@implements IDisposable
 @inject GPSWaypointState _GPSWaypointState
 @inject RoveCommService _RoveCommService
 @inject OpService _OpService
 
-<div class="card h-100">
-    <div class="card-header">
-        <h3>Autonomy Controls</h3>
+<div class="component-header">
+    <h3>Autonomy Controls</h3>
+</div>
+<div class="component-body" style="display: flex; flex-direction: column; align-items: center">
+    <div style="background-color: @(_selectedWaypoint?.Color.ToString() ?? "var(--secondary-bg)")">
+        <p><b>Selected:</b> @(_selectedWaypoint != null ? _selectedWaypoint.Name : "None")</p>
+        @if (_selectedWaypoint != null && _selectedWaypoint.TagID >= 0)
+        {
+            <ArucoTagDisplay ID="@_selectedWaypoint.TagID" Scale="10" />
+        }
     </div>
-    <div class="card-body align-content-center h-100">
-        <div class="button-header">
-            <div class="d-inline-flex bg-body-secondary justify-content-center p-2 rounded gap-2">
-                <p><b>Selected:</b> @(_selectedWaypoint != null ? _selectedWaypoint.Name : "None")</p>
-                <div class="color-preview" style="background-color: @_selectedWaypoint?.WaypointColor"></div>
-                @if (_selectedWaypoint != null && _selectedWaypoint.TagID >= 0)
-                {
-                    <ArucoTagDisplay ID="@_selectedWaypoint.TagID" Scale="10" />
-                }
-            </div>
-        </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 2px; justify-content: center">
+        <button style="width: min-content" class="secondary" @onclick=AddPositionLeg>Add Position Leg</button>
+        <button style="width: min-content" class="secondary" @onclick=AddMarkerLeg>Add Marker Leg</button>
+        <button style="width: min-content" class="secondary" @onclick=AddObjectLeg>Add Object Leg</button>
+        <button style="width: min-content" class="secondary" @onclick=AddObstacle>Add Obstacle</button>
+        <button style="width: min-content" class="secondary" @onclick=ClearWaypoints>Clear Waypoints</button>
+        <button style="width: min-content" class="secondary" @onclick=ClearObstacles>Clear Obstacles</button>
+    </div>
 
-        <div class="text-center">
-            <div class="btn-group btn-group-sm justify-content-center mb-2 gap-1" role="group">
-                <button class="btn btn-secondary" @onclick=AddPositionLeg>Add Position Leg</button>
-                <button class="btn btn-secondary" @onclick=AddMarkerLeg>Add Marker Leg</button>
-                <button class="btn btn-secondary" @onclick=AddObjectLeg>Add Object Leg</button>
-                <button class="btn btn-secondary" @onclick=AddObstacle>Add Obstacle</button>
-                <button class="btn btn-secondary" @onclick=ClearWaypoints>Clear Waypoints</button>
-                <button class="btn btn-secondary" @onclick=ClearObstacles>Clear Obstacles</button>
-            </div>
-        </div>
+    <div>
+        <button title="Start Autonomy" class="@(_doStuckRoutine ? "info" : "success")" @onclick=StartAutonomy><i class="bi-caret-right-fill"></i></button><button title="Stop Autonomy" class="danger" @onclick=StopAutonomy><i class="bi-pause-fill"></i></button>
+    </div>
 
-        <div class="text-center mb-2">
-            <div class="btn-group btn-group-sm justify-content-center" role="group">
-                <button title="Start Autonomy" class="btn @(_doStuckRoutine ? "btn-info" : "btn-success")" @onclick=StartAutonomy><i class="bi bi-caret-right-fill h1 d-block m-0"></i></button>
-                <button title="Stop Autonomy" class="btn btn-danger" @onclick=StopAutonomy><i class="bi bi-pause-fill h1 d-block m-0"></i></button>
-            </div>
-        </div>
-
-        <div class="bg-body-secondary justify-content-center p-2 rounded gap-2 text-center">
-            <label><b>GET ME OUTTA HERE!!</b></label>
-            <div style="display: grid; grid-template-columns: auto auto; gap:0.5rem;">
-                <label>Enable: </label>
-                <InputCheckbox @bind-Value=@_doStuckRoutine style="align-self-right" />
-                <label>Speed: </label>
-                <InputNumber step="0.1" @bind-Value=@_unstuckSpeed />
-                <label>Time: </label>
-                <InputNumber step="100" @bind-Value=@_unstuckTime />
-            </div>
-        </div>
-
+    <div style="background-color: var(--secondary-bg); display: grid; grid-template-columns: auto auto">
+        <p style="grid-column: 1 / 3; justify-self: center"><b>GET ME OUTTA HERE!!</b></p>
+        <p>Enable</p><input style="width: 50px" type="checkbox" @bind=_doStuckRoutine>
+        <p>Speed</p><input style="width: 50px" @bind=_unstuckSpeed>
+        <p>Time</p><input style="width: 50px" @bind=_unstuckTime>
     </div>
 </div>
 
@@ -98,33 +80,25 @@
     public async Task AddPositionLeg()
     {
         if (_selectedWaypoint != null)
-        {
             await _RoveCommService.SendAsync<double>("Autonomy", "AddPositionLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.TagID]);
-        }
     }
 
     public async Task AddMarkerLeg()
     {
         if (_selectedWaypoint != null && _selectedWaypoint.TagID >= 0 && _selectedWaypoint.SearchRadius >= 0)
-        {
             await _RoveCommService.SendAsync<double>("Autonomy", "AddMarkerLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.TagID, _selectedWaypoint.SearchRadius]);
-        }
     }
 
     public async Task AddObjectLeg()
     {
         if (_selectedWaypoint != null && _selectedWaypoint.SearchRadius >= 0)
-        {
             await _RoveCommService.SendAsync<double>("Autonomy", "AddObjectLeg", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.TagID, _selectedWaypoint.SearchRadius]);
-        }
     }
 
     public async Task AddObstacle()
     {
         if (_selectedWaypoint != null && _selectedWaypoint.SearchRadius >= 0)
-        {
             await _RoveCommService.SendAsync<double>("Autonomy", "AddObstacle", [_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.SearchRadius]);
-        }
     }
 
     protected override void OnInitialized()
@@ -136,11 +110,5 @@
     {
         _selectedWaypoint = waypoint;
         await InvokeAsync(StateHasChanged);
-    }
-
-
-    void IDisposable.Dispose()
-    {
-
     }
 }

@@ -8,25 +8,6 @@ Basestation Software is a multi-tier application designed to manage and interact
 
 ## Project Structure
 
-### Basestation_Software.Api
-
-This project contains the REST API built using ASP.NET Core. It provides endpoints for CRUD (Create, Read, Update, Delete) operations on the SQLite database.
-
-- **Technologies**: ASP.NET Core, Entity Framework Core, SQLite
-- **Key Commands**:
-  - `dotnet ef migrations add InitialDB`: Adds a new migration to create the initial database schema.
-  - `dotnet ef database update`: Applies pending migrations to the database.
-
-For more info about the API, view the README.md in the Basestation_Software.Api folder.
-
-### Basestation_Software.Models
-
-This project is a class library that contains all the object models used throughout the application. These models represent the entities in the database and are shared across the API and web application.
-
-- **Technologies**: .NET Standard Library
-- **Key Concepts**:
-  - **Models**: Represent the data structure and are used for database interaction.
-
 ### Basestation_Software.Web
 
 This project is the frontend web application built using Blazor. Blazor is a framework for building interactive web UIs with C# instead of JavaScript. It comes in two flavors: Blazor Server and Blazor WebAssembly (WASM).

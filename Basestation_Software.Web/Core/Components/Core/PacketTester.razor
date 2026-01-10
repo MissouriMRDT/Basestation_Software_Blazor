@@ -115,7 +115,7 @@
         Info = "";
         Lines.Clear();
         Lines.AddRange(TextAreaValue.Split("\n"));
-        _updateTimer.Change(0, -1);
+        _updateTimer.Change(0, Timeout.Infinite);
         InvokeAsync(StateHasChanged);
     }
 
@@ -129,7 +129,7 @@
     {
         Line = 0;
         Running = false;
-        _updateTimer.Change(-1, -1);
+        _updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
         InvokeAsync(StateHasChanged);
     }
 
@@ -193,7 +193,7 @@
 
         // Execute the next line after postDelay.
         Line++;
-        _updateTimer.Change(postDelay, -1);
+        _updateTimer.Change(postDelay, Timeout.Infinite);
         InvokeAsync(StateHasChanged);
     }
 

@@ -28,7 +28,7 @@ class Component {
             moveButton.setPointerCapture(event.pointerId);
             this.x = this.dom.offsetLeft;
             this.y = this.dom.offsetTop;
-            dotNetComponent.invokeMethodAsync("PauseSave", this.idx, width, height);
+            dotNetComponent.invokeMethodAsync("PauseSave");
         });
         moveButton.addEventListener("pointermove", event => moveButton.hasPointerCapture(event.pointerId) && move(event));
         moveButton.addEventListener("pointerup", event => {
@@ -54,7 +54,7 @@ class Component {
             resizeButton.setPointerCapture(event.pointerId);
             this.width = this.dom.offsetWidth;
             this.height = this.dom.offsetHeight;
-            dotNetComponent.invokeMethodAsync("PauseSave", this.idx, width, height);
+            dotNetComponent.invokeMethodAsync("PauseSave");
         });
         resizeButton.addEventListener("pointermove", event => resizeButton.hasPointerCapture(event.pointerId) && resize(event));
         resizeButton.addEventListener("pointerup", event => {

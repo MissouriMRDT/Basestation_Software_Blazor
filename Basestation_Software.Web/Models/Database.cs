@@ -29,11 +29,18 @@ public class DatabaseContext : DbContext
         List<(Type, Guid)> changedEntities = [.. ChangeTracker.Entries().Where(x => x.State == EntityState.Modified).Select(x => (x.Entity.GetType(), (Guid)(x.Entity.GetType().GetProperty("ID")?.GetValue(x.Entity) ?? 0)))];
         List<(Type, Guid)> deletedEntities = [.. ChangeTracker.Entries().Where(x => x.State == EntityState.Deleted).Select(x => (x.Entity.GetType(), (Guid)(x.Entity.GetType().GetProperty("ID")?.GetValue(x.Entity) ?? 0)))];
         int returnValue = await base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
-        await Task.WhenAll(
-            changedTables.Select(x => databaseService.NotifyChanges(x))
-            .Concat(changedEntities.Select(x => databaseService.NotifyChanges(x.Item1, x.Item2)))
-            .Concat(deletedEntities.Select(x => databaseService.NotifyDeleted(x.Item1, x.Item2)))
-        );
+        try
+        {
+            await Task.WhenAll(
+                changedTables.Select(x => databaseService.NotifyChanges(x))
+                .Concat(changedEntities.Select(x => databaseService.NotifyChanges(x.Item1, x.Item2)))
+                .Concat(deletedEntities.Select(x => databaseService.NotifyDeleted(x.Item1, x.Item2)))
+            );
+        }
+        catch (Exception)
+        {
+            Console.WriteLine("Failed to notify listeners of database change(s).");
+        }
         return returnValue;
     }
 

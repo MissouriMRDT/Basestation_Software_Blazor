@@ -7,68 +7,50 @@
         margin-bottom: 0;
     }
 
-    .controlBox {
-        display: flex;
-        column-gap: 0.6rem;
-        row-gap: 0.1rem;
-        justify-items: center;
-        flex: 0 1 160px;
-        flex-wrap: wrap;
-        border-radius: 10px;
-        background-color: var(--bs-secondary-bg);
-        margin: 0.2rem;
-        padding: 0.3rem;
-    }
-
     .break {
         flex-basis: 100%;
         height: 0;
     }
 </style>
 
-<div class="card h-100">
-    <div class="card-header d-flex">
-        <h3>Gimbals</h3>
-        <div class="vr">&nbsp;</div>
-        <InputCheckbox @bind-Value=OutputDisabled></InputCheckbox>
-        <InputSelect @bind-Value=@SelectedScheme>
-            @foreach (var value in Enum.GetValues<Scheme>())
-            {
-                <option value="@value">@value</option>
-            }
-        </InputSelect>
-        <GamepadSelector @ref=_gamepadSelector ChangedCallback=GamepadSelectionChanged />
-    </div>
-
-    <div class="d-flex flex-column my-2 justify-content-center align-content-center bg-body-secondary rounded p-2">
+<div class="component-header">
+    <h3>Gimbals</h3>
+    <div class="vr">&nbsp;</div>
+    <input type="checkbox" @bind=OutputDisabled>
+    <select @bind=SelectedScheme>
+        @foreach (var value in Enum.GetValues<Scheme>())
+        {
+            <option value="@value">@value</option>
+        }
+    </select>
+    <GamepadSelector @ref=_gamepadSelector ChangedCallback=GamepadSelectionChanged />
+</div>
+<div class="component-body">
+    <div style="display: flex; background-color: var(--secondary-bg) ">
         <label class="form-label">Dead Zone: </label>
-        <div class="d-flex align-content-center gap-2">
-            <RadzenSlider @bind-Value=@DeadZone TValue="double" Min="0" Max="(decimal)0.5" Step="0.001" Style="width: 5rem; align-self: center" />
-            <InputNumber class="form-control-sm" min="0" max="(decimal)0.5" step="0.001" @bind-Value=@DeadZone></InputNumber>
-        </div>
+        <input type="range" @bind=DeadZone min="0" max="0.5" step="0.001" style="width: 5rem; align-self: center">
+        <input @bind=DeadZone>
     </div>
-
     <div style="display: flex; flex-wrap: wrap; justify-content: center;">
         @for (int i = 0; i < _gimbalNames.Length; i++)
         {
             var _i = i;
-            <div class="controlBox">
+            <div class="control-box">
                 <p>Invert @_gimbalNames[_i]</p>
-                <RadzenCheckBox TValue="bool" @bind-Value=inversions[_i] />
+                <input type="checkbox" @bind=inversions[_i]>
                 <div class="break"></div>
-                <select class="form-select-sm w-100" @bind=controllerBinds[_i] name="ControlBind">
+                <select style="width: 100%" @bind=controllerBinds[_i] name="ControlBind">
                     @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
                     {
                         <option value="@bind">@bind</option>
                     }
                 </select>
-                <div style="display: flex; width:100%">
+                <div style="display: flex; width: 100%">
                     <meter value="@meterValues[_i]" min="-1.0" max="1.0" style="width: 100%" />
                 </div>
             </div>
         }
     </div>
-
 </div>
 
 @code {
@@ -105,25 +87,25 @@
     }
 
     private string[] _gimbalNames = [
-        "Left Drive",
-        "Right Drive",
-        "Left Main Pan",
-        "Left Main Tilt",
-        "Right Main Pan",
-        "Right Main Tilt",
-        "Back Drive",
-    ];
+    "Left Drive",
+"Right Drive",
+"Left Main Pan",
+"Left Main Tilt",
+"Right Main Pan",
+"Right Main Tilt",
+"Back Drive",
+];
 
     private List<Bind> controllerBinds = [
-        Bind.LBumpTrig,
-        Bind.RBumpTrig,
-        Bind.LSX,
-        Bind.LSY,
-        Bind.RSX,
-        Bind.RSY,
-        Bind.XY,
-        Bind.DpadX,
-        Bind.DpadY
+    Bind.LBumpTrig,
+Bind.RBumpTrig,
+Bind.LSX,
+Bind.LSY,
+Bind.RSX,
+Bind.RSY,
+Bind.XY,
+Bind.DpadX,
+Bind.DpadY
     ];
     double[] meterValues = [0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d];
 
@@ -135,18 +117,18 @@
     private double[] GetBindableGamepadInputs(Toolbelt.Blazor.Gamepad.Gamepad gamepad)
     {
         double[] gamepadInputs = [
-            gamepad.Axes[0],
-            gamepad.Axes[1],
-            gamepad.Axes[2],
-            gamepad.Axes[3],
-            gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
-            gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
-            gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
-            gamepad.Axes[4] - gamepad.Axes[5],
-            gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
-            gamepad.Buttons[12].Value - gamepad.Buttons[13].Value,
-            (gamepad.Axes[4] + 1) / 2.0 - gamepad.Buttons[4].Value,
-            (gamepad.Axes[5] + 1) / 2.0 - gamepad.Buttons[5].Value
+        gamepad.Axes[0],
+gamepad.Axes[1],
+gamepad.Axes[2],
+gamepad.Axes[3],
+gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
+gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
+gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
+gamepad.Axes[4] - gamepad.Axes[5],
+gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
+gamepad.Buttons[12].Value - gamepad.Buttons[13].Value,
+(gamepad.Axes[4] + 1) / 2.0 - gamepad.Buttons[4].Value,
+(gamepad.Axes[5] + 1) / 2.0 - gamepad.Buttons[5].Value
         ];
 
         return gamepadInputs;
@@ -155,7 +137,7 @@
     public void GamepadSelectionChanged()
     {
         if (_gamepadSelector?.SelectedGamepad == null)
-            _updateTimer.Change(-1, -1);
+            _updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
         else
             _updateTimer.Change(0, UPDATE_INTERVAL);
     }

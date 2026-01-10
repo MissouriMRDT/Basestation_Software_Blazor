@@ -1,120 +1,38 @@
 @inject RoveCommService _RoveCommService
 @inject IJSRuntime _IJSRuntime
 
-<style>
-    .camera-controls {
-        display: grid;
-        padding: 0;
-        grid-template-columns: 1fr 1fr 1fr 1fr;
-        grid-template-rows: 30px min-content min-content min-content;
-        grid-template-areas:
-            "source-buttons source-buttons source-buttons source-buttons"
-            "utilization-1 utilization-1 utilization-2 utilization-2"
-            "connect disconnect restart shutdown"
-            "screenshot save panorama arguments";
-        place-items: stretch stretch;
-    }
-
-    .camera-controls p {
-        place-self: center;
-        font-family: Courier New, monospace;
-    }
-
-    .source-buttons-container {
-        grid-area: source-buttons;
-        display: flex;
-        flex-direction: row;
-        margin-inline: 0;
-        margin-block: 0;
-    }
-
-    .source-buttons-container button {
-        margin: 1px;
-        flex: 1;
-        padding: 0;
-        color: white;
-    }
-
-    .source-buttons-container :not(:first-child):not(:last-child) {
-        border-radius: 0;
-    }
-
-    .source-buttons-container :first-child {
-        border-radius: 20px 0 0 20px;
-    }
-
-    .source-buttons-container :last-child {
-        border-radius: 0 20px 20px 0;
-    }
-
-    .camera-selected {
-        color: black !important;
-    }
-
-    .camera-streaming {
-        background-color: #65c100 !important;
-    }
-
-    .camera-available {
-        background-color: #cd9f00 !important;
-    }
-
-    .camera-none {
-        background-color: #808080 !important;
-    }
-
-    .camera-disconnected {
-        background-color: #ff0000 !important;
-    }
-
-    .camera-arguments {
-        position: fixed;
-        inset: 10vh 10vw 10vh 10vw;
-        z-index: 2000;
-        display: grid;
-        grid-template-rows: 9fr 1fr;
-        grid-template-columns: 1fr 1fr 1fr;
-    }
-
-    .camera-arguments button {
-        font-size: 5vh;
-    }
-</style>
-
-<div class="card h-100">
-    <div class="card-header">
-        <h3>Camera Controls</h3>
-    </div>
-    <div @ref="videoContainer" class="card-body camera-controls">
-        <div class="source-buttons-container">
-            @for (int i = 0; i < 8; i++)
-            {
-                // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
-                var _i = i;
-                <button class="btn btn-secondary @(sourceIndex == _i ? "camera-selected" : "") @(GetClass(_i))" @onclick="() => SetSource(_i)">@(_i)</button>
-            }
-        </div>
-        <p style="grid-area: utilization-1">@utilization1</p>
-        <p style="grid-area: utilization-2">@utilization2</p>
-        <button class="btn btn-primary" style="grid-area: connect" @onclick="ConnectCameras">Connect</button>
-        <button class="btn btn-primary" style="grid-area: disconnect" @onclick="DisconnectCameras">Disconnect</button>
-        <button class="btn btn-primary" style="grid-area: restart" @onclick="async () => await ToggleSource(sourceIndex, true)">Restart Camera</button>
-        <button class="btn btn-primary" style="grid-area: shutdown" @onclick="async () => await ToggleSource(sourceIndex, false)">Shutdown Camera</button>
-        <button class="btn btn-primary" style="grid-area: screenshot" @onclick="TakePicture">Take Picture</button>
-        <button class="btn btn-primary" style="grid-area: save" @onclick="SaveImage">Save Image</button>
-        <button class="btn btn-primary" style="grid-area: panorama" @onclick="TakePano">Take Pano</button>
-        <button class="btn btn-primary" style="grid-area: arguments" @onclick="@(_ => CameraArgumentsVisible = true)">Arguments</button>
-    </div>
-    @if (CameraArgumentsVisible)
-    {
-        <div class="camera-arguments">
-            <InputTextArea @bind-Value="@CameraArgumentsValue" style="grid-area: 1 / 1 / 2 / 4" />
-            <button @onclick="@(_ => CameraArgumentsVisible = false)" class="btn btn-warning" title="Close"><i class="bi bi-inline-text bi-x-circle" /></button>
-            <button @onclick=SetFFMPEGArguments class="btn btn-success" title="Set FFMPEG Arguments"><i class="bi bi-inline-text bi-camera-video" /></button>
-            <button @onclick=SetPictureArguments class="btn btn-success" title="Set Picture Arguments"><i class="bi bi-inline-text bi-image" /></button>
-        </div>
-    }
+<div class="component-header">
+    <h3>Camera Controls</h3>
 </div>
+<div @ref="videoContainer" class="component-body camera-controls">
+    <div class="source-buttons-container">
+        @for (int i = 0; i < 8; i++)
+        {
+            // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
+            var _i = i;
+            <button class="btn btn-secondary @(sourceIndex == _i ? "camera-selected" : "") @(GetClass(_i))" @onclick=@(() => SetSource(_i))>@_i</button>
+        }
+    </div>
+    <p style="grid-area: utilization-1">@utilization1</p>
+    <p style="grid-area: utilization-2">@utilization2</p>
+    <button style="grid-area: connect" @onclick=ConnectCameras>Connect</button>
+    <button style="grid-area: disconnect" @onclick=DisconnectCameras>Disconnect</button>
+    <button style="grid-area: restart" @onclick=@(async () => await ToggleSource(sourceIndex, true))>Restart Camera</button>
+    <button style="grid-area: shutdown" @onclick=@(async () => await ToggleSource(sourceIndex, false))>Shutdown Camera</button>
+    <button style="grid-area: screenshot" @onclick=TakePicture>Take Picture</button>
+    <button style="grid-area: save" @onclick=SaveImage>Save Image</button>
+    <button style="grid-area: panorama" @onclick=TakePano>Take Pano</button>
+    <button style="grid-area: arguments" @onclick=@(_ => CameraArgumentsVisible = true)>Arguments</button>
+</div>
+@if (CameraArgumentsVisible)
+{
+    <div class="camera-arguments">
+        <InputTextArea @bind-Value="@CameraArgumentsValue" style="grid-area: 1 / 1 / 2 / 4" />
+        <button @onclick=@(_ => CameraArgumentsVisible = false) class="warning" title="Close"><i class="bi-x-circle" /></button>
+        <button @onclick=SetFFMPEGArguments class="success" title="Set FFMPEG Arguments"><i class="bi-camera-video" /></button>
+        <button @onclick=SetPictureArguments class="success" title="Set Picture Arguments"><i class="bi-image" /></button>
+    </div>
+}
 
 @code {
     public const uint TELEMETRY_TIMEOUT = 10_000; // ms

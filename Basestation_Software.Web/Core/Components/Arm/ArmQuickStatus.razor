@@ -1,66 +1,36 @@
 ﻿@inject RoveCommService _RoveCommService
 @inject ArmService _armService
 
-<style>
-    .box {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        border-radius: 5%;
-        padding: 0.75rem;
-        justify-content: center;
-        background-color: var(--bs-secondary-bg);
-    }
-
-    .box>p {
-        text-align: center;
-    }
-</style>
-
-<div class="card h-100">
-    <div class="card-header">
-        <h3>Arm Quick Status</h3>
-    </div>
-    <div class="card-body align-content-center">
-        <div class="d-flex justify-content-around" style="margin: auto">
-            <div class="box">
-                <p>X</p>
-                <p style="font-size: 2rem">@(_lastTelemetry[0].ToString("F"))</p>
-            </div>
-            <div class="box">
-                <p>J2</p>
-                <p style="font-size: 2rem">@(_lastTelemetry[1].ToString("F"))</p>
-            </div>
-            <div class="box">
-                <p>J4</p>
-                <p style="font-size: 2rem">@(_lastTelemetry[3].ToString("F"))</p>
-            </div>
-            <div class="box">
-                <p>PFG</p>
-                <p style="font-size: 2rem">@(_lastTelemetry[6].ToString("F"))&deg</p>
-            </div>
-            <div class="box">
-                <p>Gripper</p>
-                <p style="font-size: 2rem">@(_armService.IsAlternateGripper ? "Valk" : "Talos")</p>
-            </div>
-        </div>
-    </div>
+<div class="component-header">
+    <h3>Arm Quick Status</h3>
+</div>
+<div class="component-body arm-quick-status">
+    <p>X</p>
+    <p>@($"{_lastTelemetry[0]:+000.000;-000.000}")</p>
+    <p>J2</p>
+    <p>@($"{_lastTelemetry[1]:+000.000;-000.000}")</p>
+    <p>J3</p>
+    <p>@($"{_lastTelemetry[2]:+000.000;-000.000}")</p>
+    <p>J4</p>
+    <p>@($"{_lastTelemetry[3]:+000.000;-000.000}")</p>
+    <p>Pitch</p>
+    <p>@($"{_lastTelemetry[4]:+000.000;-000.000}")</p>
+    <p>Roll</p>
+    <p>@($"{_lastTelemetry[5]:+000.000;-000.000}")</p>
+    <p>PFG</p>
+    <p>@($"{_lastTelemetry[6]:+000.000;-000.000}")</p>
+    <p>Gripper</p>
+    <p>@(_armService.IsAlternateGripper ? "Valk" : "Talos")</p>
 </div>
 
 @code {
-    private List<float> _lastTelemetry = new List<float>(new float[7]);
+    private float[] _lastTelemetry = new float[7];
     protected override void OnInitialized()
     {
         _armService.SubscribeToGripperChanged(OnGripperChanged);
         _RoveCommService.On<float>("Arm", "Positions", async (packet) =>
         {
-
-            if (_lastTelemetry == null)
-            {
-                _lastTelemetry = new();
-            }
-
-            for (int i = 0; i < packet.DataCount; i++) { _lastTelemetry[i] = packet.Data[i]; }
+            for (int i = 0; i < packet.DataCount; i++) _lastTelemetry[i] = packet.Data[i];
             await InvokeAsync(StateHasChanged);
         });
     }

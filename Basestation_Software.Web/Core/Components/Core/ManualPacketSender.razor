@@ -1,89 +1,51 @@
 ﻿@inject RoveCommService roveCommService
-@inject HttpClient Http
-
 @using RoveComm
 @using System.Collections.Generic
-@using System.Net.Http
 @using System.Text.Json
 @using System.IO
 
-<link href="~/PacketDebugger.css" rel="stylesheet" />
-
-<div style="background-color: #162024; padding:4px; border-radius:4px; display:flex; flex-direction:column;">
-
-    <!-- Component Header -->
-    <div style="background-color: #990000; border-top-left-radius:4px; border-top-right-radius:4px;">
-        <h3 style="margin: 4px;">Manual Packet Sender</h3>
-    </div>
-
-    <!-- Component Body -->
-    <div id="componentBody" style=" background-color: #2c3034; border-bottom-left-radius:4px; border-bottom-right-radius:4px;">
-        <div class="componentRow">
-
-            <!-- Row 1 -->
-            <!-- Device selection -->
-            <div class="componentColumn">
-                <p>Device</p>
-                <RadzenDropDown TValue="string" @bind-Value="selectedDevice" Data="deviceDropdownItems" TextProperty="Text" ValueProperty="Value" Style="color: black;" Change="LoadDeviceCommands">
-                </RadzenDropDown>
-            </div>
-
-            <!-- Command selection -->
-            <div class="componentColumn">
-                <p>Command</p>
-                <RadzenDropDown TValue="string" @bind-Value="selectedCommand" Data="commandDropdownItems" TextProperty="Text" ValueProperty="Value" Style="color:black" Change="getCommandParameterSpecs">
-                </RadzenDropDown>
-            </div>
-
-            <!-- Command Data Field -->
-            <div class="componentColumn">
-                <p>Parameter(s)</p>
-                <RadzenTextBox @bind-Value="commandParameters"></RadzenTextBox>
-            </div>
-
-        </div>
-
-        <!-- Info Text -->
-        <div class="componentRow">
-
-            <RadzenText id="infoText" class="infoErrorText" Text="@(commandParameterSpecs)" />
-
-        </div>
-
-        <!-- Error Text -->
-        <div class="componentRow">
-
-            <RadzenText id="errorText" class="infoErrorText" Text="@(errorText)" />
-
-        </div>
-
-        <!-- Run Button Row -->
-        <div class="componentRow">
-
-            <!-- Run Button -->
-            <div class="componentColumn">
-                <RadzenButton Click="RunCommand">Run</RadzenButton>
-            </div>
-
-        </div>
-    </div>
-
+<div class="component-header">
+    <h3>Manual Packet Sender</h3>
+</div>
+<div class="component-body" style="display: grid; grid-template-columns: min-content auto; align-items: center">
+    <p>Device</p>
+    <select @bind=selectedDevice>
+        @foreach (string device in RoveCommManifest.Boards.Keys)
+        {
+            <option value=@device>@device</option>
+        }
+    </select>
+    <p>Command</p>
+    <select @bind=selectedCommand @bind:after=UpdateComment>
+        @if (RoveCommManifest.Boards.ContainsKey(selectedDevice))
+        {
+            @foreach (string command in RoveCommManifest.Boards[selectedDevice].Commands.Keys)
+            {
+                <option value=@command>@command</option>
+            }
+        }
+    </select>
+    <p>Parameter(s)</p>
+    <input @bind=CommandParameters placeholder="1.23 -4.56 789">
+    <p style="grid-column: 1 / 3">@Info</p>
+    <p style="color: red; grid-column: 1 / 3">@Error</p>
+    <button class="success" style="grid-column: 1 / 3" @onclick=RunCommand>Run</button>
 </div>
 
 @code {
 
-    private string? selectedDevice;
+    private string selectedDevice = "";
     private List<DropDownItem> deviceDropdownItems = new List<DropDownItem> { };
 
-    private string? selectedCommand;
+    private string selectedCommand = "";
     private List<DropDownItem> commandDropdownItems = new List<DropDownItem> { };
 
-    private string? commandParameters; // The command parameter(s) value(s) input by user
-    private string? commandParameterSpecs; // The message to assist user in setting the command parameter(s)
-    private string? commandParameterType; // The type of the command parameters
-    private short? numCommandParameters; // The number of parameters required for the given command
+    private string CommandParameters = ""; // The command parameter(s) value(s) input by user
+    private string Info = ""; // The message to assist user in setting the command parameter(s)
+    private string Error = "";
+    private string CommandParameterType = ""; // The type of the command parameters
+    private short NumCommandParameters = 0; // The number of parameters required for the given command
 
-    private string errorText = "";
 
     private Dictionary<string, JsonElement> data = new();
 
@@ -93,222 +55,150 @@
         public required string Text { get; set; }
     }
 
-    protected void LoadDeviceCommands()
-    {
-        commandDropdownItems.Clear();
-        selectedCommand = null;
-        commandParameterSpecs = "";
-        errorText = "";
-        if (selectedDevice != null)
-        {
-            foreach (string command in RoveCommManifest.Boards[selectedDevice].Commands.Keys)
-            {
-                commandDropdownItems.Add(new DropDownItem() { Value = command, Text = command });
-            }
-        }
-        StateHasChanged();
-    }
-
     protected async Task RunCommand()
     {
-
         short numParameters;
-        if (commandParameters != null && commandParameters != String.Empty)
+        if (CommandParameters != "")
         {
-            numParameters = Convert.ToInt16(commandParameters.Replace(" ", "").Split(',').Length);
+            numParameters = Convert.ToInt16(CommandParameters.Split(' ').Length);
         }
         else
         {
             numParameters = 0;
         }
 
-        if ((selectedDevice != null) && (selectedCommand != null) && (commandParameters != null) && numParameters == numCommandParameters)
+        Error = "";
+        if (selectedDevice == "")
+            Error += "Please select a device. ";
+        if (selectedCommand == "")
+            Error += "Please select a command. ";
+        if (numParameters != NumCommandParameters)
+            Error += $"The selected command requires {NumCommandParameters} parameter(s) of type {CommandParameterType}. ";
+
+        if (Error == "")
         {
-            errorText = "";
             try
             {
-                switch (commandParameterType)
+                switch (CommandParameterType)
                 {
                     case "INT8_T":
-                        List<sbyte> data_sbyte = commandParameters.Split(',').Select(x => Convert.ToSByte(x)).ToList();
+                        List<sbyte> data_sbyte = CommandParameters.Split(' ').Select(x => Convert.ToSByte(x)).ToList();
                         await roveCommService.SendAsync<sbyte>(
-                            boardName: selectedDevice,
-                            commandName: selectedCommand,
-                            data: data_sbyte
+                        boardName: selectedDevice,
+                        commandName: selectedCommand,
+                        data: data_sbyte
                         );
                         break;
                     case "UINT8_T":
-                        List<byte> data_byte = commandParameters.Split(',').Select(x => Convert.ToByte(x)).ToList();
+                        List<byte> data_byte = CommandParameters.Split(' ').Select(x => Convert.ToByte(x)).ToList();
                         await roveCommService.SendAsync<byte>(
-                            boardName: selectedDevice,
-                            commandName: selectedCommand,
-                            data: data_byte
+                        boardName: selectedDevice,
+                        commandName: selectedCommand,
+                        data: data_byte
                         );
                         break;
                     case "INT16_T":
-                        List<Int16> data_int16 = commandParameters.Split(',').Select(x => Convert.ToInt16(x)).ToList();
+                        List<Int16> data_int16 = CommandParameters.Split(' ').Select(x => Convert.ToInt16(x)).ToList();
                         await roveCommService.SendAsync<Int16>(
-                            boardName: selectedDevice,
-                            commandName: selectedCommand,
-                            data: data_int16
+                        boardName: selectedDevice,
+                        commandName: selectedCommand,
+                        data: data_int16
                         );
                         break;
                     case "UINT16_T":
-                        List<UInt16> data_uint16 = commandParameters.Split(',').Select(x => Convert.ToUInt16(x)).ToList();
+                        List<UInt16> data_uint16 = CommandParameters.Split(' ').Select(x => Convert.ToUInt16(x)).ToList();
                         await roveCommService.SendAsync<UInt16>(
-                            boardName: selectedDevice,
-                            commandName: selectedCommand,
-                            data: data_uint16
+                        boardName: selectedDevice,
+                        commandName: selectedCommand,
+                        data: data_uint16
                         );
                         break;
                     case "INT32_T":
-                        List<Int32> data_int32 = commandParameters.Split(',').Select(x => Convert.ToInt32(x)).ToList();
+                        List<Int32> data_int32 = CommandParameters.Split(' ').Select(x => Convert.ToInt32(x)).ToList();
                         await roveCommService.SendAsync<Int32>(
-                            boardName: selectedDevice,
-                            commandName: selectedCommand,
-                            data: data_int32
+                        boardName: selectedDevice,
+                        commandName: selectedCommand,
+                        data: data_int32
                         );
                         break;
                     case "UINT32_T":
-                        List<UInt32> data_uint32 = commandParameters.Split(',').Select(x => Convert.ToUInt32(x)).ToList();
+                        List<UInt32> data_uint32 = CommandParameters.Split(' ').Select(x => Convert.ToUInt32(x)).ToList();
                         await roveCommService.SendAsync<UInt32>(
-                            boardName: selectedDevice,
-                            commandName: selectedCommand,
-                            data: data_uint32
+                        boardName: selectedDevice,
+                        commandName: selectedCommand,
+                        data: data_uint32
                         );
                         break;
                     case "FLOAT_T":
-                        List<float> data_float = commandParameters.Split(',').Select(x => Convert.ToSingle(x)).ToList();
+                        List<float> data_float = CommandParameters.Split(' ').Select(x => Convert.ToSingle(x)).ToList();
                         await roveCommService.SendAsync<float>(
-                            boardName: selectedDevice,
-                            commandName: selectedCommand,
-                            data: data_float
+                        boardName: selectedDevice,
+                        commandName: selectedCommand,
+                        data: data_float
                         );
                         break;
                     case "DOUBLE_T":
-                        List<double> data_double = commandParameters.Split(',').Select(x => Convert.ToDouble(x)).ToList();
+                        List<double> data_double = CommandParameters.Split(' ').Select(x => Convert.ToDouble(x)).ToList();
                         await roveCommService.SendAsync<double>(
-                            boardName: selectedDevice,
-                            commandName: selectedCommand,
-                            data: data_double
+                        boardName: selectedDevice,
+                        commandName: selectedCommand,
+                        data: data_double
                         );
                         break;
                     case "CHAR":
-                        List<char> data_char = commandParameters.Split(',').Select(x => Convert.ToChar(x)).ToList();
+                        List<char> data_char = CommandParameters.Split(' ').Select(x => Convert.ToChar(x)).ToList();
                         await roveCommService.SendAsync<char>(
-                            boardName: selectedDevice,
-                            commandName: selectedCommand,
-                            data: data_char
+                        boardName: selectedDevice,
+                        commandName: selectedCommand,
+                        data: data_char
                         );
                         break;
                 }
 
-                commandParameterSpecs = "Command Successful";
+                Info = "Command Successful";
             }
             catch
             {
-                errorText = $"Check that all values are of type {commandParameterType}.";
+                Error = $"Check that all values are of type {CommandParameterType}.";
             }
         }
-        else if (selectedDevice == null || selectedDevice == "")
-        {
-            errorText = "Please select a device.";
-        }
-        else if (selectedCommand == null || selectedCommand == "")
-        {
-            errorText = "Please select a command.";
-        }
-        else if (commandParameters == null || commandParameters == "")
-        {
-            errorText = $"Please enter the appropriate command parameters. The selected command requires {numCommandParameters} parameter(s) of type {commandParameterType}.";
-        }
-        else if (numParameters != numCommandParameters)
-        {
-            errorText = $"The selected command requires {numCommandParameters} parameter(s) of type {commandParameterType}.";
-        }
-
     }
 
     protected override void OnInitialized()
     {
-        // Get all board names and add them to the board dropdown
-        foreach (string boardName in RoveCommManifest.Boards.Keys)
-        {
-            deviceDropdownItems.Add(new DropDownItem() { Value = boardName, Text = boardName });
-        }
-
-        var json = File.ReadAllText("wwwroot/manifest.json");
+        var json = File.ReadAllText("../RoveComm_CSharp/data/RoveComm/manifest.json");
         data = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json) ?? [];
     }
 
-    protected void getCommandParameterSpecs()
+    private void UpdateComment()
     {
-        commandParameters = null;
-        errorText = "";
+        CommandParameters = "";
+        Error = "";
         // Get command comments
-        if (selectedDevice != null && selectedCommand != null && data.TryGetValue("RovecommManifest", out var rovecommManifest) &&
-            rovecommManifest.TryGetProperty(selectedDevice, out var device) &&
-            device.TryGetProperty("Commands", out var commands) &&
-            commands.TryGetProperty(selectedCommand, out var command) &&
-            command.TryGetProperty("comments", out var comments))
+        if (data.TryGetValue("RovecommManifest", out var rovecommManifest) &&
+        rovecommManifest.TryGetProperty(selectedDevice, out var device) &&
+        device.TryGetProperty("Commands", out var commands) &&
+        commands.TryGetProperty(selectedCommand, out var command) &&
+        command.TryGetProperty("comments", out var comments))
         {
-            commandParameterSpecs = "Parameter Format: " + comments.GetString();
+            Info = "Parameter Format: " + comments.GetString();
 
             // Get command parameter type
             if (command.TryGetProperty("dataType", out var paramType))
-            {
-                commandParameterType = paramType.ToString();
-            }
+                CommandParameterType = paramType.ToString();
             else
-            {
-                // TODO
-            }
+                Error = "Command data type not found.";
 
             // Get number of command parameters
             if (command.TryGetProperty("dataCount", out var numParams))
-            {
-                numCommandParameters = Convert.ToInt16(numParams.ToString());
-            }
+                NumCommandParameters = Convert.ToInt16(numParams.ToString());
             else
-            {
-                // TODO
-            }
+                Error = "Command data count not found.";
         }
         else
         {
-            commandParameterSpecs = "Command parameter specs not found.";
+            Info = "Command parameter specs not found.";
         }
         StateHasChanged();
     }
 }
-
-<style>
-    .rz-dropdown-item span {
-        color: black;
-    }
-
-    .componentColumn {
-        display: flex;
-        flex-direction: column;
-        flex-shrink: 1;
-        padding: 4px;
-    }
-
-    .componentRow {
-        display: flex;
-    }
-
-    .infoErrorText {
-        margin: 4px;
-    }
-
-    #componentBody {}
-
-    #infoText {
-        color: white;
-    }
-
-    #errorText {
-        color: red;
-    }
-</style>

@@ -4,29 +4,25 @@
 @inject OpService _OpState
 @inject IJSRuntime _IJSRuntime
 
-@attribute [ComponentAttributes.Ignore]
-
-<div class="h-100 w-100">
+<div class="component-header">
+    <h3>3D Rover</h3>
+</div>
+<div class="component-body" style="width: 100%; height: calc(100% - 19px)">
     @if (!_dataLoaded)
     {
-        <div class="row">
-            <div class="spinner-border " role="status"></div>
-            <div class="col">
-                <h3>Loading...</h3>
-            </div>
-        </div>
+        <h3>Loading...</h3>
     }
-    <div @ref=CanvasContainer class="h-100 w-100" hidden="@(!_dataLoaded)"></div>
+    <div @ref=CanvasContainer style="width: 100%; height: 100%" hidden="@(!_dataLoaded)"></div>
 </div>
 
 @code
 {
     /* WARNING: THIS COMPONENT IS EVIL AND UNTRUSTWORTHY!!!
-     * We enabled it and it ate all of basestation's performance. It appears there is no good way to clean up a Three.js scene.
-     * Three.js is only meant to be initialized once and remain until the browser reloads. This means it does not play nice
-     * with Blazor's SignalIR-JS-injection-voodoo-rendering tomfoolery.
-     * USE AT YOUR OWN RISK!
-     */
+    * We enabled it and it ate all of basestation's performance. It appears there is no good way to clean up a Three.js scene.
+    * Three.js is only meant to be initialized once and remain until the browser reloads. This means it does not play nice
+    * with Blazor's SignalIR-JS-injection-voodoo-rendering tomfoolery.
+    * USE AT YOUR OWN RISK!
+    */
 
     private ElementReference CanvasContainer;
     private IJSObjectReference? jsRoverView;

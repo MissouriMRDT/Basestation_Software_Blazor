@@ -1,44 +1,46 @@
 ﻿@inject RoveCommService _RoveCommService
+@using static RoveComm.Boards.Autonomy
 
-<div class="card full-height">
-    <div class="card-header d-flex">
-        <h3>Autonomy Log</h3>
-        <button @onclick=@(() => { logs.Add(new Log { message = "very very long messagevery very long messagevery very long messagevery very long messagevery very long messagevery very long messagevery very long messagevery very long message", timestamp = DateTime.Now }); })>Test Log</button>
-    </div>
-    <div class="card-body">
-        <div class="d-flex">
-            <RadzenNumeric TValue="byte" Min="0" Max="8" @bind-Value=@ll1 />
-            <RadzenNumeric TValue="byte" Min="0" Max="8" @bind-Value=@ll2 />
-            <RadzenNumeric TValue="byte" Min="0" Max="8" @bind-Value=@ll3 />
-            <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Autonomy", "SetLoggingLevels", [ll1, ll2, ll3]))>Set Log Level</button>
-        </div>
-        <div style="height: 15vh; overflow-y: scroll">
-            <table class="table table-striped">
-                <thead class="thead-light">
-                    <tr>
-                        <th>message</th>
-                        <th>timestamp</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (Log log in logs)
-                    {
-                        <tr>
-                            <td scope="row">@log.message</td>
-                            <td>@log.timestamp</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-    </div>
+<div class="component-header">
+    <h3>Autonomy Log</h3>
+</div>
+<div class="component-body" style="display: grid; overflow-y: scroll; height: calc(100% - 19px); grid: repeat(2, min-content) / auto repeat(4, min-content)">
+    <p style="place-self: center right">Log Level</p>
+    <select @bind=ll1>
+        @foreach (AUTONOMYLOG level in Enum.GetValues<AUTONOMYLOG>())
+        {
+            <option value=@level>@level</option>
+        }
+    </select>
+    <select @bind=ll2>
+        @foreach (AUTONOMYLOG level in Enum.GetValues<AUTONOMYLOG>())
+        {
+            <option value=@level>@level</option>
+        }
+    </select>
+    <select @bind=ll3>
+        @foreach (AUTONOMYLOG level in Enum.GetValues<AUTONOMYLOG>())
+        {
+            <option value=@level>@level</option>
+        }
+    </select>
+    <button class="success" @onclick=@(() => _RoveCommService.SendAsync<byte>("Autonomy", "SetLoggingLevels", [(byte)ll1, (byte)ll2, (byte)ll3]))><i class="bi-send"></i></button>
+    <table style="grid-column: 1 / 6">
+        @foreach (Log log in logs)
+        {
+            <tr>
+                <td>@log.timestamp</td>
+                <td>@log.message</td>
+            </tr>
+        }
+    </table>
 </div>
 
 @code {
 
-    byte ll1 = 0;
-    byte ll2 = 0;
-    byte ll3 = 0;
+    AUTONOMYLOG ll1 = 0;
+    AUTONOMYLOG ll2 = 0;
+    AUTONOMYLOG ll3 = 0;
 
     struct Log
     {
@@ -51,26 +53,24 @@
     {
         _RoveCommService.On<char>("Autonomy", "CurrentLog", async (packet) =>
         {
-            Log newLog = new Log
+            logs.Add(new Log
             {
-                message = packet.Data.ToString() ?? "null",
+                message = packet.Data.ToString() ?? "",
                 timestamp = DateTime.Now
-            };
-            logs.Add(newLog);
+            });
 
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<byte>("Autonomy", "ReachedGoal", async (packet) =>
+        /* _RoveCommService.On<byte>("Autonomy", "ReachedGoal", async (packet) =>
         {
-            Log newLog = new Log
-            {
-                message = "Reached Goal!",
-                timestamp = DateTime.Now
-            };
-            logs.Add(newLog);
-
-            await InvokeAsync(StateHasChanged);
+        logs.Add(new Log
+        {
+        message = "ReachedGoal",
+        timestamp = DateTime.Now
         });
+
+        await InvokeAsync(StateHasChanged);
+        });*/
     }
 }

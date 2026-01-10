@@ -3,133 +3,74 @@
 @inject IJSRuntime _IJSRuntime
 @using Basestation_Software.Web.Utils
 
-<style>
-    .drive {
-        display: grid;
-        padding: 2px;
-        /* Grid exterior border width */
-        grid-template-columns: 1fr 1fr 1fr 1fr;
-        grid-template-areas:
-            "left-backward left-backward left-forward left-forward"
-            "right-backward right-backward right-forward right-forward"
-            "drivespeed-input drivespeed-buttons drivespeed-buttons gimbal"
-            "midspeed-input midspeed-input midspeed gimbal"
-            "outspeed-input outspeed-input outspeed gimbal"
-            "deadzone-input deadzone-input deadzone gimbal"
-            "none none none gimbal"
-            "none none none gimbal";
-        place-items: center;
-        font-weight: bold;
-    }
-
-    .drive>p {
-        margin: 0;
-        align-content: center;
-    }
-
-    .drive>progress {
-        -webkit-appearance: none;
-        -moz-appearance: none;
-        appearance: none;
-        border: 2px solid #000;
-        background-color: #333;
-    }
-
-    .drive>progress[value]::-webkit-progress-bar {
-        background-color: #333;
-        border-radius: 0px;
-    }
-
-    .drive>progress[value]::-moz-progress-bar {
-        background-color: #00f;
-        border-radius: 0;
-    }
-
-    .drive>progress[value]::-webkit-progress-value {
-        background-color: #00f;
-        border-radius: 0;
-    }
-
-    .gimbal-frame {
-        grid-area: gimbal;
-        aspect-ratio: 1 / 1;
-        place-self: center;
-        height: 80%;
-    }
-</style>
-
-<div class="card h-100">
-    <div class="card-header">
-        <div class="col-6 d-flex align-self-center">
-            <h5>Drive</h5>
-            <div class="vr">&nbsp;</div>
-            <InputCheckbox @bind-Value=OutputDisabled></InputCheckbox>
-            <InputSelect @bind-Value=@SelectedScheme>
-                @foreach (var value in Enum.GetValues<Scheme>())
-                {
-                    <option value="@value">@value</option>
-                }
-            </InputSelect>
-            <GamepadSelector @ref=_gamepadSelector ChangedCallback=GamepadSelectionChanged />
-        </div>
-    </div>
-    <div class="card-body drive w-100">
-        <progress style="grid-area: left-backward; transform: rotate(180deg); place-self: stretch" value=@(LeftSpeed < 0 ? -LeftSpeed : 0) max=@DriveSpeed />
-        <progress style="grid-area: left-forward; place-self: stretch" value=@(LeftSpeed > 0 ? LeftSpeed : 0) max=@DriveSpeed />
-        <progress style="grid-area: right-backward; transform: rotate(180deg); place-self: stretch" value=@(RightSpeed < 0 ? -RightSpeed : 0) max=@DriveSpeed />
-        <progress style="grid-area: right-forward; place-self: stretch" value=@(RightSpeed > 0 ? RightSpeed : 0) max=@DriveSpeed />
-        <p style="grid-area: left-backward-start / left-backward-start / left-forward-end / left-forward-end; z-index: 10">@($"{LeftSpeed:+0.00000;-0.00000;+0.00000}")</p>
-        <p style="grid-area: right-backward-start / right-backward-start / right-forward-end / right-forward-end; z-index: 10">@($"{RightSpeed:+0.00000;-0.00000;+0.00000}")</p>
-        <InputNumber Style="grid-area: drivespeed-input; width: 100%" @bind-Value=@DriveSpeed TValue="double" />
-        <div style="grid-area: drivespeed-buttons">
-            <button @onclick=@(() => DriveSpeed = 0.1)>10</button>
-            <button @onclick=@(() => DriveSpeed = 0.2)>20</button>
-            <button @onclick=@(() => DriveSpeed = 0.3)>30</button>
-            <button @onclick=@(() => DriveSpeed = 0.4)>40</button>
-        </div>
-        <InputNumber Style="grid-area: midspeed-input; width: 100%" @bind-Value=@MidMult TValue="double" />
-        <p style="grid-area: midspeed">Mid: @($"{MidMult:0.0}")x</p>
-        <InputNumber Style="grid-area: outspeed-input; width: 100%" @bind-Value=@OutMult TValue="double" />
-        <p style="grid-area: outspeed">Outer: @($"{OutMult:0.0}")x</p>
-
-        <RadzenSlider Style="grid-area: deadzone-input; width: 100%" @bind-Value=@DeadZone TValue="double" Min="0" Max="(decimal)0.5" Step="0.001" />
-        <p style="grid-area: deadzone">Dead Zone: @($"{DeadZone:0.000}")</p>
-
-        <svg class="gimbal-frame" viewBox="0 0 60 60">
-            <style>
-                .background {
-                    stroke: none;
-                    fill: #ffff;
-                }
-
-                .frame {
-                    stroke-width: 0.5;
-                    stroke: #000f;
-                    fill: #ffff;
-                }
-
-                .center {
-                    stroke-width: 0.5;
-                    stroke: #000f;
-                    fill: none;
-                }
-
-                .dot {
-                    stroke: none;
-                    fill: #00ff;
-                }
-            </style>
-            <rect class="background" x="0" y="0" width="60" height="60" />
-            <rect class="frame" x="5" y="5" width="50" height="50" />
-            <line class="center" x1="0" y1="30" x2="60" y2="30" />
-            <line class="center" x1="30" y1="0" x2="30" y2="60" />
-            <circle class="dot" cx="@Utils.Map(Pan, -5, 5, 5, 55)" cy="@Utils.Map(Tilt, -5, 5, 55, 5)" r="3" />
-        </svg>
-        @for (int i = 0; i < GIMBAL_NAMES.Count(); i++)
+<div class="component-header">
+    <h3>Drive</h3>
+    <div class="vr">&nbsp;</div>
+    <input type="checkbox" @bind=OutputDisabled>
+    <select @bind=SelectedScheme>
+        @foreach (var value in Enum.GetValues<Scheme>())
         {
-            <p style="@(i == SelectedGimbal ? "color: #0f0" : "")">@GIMBAL_NAMES[i]</p>
+            <option value="@value">@value</option>
         }
+    </select>
+    <GamepadSelector @ref=_gamepadSelector ChangedCallback=GamepadSelectionChanged />
+</div>
+<div class="component-body drive">
+    <progress style="grid-area: left-backward; transform: rotate(180deg); place-self: stretch" value=@(LeftSpeed < 0 ? -LeftSpeed : 0) max=@DriveSpeed />
+    <progress style="grid-area: left-forward; place-self: stretch" value=@(LeftSpeed > 0 ? LeftSpeed : 0) max=@DriveSpeed />
+    <progress style="grid-area: right-backward; transform: rotate(180deg); place-self: stretch" value=@(RightSpeed < 0 ? -RightSpeed : 0) max=@DriveSpeed />
+    <progress style="grid-area: right-forward; place-self: stretch" value=@(RightSpeed > 0 ? RightSpeed : 0) max=@DriveSpeed />
+    <p style="grid-area: left-backward-start / left-backward-start / left-forward-end / left-forward-end; z-index: 10">@($"{LeftSpeed:+0.00000;-0.00000;+0.00000}")</p>
+    <p style="grid-area: right-backward-start / right-backward-start / right-forward-end / right-forward-end; z-index: 10">@($"{RightSpeed:+0.00000;-0.00000;+0.00000}")</p>
+    <input style="grid-area: drivespeed-input; width: 100%" @bind=DriveSpeed>
+    <div style="grid-area: drivespeed-buttons">
+        <button @onclick=@(() => DriveSpeed = 0.1)>10</button>
+        <button @onclick=@(() => DriveSpeed = 0.2)>20</button>
+        <button @onclick=@(() => DriveSpeed = 0.3)>30</button>
+        <button @onclick=@(() => DriveSpeed = 0.4)>40</button>
     </div>
+    <input style="grid-area: midspeed-input; width: 100%" @bind=MidMult>
+    <p style="grid-area: midspeed">Mid: @($"{MidMult:0.0}")x</p>
+    <input Style="grid-area: outspeed-input; width: 100%" @bind=OutMult>
+    <p style="grid-area: outspeed">Outer: @($"{OutMult:0.0}")x</p>
+
+    <input style="grid-area: deadzone-input; width: 100%" type="range" @bind=DeadZone min="0" max="0.5" step="0.001">
+    <p style="grid-area: deadzone">Dead Zone: @($"{DeadZone:0.000}")</p>
+
+    <svg class="gimbal-frame" viewBox="0 0 60 60">
+        <style>
+            .background {
+                stroke: none;
+                fill: #ffff;
+            }
+
+            .frame {
+                stroke-width: 0.5;
+                stroke: #000f;
+                fill: #ffff;
+            }
+
+            .center {
+                stroke-width: 0.5;
+                stroke: #000f;
+                fill: none;
+            }
+
+            .dot {
+                stroke: none;
+                fill: #00ff;
+            }
+        </style>
+        <rect class="background" x="0" y="0" width="60" height="60" />
+        <rect class="frame" x="5" y="5" width="50" height="50" />
+        <line class="center" x1="0" y1="30" x2="60" y2="30" />
+        <line class="center" x1="30" y1="0" x2="30" y2="60" />
+        <circle class="dot" cx="@Utils.Map(Pan, -5, 5, 5, 55)" cy="@Utils.Map(Tilt, -5, 5, 55, 5)" r="3" />
+    </svg>
+    @for (int i = 0; i < GIMBAL_NAMES.Count(); i++)
+    {
+        <p style="@(i == SelectedGimbal ? "color: #0f0" : "")">@GIMBAL_NAMES[i]</p>
+    }
 </div>
 
 @code
@@ -492,7 +433,7 @@
     public void GamepadSelectionChanged()
     {
         if (_gamepadSelector?.SelectedGamepad == null)
-            _updateTimer.Change(-1, -1);
+            _updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
         else
             _updateTimer.Change(0, UPDATE_INTERVAL);
     }

@@ -1,0 +1,77 @@
+.camera-controls {
+    display: grid;
+    padding: 0;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-template-rows: 30px min-content min-content min-content;
+    grid-template-areas:
+        "source-buttons source-buttons source-buttons source-buttons"
+        "utilization-1 utilization-1 utilization-2 utilization-2"
+        "connect disconnect restart shutdown"
+        "screenshot save panorama arguments";
+    place-items: stretch stretch;
+}
+
+.camera-controls p {
+    place-self: center;
+    font-family: Courier New, monospace;
+}
+
+.source-buttons-container {
+    grid-area: source-buttons;
+    display: flex;
+    flex-direction: row;
+    margin-inline: 0;
+    margin-block: 0;
+}
+
+.source-buttons-container button {
+    margin: 1px;
+    flex: 1;
+    padding: 0;
+    color: white;
+}
+
+.source-buttons-container :not(:first-child):not(:last-child) {
+    border-radius: 0;
+}
+
+.source-buttons-container :first-child {
+    border-radius: 20px 0 0 20px;
+}
+
+.source-buttons-container :last-child {
+    border-radius: 0 20px 20px 0;
+}
+
+.camera-selected {
+    color: black !important;
+}
+
+.camera-streaming {
+    background-color: #65c100 !important;
+}
+
+.camera-available {
+    background-color: #cd9f00 !important;
+}
+
+.camera-none {
+    background-color: #808080 !important;
+}
+
+.camera-disconnected {
+    background-color: #ff0000 !important;
+}
+
+.camera-arguments {
+    position: fixed;
+    inset: 10vh 10vw 10vh 10vw;
+    z-index: 2000;
+    display: grid;
+    grid-template-rows: 9fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.camera-arguments button {
+    font-size: 5vh;
+}

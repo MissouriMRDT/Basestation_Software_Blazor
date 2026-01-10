@@ -2,73 +2,30 @@
 @inject RoveCommService _RoveCommService
 @inject IJSRuntime _IJSRuntime
 
-<style>
-    .pms {
-        display: grid;
-        padding: 2px; /* Grid exterior border width */
-        grid-template-columns: 2fr 1fr 1fr 2fr 3fr;
-        grid-template-areas:
-            "motors motors core-current core-current pack-capacity"
-            "core core core-current core-current pack-current"
-            "aux aux aux-current aux-current pack-current"
-            "cs1-current cs1-current cs2-current cs2-current cs3-current"
-            "c1-voltage c2-voltage c2-voltage c3-voltage pack-voltage"
-            "c4-voltage c5-voltage c5-voltage c6-voltage pack-voltage"
-            "reboot reboot e-stop e-stop suicide";
-        place-items: stretch stretch;
-        color: #000;
-        gap: 2px; /* Grid interior border width */
-        background-color: #000; /* Grid border color */
-        font-weight: bold;
-    }
-
-    .pms > div {
-        margin: 0;
-        padding: 0px 20px;
-        align-content: center;
-    }
-
-    .pms > div > span {
-        margin: 0;
-        float: right;
-    }
-
-    .pms > div > button {
-        margin: 0;
-        float: right;
-    }
-
-    .pms > button {
-        margin: 0;
-    }
-</style>
-
-<div class="card h-100">
-    <div class="card-header">
-        <h3>PMS</h3>
-    </div>
-    <div class="card-body pms w-100">
-        <div style="grid-area: motors; background-color: @(BusStatus[0] == BusState.Enabled ? "yellow" : "grey")">Motors<button @onclick="() => toggleBus(0)">@(BusStatus[0] == BusState.Enabled ? "Disable" : (BusStatus[0] == BusState.Disabled ? "Enable" : "Pending..."))</button></div>
-        <div style="grid-area: core; background-color: @(BusStatus[1] == BusState.Enabled ? "yellow" : "grey")">Core<button @onclick="() => toggleBus(1)">@(BusStatus[1] == BusState.Enabled ? "Disable" : (BusStatus[1] == BusState.Disabled ? "Enable" : "Pending..."))</button></div>
-        <div style="grid-area: aux; background-color: @(BusStatus[2] == BusState.Enabled ? "yellow" : "grey")">Aux<button @onclick="() => toggleBus(2)">@(BusStatus[2] == BusState.Enabled ? "Disable" : (BusStatus[2] == BusState.Disabled ? "Enable" : "Pending..."))</button></div>
-        <div style="grid-area: core-current; background-color: @Utils.ClampMap(PackCurrent - AuxCurrent, 7.2, 30, COLOR_OK, COLOR_ERROR)">Core Current<span>@($"{PackCurrent - AuxCurrent:0.00}") A</span></div>
-        <div style="grid-area: aux-current; background-color: @Utils.ClampMap(AuxCurrent, 5, 15, COLOR_OK, COLOR_ERROR)">Aux Current<span>@($"{AuxCurrent:0.00}") A</span></div>
-        <div style="grid-area: pack-current; background-color: @Utils.ClampMap(PackCurrent, 9.5, 45, COLOR_OK, COLOR_ERROR)">Pack Current<span>@($"{PackCurrent:0.00}") A</span></div>
-        <div style="grid-area: pack-capacity; background-color: @Utils.ClampMap(PackCapacity, 1, 2.3, COLOR_ERROR, COLOR_OK)">Pack Capactity<span>@($"{PackCapacity:0.00}") J</span></div>
-        <div style="grid-area: cs1-current; background-color: #fff">CS1<span>@($"{MiscCurrent[0]:0.00}") A</span></div>
-        <div style="grid-area: cs2-current; background-color: #fff">CS2<span>@($"{MiscCurrent[1]:0.00}") A</span></div>
-        <div style="grid-area: cs3-current; background-color: #fff">CS3<span>@($"{MiscCurrent[2]:0.00}") A</span></div>
-        <div style="grid-area: c1-voltage; background-color: @Utils.ClampMap(CellVoltage[0], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C1<span>@($"{CellVoltage[0]:0.00}") V</span></div>
-        <div style="grid-area: c2-voltage; background-color: @Utils.ClampMap(CellVoltage[1], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C2<span>@($"{CellVoltage[1]:0.00}") V</span></div>
-        <div style="grid-area: c3-voltage; background-color: @Utils.ClampMap(CellVoltage[2], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C3<span>@($"{CellVoltage[2]:0.00}") V</span></div>
-        <div style="grid-area: c4-voltage; background-color: @Utils.ClampMap(CellVoltage[3], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C4<span>@($"{CellVoltage[3]:0.00}") V</span></div>
-        <div style="grid-area: c5-voltage; background-color: @Utils.ClampMap(CellVoltage[4], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C5<span>@($"{CellVoltage[4]:0.00}") V</span></div>
-        <div style="grid-area: c6-voltage; background-color: @Utils.ClampMap(CellVoltage[5], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C6<span>@($"{CellVoltage[5]:0.00}") V</span></div>
-        <div style="grid-area: pack-voltage; background-color: @Utils.ClampMap(PackVoltage, 15, 25, COLOR_ERROR, COLOR_OK)">Pack Voltage<span>@($"{PackVoltage:0.00}") V</span></div>
-        <button style="grid-area: reboot" @onclick=Reboot>REBOOT</button>
-        <button style="grid-area: e-stop" @onclick=EStop>E-STOP</button>
-        <button style="grid-area: suicide" @onclick=Suicide>SUICIDE</button>
-    </div>
+<div class="component-header">
+    <h3>PMS</h3>
+</div>
+<div class="component-body pms">
+    <div style="grid-area: motors; background-color: @(BusStatus[0] == BusState.Enabled ? "yellow" : "grey")">Motors<button @onclick="() => toggleBus(0)">@(BusStatus[0] == BusState.Enabled ? "Disable" : (BusStatus[0] == BusState.Disabled ? "Enable" : "Pending..."))</button></div>
+    <div style="grid-area: core; background-color: @(BusStatus[1] == BusState.Enabled ? "yellow" : "grey")">Core<button @onclick="() => toggleBus(1)">@(BusStatus[1] == BusState.Enabled ? "Disable" : (BusStatus[1] == BusState.Disabled ? "Enable" : "Pending..."))</button></div>
+    <div style="grid-area: aux; background-color: @(BusStatus[2] == BusState.Enabled ? "yellow" : "grey")">Aux<button @onclick="() => toggleBus(2)">@(BusStatus[2] == BusState.Enabled ? "Disable" : (BusStatus[2] == BusState.Disabled ? "Enable" : "Pending..."))</button></div>
+    <div style="grid-area: core-current; background-color: @Utils.ClampMap(PackCurrent - AuxCurrent, 7.2, 30, COLOR_OK, COLOR_ERROR)">Core Current<span>@($"{PackCurrent - AuxCurrent:0.00}") A</span></div>
+    <div style="grid-area: aux-current; background-color: @Utils.ClampMap(AuxCurrent, 5, 15, COLOR_OK, COLOR_ERROR)">Aux Current<span>@($"{AuxCurrent:0.00}") A</span></div>
+    <div style="grid-area: pack-current; background-color: @Utils.ClampMap(PackCurrent, 9.5, 45, COLOR_OK, COLOR_ERROR)">Pack Current<span>@($"{PackCurrent:0.00}") A</span></div>
+    <div style="grid-area: pack-capacity; background-color: @Utils.ClampMap(PackCapacity, 1, 2.3, COLOR_ERROR, COLOR_OK)">Pack Capactity<span>@($"{PackCapacity:0.00}") J</span></div>
+    <div style="grid-area: cs1-current; background-color: #fff">CS1<span>@($"{MiscCurrent[0]:0.00}") A</span></div>
+    <div style="grid-area: cs2-current; background-color: #fff">CS2<span>@($"{MiscCurrent[1]:0.00}") A</span></div>
+    <div style="grid-area: cs3-current; background-color: #fff">CS3<span>@($"{MiscCurrent[2]:0.00}") A</span></div>
+    <div style="grid-area: c1-voltage; background-color: @Utils.ClampMap(CellVoltage[0], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C1<span>@($"{CellVoltage[0]:0.00}") V</span></div>
+    <div style="grid-area: c2-voltage; background-color: @Utils.ClampMap(CellVoltage[1], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C2<span>@($"{CellVoltage[1]:0.00}") V</span></div>
+    <div style="grid-area: c3-voltage; background-color: @Utils.ClampMap(CellVoltage[2], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C3<span>@($"{CellVoltage[2]:0.00}") V</span></div>
+    <div style="grid-area: c4-voltage; background-color: @Utils.ClampMap(CellVoltage[3], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C4<span>@($"{CellVoltage[3]:0.00}") V</span></div>
+    <div style="grid-area: c5-voltage; background-color: @Utils.ClampMap(CellVoltage[4], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C5<span>@($"{CellVoltage[4]:0.00}") V</span></div>
+    <div style="grid-area: c6-voltage; background-color: @Utils.ClampMap(CellVoltage[5], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C6<span>@($"{CellVoltage[5]:0.00}") V</span></div>
+    <div style="grid-area: pack-voltage; background-color: @Utils.ClampMap(PackVoltage, 15, 25, COLOR_ERROR, COLOR_OK)">Pack Voltage<span>@($"{PackVoltage:0.00}") V</span></div>
+    <button style="grid-area: reboot" @onclick=Reboot>REBOOT</button>
+    <button style="grid-area: e-stop" @onclick=EStop>E-STOP</button>
+    <button style="grid-area: suicide" @onclick=Suicide>SUICIDE</button>
 </div>
 
 @code

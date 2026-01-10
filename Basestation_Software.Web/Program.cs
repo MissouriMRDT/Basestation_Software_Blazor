@@ -2,7 +2,6 @@ using Basestation_Software.Web.Core;
 using Basestation_Software.Web.Core.Services;
 using Basestation_Software.Web.Models;
 using Blazored.Toast;
-using Radzen;
 using RoveComm;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
 
@@ -28,11 +27,9 @@ builder.Services.AddServerSideBlazor()
             option.DisconnectedCircuitRetentionPeriod = TimeSpan.FromSeconds(10);
         })
         .AddHubOptions(option => option.MaximumReceiveMessageSize = 10_000_000); // Configures the message size for SignalR connections.
-builder.Services.AddRadzenComponents();
 builder.Services.AddGamepadList();
 builder.Services.AddScoped<CookieService>();
 builder.Services.AddScoped<GPSWaypointState>();
-builder.Services.AddSingleton<TaskTimerService>();
 builder.Services.AddSingleton<PingService>();
 builder.Services.AddSingleton<OpService>();
 builder.Services.AddSingleton<ArmService>();
@@ -40,8 +37,6 @@ builder.Services.AddSingleton<DatabaseService>();
 builder.Services.AddDbContextFactory<DatabaseContext>();
 builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
-//builder.Services.AddSingleton<LoggerService_Deprecated>();
-//builder.Services.AddSingleton<LoggerCore.LoggerService>();
 
 var app = builder.Build();
 

@@ -3,74 +3,22 @@
 @implements IAsyncDisposable
 
 <style>
-    .camera-display {
-        display: grid;
-        padding: 0;
-        grid-template-columns: 1fr;
-        grid-template-rows: 1fr 30px;
-        grid-template-areas:
-            "video"
-            "source-buttons";
-        place-items: stretch stretch;
-    }
-
-    .video-display {
-        grid-area: video;
-        height: 100%;
-        width: 100%;
-    }
-
-    .source-buttons-container {
-        grid-area: source-buttons;
-        display: flex;
-        flex-direction: row;
-        margin-inline: 0;
-        margin-block: 0;
-    }
-
-    .source-buttons-container button {
-        margin: 1px;
-        flex: 1;
-        padding: 0;
-        color: white;
-    }
-
-    .source-buttons-container :not(:first-child):not(:last-child) {
-        border-radius: 0;
-    }
-
-    .source-buttons-container :first-child {
-        border-radius: 20px 0 0 20px;
-    }
-
-    .source-buttons-container :last-child {
-        border-radius: 0 20px 20px 0;
-    }
-
-    .camera-display-rotate {
-        position: absolute;
-        top: 0;
-        right: 0;
-        width: 3rem;
-    }
-
-    .camera-selected {
-        color: black !important;
+    /*Does not work when placed in CameraDisplay.razor.css*/
+    .component:has(.camera-display)>.component-move {
+        color: #000;
     }
 </style>
 
-<div class="card h-100">
-    <div @ref="videoContainer" class="card-body camera-display">
-        <div class="source-buttons-container">
-            @for (int i = 0; i < 8; i++)
-            {
-                // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
-                var _i = i;
-                <button class="@("btn btn-secondary " + ((sourceIndex == _i) ? "camera-selected" : ""))" @onclick="() => SetSource(_i)">@(_i)</button>
-            }
-        </div>
-        <button class="btn btn-primary camera-display-rotate" @onclick="Rotate"><i class="bi bi-arrow-clockwise"></i></button>
+<div @ref="videoContainer" class="component-body camera-display">
+    <div class="source-buttons-container">
+        @for (int i = 0; i < 8; i++)
+        {
+            // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
+            var _i = i;
+            <button class="@("btn btn-secondary " + ((sourceIndex == _i) ? "camera-selected" : ""))" @onclick=@(() => SetSource(_i))>@_i</button>
+        }
     </div>
+    <button class="camera-display-rotate" @onclick=Rotate><i class="bi-arrow-clockwise"></i></button>
 </div>
 
 @code {

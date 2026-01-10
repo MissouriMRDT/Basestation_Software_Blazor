@@ -23,38 +23,13 @@
     }
 </style>
 
-<div class="card h-100">
-    <div class="card-header">
-        <div class="d-flex justify-content-between align-items-center">
-            <h3>Map</h3>
-            @if (_cachingMapTiles)
-            {
-                <div>
-                    <h6 class="col">Caching map tiles... (only caches in dev mode)</h6>
-                </div>
-            }
-        </div>
-    </div>
-    <div class="card-body p-0">
-        @if (!_dataLoaded)
-        {
-            <div class="row">
-                <div class="spinner-border " role="status"></div>
-                <div class="col">
-                    <h3>Loading...</h3>
-                </div>
-            </div>
-        }
-        else
-        {
-            <div @ref=MapContainer class="w-100 h-100" style="position: relative;"></div>
-        }
-    </div>
+<div class="component-header">
+    <h3>Map</h3>
 </div>
+<div @ref=_mapContainer class="component-body" style="width: 100%; height: calc(100% - 19px)"></div>
 
 @code
 {
-    // Component parameters.
     [Parameter]
     public double InitialLat { get; set; } = 37.951764;
     [Parameter]
@@ -62,31 +37,24 @@
     [Parameter]
     public int InitialZoomLevel { get; set; } = 18;
 
-    // Declare page member variables.
     private float _heading = 0;
-    private ElementReference MapContainer;
-    private IJSObjectReference? jsRoverMap;
-    private DotNetObjectReference<RoverMap>? ObjectReference;
-
-    // Flags.
-    private bool _dataLoaded = false;
-    private bool _cachingMapTiles = false;
+    private ElementReference _mapContainer;
+    private IJSObjectReference? _jsMap;
+    private DotNetObjectReference<Map>? _objectReference;
 
     protected override async Task OnInitializedAsync()
     {
-        // Toggle component is done loading.
-        _dataLoaded = true;
-        await InvokeAsync(StateHasChanged);
         _RoveCommService.On<double>("Nav", "GPSLatLonAlt", async (packet) =>
         {
-            await jsRoverMap!.InvokeVoidAsync("addRoverIcon", [packet.Data[0], packet.Data[1]]);
+            await _jsMap!.InvokeVoidAsync("addRoverIcon", [packet.Data[0], packet.Data[1]]);
         });
 
-        _RoveCommService.On<float>("Nav", "IMUData", async (packet) =>
+        _RoveCommService.On<float>("Nav", "CompassData", async (packet) =>
         {
             _heading = packet.Data[1];
             await InvokeAsync(StateHasChanged);
         });
+        await InvokeAsync(StateHasChanged);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -96,8 +64,8 @@
             await using var jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-map.js");
             // Create leaflet map.
             Uri baseUri = new Uri(_NavigationManager.BaseUri);
-            ObjectReference = DotNetObjectReference.Create(this);
-            jsRoverMap = await jsModule.InvokeAsync<IJSObjectReference>("createRoverMap", [MapContainer, ObjectReference, $"{baseUri.Scheme}://{baseUri.Host}:5000/api/MapTiles/{{z}}/{{y}}/{{x}}.png", $"{baseUri.Scheme}://{baseUri.Host}:5000/api/LidarTiles/{{z}}/{{y}}/{{x}}.png", InitialLat, InitialLong, InitialZoomLevel]);
+            _objectReference = DotNetObjectReference.Create(this);
+            _jsMap = await jsModule.InvokeAsync<IJSObjectReference>("createRoverMap", [_mapContainer, _objectReference, $"{baseUri.Scheme}://{baseUri.Host}:5000/api/MapTiles/{{z}}/{{y}}/{{x}}.png", $"{baseUri.Scheme}://{baseUri.Host}:5000/api/LidarTiles/{{z}}/{{y}}/{{x}}.png", InitialLat, InitialLong, InitialZoomLevel]);
 
             // Plot waypoints and keep them updated.
             await PlotWaypoints();
@@ -109,7 +77,7 @@
     private async Task UpdateWaypoints()
     {
         // Update waypoint markers.
-        await jsRoverMap!.InvokeVoidAsync("clearWaypointMarkers");
+        await _jsMap!.InvokeVoidAsync("clearWaypointMarkers");
         await PlotWaypoints();
     }
 
@@ -117,7 +85,7 @@
     {
         using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
         List<GPSWaypoint> waypoints = await databaseContext.Waypoints.ToListAsync();
-        await Task.WhenAll(waypoints.ConvertAll<Task>(waypoint => jsRoverMap!.InvokeVoidAsync("addWaypointMarker", [waypoint.Latitude, waypoint.Longitude, waypoint.SearchRadius, ColorTranslator.ToHtml(Color.FromArgb(waypoint.WaypointColor)), waypoint.TagID]).AsTask()));
+        await Task.WhenAll(waypoints.ConvertAll<Task>(waypoint => _jsMap!.InvokeVoidAsync("addWaypointMarker", [waypoint.Latitude, waypoint.Longitude, waypoint.SearchRadius, ColorTranslator.ToHtml(Color.FromArgb(waypoint.Color)), waypoint.TagID]).AsTask()));
     }
 
     [JSInvokable]
@@ -130,6 +98,7 @@
             Latitude = lat,
             Longitude = lon,
         });
+        await databaseContext.SaveChangesAsync(_databaseService);
     }
 
     private async Task OnWaypointSelected(GPSWaypoint? waypoint)
@@ -139,7 +108,7 @@
 
     public async Task PanToCoordinates(double lat, double lon)
     {
-        await jsRoverMap!.InvokeVoidAsync("panToCoordinates", [lat, lon]);
+        await _jsMap!.InvokeVoidAsync("panToCoordinates", [lat, lon]);
     }
 
     [JSInvokable]
@@ -159,12 +128,12 @@
     {
         _databaseService.UnsubscribeFromTableChanges(typeof(GPSWaypoint), UpdateWaypoints);
         _GPSWaypointState.UnsubscribeFromWaypointSelected(OnWaypointSelected);
-        ObjectReference?.Dispose();
+        _objectReference?.Dispose();
         try
         {
-            if (jsRoverMap != null)
+            if (_jsMap != null)
             {
-                await jsRoverMap.DisposeAsync();
+                await _jsMap.DisposeAsync();
             }
         }
         catch (JSDisconnectedException)

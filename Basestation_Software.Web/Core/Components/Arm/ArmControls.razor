@@ -21,7 +21,7 @@
         flex: 0 1 160px;
         flex-wrap: wrap;
         border-radius: 10px;
-        background-color: var(--bs-secondary-bg);
+        background-color: var(--secondary-bg);
         margin: 0.2rem;
         padding: 0.3rem;
     }
@@ -32,157 +32,157 @@
     }
 </style>
 
-<div class="card full-height">
-    <div class="card-header" style="display: flex">
-        <h3>Arm Controls</h3>
-        <div class="vr">&nbsp;</div>
-        <InputCheckbox @bind-Value=OutputDisabled></InputCheckbox>
-        <InputSelect @bind-Value=@SelectedScheme>
-            @foreach (var value in Enum.GetValues<Scheme>())
+<div class="component-header">
+    <h3>Arm Controls</h3>
+    <div class="vr">&nbsp;</div>
+    <input type="checkbox" @bind=OutputDisabled>
+    <select @bind=SelectedScheme>
+        @foreach (var value in Enum.GetValues<Scheme>())
+        {
+            <option value="@value">@value</option>
+        }
+    </select>
+    <GamepadSelector @ref=_gamepadSelector ChangedCallback=GamepadSelectionChanged />
+</div>
+<div class="component-body">
+    <div style="d-flex">
+        <label>Preset:</label>
+        <select @bind:get=@(_selectedPreset.ID) @bind:set=@(value => {_selectedPreset = _presets.Find(preset => preset.ID == value) ?? new(); LoadPreset(); })>
+            @foreach (var preset in _presets)
             {
-                <option value="@value">@value</option>
+                <option value=@preset>@preset</option>
             }
-        </InputSelect>
-        <GamepadSelector @ref=_gamepadSelector ChangedCallback=GamepadSelectionChanged />
+        </select>
+        <input @bind=_presetNameInput>
+        <button @onclick=@(() => AddPreset(_presetNameInput))>Save Preset</button>
+        <button @onclick=DeletePreset>Delete Preset</button>
     </div>
-    <div class="card-body">
-        <div style="d-flex">
-            <label>Preset:</label>
-            <RadzenDropDown TValue="ControlPreset" Data="@_presets" bind="@_selectedPreset" Change="(args) => LoadPreset((ControlPreset)args)" />
-            <InputText @bind-Value=@_presetNameInput></InputText>
-            <button class="btn btn-primary" @onclick="(() => AddPreset(_presetNameInput))">Save Preset</button>
-            <button class="btn btn-primary" @onclick="DeletePreset">Delete Preset</button>
+    <div style="display:flex; gap:0.6rem">
+        <input type="checkbox" @bind=_armService.IsAlternateGripper>
+        <p style="width: auto; text-align: left">@(_armService.IsAlternateGripper ? "Driving Valk" : "Driving Talos")</p>
+    </div>
 
-
+    <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
+        <p style="width:auto; text-align: center"><b>Calibration</b></p>
+        <div class="btn-group d-flex justify-items-center gap-1" role="group">
+            <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0b00000001]))>Calibrate X</button>
+            <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0b00000010]))>Calibrate Roll</button>
         </div>
-        <div style="display:flex; gap:0.6rem;">
-            <InputCheckbox @bind-Value=@(_armService.IsAlternateGripper)></InputCheckbox>
-            <p style="width: auto; text-align: left">@(_armService.IsAlternateGripper ? "Driving Valk" : "Driving Talos")</p>
+    </div>
+
+    <div class="d-flex justify-content-evenly">
+        <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
+            <p style="width:auto; text-align: center"><b>Laser</b></p>
+            <div class="btn-group d-flex justify-items-center" role="group">
+                <button class="btn btn-success" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "Laser", [1]))>On</button>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "Laser", [0]))>Off</button>
+            </div>
         </div>
 
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
-            <p style="width:auto; text-align: center"><b>Calibration</b></p>
-            <div class="btn-group d-flex justify-items-center gap-1" role="group">
-                <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0b00000001]))>Calibrate X</button>
-                <button class="btn btn-secondary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "CalibrateEncoder", [0b00000010]))>Calibrate Roll</button>
+            <p style="width:auto; text-align: center"><b>Solenoid</b></p>
+            <div class="btn-group d-flex justify-items-center" role="group">
+                <button class="btn btn-success" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [1]))>On</button>
+                <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [0]))>Off</button>
             </div>
         </div>
+    </div>
 
-        <div class="d-flex justify-content-evenly">
-            <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
-                <p style="width:auto; text-align: center"><b>Laser</b></p>
-                <div class="btn-group d-flex justify-items-center" role="group">
-                    <button class="btn btn-success" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "Laser", [1]))>On</button>
-                    <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "Laser", [0]))>Off</button>
-                </div>
-            </div>
-
-            <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
-                <p style="width:auto; text-align: center"><b>Solenoid</b></p>
-                <div class="btn-group d-flex justify-items-center" role="group">
-                    <button class="btn btn-success" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [1]))>On</button>
-                    <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Arm", "Solenoid", [0]))>Off</button>
-                </div>
-            </div>
+    <div class="d-flex justify-content-center gap-2">
+        <div class="d-flex flex-column my-2 justify-content-center align-content-center bg-body-secondary rounded p-2">
+            <label class="form-label" style="width: auto">Poll Interval (ms):</label>
+            <input @bind=UPDATE_INTERVAL @bind:after=UpdateInterval>
         </div>
 
-        <div class="d-flex justify-content-center gap-2">
-            <div class="d-flex flex-column my-2 justify-content-center align-content-center bg-body-secondary rounded p-2">
-                <label class="form-label" style="width: auto">Poll Interval (ms):</label>
-                <InputNumber TValue="int" class="form-control-sm" @bind-Value=@UPDATE_INTERVAL @bind-Value:after="() => UpdateInterval()"></InputNumber>
-            </div>
-
-            <div class="d-flex flex-column my-2 justify-content-center align-content-center bg-body-secondary rounded p-2">
-                <label class="form-label">Dead Zone: </label>
-                <div class="d-flex align-content-center gap-2">
-                    <RadzenSlider @bind-Value=@DeadZone TValue="double" Min="0" Max="(decimal)0.5" Step="0.001" Style="width: 5rem;  align-self: center" />
-                    <InputNumber class="form-control-sm" min="0" max="(decimal)0.5" step="0.001" @bind-Value=@DeadZone></InputNumber>
-                </div>
+        <div class="d-flex flex-column my-2 justify-content-center align-content-center bg-body-secondary rounded p-2">
+            <label class="form-label">Dead Zone: </label>
+            <div class="d-flex align-content-center gap-2">
+                <input type="range" @bind=DeadZone min="0" max="0.5" step="0.001" style="width: 5rem; align-self: center">
+                <input @bind=DeadZone>
             </div>
         </div>
+    </div>
 
-        <div style="display: flex; flex-wrap: wrap; justify-content: center;">
-            @foreach (JointNames joint in JointNames.GetValues(typeof(JointNames)))
+    <div style="display: flex; flex-wrap: wrap; justify-content: center;">
+        @foreach (JointNames joint in JointNames.GetValues(typeof(JointNames)))
+        {
+            <div class="jointBox">
+                <p>Invert @((SelectedScheme != Scheme.InverseKinematics) ? Enum.GetName(joint) : Enum.GetName((IKNames)joint))</p>
+                <input type="checkbox" @bind=_selectedPreset.JointInversions[(int)joint]>
+                <div class="break"></div>
+                <select name="JointBind" @bind=_selectedPreset.GamepadBinds[(int)joint]>
+                    @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
+                    {
+                        <option value="@bind">@bind</option>
+                    }
+                </select>
+                <div style="display: flex; width:100%">
+                    <meter min="-1.0" max="1.0" value="@inputMeterValues[(int)joint]" style="width: 100%" />
+                </div>
+            </div>
+        }
+
+        <div class="jointBox">
+            <p>Invert Gripper</p>
+            <input type="checkbox" @bind=isGripperInverted>
+            <div class="break"></div>
+            <select name="JointBind" @bind=gripperBind>
+                @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
+                {
+                    <option value="@bind">@bind</option>
+                }
+            </select>
+            <div style="display: flex; width:100%">
+                <meter min="-1.0" max="1.0" value="@gripperMeterValue" style="width: 100%" />
+            </div>
+
+        </div>
+
+        <div class="jointBox">
+            <p>Invert Laser</p>
+            <input type="checkbox" @bind=isLaserInverted>
+            <div class="break"></div>
+            <select name="JointBind" @bind=laserBind>
+                @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
+                {
+                    <option value="@bind">@bind</option>
+                }
+            </select>
+            <div style="display: flex; width:100%">
+                <meter min="-1.0" max="1.0" value="@laserMeterValue" style="width: 100%" />
+            </div>
+
+        </div>
+
+        <div class="jointBox">
+            <p>Invert Solenoid</p>
+            <input type="checkbox" @bind=isSolInverted>
+            <div class="break"></div>
+            <select name="JointBind" @bind=solBind>
+                @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
+                {
+                    <option value="@bind">@bind</option>
+                }
+            </select>
+            <div style="display: flex; width:100%">
+                <meter min="-1.0" max="1.0" value="@solMeterValue" style="width: 100%" />
+            </div>
+
+        </div>
+    </div>
+    <div class="jointBox" style="flex-direction: column">
+        <div style="display: grid; grid-template-columns: auto auto; align-items: center; justify-items: center;">
+            @for (int i = 0; i < limitOverrides.Count; i++)
             {
-                <div class="jointBox">
-                    <p>Invert @((SelectedScheme != Scheme.InverseKinematics) ? Enum.GetName(joint) : Enum.GetName((IKNames)joint))</p>
-                    <RadzenCheckBox TValue="bool" @bind-Value=@_selectedPreset.JointInversions[(int)joint] />
-                    <div class="break"></div>
-                    <select class="form-select-sm w-100" name="JointBind" @bind=@_selectedPreset.GamepadBinds[(int)joint]>
-                        @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
-                        {
-                            <option value="@bind">@bind</option>
-                        }
-                    </select>
-                    <div style="display: flex; width:100%">
-                        <meter min="-1.0" max="1.0" value="@inputMeterValues[(int)joint]" style="width: 100%" />
-                    </div>
-
+                var _i = i;
+                <div style="display: flex; justify-items: center; align-items: center; flex-basis: 0.5">
+                    <p style="width:30px">@limitNames[i]</p>
+                    <input type="checkbox" @bind=limitOverrides[_i]>
                 </div>
             }
-
-            <div class="jointBox">
-                <p>Invert Gripper</p>
-                <RadzenCheckBox TValue="bool" @bind-value=@isGripperInverted />
-                <div class="break"></div>
-                <select class="form-select-sm w-100" name="JointBind" @bind=@gripperBind>
-                    @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
-                    {
-                        <option value="@bind">@bind</option>
-                    }
-                </select>
-                <div style="display: flex; width:100%">
-                    <meter min="-1.0" max="1.0" value="@gripperMeterValue" style="width: 100%" />
-                </div>
-
-            </div>
-
-            <div class="jointBox">
-                <p>Invert Laser</p>
-                <RadzenCheckBox TValue="bool" @bind-value=@isLaserInverted />
-                <div class="break"></div>
-                <select class="form-select-sm w-100" name="JointBind" @bind=@laserBind>
-                    @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
-                    {
-                        <option value="@bind">@bind</option>
-                    }
-                </select>
-                <div style="display: flex; width:100%">
-                    <meter min="-1.0" max="1.0" value="@laserMeterValue" style="width: 100%" />
-                </div>
-
-            </div>
-
-            <div class="jointBox">
-                <p>Invert Solenoid</p>
-                <RadzenCheckBox TValue="bool" @bind-value=@isSolInverted />
-                <div class="break"></div>
-                <select class="form-select-sm w-100" name="JointBind" @bind=@solBind>
-                    @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
-                    {
-                        <option value="@bind">@bind</option>
-                    }
-                </select>
-                <div style="display: flex; width:100%">
-                    <meter min="-1.0" max="1.0" value="@solMeterValue" style="width: 100%" />
-                </div>
-
-            </div>
         </div>
-        <div class="jointBox" style="flex-direction: column">
-            <div style="display: grid; grid-template-columns: auto auto; align-items: center; justify-items: center;">
-                @for (int i = 0; i < limitOverrides.Count; i++)
-                {
-                    var _i = i;
-                    <div style="display: flex; justify-items: center; align-items: center; flex-basis: 0.5">
-                        <p style="width:30px">@limitNames[i]</p>
-                        <RadzenCheckBox TValue="bool" @bind-Value=@limitOverrides[_i] />
-                    </div>
-                }
-            </div>
-            <button class="btn btn-primary" @onclick=@(() => { ushort mask = 0; for (int i = 0; i < limitOverrides.Count; i++) { mask += (ushort)((limitOverrides[i] ? 1 : 0) << i); } _RoveCommService.Send<ushort>("Arm", "SoftLimitOverride", [mask]); })>Send Soft Overrides</button>
-            <button class="btn btn-primary" @onclick=@(() => { ushort mask = 0; for (int i = 0; i < limitOverrides.Count - 1; i++) { mask += (ushort)((limitOverrides[i] ? 1 : 0) << i); } _RoveCommService.Send<ushort>("Arm", "LimitSwitchOverride", [mask]); })>Send Limit Overrides</button>
-        </div>
+        <button @onclick=@(() => { ushort mask = 0; for (int i = 0; i < limitOverrides.Count; i++) { mask += (ushort)((limitOverrides[i] ? 1 : 0) << i); } _RoveCommService.Send<ushort>("Arm", "SoftLimitOverride", [mask]); })>Send Soft Overrides</button>
+        <button @onclick=@(() => { ushort mask = 0; for (int i = 0; i < limitOverrides.Count - 1; i++) { mask += (ushort)((limitOverrides[i] ? 1 : 0) << i); } _RoveCommService.Send<ushort>("Arm", "LimitSwitchOverride", [mask]); })>Send Limit Overrides</button>
     </div>
 </div>
 
@@ -198,7 +198,7 @@
     private void UpdateInterval()
     {
         if (_gamepadSelector?.SelectedGamepad == null)
-            _updateTimer.Change(-1, -1);
+            _updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
         else
             _updateTimer.Change(0, UPDATE_INTERVAL);
     }
@@ -267,7 +267,7 @@ gamepad.Buttons[9].Value - gamepad.Buttons[8].Value,
     public void GamepadSelectionChanged()
     {
         if (_gamepadSelector?.SelectedGamepad == null)
-            _updateTimer.Change(-1, -1);
+            _updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
         else
             _updateTimer.Change(0, UPDATE_INTERVAL);
     }
@@ -487,8 +487,9 @@ gamepad.Buttons[9].Value - gamepad.Buttons[8].Value,
         await databaseContext.SaveChangesAsync(_databaseService);
     }
 
-    private async void LoadPreset(ControlPreset preset)
+    private async void LoadPreset()
     {
+        ControlPreset preset = _selectedPreset;
         _armService.ArmSpeeds = new Dictionary<string, float>(){
 { "X", preset.JointSpeeds[0]},
 { "J2", preset.JointSpeeds[1]},
@@ -499,7 +500,6 @@ gamepad.Buttons[9].Value - gamepad.Buttons[8].Value,
 { "Gripper", preset.JointSpeeds[6]},
 { "Master", preset.JointSpeeds[7]}};
 
-        _selectedPreset = preset;
 
         await InvokeAsync(StateHasChanged);
     }

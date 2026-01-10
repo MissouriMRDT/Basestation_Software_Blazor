@@ -4,83 +4,53 @@
 @inject DatabaseService _databaseService
 @inject IDbContextFactory<DatabaseContext> _dbContextFactory
 
-<div class="card full-height">
-    <div class="card-header">
-        <h3>Arm Angular</h3>
+<div class="component-header">
+    <h3>Arm Angular</h3>
+</div>
+<div class="component-body">
+    <div style="display: flex">
+        <label class="form-label">IK Mode</label>
+        <input type="checkbox" @bind=_isIKMode>
     </div>
-    <div class="card-body">
-        <div class="d-flex">
-            <label class="form-label">IK Mode</label>
-            <InputCheckbox @bind-Value=_isIKMode></InputCheckbox>
-        </div>
-        <div style="display: flex; flex-wrap: wrap; justify-content: center;">
-            @foreach (JointNames joint in Enum.GetValues<JointNames>())
-            {
-                JointNames _joint = joint;
-                <div class="d-flex flex-column" style="flex: 0 1 160px; border-radius: 10px; background-color: var(--bs-secondary-bg); margin: 0.2rem; padding: 0.3rem;">
-                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.1rem" JustifyContent="JustifyContent.Center" Style="">
-                        <p style="width: 80px; margin-inline: 0.4rem; margin-bottom:0; text-align: right">@(_isIKMode? Enum.GetName((IKNames)_joint) : Enum.GetName(_joint))</p>
-                        <RadzenNumeric TValue="float" Min="-360" Max="360" @bind-value=@(_activeJointValues[_joint])></RadzenNumeric>
-                        <button class="btn btn-sm btn-secondary" @onclick="() => SetSingle(_joint)" title="Set Joint"><i class="bi bi-inline-text bi-arrow-up-right" /></button>
-                        <button class="btn btn-sm btn-secondary" @onclick="() => GetSingle(_joint)" title="Get Joint"><i class="bi bi-inline-text bi-arrow-down-right" /></button>
-                    </RadzenStack>
-                    <label class="form-label text-center">@(!_isIKMode ? _lastPosTelemetry?[_joint].ToString("F") ?? "-" : _lastCoordTelemetry?[_joint].ToString("F") ?? "-")</label>
-                    @*<label class="form-label text-center">@(_lastCoordTelemetry?[_joint].ToString("F") ?? "-")</label> *@
-
-                </div>
-            }
-        </div>
-        <p style="width: auto; text-align: center">Pitch From Ground: @(_ac.ToString("F"))</p>
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center" Style="margin-block: 1rem">
-            <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="@GetAll">Get All</RadzenButton>
-            <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="@SetAll">Set All</RadzenButton>
-
-        </RadzenStack>
-
-        <RadzenDataGrid @ref="_positionDataGrid" AllowColumnResize="true" AllowAlternatingRows="true" AllowSorting="false" TItem="ArmAngularPosition" SelectionMode="DataGridSelectionMode.Single" AllowRowSelectOnRowClick="true" Data="@_armAngularPositions" Density="Density.Compact" CellRender="@OnCellRender" RowClick="@OnPositionClick" RowDoubleClick="@OnPositionDoubleClick" Style="margin-inline: 10%; height: 11vh; overflow-y: auto;">
-
-            <Columns>
-                <RadzenDataGridColumn Filterable="false" Title="Position" Frozen="true" Width="80px" TextAlign="TextAlign.Center">
-                    <Template Context="position">
-                        <p style="-moz-user-select: none;">@position.Name</p>
-                    </Template>
-
-                </RadzenDataGridColumn>
-
-                <RadzenDataGridColumn Filterable="false" Title="Actions" Frozen="true" Width="50px" TextAlign="TextAlign.Center">
-
-                    <Template Context="position">
-                        <button class="btn btn-sm btn-danger" title="Delete Position" @onclick="() => DeletePosition(position)"><i class="bi bi-inline-text bi-trash" /></button>
-                        <button class="btn btn-sm btn-success" title="Add Keyframe" @onclick="() => AddKeyframe(position)"><i class="bi bi-inline-text bi-plus" /></button>
-
-                    </Template>
-
-                </RadzenDataGridColumn>
-
-            </Columns>
-
-        </RadzenDataGrid>
-
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center" Style="margin-block: 1rem">
-            <RadzenButton ButtonStyle="ButtonStyle.Secondary" Click="() => AddPosition(_positionNameInput)">Save Position</RadzenButton>
-            <RadzenTextBox @bind-Value=_positionNameInput></RadzenTextBox>
-
-        </RadzenStack>
-
-        <meter min="0" max="5000" value="@_keyframeStatusMeter"></meter>
-        <ol>
-            @for (int i = 0; i < _keyframes.Count; i++)
-            {
-                int _i = i;
-                <li style=@(_i == _currentKeyframeIndex ? "font-weight: bold" : "font-weight: auto")>@_keyframes[_i].Name</li>
-            }
-        </ol>
-        <div class="d-flex gap-2">
-            <button class="btn btn-primary" @onclick="@(() => PlayKeyframes())">Play</button>
-            <button class="btn btn-primary" @onclick="@(() => { _keyframes = new(); InvokeAsync(StateHasChanged); })">Clear</button>
-
-        </div>
-
+    <div style="display: flex; flex-wrap: wrap; justify-content: center">
+        @foreach (JointNames joint in Enum.GetValues<JointNames>())
+        {
+            JointNames _joint = joint;
+            <div style="display: flex; flex-direction: column; flex-flex: 0 1 160px; border-radius: 10px; background-color: var(--secondary-bg); margin: 0.2rem; padding: 0.3rem">
+                <p style="width: 80px; margin-inline: 0.4rem; margin-bottom:0; text-align: right">@(_isIKMode? Enum.GetName((IKNames)_joint) : Enum.GetName(_joint))</p>
+                <input @bind=_activeJointValues[_joint]>
+                <button class="secondary" @onclick=@(() => SetSingle(_joint)) title="Set Joint"><i class="bi-arrow-up-right" /></button>
+                <button class="secondary" @onclick=@(() => GetSingle(_joint)) title="Get Joint"><i class="bi-arrow-down-right" /></button>
+                <label class="form-label text-center">@(!_isIKMode ? _lastPosTelemetry?[_joint].ToString("F") ?? "-" : _lastCoordTelemetry?[_joint].ToString("F") ?? "-")</label>
+            </div>
+        }
+    </div>
+    <p style="width: auto; text-align: center">Pitch From Ground: @(_ac.ToString("F"))</p>
+    <button class="secondary" @onclick=GetAll>Get All</button>
+    <button class="secondary" @onclick=SetAll>Set All</button>
+    <div style="display: grid; grid-template-columns: auto min-content min-content; justify-items: center">
+        @foreach (ArmAngularPosition position in _armAngularPositions)
+        {
+            <p style="-moz-user-select: none;">@position.Name</p>
+            <button class="danger" title="Delete Position" @onclick=@(() => DeletePosition(position))><i class="bi-trash" /></button>
+            <button class="success" title="Add Keyframe" @onclick=@(() => AddKeyframe(position))><i class="bi-plus" /></button>
+        }
+    </div>
+    <div style="display: flex; align-items: center; justify-content: center">
+        <button class="seconday" @onclick=@(() => AddPosition(_positionNameInput))>Save Preset</button>
+        <input @bind=_positionNameInput>
+    </div>
+    <meter min="0" max="5000" value="@_keyframeStatusMeter"></meter>
+    <ol>
+        @for (int i = 0; i < _keyframes.Count; i++)
+        {
+            int _i = i;
+            <li style=@(_i == _currentKeyframeIndex ? "font-weight: bold" : "font-weight: auto")>@_keyframes[_i].Name</li>
+        }
+    </ol>
+    <div style="display: flex; gap: 2px">
+        <button @onclick=PlayKeyframes>Play</button>
+        <button @onclick=@(() => { _keyframes = new(); InvokeAsync(StateHasChanged); })>Clear</button>
     </div>
 </div>
 
@@ -90,7 +60,6 @@
     private ArmAngularPosition? _selectedPosition = null;
     private JointValues _activeJointValues = new();
     private string _positionNameInput = "";
-    private RadzenDataGrid<ArmAngularPosition>? _positionDataGrid;
     private JointValues? _lastPosTelemetry;
     private JointValues? _lastCoordTelemetry;
     private bool _isIKMode = false;
@@ -141,7 +110,6 @@
     {
         using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
         _armAngularPositions = await databaseContext.ArmAngularPositions.ToListAsync();
-        _positionDataGrid?.Reload();
         await InvokeAsync(StateHasChanged);
     }
 
@@ -184,29 +152,6 @@
     {
         _keyframes = new();
         await InvokeAsync(StateHasChanged);
-    }
-
-    /// <summary>
-    /// Runs when a position row is clicked.
-    /// </summary>
-    /// <param name="args">The event args with info about the click and the row.</param>
-    private void OnPositionClick(DataGridRowMouseEventArgs<ArmAngularPosition> args)
-    {
-        _selectedPosition = args.Data;
-        _positionNameInput = args.Data.Name ?? "---";
-        StateHasChanged();
-    }
-
-    // load position on double-click
-    private void OnPositionDoubleClick(DataGridRowMouseEventArgs<ArmAngularPosition> args)
-    {
-        _activeJointValues = args.Data;
-    }
-
-    private void OnCellRender(DataGridCellRenderEventArgs<ArmAngularPosition> args)
-    {
-        if (args.Data == _selectedPosition)
-            args.Attributes.Add("style", $"background-color: #9a0000c0 !important");
     }
 
     private async Task AddPosition(string positionName)

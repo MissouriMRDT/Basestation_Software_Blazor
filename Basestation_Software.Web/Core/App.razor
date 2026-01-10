@@ -21,18 +21,17 @@
     <Routes @rendermode="InteractiveServer" />
     <script src="_framework/blazor.web.js"></script>
 
-    <!-- Leaflet does not support JS modules -->
+    @* Leaflet does not support JS modules *@
     <script src="js/lib/leaflet/leaflet.js"></script>
     <script src="js/lib/leaflet-contextmenu/leaflet.contextmenu.min.js"></script>
-    <!-- Script needs to be imported only once for the page -->
+    @* Script needs to be imported only once for the page *@
     <script type="module">
         import * as cameras from "/js/cameras.js";
         window.cameras = cameras;
         import * as components from "/js/components.js";
         window.components = components;
     </script>
-
-    <!-- three.js and rover javascript code is imported with modules, so does not require a script tag -->
+    @* three.js and 3D rover are imported with modules, so do not require a script tag *@
 </body>
 
 </html>

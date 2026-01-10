@@ -1,0 +1,36 @@
+.pms {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 2fr 3fr;
+    grid-template-areas:
+        "motors motors core-current core-current pack-capacity"
+        "core core core-current core-current pack-current"
+        "aux aux aux-current aux-current pack-current"
+        "cs1-current cs1-current cs2-current cs2-current cs3-current"
+        "c1-voltage c2-voltage c2-voltage c3-voltage pack-voltage"
+        "c4-voltage c5-voltage c5-voltage c6-voltage pack-voltage"
+        "reboot reboot e-stop e-stop suicide";
+    place-items: stretch stretch;
+    color: #000;
+    gap: 1px;
+    background-color: #000;
+}
+
+.pms>div {
+    margin: 0;
+    padding: 0 4px;
+    align-content: center;
+}
+
+.pms>div>span {
+    margin: 0;
+    float: right;
+}
+
+.pms>div>button {
+    margin: 0;
+    float: right;
+}
+
+.pms>button {
+    margin: 0;
+}

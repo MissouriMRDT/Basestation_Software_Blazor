@@ -1,47 +1,38 @@
 ﻿@inject RoveCommService _RoveCommService
 @inject OpService _OpService
 
-@* TODO: Look into why width style is getting inherited on p tags*@
-<style>
-    p {
-        width: auto;
-        text-align: center;
-    }
-</style>
+<div class="component-header">
+    <h3>Advanced Autonomous Typing</h3>
+</div>
 
-<div class="card h-100">
-    <div class="card-header">
-        <h3>Cooler Autonomous Typing</h3>
-    </div>
-
-    <div class="d-flex flex-column justify-content-center align-content-center rounded p-2 bg-body-secondary text-center">
-        <p class="font-monospace fs-3">@(_phrase != "" ? _phrase : "_")</p>
+<div class="component-body">
+    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center">
+        <p class="font-monospace fs-3">@_phrase</p>
         <p class="">@_statusMessage</p>
         <p>@(delay * 10)ms</p>
         <progress max="5000" value=@_charStatusMeter class="progress"></progress>
     </div>
 
-    <div class="d-flex gap-2 justify-content-center">
-        <InputText class="form-text" @bind-Value="@_phrase" @oninput="OnPhraseChanged" />
-        <button class="btn btn-primary" @onclick="@PlayPhrase">Start</button>
-        <button class="btn btn-primary" @onclick="@Flip">180 Pitch</button>
-        <button class="btn btn-primary" @onclick="@ResetCache">Reset Cache</button>
+    <div style="display: flex; gap: 2px; justify-content: center">
+        <input @bind:get=_phrase @bind:set=@(value => { _phrase = value.ToUpper(); }) />
+        <button @onclick=PlayPhrase>Start</button>
+        <button @onclick=Flip>180 Pitch</button>
+        <button @onclick=ResetCache>Reset Cache</button>
     </div>
 
     <div style="display: grid; grid-template-columns: auto auto auto; text-align: center; padding: 0.5rem;">
-        <button class="btn btn-primary" @onclick="@CacheQ">Cache Q</button>
-        <button class="btn btn-primary" @onclick="@CacheP">Cache P</button>
-        <button class="btn btn-primary" @onclick="@CacheA">Cache A</button>
-        <label>@(_isCached[0] ? "Cached!" : "Not Cached")</label>
-        <label>@(_isCached[1] ? "Cached!" : "Not Cached")</label>
-        <label>@(_isCached[2] ? "Cached!" : "Not Cached")</label>
-
+        <button @onclick=CacheQ>Cache Q</button>
+        <button @onclick=CacheP>Cache P</button>
+        <button @onclick=CacheA>Cache A</button>
+        <p>@(_isCached[0] ? "Cached!" : "Not Cached")</p>
+        <p>@(_isCached[1] ? "Cached!" : "Not Cached")</p>
+        <p>@(_isCached[2] ? "Cached!" : "Not Cached")</p>
     </div>
 </div>
 
 @code {
     private string _phrase = "";
-    private string _statusMessage = "Placeholder";
+    private string _statusMessage = "Idle";
     private int _currentCharIndex = 0;
     private int _charStatusMeter = 0;
 
@@ -216,11 +207,5 @@
     private void Flip()
     {
         RoveComm.Boards.Arm.IncrementIndividualTargetAngles(_RoveCommService, 0, 0, 0, 0, 180f, 0);
-    }
-
-    private void OnPhraseChanged(ChangeEventArgs e)
-    {
-        _phrase = e.Value?.ToString()?.ToUpper() ?? "NULL";
-        StateHasChanged();
     }
 }

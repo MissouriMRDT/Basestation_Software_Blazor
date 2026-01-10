@@ -1,0 +1,11 @@
+.ping-tool {
+    display: grid;
+    overflow-y: auto;
+    align-items: center;
+    height: calc(100% - 19px);
+    grid-template-columns: max-content auto max-content max-content 50px 50px;
+}
+
+.ping-tool>p {
+    padding: 3.5px 4px;
+}

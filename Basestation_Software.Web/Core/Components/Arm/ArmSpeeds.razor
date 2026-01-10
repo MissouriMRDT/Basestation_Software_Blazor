@@ -1,20 +1,18 @@
 @inject RoveCommService _RoveCommService
 @inject ArmService _armService
 
-<div class="card full-height">
-    <div class="card-header">
-        <h3>Arm Speeds</h3>
-    </div>
-    <div class="card-body">
-        <button class="btn btn-primary" @onclick=EStopArm>ESTOP</button>
-        <button class="btn btn-primary" @onclick=UnEStopArm>UNESTOP</button>
+<div class="component-header">
+    <h3>Arm Speeds</h3>
+</div>
+<div class="component-body">
+    <button class="danger" @onclick=EStopArm>ESTOP</button>
+    <button class="danger" @onclick=UnEStopArm>UNESTOP</button>
+    <div style="display: grid; align-items: center; grid-template-columns: min-content auto 40px">
         @foreach (string joint in _armService.ArmSpeeds.Keys)
         {
-            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="2rem" JustifyContent="JustifyContent.Center">
-                <p style="width: 80px; text-align: right">@joint</p>
-                <RadzenSlider TValue="float" Min="(decimal)0.0" Max="(decimal)20.0" Step="0.1" Style="width:30%" @bind-value=@_armService.ArmSpeeds[joint]> </RadzenSlider>
-                <RadzenNumeric TValue="float" Min="(decimal)0.0" Max="(decimal)20.0" Step="0.1" @bind-value=@_armService.ArmSpeeds[joint]></RadzenNumeric>
-            </RadzenStack>
+            <p style="align-self: right">@joint</p>
+            <input type="range" min="0.0" max="20.0" step="0.1" @bind=_armService.ArmSpeeds[joint]>
+            <input @bind=@_armService.ArmSpeeds[joint]>
         }
     </div>
 </div>

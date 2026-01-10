@@ -1,0 +1,55 @@
+.camera-display {
+    display: grid;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr 30px;
+    grid-template-areas:
+        "video"
+        "source-buttons";
+    place-items: stretch stretch;
+}
+
+.video-display {
+    grid-area: video;
+    height: 100%;
+    width: 100%;
+}
+
+.source-buttons-container {
+    grid-area: source-buttons;
+    display: flex;
+    flex-direction: row;
+    margin-inline: 0;
+    margin-block: 0;
+}
+
+.source-buttons-container button {
+    margin: 1px;
+    flex: 1;
+    padding: 0;
+    color: white;
+}
+
+.source-buttons-container :not(:first-child):not(:last-child) {
+    border-radius: 0;
+}
+
+.source-buttons-container :first-child {
+    border-radius: 20px 0 0 20px;
+}
+
+.source-buttons-container :last-child {
+    border-radius: 0 20px 20px 0;
+}
+
+.camera-display-rotate {
+    position: absolute;
+    top: 0;
+    right: 20px;
+}
+
+.camera-selected {
+    color: black !important;
+}

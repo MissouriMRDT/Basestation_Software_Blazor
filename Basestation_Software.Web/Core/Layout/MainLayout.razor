@@ -2,8 +2,10 @@
 @implements IDisposable
 @using Basestation_Software.Web.Models
 @using System.Text.Json;
+@using Microsoft.AspNetCore.Mvc.ModelBinding
 @using Microsoft.EntityFrameworkCore
 @using System.Collections.ObjectModel
+@using System.Collections.Immutable
 @inherits LayoutComponentBase
 @inject IJSRuntime _IJSRuntime
 @inject NavigationManager _NavigationManager
@@ -52,10 +54,15 @@
         font-size: 5vh;
     }
 </style>
-<link rel="stylesheet" href="_content/Radzen.Blazor/css/default-base.css" />
 <link rel="stylesheet" href=themes/default.css />
 <div id="navbar">
     <img src="images/swoosh.svg" style="height: 100%">
+    <select @bind=ComponentName>
+        @foreach (string name in ComponentNames)
+        {
+            <option value="@name">@name</option>
+        }
+    </select>
     <button class="success" @onclick=NewComponent title="New Component"><i class="bi-node-plus" /></button>
     <button class="primary" title="RoveComm Resubscribe All" @onclick="_RoveCommService.SubscribeAll">
         <img src="/images/rovecomm-sil.png" style="height: 13px">
@@ -65,6 +72,7 @@
     <button class="success" @onclick=OpenCopyArea title="Edit Page"><i class="bi-pencil" /></button>
     <button class="success" @onclick=SavePage title="Save Page"><i class="bi-floppy" /></button>
     <select id="pageSelect" value="@PageID" @onchange=@(async (ChangeEventArgs __e) => { if (Guid.TryParse(__e?.Value as string, out Guid guid)) await Navigate(guid); })>
+        <option value="00000000-0000-0000-0000-000000000000">Default</option>
         @SelectOptions
     </select>
 </div>
@@ -99,6 +107,8 @@
     private DotNetObjectReference<MainLayout>? ObjectReference;
     private bool RegisterComponents = false;
     private Timer PageSaveTimer;
+    private List<string> ComponentNames = new();
+    private string ComponentName = "";
 
     [CascadingParameter]
     RouteData RouteData_ { get; set; } = new(typeof(MainLayout), new ReadOnlyDictionary<string, object?>(new Dictionary<string, object?>()));
@@ -106,6 +116,18 @@
     public MainLayout()
     {
         PageSaveTimer = new(async _ => await SavePage());
+        string prefix = "Basestation_Software.Web.Core.Components";
+        foreach (Type type in Assembly.GetExecutingAssembly().GetTypes())
+        {
+            if (
+            type.FullName == null
+            || !type.FullName.StartsWith(prefix)
+            || !type.IsSubclassOf(typeof(Microsoft.AspNetCore.Components.ComponentBase))
+            || type.IsDefined(typeof(Basestation_Software.Web.Core.Layout.ComponentAttributes.Ignore))
+            ) continue;
+            ComponentNames.Add(type.FullName![(prefix.Length + 1)..]);
+        }
+        ComponentNames.Sort();
     }
 
     protected override async Task OnInitializedAsync()
@@ -124,6 +146,7 @@
             _databaseService.SubscribeToEntityDeleted(typeof(Page), PageID, PageChanged);
         }
 
+        await TableChanged();
         await PageChanged();
     }
 
@@ -270,7 +293,7 @@
             builder.AddAttribute(i + 2, "class", "component");
             builder.AddAttribute(i + 3, "idx", componentIndex);
 
-            builder.AddMarkupContent(i + 4, $"<i class=\"component-move bi-arrows-move\"></i><i class=\"component-resize bi-arrow-down-right\"></i><button class=\"danger component-delete\" title=\"Delete Component\" onclick=\"window.components.delete_({componentIndex})\"><i class=\"bi-trash\"></i></button>");
+            builder.AddMarkupContent(i + 4, $"<i class=\"component-move bi-arrows-move\"></i><i class=\"component-resize bi-arrow-down-right\"></i><button class=\"danger component-delete\" title=\"Delete Component\" onclick=\"components.delete_({componentIndex})\"><i class=\"bi-trash\"></i></button>");
 
             builder.OpenComponent(i + 5, componentType); // <componentType>
             if (componentType.GetMember("ID").Length > 0)
@@ -314,20 +337,20 @@
     private async Task NewPage()
     {
         using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
-        Guid newID = Guid.NewGuid();
-        Page_.ID = newID;
+        Page_.ID = Guid.NewGuid();
         await databaseContext.Pages.AddAsync(Page_);
         await databaseContext.SaveChangesAsync(_databaseService);
-        await Navigate(newID);
+        await Navigate(Page_.ID);
     }
 
     private async Task DeletePage()
     {
-        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
-        Guid guid = PageID;
-        databaseContext.Pages.Remove(Page_);
-        await databaseContext.SaveChangesAsync(_databaseService);
+        if (PageID == Guid.Empty) return;
+        Page deleted = Page_;
         await Navigate(Guid.Empty);
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        databaseContext.Pages.Remove(deleted);
+        await databaseContext.SaveChangesAsync(_databaseService);
     }
 
     private async Task NewComponent()
@@ -338,7 +361,7 @@
             Y = 5,
             Width = 20,
             Height = 10,
-            Type = "Other.Placeholder",
+            Type = ComponentName,
         }
         );
         await SavePage();
