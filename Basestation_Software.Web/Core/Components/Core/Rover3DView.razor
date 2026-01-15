@@ -30,7 +30,7 @@
 
     protected override void OnInitialized()
     {
-        _RoveCommService.On<float>("Core", "AccelerometerData", OnAccelerometer);
+        _RoveCommService.Boards.Core.OnAccelerometerData(OnAccelerometer);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

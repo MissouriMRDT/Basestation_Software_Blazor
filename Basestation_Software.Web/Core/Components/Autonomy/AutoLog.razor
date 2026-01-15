@@ -51,7 +51,7 @@
 
     protected override void OnInitialized()
     {
-        _RoveCommService.On<char>("Autonomy", "CurrentLog", async (packet) =>
+        _RoveCommService.Boards.Autonomy.OnCurrentLog(async packet =>
         {
             logs.Add(new Log
             {
@@ -62,7 +62,7 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        /* _RoveCommService.On<byte>("Autonomy", "ReachedGoal", async (packet) =>
+        /* _RoveCommService.On<byte>("Autonomy", "ReachedGoal", async packet =>
         {
         logs.Add(new Log
         {

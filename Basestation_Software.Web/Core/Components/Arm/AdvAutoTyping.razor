@@ -81,10 +81,9 @@
 
 
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
-        ResetCache();
-        _RoveCommService.On<float>("Arm", "Positions", async (packet) =>
+        _RoveCommService.Boards.Arm.OnPositions(async packet =>
         {
             for (int i = 0; i < packet.DataCount; i++)
             {
@@ -93,7 +92,6 @@
 
             await InvokeAsync(StateHasChanged);
         });
-        await InvokeAsync(StateHasChanged);
     }
 
     private async Task PlayPhrase()

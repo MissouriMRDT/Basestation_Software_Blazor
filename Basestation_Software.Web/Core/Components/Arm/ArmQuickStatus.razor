@@ -1,4 +1,4 @@
-﻿@inject RoveCommService _RoveCommService
+@inject RoveCommService _RoveCommService
 @inject ArmService _armService
 
 <div class="component-header">
@@ -28,7 +28,7 @@
     protected override void OnInitialized()
     {
         _armService.SubscribeToGripperChanged(OnGripperChanged);
-        _RoveCommService.On<float>("Arm", "Positions", async (packet) =>
+        _RoveCommService.Boards.Arm.OnPositions(async packet =>
         {
             for (int i = 0; i < packet.DataCount; i++) _lastTelemetry[i] = packet.Data[i];
             await InvokeAsync(StateHasChanged);

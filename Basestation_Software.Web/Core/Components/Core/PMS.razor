@@ -55,13 +55,13 @@
     {
         TelemetryWatchdog = new System.Threading.Timer(WatchdogTimeout, null, TELEMETRY_TIMEOUT, Timeout.Infinite);
 
-        _RoveCommService.On<float>("PMS", "PackCurrent", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.Boards.PMS.OnPackCurrent(async packet =>
         {
             PackCurrent = packet.Data[0];
             ResetWatchdog();
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.On<float>("PMS", "PackVoltage", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.Boards.PMS.OnPackVoltage(async packet =>
         {
             PackVoltage = packet.Data[0];
             double x = PackVoltage / 6;
@@ -82,31 +82,31 @@
 
         });
 
-        _RoveCommService.On<float>("PMS", "CellVoltage", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.Boards.PMS.OnCellVoltage(async packet =>
         {
             CellVoltage = packet.Data;
             ResetWatchdog();
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.On<float>("PMS", "AuxCurrent", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.Boards.PMS.OnAuxCurrent(async packet =>
         {
             AuxCurrent = packet.Data[0];
             ResetWatchdog();
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.On<float>("PMS", "MiscCurrent", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.Boards.PMS.OnMiscCurrent(async packet =>
         {
             MiscCurrent = packet.Data;
             ResetWatchdog();
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.On<float>("PMS", "PackVoltage", async (RoveCommPacket<float> packet) =>
+        _RoveCommService.Boards.PMS.OnPackVoltage(async packet =>
         {
             PackVoltage = packet.Data[0];
             ResetWatchdog();
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.On<byte>("PMS", "BusStatus", async (RoveCommPacket<byte> packet) =>
+        _RoveCommService.Boards.PMS.OnBusStatus(async packet =>
         {
             for (int i = 0; i < 3; i++)
                 BusStatus[i] = (packet.Data[0] & (1 << i)) == 0 ? BusState.Disabled : BusState.Enabled;

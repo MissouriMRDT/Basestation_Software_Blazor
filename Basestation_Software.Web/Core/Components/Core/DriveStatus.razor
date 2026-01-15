@@ -49,10 +49,10 @@
         _motorData.Add(new() { DisplayName = "MR" });
         _motorData.Add(new() { DisplayName = "BR" });
 
-        _RoveCommService.On<float>("Core", "MotorSpeeds", OnMotorSpeeds);
-        _RoveCommService.On<float>("Core", "MotorCurrents", OnMotorCurrents);
-        _RoveCommService.On<float>("Core", "VESCCurrents", OnVescCurrents);
-        _RoveCommService.On<byte>("Core", "VESCFault", OnVescFault);
+        _RoveCommService.Boards.Core.OnMotorSpeeds(OnMotorSpeeds);
+        _RoveCommService.Boards.Core.OnMotorCurrents(OnMotorCurrents);
+        _RoveCommService.Boards.Core.OnVESCCurrents(OnVescCurrents);
+        _RoveCommService.Boards.Core.OnVESCFault(OnVescFault);
 
         TelemetryWatchdog = new Timer(OnResetTelemetry, null, TELEMETRY_TIMEOUT, Timeout.Infinite);
     }

@@ -53,7 +53,7 @@
             ).FirstOrDefault();
         }
 
-        _RoveCommService.On<byte>("Autonomy", "CurrentState", async (packet) =>
+        _RoveCommService.Boards.Autonomy.OnCurrentState(async packet =>
         {
             byte currState = packet.Data[0];
 

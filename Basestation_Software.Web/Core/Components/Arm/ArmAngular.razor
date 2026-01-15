@@ -71,7 +71,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _RoveCommService.On<float>("Arm", "Positions", async (packet) =>
+        _RoveCommService.Boards.Arm.OnPositions(async packet =>
         {
             if (_lastPosTelemetry == null)
             {
@@ -87,7 +87,7 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<float>("Arm", "Coordinates", async (packet) =>
+        _RoveCommService.Boards.Arm.OnCoordinates(async packet =>
         {
             if (_lastCoordTelemetry == null)
             {

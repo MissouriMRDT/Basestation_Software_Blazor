@@ -59,37 +59,37 @@
         TelemetryWatchdog1 = new System.Threading.Timer(WatchdogTimeout, 1, TELEMETRY_TIMEOUT, Timeout.Infinite);
         TelemetryWatchdog2 = new System.Threading.Timer(WatchdogTimeout, 2, TELEMETRY_TIMEOUT, Timeout.Infinite);
 
-        _RoveCommService.On<byte>("Camera1", "AvailableCameras", async (packet) =>
+        _RoveCommService.Boards.Camera1.OnAvailableCameras(async packet =>
         {
             available1 = packet.Data[0];
             ResetWatchdog(1);
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.On<byte>("Camera1", "StreamingCameras", async (packet) =>
+        _RoveCommService.Boards.Camera1.OnStreamingCameras(async packet =>
         {
             streaming1 = packet.Data[0];
             ResetWatchdog(1);
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.On<byte>("Camera1", "Utilization", async (packet) =>
+        _RoveCommService.Boards.Camera1.OnUtilization(async packet =>
         {
             utilization1 = $"cpu0: {packet.Data[0]:000}% 1: {packet.Data[1]:000}% 2: {packet.Data[2]:000}% 3: {packet.Data[3]:000}% mem: {packet.Data[4]:000}% sd: {packet.Data[5]:000}%";
             ResetWatchdog(1);
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.On<byte>("Camera2", "AvailableCameras", async (packet) =>
+        _RoveCommService.Boards.Camera1.OnAvailableCameras(async packet =>
         {
             available2 = packet.Data[0];
             ResetWatchdog(2);
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.On<byte>("Camera2", "StreamingCameras", async (packet) =>
+        _RoveCommService.Boards.Camera1.OnStreamingCameras(async packet =>
         {
             streaming2 = packet.Data[0];
             ResetWatchdog(2);
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.On<byte>("Camera2", "Utilization", async (packet) =>
+        _RoveCommService.Boards.Camera1.OnUtilization(async packet =>
         {
             utilization2 = $"cpu0: {packet.Data[0]:000}% 1: {packet.Data[1]:000}% 2: {packet.Data[2]:000}% 3: {packet.Data[3]:000}% mem: {packet.Data[4]:000}% sd: {packet.Data[5]:000}%";
             ResetWatchdog(2);

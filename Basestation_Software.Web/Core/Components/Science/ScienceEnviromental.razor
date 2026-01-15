@@ -15,7 +15,7 @@
 
     protected override void OnInitialized()
     {
-        _RoveCommService.On<float>("Auger", "Environmental", async (packet) =>
+        _RoveCommService.Boards.Auger.OnEnvironmental(async packet =>
         {
             _temperature = (float)Math.Round(packet.Data[0], 2);
             _humidity = (float)Math.Round(packet.Data[1], 2);

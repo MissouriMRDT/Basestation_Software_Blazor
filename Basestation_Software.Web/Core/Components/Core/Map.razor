@@ -44,12 +44,12 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _RoveCommService.On<double>("Nav", "GPSLatLonAlt", async (packet) =>
+        _RoveCommService.Boards.Nav.OnGPSLatLonAlt(async packet =>
         {
             await _jsMap!.InvokeVoidAsync("addRoverIcon", [packet.Data[0], packet.Data[1]]);
         });
 
-        _RoveCommService.On<float>("Nav", "CompassData", async (packet) =>
+        _RoveCommService.Boards.Nav.OnCompassData(async packet =>
         {
             _heading = packet.Data[1];
             await InvokeAsync(StateHasChanged);

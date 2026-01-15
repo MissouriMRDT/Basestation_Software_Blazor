@@ -34,25 +34,25 @@
         }
 
         //Receiving RoveComm packets if they are sent in
-        _RoveCommService.On<ushort>("Raman", "RamanReading_Part1", async (packet) =>
+        _RoveCommService.Boards.Raman.OnRamanReading_Part1(async packet =>
         {
             for (int i = 0; i < 512; i++) _data[i] = packet.Data[i];
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<ushort>("Raman", "RamanReading_Part2", async (packet) =>
+        _RoveCommService.Boards.Raman.OnRamanReading_Part2(async packet =>
         {
             for (int i = 0; i < 512; i++) _data[i + 512] = packet.Data[i];
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<ushort>("Raman", "RamanReading_Part3", async (packet) =>
+        _RoveCommService.Boards.Raman.OnRamanReading_Part3(async packet =>
         {
             for (int i = 0; i < 512; i++) _data[i + 1024] = packet.Data[i];
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<ushort>("Raman", "RamanReading_Part4", async (packet) =>
+        _RoveCommService.Boards.Raman.OnRamanReading_Part4(async packet =>
         {
             for (int i = 0; i < 512; i++) _data[i + 1536] = packet.Data[i];
             await InvokeAsync(StateHasChanged);

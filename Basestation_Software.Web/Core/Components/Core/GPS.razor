@@ -250,7 +250,7 @@
 
     protected override void OnInitialized()
     {
-        _RoveCommService.On<double>("Nav", "GPSLatLonAlt", async (packet) =>
+        _RoveCommService.Boards.Nav.OnGPSLatLonAlt(async (packet) =>
         {
             Lat = packet.Data[0];
             Lon = packet.Data[1];
@@ -287,7 +287,7 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<float>("Core", "IMUData", async (packet) =>
+        _RoveCommService.Boards.Core.OnIMUData(async packet =>
         {
             // Roll relative to upright [-180L, 180R]
             Roll = Math.Clamp(packet.Data[0], -180, 180);
@@ -297,19 +297,19 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<float>("Nav", "CompassData", async (packet) =>
+        _RoveCommService.Boards.Nav.OnCompassData(async packet =>
         {
             Heading = packet.Data[0];
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<byte>("Nav", "SatelliteCountData", async (packet) =>
+        _RoveCommService.Boards.Nav.OnSatelliteCountData(async packet =>
         {
             Satellites = packet.Data[0];
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<float>("Core", "AccelerometerData", async (packet) =>
+        _RoveCommService.Boards.Core.OnAccelerometerData(async packet =>
         {
             AccelX = packet.Data[0];
             AccelY = packet.Data[1];

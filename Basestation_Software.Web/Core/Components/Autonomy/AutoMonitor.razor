@@ -20,7 +20,7 @@
 
     protected override void OnInitialized()
     {
-        _RoveCommService.On<uint>("Autonomy", "ThreadFPS", async (packet) =>
+        _RoveCommService.Boards.Autonomy.OnThreadFPS(async packet =>
         {
             _fpsValues[(int)packet.Data[0]] = packet.Data[1];
             await InvokeAsync(StateHasChanged);
