@@ -26,9 +26,9 @@
         <button title="Start Autonomy" class="@(_doStuckRoutine ? "info" : "success")" @onclick=StartAutonomy><i class="bi-caret-right-fill"></i></button><button title="Stop Autonomy" class="danger" @onclick=StopAutonomy><i class="bi-pause-fill"></i></button>
     </div>
 
-    <div style="background-color: var(--secondary-bg); display: grid; grid-template-columns: auto auto">
+    <div style="background-color: var(--secondary-bg); display: grid; grid-template-columns: auto 50px; place-items: center center">
         <p style="grid-column: 1 / 3; justify-self: center"><b>GET ME OUTTA HERE!!</b></p>
-        <p>Enable</p><input style="width: 50px" type="checkbox" @bind=_doStuckRoutine>
+        <p>Enable</p><input type="checkbox" @bind=_doStuckRoutine>
         <p>Speed</p><input style="width: 50px" @bind=_unstuckSpeed>
         <p>Time</p><input style="width: 50px" @bind=_unstuckTime>
     </div>

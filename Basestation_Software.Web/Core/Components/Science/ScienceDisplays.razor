@@ -1,9 +1,9 @@
-﻿<div class="component-header">
+<div class="component-header">
 	<h3>Science Displays</h3>
 </div>
 <div class="component-body">
-	<img style="max-width: 100%; max-height: 200px;" src=@("graphs/" + _graphFiles[_selectedGraphIndex]) />
-	<div style="display:flex; flex-wrap: wrap; justify-content:center; align-content: center; height:100%;">
+	<img style="max-width: 100%; max-height: 200px" src=@("graphs/" + _graphFiles[_selectedGraphIndex]) />
+	<div style="display:flex; flex-wrap: wrap; justify-content:center; align-content: center">
 		@for (int i = 0; i < _graphFiles.Length; i++)
 		{
 			int _i = i;

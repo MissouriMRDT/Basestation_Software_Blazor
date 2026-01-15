@@ -10,7 +10,7 @@
         {
             // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
             var _i = i;
-            <button class="secondary @(sourceIndex == _i ? "camera-selected" : "") @(GetClass(_i))" @onclick=@(() => SetSource(_i))>@_i</button>
+            <button class="secondary @(sourceIndex == _i ? "camera-selected" : "") @(GetClass(_i))" title=@GetTitle(_i) @onclick=@(() => SetSource(_i))>@_i</button>
         }
     </div>
     <p style="grid-area: utilization-1">@utilization1</p>
@@ -121,13 +121,17 @@
     private String GetClass(int i)
     {
         if (i < 4)
-        {
             return !connected1 ? "camera-disconnected" : i < streaming1 ? "camera-streaming" : i < available1 ? "camera-available" : "camera-none";
-        }
         else
-        {
             return !connected2 ? "camera-disconnected" : i - 4 < streaming2 ? "camera-streaming" : i - 4 < available2 ? "camera-available" : "camera-none";
-        }
+    }
+
+    private String GetTitle(int i)
+    {
+        if (i < 4)
+            return !connected1 ? "Camera server has not sent RoveComm telemetry to Basestation Server within the last 10s." : i < streaming1 ? "Camera server detects camera, ffmpeg stream started." : i < available1 ? "Camera server detects camera, ffmpeg stream not started." : "Camera server does not detect camera.";
+        else
+            return !connected2 ? "Camera server has not sent RoveComm telemetry to Basestation Server within the last 10s." : i < streaming2 ? "Camera server detects camera, ffmpeg stream started." : i < available2 ? "Camera server detects camera, ffmpeg stream not started." : "Camera server does not detect camera.";
     }
 
     private async Task ConnectCameras()

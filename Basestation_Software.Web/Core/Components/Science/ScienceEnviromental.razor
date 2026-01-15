@@ -2,13 +2,11 @@
 <div class="component-header">
     <h3>Science Enviromental</h3>
 </div>
-<div class="component-body" style="display: grid; grid-template-columns: repeat(3, auto); gap: 2px">
+<div class="component-body" style="display: grid; grid-template-columns: auto auto; gap: 2px; height: unset">
     <p>Temperature</p>
     <p>@_temperature&deg</p>
-    <button @onclick=@(() => _RoveCommService.Boards.Auger.RequestTemperature(1))><i class="bi-arrow-clockwise" /></button>
     <p>Humidity</p>
     <p>@_humidity%</p>
-    <button @onclick=@(() => _RoveCommService.Boards.Auger.RequestHumidity(1))><i class="bi-arrow-clockwise" /></button>
 </div>
 
 @code {
@@ -17,15 +15,10 @@
 
     protected override void OnInitialized()
     {
-        _RoveCommService.On<float>("Auger", "Temperature", async (packet) =>
+        _RoveCommService.On<float>("Auger", "Environmental", async (packet) =>
         {
             _temperature = (float)Math.Round(packet.Data[0], 2);
-            await InvokeAsync(StateHasChanged);
-        });
-
-        _RoveCommService.On<float>("Auger", "Humidity", async (packet) =>
-        {
-            _humidity = (float)Math.Round(packet.Data[0], 2);
+            _humidity = (float)Math.Round(packet.Data[1], 2);
             await InvokeAsync(StateHasChanged);
         });
     }

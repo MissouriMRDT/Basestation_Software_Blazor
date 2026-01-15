@@ -32,18 +32,6 @@
     color: white;
 }
 
-.source-buttons-container :not(:first-child):not(:last-child) {
-    border-radius: 0;
-}
-
-.source-buttons-container :first-child {
-    border-radius: 20px 0 0 20px;
-}
-
-.source-buttons-container :last-child {
-    border-radius: 0 20px 20px 0;
-}
-
 .camera-display-rotate {
     position: absolute;
     top: 0;

@@ -43,17 +43,23 @@
     unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+* {
+    box-sizing: border-box;
+}
+
 html,
 body,
 p {
-    font-family: "B612", Helvetica, Arial, sans-serif;
     --secondary-bg: #e9ecef;
     margin: 0;
     font-size: 13px;
 }
 
+body,
+button,
 select {
     font-family: "B612", Helvetica, Arial, sans-serif;
+    font-size: 13px;
 }
 
 #blazor-error-ui {
@@ -76,39 +82,47 @@ select {
 }
 
 button {
+    cursor: pointer;
     color: var(--btn-color);
-    background-color: var(--btn-bg);
+    background-color: var(--btn-fill);
     padding: 4px 8px;
     border: none;
     border-radius: 3px;
     --btn-color: #fff;
-    --btn-bg: #0d6efd;
-    --btn-hover-bg: #0b5ed7;
-    --btn-active-bg: #0a58ca;
-    --btn-disabled-bg: #0d6efd;
+    --btn-fill: #0d6efd;
 }
 
 button:hover {
-    background-color: var(--btn-hover-bg);
+    background-color: color-mix(in oklab, var(--btn-fill) 90%, #000);
 }
 
 button:active {
-    background-color: var(--btn-active-bg);
+    background-color: color-mix(in oklab, var(--btn-fill) 90%, #000);
+    box-shadow: 0 -4px color-mix(in oklab, var(--btn-fill) 70%, #000);
+    /* Cut off the bottom of the button to hide it underneath the page serface. shape() is required as the corners have a radius. Firefox 126-(at least 146): in about:config set layout.css.basic-shape-shape.enabled = true */
+    clip-path: shape(from 0 -4px,
+            hline to 100%,
+            vline by calc(100% - 3px),
+            arc by -3px 3px of 3px cw,
+            hline to 3px,
+            arc by -3px -3px of 3px cw,
+            close);
+    transform: translateY(4px);
 }
 
 button:disabled {
-    background-color: var(--btn-disabled-bg);
+    background-color: #888;
 }
 
 button.secondary {
-    --btn-bg: #0d6efd;
+    --btn-fill: #0d6efd;
     --btn-hover-bg: #0b5ed7;
     --btn-active-bg: #0a58ca;
     --btn-disabled-bg: #0d6efd;
 }
 
 button.success {
-    --btn-bg: #198754;
+    --btn-fill: #198754;
     --btn-hover-bg: #157347;
     --btn-active-bg: #146c43;
     --btn-disabled-bg: #198754;
@@ -116,7 +130,7 @@ button.success {
 
 button.info {
     --btn-color: #000;
-    --btn-bg: #0dcaf0;
+    --btn-fill: #0dcaf0;
     --btn-hover-bg: #31d2f2;
     --btn-active-bg: #3dd5f3;
     --btn-disabled-bg: #0dcaf0;
@@ -124,17 +138,113 @@ button.info {
 
 button.warning {
     --btn-color: #000;
-    --btn-bg: #ffc107;
+    --btn-fill: #ffc107;
     --btn-hover-bg: #ffca2c;
     --btn-active-bg: #ffcd39;
     --btn-disabled-bg: #ffc107;
 }
 
 button.danger {
-    --btn-bg: #dc3545;
+    --btn-fill: #dc3545;
     --btn-hover-bg: #bb2d3b;
     --btn-active-bg: #b02a37;
     --btn-disabled-bg: #dc3545;
+}
+
+input {
+    border: 1px solid #000;
+    border-radius: 3px;
+}
+
+input:focus {
+    outline: none;
+    background-color: #2af371;
+}
+
+input[type=checkbox] {
+    box-shadow: none;
+}
+
+input[type=range] {
+    box-shadow: none;
+    margin: 0;
+    --range-bg: #2af371;
+    --range-color: #0d6efd;
+}
+
+input[type=range] {
+    width: 100%;
+    /* Specific width is required for Firefox. */
+    background: transparent;
+    height: 16px;
+}
+
+input[type=range]::-moz-range-thumb {
+    border: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 3px;
+    background: var(--range-color);
+    cursor: pointer;
+    box-shadow: 0 4px color-mix(in oklab, var(--range-color) 70%, #000);
+    transform: translateY(-4px);
+}
+
+input[type=range]::-moz-range-thumb:hover {
+    background-color: color-mix(in oklab, var(--range-color) 90%, #000);
+}
+
+input[type=range]::-moz-range-thumb:hover:active {
+    background-color: color-mix(in oklab, var(--range-color) 90%, #000);
+    box-shadow: 0 2px color-mix(in oklab, var(--range-color) 70%, #000);
+    transform: translateY(-2px);
+}
+
+input[type=range]::-moz-range-track {
+    width: 100%;
+    height: 16px;
+    cursor: pointer;
+    box-shadow: none;
+    background: none;
+    border-radius: 3px;
+    border: none;
+    padding: 0;
+}
+
+input[type=range]::-moz-range-progress {
+    background-color: var(--range-bg);
+    height: 14px;
+}
+
+input[type=checkbox] {
+    background-color: var(--checkbox-color);
+    border: none;
+    border-radius: 3px;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    position: relative;
+    top: 5px;
+    transform: translateY(-4px);
+    box-shadow: 0 4px color-mix(in oklab, var(--checkbox-color) 70%, #000);
+    --checkbox-color: #0d6efd;
+}
+
+input[type=checkbox]:hover {
+    background-color: color-mix(in oklab, var(--checkbox-color) 90%, #000);
+    box-shadow: 0 4px color-mix(in oklab, var(--checkbox-color) 70%, #000);
+}
+
+div[style*="display: grid"]>input[type=checkbox] {
+    position: static;
+}
+
+input[type=checkbox]:checked {
+    background-color: var(--checkbox-color);
+    box-shadow: 0 1px color-mix(in oklab, var(--checkbox-color) 70%, #000);
+    transform: translateY(-1px);
+    --checkbox-color: #2af371;
 }
 
 .component {
@@ -153,7 +263,9 @@ button.danger {
     margin: 0;
 }
 
-.component-body {}
+.component-body {
+    height: calc(100% - 19px);
+}
 
 .component-move {
     position: absolute;

@@ -1,0 +1,37 @@
+.packet-tester {
+    display: grid;
+    padding: 0;
+    grid-template-columns: 50px 50px 40px calc(100% - 140px);
+    grid-template-rows: auto min-content min-content min-content min-content;
+    grid-template-areas:
+        "code code code code"
+        "start stop line info"
+        "ip-label ip-label ip-checkbox ip"
+        "port-label port-label port port"
+        "tcp-label tcp-label tcp .";
+    place-items: stretch stretch;
+}
+
+.packet-tester-help>pre {
+    display: none;
+    position: fixed;
+    z-index: 3000;
+    top: 20px;
+    left: 10px;
+    right: 10px;
+    background-color: #000;
+    color: #fff;
+    white-space: pre-wrap;
+}
+
+.packet-tester-help:hover>pre {
+    display: block;
+}
+
+.packet-tester>input[type=checkbox] {
+    place-self: center center;
+}
+
+.packet-tester>p {
+    place-self: center left;
+}

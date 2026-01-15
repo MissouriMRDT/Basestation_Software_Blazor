@@ -1,32 +1,6 @@
 @implements IDisposable
 @inject RoveCommService _RoveCommService
 
-<style>
-    p {
-        width: 110px;
-        text-align: right;
-        margin-bottom: 0;
-    }
-
-    .control-box {
-        display: flex;
-        column-gap: 0.6rem;
-        row-gap: 0.1rem;
-        justify-items: center;
-        flex: 0 1 160px;
-        flex-wrap: wrap;
-        border-radius: 10px;
-        background-color: var(--secondary-bg);
-        margin: 0.2rem;
-        padding: 0.3rem;
-    }
-
-    .break {
-        flex-basis: 100%;
-        height: 0;
-    }
-</style>
-
 <div class="component-header" style="display: flex">
     <h3>Science Controls</h3>
     <div class="vr">&nbsp;</div>
@@ -43,8 +17,8 @@
     <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
         <p style="width:auto; text-align: center"><b>Calibration</b></p>
         <div class="btn-group d-flex justify-items-center gap-1" role="group">
-            <button class="secondary" @onclick=@(() => _RoveCommService.Boards.Auger.CalibrateEncoder(1))>AugerAxis</button>
-            <button class="secondary" @onclick=@(() => _RoveCommService.Boards.Raman.CalibrateEncoder(1))>InstrumentsAxis</button>
+            <button class="secondary" @onclick=@(() => _RoveCommService.Boards.Auger.CalibrateEncoder())>AugerAxis</button>
+            <button class="secondary" @onclick=@(() => _RoveCommService.Boards.Raman.CalibrateEncoder())>InstrumentsAxis</button>
         </div>
     </div>
     <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
@@ -58,16 +32,16 @@
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
             <p style="width:auto; text-align: center"><b>UV LED</b></p>
             <div class="btn-group d-flex justify-items-center" role="group">
-                <button class="success" @onclick=@(() => _RoveCommService.Boards.Auger.UVLED(1))>On</button>
-                <button @onclick=@(() => _RoveCommService.Boards.Auger.UVLED(0))>Off</button>
+                <button class="success" @onclick=@(() => _RoveCommService.Boards.Auger.LED(0, 255, 255, 255))>On</button>
+                <button @onclick=@(() => _RoveCommService.Boards.Auger.LED(0, 0, 0, 0))>Off</button>
             </div>
         </div>
 
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
             <p style="width:auto; text-align: center"><b>WH LED</b></p>
             <div class="btn-group d-flex justify-items-center" role="group">
-                <button class="success" @onclick=@(() => _RoveCommService.Boards.Auger.UVLED(0b10))>On</button>
-                <button @onclick=@(() => _RoveCommService.Boards.Auger.UVLED(0b00))>Off</button>
+                <button class="success" @onclick=@(() => _RoveCommService.Boards.Auger.LED(255, 0, 0, 0))>On</button>
+                <button @onclick=@(() => _RoveCommService.Boards.Auger.LED(0, 0, 0, 0))>Off</button>
             </div>
         </div>
 

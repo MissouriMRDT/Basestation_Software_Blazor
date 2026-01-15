@@ -31,36 +31,31 @@
     color: white;
 }
 
-.source-buttons-container :not(:first-child):not(:last-child) {
-    border-radius: 0;
-}
-
-.source-buttons-container :first-child {
-    border-radius: 20px 0 0 20px;
-}
-
-.source-buttons-container :last-child {
-    border-radius: 0 20px 20px 0;
+.source-buttons-container button:hover::after {
+    content: var(--camera-button-title);
+    position: relative;
+    top: +100%;
+    background-color: #f00;
 }
 
 .camera-selected {
-    color: black !important;
+    --btn-color: #000;
 }
 
 .camera-streaming {
-    background-color: #65c100 !important;
+    --btn-fill: #65c100;
 }
 
 .camera-available {
-    background-color: #cd9f00 !important;
+    --btn-fill: #cd9f00;
 }
 
 .camera-none {
-    background-color: #808080 !important;
+    --btn-fill: #808080;
 }
 
 .camera-disconnected {
-    background-color: #ff0000 !important;
+    --btn-fill: #ff0000;
 }
 
 .camera-arguments {

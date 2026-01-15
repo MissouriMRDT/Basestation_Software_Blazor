@@ -1,7 +1,5 @@
 .drive {
     display: grid;
-    padding: 2px;
-    /* Grid exterior border width */
     grid-template-columns: 1fr 1fr 1fr 1fr;
     grid-template-areas:
         "left-backward left-backward left-forward left-forward"
@@ -13,11 +11,10 @@
         "none none none gimbal"
         "none none none gimbal";
     place-items: center;
-    font-weight: bold;
+    height: unset;
 }
 
 .drive>p {
-    margin: 0;
     align-content: center;
 }
 
@@ -46,7 +43,6 @@
 
 .gimbal-frame {
     grid-area: gimbal;
-    aspect-ratio: 1 / 1;
     place-self: center;
-    height: 80%;
+    max-height: 120px;
 }

@@ -4,7 +4,7 @@
 <div class="component-header">
     <h3>Autonomy Log</h3>
 </div>
-<div class="component-body" style="display: grid; overflow-y: scroll; height: calc(100% - 19px); grid: repeat(2, min-content) / auto repeat(4, min-content)">
+<div class="component-body" style="display: grid; overflow-y: scroll; grid: repeat(2, min-content) / auto repeat(4, min-content)">
     <p style="place-self: center right">Log Level</p>
     <select @bind=ll1>
         @foreach (AUTONOMYLOG level in Enum.GetValues<AUTONOMYLOG>())

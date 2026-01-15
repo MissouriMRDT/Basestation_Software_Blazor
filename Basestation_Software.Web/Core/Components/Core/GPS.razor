@@ -241,8 +241,7 @@
 @code
 {
     // State
-    private double Lat = 0, Lon = 0, Alt = 0;
-    private float AccurHor = 0, AccurVer = 0, AccurHdg = 0, IsDifferential = 0;
+    private double Lat = 0, Lon = 0, Alt = 0, AccurHor = 0, AccurVer = 0, AccurHdg = 0, IsDifferential = 0;
     private string FixType = "";
     private float Heading = 0;
     private uint Satellites = 0;
@@ -256,6 +255,35 @@
             Lat = packet.Data[0];
             Lon = packet.Data[1];
             Alt = packet.Data[2];
+            AccurHor = packet.Data[3];
+            AccurVer = packet.Data[4];
+            AccurHdg = packet.Data[5];
+            switch (packet.Data[6])
+            {
+                case 0f:
+                    FixType = "No";
+                    break;
+                case 1f:
+                    FixType = "Dead Reckoning";
+                    break;
+                case 2f:
+                    FixType = "2D GNSS";
+                    break;
+                case 3f:
+                    FixType = "3D GNSS";
+                    break;
+                case 4f:
+                    FixType = "GNSS+DeadRkn";
+                    break;
+                case 5f:
+                    FixType = "Time";
+                    break;
+                default:
+                    FixType = "Undefined";
+                    break;
+            }
+        ;
+            IsDifferential = packet.Data[7];
             await InvokeAsync(StateHasChanged);
         });
 
@@ -281,45 +309,11 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<float>("Nav", "AccelerometerData", async (packet) =>
+        _RoveCommService.On<float>("Core", "AccelerometerData", async (packet) =>
         {
             AccelX = packet.Data[0];
             AccelY = packet.Data[1];
             AccelZ = packet.Data[2];
-            await InvokeAsync(StateHasChanged);
-        });
-
-        _RoveCommService.On<float>("Nav", "AccuracyData", async (packet) =>
-        {
-            AccurHor = packet.Data[0];
-            AccurVer = packet.Data[1];
-            AccurHdg = packet.Data[2];
-            IsDifferential = packet.Data[4];
-            switch (packet.Data[3])
-            {
-                case 0f:
-                    FixType = "No";
-                    break;
-                case 1f:
-                    FixType = "Dead Reckoning";
-                    break;
-                case 2f:
-                    FixType = "2D GNSS";
-                    break;
-                case 3f:
-                    FixType = "3D GNSS";
-                    break;
-                case 4f:
-                    FixType = "GNSS+DeadRkn";
-                    break;
-                case 5f:
-                    FixType = "Time";
-                    break;
-                default:
-                    FixType = "Undefined";
-                    break;
-            }
-        ;
             await InvokeAsync(StateHasChanged);
         });
     }
