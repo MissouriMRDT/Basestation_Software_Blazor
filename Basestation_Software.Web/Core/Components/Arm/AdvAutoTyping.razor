@@ -83,12 +83,10 @@
 
     protected override void OnInitialized()
     {
-        _RoveCommService.Boards.Arm.OnPositions(async packet =>
+        _RoveCommService.Boards.Arm.OnPosition(async packet =>
         {
             for (int i = 0; i < packet.DataCount; i++)
-            {
                 _lastPosTelemetry[i] = packet.Data[i];
-            }
 
             await InvokeAsync(StateHasChanged);
         });
@@ -112,10 +110,10 @@
             if (pos != null)
             {
                 // X
-                _RoveCommService.Boards.Arm.IncrementJointTargetAngle(0, pos[0] - totalOffset[0]);
+                //_RoveCommService.Boards.Arm.IncrementJointTargetAngle(0, pos[0] - totalOffset[0]);
 
                 // Pitch
-                _RoveCommService.Boards.Arm.IncrementJointTargetAngle(4, pos[1] - totalOffset[1]);
+                //_RoveCommService.Boards.Arm.IncrementJointTargetAngle(4, pos[1] - totalOffset[1]);
 
                 delay = (int)Math.Ceiling(Math.Abs(pos[0] - totalOffset[0])) * 100 + 100;
 
@@ -133,9 +131,9 @@
 
             _statusMessage = "Running solenoid";
             _ = InvokeAsync(StateHasChanged);
-            _RoveCommService.Boards.Arm.Solenoid(1);
+            _RoveCommService.Boards.Arm.LinearServo(1);
             await Task.Delay(100);
-            _RoveCommService.Boards.Arm.Solenoid(0);
+            _RoveCommService.Boards.Arm.LinearServo(0);
             await Task.Delay(100);
         }
 
@@ -196,6 +194,6 @@
 
     private void Flip()
     {
-        _RoveCommService.Boards.Arm.IncrementIndividualTargetAngles(0, 0, 0, 0, 180f, 0);
+        _RoveCommService.Boards.Arm.TargetAngle(0, 0, 0, 0, _lastPosTelemetry[4] + 180f, 0);
     }
 }

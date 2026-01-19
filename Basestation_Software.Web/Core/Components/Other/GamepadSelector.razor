@@ -1,5 +1,6 @@
-﻿@implements IDisposable
+@implements IDisposable
 @inject Toolbelt.Blazor.Gamepad.GamepadList _GamepadList
+@attribute [ComponentAttributes.Ignore]
 
 <button @onclick=@(async _ => Gamepads = await _GamepadList.GetGamepadsAsync())>Update</button>
 <select @onchange="ChangeHandler">

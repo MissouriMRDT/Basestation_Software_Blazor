@@ -214,6 +214,7 @@ input[type=range]::-moz-range-track {
 input[type=range]::-moz-range-progress {
     background-color: var(--range-bg);
     height: 14px;
+    border-radius: 3px;
 }
 
 input[type=checkbox] {
@@ -308,19 +309,6 @@ input[type=checkbox]:checked {
     display: inline-block;
     align-self: stretch;
     background-color: #fff;
-}
-
-.control-box {
-    display: flex;
-    column-gap: 0.6rem;
-    row-gap: 0.1rem;
-    justify-items: center;
-    flex: 0 1 160px;
-    flex-wrap: wrap;
-    border-radius: 10px;
-    background-color: var(--secondary-bg);
-    margin: 0.2rem;
-    padding: 0.3rem;
 }
 
 .form-label {

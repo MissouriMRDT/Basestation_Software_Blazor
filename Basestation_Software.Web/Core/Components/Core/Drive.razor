@@ -2,6 +2,7 @@
 @inject OpService _OpService
 @inject IJSRuntime _IJSRuntime
 @using Basestation_Software.Web.Utils
+@using System.Diagnostics
 
 <div class="component-header">
     <h3>Drive</h3>
@@ -88,14 +89,16 @@
     public const double BUMP_SPEED = 0.05, GAMMA_FLIGHTSTICK = 1.5, GAMMA_XBOX = 1.5;
     public readonly List<string> GIMBAL_NAMES = new List<string>()
 {
-"Left Drive", "Right Drive", "Left Main",
-"Right Main", "Back Drive", "Raman"
+"Left", "Right", "Back",
+"Arm 1", "Arm 2", "Auger"
 };
 
     // State
     private GamepadSelector? _gamepadSelector;
     private Scheme SelectedScheme;
     private Timer _updateTimer;
+    private Stopwatch _stopwatch = new();
+    private long _lastTime;
     private bool OutputDisabled = false;
     private double DriveSpeed = 0.1;
     private double MidMult = 1.0;
@@ -105,14 +108,17 @@
     private int SelectedGimbal = 0;
     private double LeftSpeed;
     private double RightSpeed;
-    private short Pan;
-    private short Tilt;
+    public double GIMBAL_SPEED = 80; // deg/s
+    private static double[] _angles = new double[12];
+    private int Pan;
+    private int Tilt;
     private bool LastProcessGamepadInputOK = false;
     private int GimbalSpeed = 4;
 
     public Drive()
     {
         _updateTimer = new Timer(Update);
+        _stopwatch.Start();
     }
 
     /// This function is called every UPDATE_INTERVAL ms, takes input from the selected gamepad, and sends the proper
@@ -130,6 +136,39 @@
         }
         LastProcessGamepadInputOK = ProcessGamepadInputOK;
         InvokeAsync(StateHasChanged);
+    }
+
+    private void Gimbal(bool next, bool previous)
+    {
+        long now = _stopwatch.ElapsedMilliseconds;
+        float deltaT = Math.Min((_lastTime - now) / 1000f, 1f); // Cap deltaT to 1 second.
+        _lastTime = now;
+        _angles[SelectedGimbal * 2] = Math.Clamp(_angles[SelectedGimbal * 2] + Pan * GIMBAL_SPEED / deltaT, -180, 180);
+        _angles[SelectedGimbal * 2 + 1] = Math.Clamp(_angles[SelectedGimbal * 2 + 1] + Tilt * GIMBAL_SPEED / deltaT, -180, 180);
+        if (!OutputDisabled && (Math.Abs(Pan) > 0 || Math.Abs(Tilt) > 0))
+        {
+            switch (SelectedGimbal)
+            {
+                case 0:
+                    _RoveCommService.Boards.Core.LeftGimbal((short)_angles[0], (short)_angles[1]);
+                    break;
+                case 1:
+                    _RoveCommService.Boards.Core.RightGimbal((short)_angles[2], (short)_angles[3]);
+                    break;
+                case 2:
+                    _RoveCommService.Boards.Core.BackGimbal((short)_angles[4], (short)_angles[5]);
+                    break;
+                case 3:
+                    _RoveCommService.Boards.Arm.ArmGimbal1((short)_angles[6], (short)_angles[7]);
+                    break;
+                case 4:
+                    _RoveCommService.Boards.Arm.ArmGimbal2((short)_angles[8], (short)_angles[9]);
+                    break;
+                case 5:
+                    _RoveCommService.Boards.Auger.AugerGimbal((short)_angles[10], (short)_angles[11]);
+                    break;
+            }
+        }
     }
 
     // Process gamepad input and return true if rovecomm packets were sent.
@@ -210,37 +249,9 @@
                     }
 
                     // Gimbal controls:
-                    if (_gamepadSelector.SoftwareDebounce(7)) SelectedGimbal = (SelectedGimbal + 1) % 6; // Next
-                    if (_gamepadSelector.SoftwareDebounce(6)) SelectedGimbal = (SelectedGimbal + 5) % 6; // Previous
-
-                    // Cast because short literals don't exist for some reason.
-                    Pan = (short)(_gamepadSelector.SelectedGamepad.Axes[4] < -0.2 ? -5 : _gamepadSelector.SelectedGamepad.Axes[4] > 0.2 ? 5 : 0);
-                    Tilt = (short)(_gamepadSelector.SelectedGamepad.Axes[5] < -0.2 ? 5 : _gamepadSelector.SelectedGamepad.Axes[5] > 0.2 ? -5 : 0);
-
-                    if (!OutputDisabled || Math.Abs(Pan) > 0 || Math.Abs(Tilt) > 0)
-                    {
-                        switch (SelectedGimbal)
-                        {
-                            case 0:
-                                _RoveCommService.Boards.Core.LeftDriveGimbalIncrement(Tilt);
-                                break;
-                            case 1:
-                                _RoveCommService.Boards.Core.RightDriveGimbalIncrement(Tilt);
-                                break;
-                            case 2:
-                                _RoveCommService.Boards.Core.LeftMainGimbalIncrement(Pan, Tilt);
-                                break;
-                            case 3:
-                                _RoveCommService.Boards.Core.RightMainGimbalIncrement(Pan, Tilt);
-                                break;
-                            case 4:
-                                _RoveCommService.Boards.Core.BackDriveGimbalIncrement(Tilt);
-                                break;
-                            case 5:
-                                _RoveCommService.Boards.Auger.AugerGimbalIncrement(Pan, Tilt);
-                                break;
-                        }
-                    }
+                    Pan = _gamepadSelector.SelectedGamepad.Axes[4] < -0.2 ? -5 : _gamepadSelector.SelectedGamepad.Axes[4] > 0.2 ? 5 : 0;
+                    Tilt = _gamepadSelector.SelectedGamepad.Axes[5] < -0.2 ? 5 : _gamepadSelector.SelectedGamepad.Axes[5] > 0.2 ? -5 : 0;
+                    Gimbal(_gamepadSelector.SoftwareDebounce(7), _gamepadSelector.SoftwareDebounce(6));
 
                     break;
                 }
@@ -303,39 +314,12 @@
                     }
 
                     // Gimbal controls:
-                    if (_gamepadSelector.SoftwareDebounce(15)) SelectedGimbal = (SelectedGimbal + 1) % 6; // Next
-                    if (_gamepadSelector.SoftwareDebounce(14)) SelectedGimbal = (SelectedGimbal + 5) % 6; // Previous
-
                     x = _gamepadSelector.SelectedGamepad.Axes[2];
                     y = -_gamepadSelector.SelectedGamepad.Axes[3];
                     // Clamp deadzone.
-                    Pan = (short)Utils.ClampMap(Math.Abs(x) > DeadZone ? x : 0, -1.0, 1.0, -5, 5);
-                    Tilt = (short)Utils.ClampMap(Math.Abs(y) > DeadZone ? y : 0, -1.0, 1.0, -5, 5);
-
-                    if (!OutputDisabled && Math.Abs(Pan) > 0 || Math.Abs(Tilt) > 0)
-                    {
-                        switch (SelectedGimbal)
-                        {
-                            case 0:
-                                _RoveCommService.Boards.Core.LeftDriveGimbalIncrement(Tilt);
-                                break;
-                            case 1:
-                                _RoveCommService.Boards.Core.RightDriveGimbalIncrement(Tilt);
-                                break;
-                            case 2:
-                                _RoveCommService.Boards.Core.LeftMainGimbalIncrement(Pan, Tilt);
-                                break;
-                            case 3:
-                                _RoveCommService.Boards.Core.RightMainGimbalIncrement(Pan, Tilt);
-                                break;
-                            case 4:
-                                _RoveCommService.Boards.Core.BackDriveGimbalIncrement(Tilt);
-                                break;
-                            case 5:
-                                _RoveCommService.Boards.Auger.AugerGimbalIncrement(Pan, Tilt);
-                                break;
-                        }
-                    }
+                    Pan = Utils.ClampMap(Math.Abs(x) > DeadZone ? x : 0, -1.0, 1.0, -5, 5);
+                    Tilt = Utils.ClampMap(Math.Abs(y) > DeadZone ? y : 0, -1.0, 1.0, -5, 5);
+                    Gimbal(_gamepadSelector.SoftwareDebounce(15), _gamepadSelector.SoftwareDebounce(14));
 
                     break;
                 }
@@ -368,38 +352,12 @@
                     if (_gamepadSelector.SelectedGamepad.Axes.Count < 4 || _gamepadSelector.SelectedGamepad.Buttons.Count < 17) return false;
 
                     // Gimbal controls:
-                    if (_gamepadSelector.SoftwareDebounce(5)) SelectedGimbal = (SelectedGimbal + 1) % 6; // Next
-                    if (_gamepadSelector.SoftwareDebounce(4)) SelectedGimbal = (SelectedGimbal + 5) % 6; // Previous
-
                     double x = _gamepadSelector.SelectedGamepad.Buttons[15].Value - _gamepadSelector.SelectedGamepad.Buttons[14].Value;
                     double y = -_gamepadSelector.SelectedGamepad.Buttons[12].Value + _gamepadSelector.SelectedGamepad.Buttons[13].Value;
                     // Clamp deadzone.
-                    Pan = (short)Utils.ClampMap(Math.Abs(x) > DeadZone ? x : 0, -1.0, 1.0, -GimbalSpeed, GimbalSpeed);
-                    Tilt = (short)Utils.ClampMap(Math.Abs(y) > DeadZone ? y : 0, -1.0, 1.0, -GimbalSpeed, GimbalSpeed);
-                    if (Math.Abs(Pan) > 0 || Math.Abs(Tilt) > 0)
-                    {
-                        switch (SelectedGimbal)
-                        {
-                            case 0:
-                                _RoveCommService.Boards.Core.LeftDriveGimbalIncrement(Tilt);
-                                break;
-                            case 1:
-                                _RoveCommService.Boards.Core.RightDriveGimbalIncrement(Tilt);
-                                break;
-                            case 2:
-                                _RoveCommService.Boards.Core.LeftMainGimbalIncrement(Pan, Tilt);
-                                break;
-                            case 3:
-                                _RoveCommService.Boards.Core.RightMainGimbalIncrement(Pan, Tilt);
-                                break;
-                            case 4:
-                                _RoveCommService.Boards.Core.BackDriveGimbalIncrement(Tilt);
-                                break;
-                            case 5:
-                                _RoveCommService.Boards.Auger.AugerGimbalIncrement(Pan, Tilt);
-                                break;
-                        }
-                    }
+                    Pan = Utils.ClampMap(Math.Abs(x) > DeadZone ? x : 0, -1.0, 1.0, -GimbalSpeed, GimbalSpeed);
+                    Tilt = Utils.ClampMap(Math.Abs(y) > DeadZone ? y : 0, -1.0, 1.0, -GimbalSpeed, GimbalSpeed);
+                    Gimbal(_gamepadSelector.SoftwareDebounce(5), _gamepadSelector.SoftwareDebounce(4));
 
                     double left = -_gamepadSelector.SelectedGamepad.Axes[1];
                     double right = -_gamepadSelector.SelectedGamepad.Axes[3];

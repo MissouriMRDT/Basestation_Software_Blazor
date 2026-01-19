@@ -65,6 +65,6 @@ public class DatabaseContext : DbContext
     public DbSet<GPSWaypoint> Waypoints { get; set; }
     public DbSet<MapTile> MapTiles { get; set; }
     public DbSet<LidarTile> LidarTiles { get; set; }
-    public DbSet<ArmAngularPosition> ArmAngularPositions { get; set; }
-    public DbSet<ControlPreset> ControlPresets { get; set; }
+    public DbSet<ArmPose> ArmPoses { get; set; }
+    public DbSet<ArmPreset> ControlPresets { get; set; }
 }

@@ -55,57 +55,14 @@
     {
         TelemetryWatchdog = new System.Threading.Timer(WatchdogTimeout, null, TELEMETRY_TIMEOUT, Timeout.Infinite);
 
-        _RoveCommService.Boards.PMS.OnPackCurrent(async packet =>
+        _RoveCommService.Boards.PMS.OnCurrentAndVoltage(async packet =>
         {
+            // TODO: Update current and voltage from packet.
             PackCurrent = packet.Data[0];
             ResetWatchdog();
             await InvokeAsync(StateHasChanged);
         });
-        _RoveCommService.Boards.PMS.OnPackVoltage(async packet =>
-        {
-            PackVoltage = packet.Data[0];
-            double x = PackVoltage / 6;
 
-            if (x < 2.8)
-                PackCapacity = 0;
-            else if (x < 3.45)
-                PackCapacity = -144081.925 + 235284.736 * x - 153537.325 * x * x + 50048.2469 * x * x * x - 8149.57918 * x * x * x * x + 530.359797 * x * x * x * x * x;
-            else if (x < 3.81)
-                PackCapacity = 6198350.17 - 8453983.154 * x + 4610248.291 * x * x - 1256560.878 * x * x * x + 171177.5361 * x * x * x * x - 9324.159109 * x * x * x * x * x;
-            else if (x < 4.12)
-                PackCapacity = -2608191.44 + 3247156.22 * x - 1615884.19 * x * x + 401745.658 * x * x * x - 49900.4554 * x * x * x * x + 2477.08634 * x * x * x * x * x;
-            else
-                PackCapacity = 30.453;
-
-            ResetWatchdog();
-            await InvokeAsync(StateHasChanged);
-
-        });
-
-        _RoveCommService.Boards.PMS.OnCellVoltage(async packet =>
-        {
-            CellVoltage = packet.Data;
-            ResetWatchdog();
-            await InvokeAsync(StateHasChanged);
-        });
-        _RoveCommService.Boards.PMS.OnAuxCurrent(async packet =>
-        {
-            AuxCurrent = packet.Data[0];
-            ResetWatchdog();
-            await InvokeAsync(StateHasChanged);
-        });
-        _RoveCommService.Boards.PMS.OnMiscCurrent(async packet =>
-        {
-            MiscCurrent = packet.Data;
-            ResetWatchdog();
-            await InvokeAsync(StateHasChanged);
-        });
-        _RoveCommService.Boards.PMS.OnPackVoltage(async packet =>
-        {
-            PackVoltage = packet.Data[0];
-            ResetWatchdog();
-            await InvokeAsync(StateHasChanged);
-        });
         _RoveCommService.Boards.PMS.OnBusStatus(async packet =>
         {
             for (int i = 0; i < 3; i++)
@@ -143,18 +100,18 @@
     async Task Reboot()
     {
         if (await _IJSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to do this? It will take a few minutes to reboot the network switch."))
-            _RoveCommService.Boards.PMS.Reboot(1);
+            _RoveCommService.Boards.PMS.Reboot();
     }
 
     void EStop()
     {
-        _RoveCommService.Boards.PMS.EStop(1);
+        _RoveCommService.Boards.PMS.EStop();
     }
 
     async Task Suicide()
     {
         if (await _IJSRuntime.InvokeAsync<bool>("confirm", "Are you sure you want to do this? You must pull the physical E Stop to turn the rover on again!"))
-            _RoveCommService.Boards.PMS.Suicide(1);
+            _RoveCommService.Boards.PMS.Suicide();
     }
 
     void IDisposable.Dispose() { }

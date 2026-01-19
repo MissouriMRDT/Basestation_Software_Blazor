@@ -32,7 +32,6 @@ builder.Services.AddScoped<CookieService>();
 builder.Services.AddScoped<GPSWaypointState>();
 builder.Services.AddSingleton<PingService>();
 builder.Services.AddSingleton<OpService>();
-builder.Services.AddSingleton<ArmService>();
 builder.Services.AddSingleton<DatabaseService>();
 builder.Services.AddDbContextFactory<DatabaseContext>();
 builder.Services.AddRoveComm();

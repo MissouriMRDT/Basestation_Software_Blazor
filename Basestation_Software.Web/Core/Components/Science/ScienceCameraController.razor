@@ -88,13 +88,13 @@ pictures/{0}.png";
 
     private async Task TakePano()
     {
-        _RoveCommService.Boards.Core.LeftMainGimbalIncrement(-180, 0);
+        _RoveCommService.Boards.Core.LeftGimbal(-180, 0);
         await Task.Delay(3000);
         for (int i = 0; i < 3; i++)
         {
             await TakePicture(_panoIndex, panoSegmentNames[i], 40, "");
             await Task.Delay(20000);
-            _RoveCommService.Boards.Core.LeftMainGimbalIncrement(90, 0);
+            _RoveCommService.Boards.Core.LeftGimbal((short)(i * 90 - 180), 0);
             await Task.Delay(2000);
         }
     }

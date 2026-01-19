@@ -1,5 +1,4 @@
 @inject RoveCommService _RoveCommService
-@inject ArmService _armService
 
 <div class="component-header">
     <h3>Arm Quick Status</h3>
@@ -15,24 +14,27 @@
     <p>@($"{_lastTelemetry[3]:+000.000;-000.000}")</p>
     <p>Pitch</p>
     <p>@($"{_lastTelemetry[4]:+000.000;-000.000}")</p>
+    <p>PFG</p>
+    <p>@($"{_pitchFromGround:+000.000;-000.000}")</p>
     <p>Roll</p>
     <p>@($"{_lastTelemetry[5]:+000.000;-000.000}")</p>
-    <p>PFG</p>
+    <p>Y</p>
     <p>@($"{_lastTelemetry[6]:+000.000;-000.000}")</p>
-    <p>Gripper</p>
-    <p>@(_armService.IsAlternateGripper ? "Valk" : "Talos")</p>
+    <p>Z</p>
+    <p>@($"{_lastTelemetry[7]:+000.000;-000.000}")</p>
 </div>
 
 @code {
-    private float[] _lastTelemetry = new float[7];
+    private float[] _lastTelemetry = new float[8];
+    private float _pitchFromGround = 0;
     protected override void OnInitialized()
     {
-        _armService.SubscribeToGripperChanged(OnGripperChanged);
-        _RoveCommService.Boards.Arm.OnPositions(async packet =>
+        _RoveCommService.Boards.Arm.OnPosition(async packet =>
         {
             for (int i = 0; i < packet.DataCount; i++) _lastTelemetry[i] = packet.Data[i];
+            // Pitch * Cos(J4) + J2 + J3;
+            _pitchFromGround = _lastTelemetry[4] + (float)Math.Cos(_lastTelemetry[3] * Math.PI / 180f) + _lastTelemetry[1] + _lastTelemetry[3];
             await InvokeAsync(StateHasChanged);
         });
     }
-    private async void OnGripperChanged(bool isAlternateGripper) { await InvokeAsync(StateHasChanged); }
 }

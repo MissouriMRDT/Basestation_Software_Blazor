@@ -172,13 +172,13 @@
 
     private async Task TakePano()
     {
-        _RoveCommService.Boards.Core.LeftMainGimbalIncrement(-180, 0);
+        _RoveCommService.Boards.Core.LeftGimbal(-180, 0);
         await Task.Delay(4000);
         TakePicture();
         await Task.Delay(40000);
         for (int i = 0; i < 3; i++)
         {
-            _RoveCommService.Boards.Core.LeftMainGimbalIncrement(60, 0);
+            _RoveCommService.Boards.Core.LeftGimbal((short)(i * 60 - 180), 0);
             await Task.Delay(2000);
             TakePicture();
             await Task.Delay(40000);

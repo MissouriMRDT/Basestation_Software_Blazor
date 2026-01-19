@@ -1,192 +1,91 @@
+@using System.Diagnostics
 @inject RoveCommService _RoveCommService
+@inject OpService _opService
 
 <div class="component-header">
     <h3>Gimbals</h3>
     <div class="vr">&nbsp;</div>
-    <input type="checkbox" @bind=OutputDisabled>
-    <select @bind=SelectedScheme>
-        @foreach (var value in Enum.GetValues<Scheme>())
-        {
-            <option value="@value">@value</option>
-        }
-    </select>
+    <input type="checkbox" @bind=OutputDisabled title="Disable Output">
     <GamepadSelector @ref=_gamepadSelector ChangedCallback=GamepadSelectionChanged />
 </div>
 <div class="component-body">
-    <div style="display: flex; background-color: var(--secondary-bg) ">
-        <label class="form-label">Dead Zone: </label>
-        <input type="range" @bind=DeadZone min="0" max="0.5" step="0.001" style="width: 5rem; align-self: center">
-        <input @bind=DeadZone>
-    </div>
-    <div style="display: flex; flex-wrap: wrap; justify-content: center;">
-        @for (int i = 0; i < _gimbalNames.Length; i++)
-        {
-            var _i = i;
-            <div class="control-box">
-                <p>Invert @_gimbalNames[_i]</p>
-                <input type="checkbox" @bind=inversions[_i]>
-                <div class="break"></div>
-                <select style="width: 100%" @bind=controllerBinds[_i] name="ControlBind">
-                    @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
-                    {
-                        <option value="@bind">@bind</option>
-                    }
-                </select>
-                <div style="display: flex; width: 100%">
-                    <meter value="@meterValues[_i]" min="-1.0" max="1.0" style="width: 100%" />
-                </div>
-            </div>
-        }
-    </div>
+    <GamepadScheme @ref=_gamepadScheme AxisNames=_axisNames ControlScheme=_controlScheme />
 </div>
 
 @code {
     // Declare member variables
     private bool OutputDisabled = false;
-    private GamepadSelector? _gamepadSelector;
-    private Scheme SelectedScheme;
-    public int UPDATE_INTERVAL = 50;
+    private GamepadSelector _gamepadSelector;
+    private GamepadScheme _gamepadScheme;
+    private ControlScheme _controlScheme = new()
+    {
+        Binds = [Bind.LSX, Bind.LSY, Bind.RSX, Bind.RSY, Bind.DPadX, Bind.DPadY, Bind.LBumpTrig, Bind.RBumpTrig, Bind.XB, Bind.AY, Bind.None, Bind.None],
+        Inversions = [false, true, false, true, false, true, false, false, false, true, false, false]
+    };
+    public int UPDATE_INTERVAL = 50; // ms
+    public double GIMBAL_SPEED = 80; // deg/s
     private Timer _updateTimer;
-    private double DeadZone = 0.5;
-    private List<bool> inversions = new(new bool[9]);
+    private Stopwatch _stopwatch = new();
+    private long _lastTime = 0;
 
-    // Available gimbal control schemes
-    enum Scheme
-    {
-        GimbalsXbox,
-    }
-
-    // Gamepade inputs are put in a list for rebinding.
-    enum Bind
-    {
-        LSX = 0,
-        LSY,
-        RSX,
-        RSY,
-        AB,
-        XY,
-        Bumpers,
-        Triggers,
-        DpadX,
-        DpadY,
-        LBumpTrig,
-        RBumpTrig,
-    }
-
-    private string[] _gimbalNames = [
-    "Left Drive",
-"Right Drive",
-"Left Main Pan",
-"Left Main Tilt",
-"Right Main Pan",
-"Right Main Tilt",
-"Back Drive",
+    private static readonly string[] _axisNames = [
+    "Left Pan",
+"Left Tilt",
+"Right Pan",
+"Right Tilt",
+"Back Pan",
+"Back Tilt",
+"Arm 1 Pan",
+"Arm 1 Tilt",
+"Arm 2 Pan",
+"Arm 2 Tilt",
+"Auger Pan",
+"Auger Tilt",
 ];
-
-    private List<Bind> controllerBinds = [
-    Bind.LBumpTrig,
-Bind.RBumpTrig,
-Bind.LSX,
-Bind.LSY,
-Bind.RSX,
-Bind.RSY,
-Bind.XY,
-Bind.DpadX,
-Bind.DpadY
-    ];
-    double[] meterValues = [0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d, 0d];
-
-    /// <summary>
-    /// Returns an array of input values in range [-1, 1] for possible joint control setups on an xinput gamepad. Value indexes are based on the Bind enum
-    /// </summary>
-    /// <param name="gamepad"></param>
-    /// <returns></returns>
-    private double[] GetBindableGamepadInputs(Toolbelt.Blazor.Gamepad.Gamepad gamepad)
-    {
-        double[] gamepadInputs = [
-        gamepad.Axes[0],
-gamepad.Axes[1],
-gamepad.Axes[2],
-gamepad.Axes[3],
-gamepad.Buttons[0].Value - gamepad.Buttons[1].Value,
-gamepad.Buttons[2].Value - gamepad.Buttons[3].Value,
-gamepad.Buttons[4].Value - gamepad.Buttons[5].Value,
-gamepad.Axes[4] - gamepad.Axes[5],
-gamepad.Buttons[14].Value - gamepad.Buttons[15].Value,
-gamepad.Buttons[12].Value - gamepad.Buttons[13].Value,
-(gamepad.Axes[4] + 1) / 2.0 - gamepad.Buttons[4].Value,
-(gamepad.Axes[5] + 1) / 2.0 - gamepad.Buttons[5].Value
-        ];
-
-        return gamepadInputs;
-    }
-
-    public void GamepadSelectionChanged()
-    {
-        if (_gamepadSelector?.SelectedGamepad == null)
-            _updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
-        else
-            _updateTimer.Change(0, UPDATE_INTERVAL);
-    }
+    private static double[] _angles = new double[12];
 
     public Gimbals()
     {
         // Run update function every 100ms
         _updateTimer = new(Update);
+        _stopwatch.Start();
+    }
+
+    public void GamepadSelectionChanged()
+    {
+        if (_gamepadSelector.SelectedGamepad == null)
+            _updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
+        else
+            _updateTimer.Change(0, UPDATE_INTERVAL);
     }
 
     private void Update(object? _)
     {
-        bool ProcessGamepadInputOK = ProcessGamepadInput();
-        if (ProcessGamepadInputOK)
-        {
-            // set teleop if controller being used
-            _RoveCommService.Boards.Core.StateDisplay(0);
-        }
+        // Set teleop if controller being used.
+        if (ProcessGamepadInput())
+            _opService.SetTeleop();
+        // It is safe for this component to take no action when the controller is disconnected.
         InvokeAsync(StateHasChanged);
     }
 
     // Process gamepad input and return true if rovecomm packets were sent.
     private bool ProcessGamepadInput()
     {
-        if (_gamepadSelector?.SelectedGamepad == null) return false;
-        switch (SelectedScheme)
-        {
-            case Scheme.GimbalsXbox:
-                {
-                    // Controller check
-                    if (_gamepadSelector.SelectedGamepad.Axes.Count < 4 || _gamepadSelector.SelectedGamepad.Buttons.Count < 17) return false;
+        long now = _stopwatch.ElapsedMilliseconds;
+        float deltaT = Math.Min((_lastTime - now) / 1000f, 1f); // Cap deltaT to 1 second.
+        _lastTime = now;
 
-                    double[] inputValues = GetBindableGamepadInputs(_gamepadSelector.SelectedGamepad);
-
-                    float[] bindedInputs = new float[controllerBinds.Count];
-                    for (int i = 0; i < controllerBinds.Count; i++)
-                    {
-                        bindedInputs[i] = (float)inputValues[(int)(controllerBinds[i])];
-                    }
-
-                    // sanitize inputs and send packets
-                    for (int i = 0; i < bindedInputs.Length; i++)
-                    {
-                        meterValues[i] = bindedInputs[i];
-                        // multiply by 4 for speed
-                        bindedInputs[i] = (Math.Abs(bindedInputs[i]) < DeadZone) ? 0f : bindedInputs[i] * 4 * (inversions[i] == false ? 1 : -1);
-                    }
-
-                    if (!OutputDisabled)
-                    {
-                        if (Math.Abs(bindedInputs[0]) > 0) _RoveCommService.Boards.Core.LeftDriveGimbalIncrement((short)bindedInputs[0]);
-                        if (Math.Abs(bindedInputs[1]) > 0) _RoveCommService.Boards.Core.RightDriveGimbalIncrement((short)bindedInputs[1]);
-                        if (Math.Abs(bindedInputs[2]) > 0 || Math.Abs(bindedInputs[3]) > 0) _RoveCommService.Boards.Core.LeftMainGimbalIncrement((short)bindedInputs[2], (short)bindedInputs[3]);
-                        if (Math.Abs(bindedInputs[4]) > 0 || Math.Abs(bindedInputs[5]) > 0) _RoveCommService.Boards.Core.RightMainGimbalIncrement((short)bindedInputs[4], (short)bindedInputs[5]);
-                        if (Math.Abs(bindedInputs[6]) > 0) _RoveCommService.Boards.Core.BackDriveGimbalIncrement((short)bindedInputs[6]);
-                    }
-                    break;
-                }
-
-            default: return false;
-        }
-
+        if (_gamepadSelector?.SelectedGamepad == null || !_gamepadSelector.SelectedGamepad.Connected) return false;
+        float[] inputs = _gamepadScheme.Update(_gamepadSelector.SelectedGamepad);
+        if (OutputDisabled) return false;
+        for (int i = 0; i < _angles.Length; i++)
+            _angles[i] = Math.Clamp(_angles[i] + inputs[i] * GIMBAL_SPEED / deltaT, -180, 180);
+        if (Math.Abs(inputs[0]) > 0 || Math.Abs(inputs[1]) > 0) _RoveCommService.Boards.Core.LeftGimbal((short)_angles[0], (short)_angles[1]);
+        if (Math.Abs(inputs[2]) > 0 || Math.Abs(inputs[3]) > 0) _RoveCommService.Boards.Core.RightGimbal((short)_angles[2], (short)_angles[3]);
+        if (Math.Abs(inputs[4]) > 0 || Math.Abs(inputs[5]) > 0) _RoveCommService.Boards.Core.BackGimbal((short)_angles[4], (short)_angles[5]);
+        if (Math.Abs(inputs[6]) > 0 || Math.Abs(inputs[7]) > 0) _RoveCommService.Boards.Arm.ArmGimbal1((short)_angles[6], (short)_angles[7]);
+        if (Math.Abs(inputs[8]) > 0 || Math.Abs(inputs[9]) > 0) _RoveCommService.Boards.Arm.ArmGimbal2((short)_angles[8], (short)_angles[9]);
+        if (Math.Abs(inputs[10]) > 0 || Math.Abs(inputs[11]) > 0) _RoveCommService.Boards.Auger.AugerGimbal((short)_angles[10], (short)_angles[11]);
         return true;
     }
 }
