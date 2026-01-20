@@ -16,7 +16,7 @@
             <option value="@mode">@mode</option>
         }
     </select>
-    <GamepadSelector @ref=_gamepadSelector ChangedCallback=GamepadSelectionChanged />
+    <GamepadSelector @ref=_gamepadSelector />
 </div>
 <div class="component-body">
     <div style="d-flex">
@@ -88,8 +88,8 @@
 
     // Member variables
     private bool OutputDisabled = false;
-    private GamepadSelector _gamepadSelector;
-    private GamepadScheme _gamepadScheme;
+    private GamepadSelector? _gamepadSelector;
+    private GamepadScheme? _gamepadScheme;
     private static readonly string[] _axisNames = ["X", "Y", "Z", "J2", "J3", "J4", "Pitch", "Roll", "Gripper", "Linear Servo", "Laser", "Cache"];
     private ControlMode _controlMode;
 
@@ -118,16 +118,24 @@
     public ArmControls()
     {
         // Run update function every 100ms
-        _updateTimer = new(Update);
+        _updateTimer = new(async _ =>
+        {
+            bool ProcessGamepadInputOK = await ProcessGamepadInput();
+            if (ProcessGamepadInputOK)
+            {
+                // Set teleop if controller being used
+                _opService.SetTeleop();
+            }
+            else if (_lastProcessGamepadInputOK)
+            {
+                // Stop Arm
+                _RoveCommService.Boards.Arm.OpenLoop(0, 0, 0, 0, 0, 0);
+                _RoveCommService.Boards.Arm.GripperOpenLoop(0);
+            }
+            _lastProcessGamepadInputOK = ProcessGamepadInputOK;
+            await InvokeAsync(StateHasChanged);
+        }, null, 0, UPDATE_INTERVAL);
         _stopwatch.Start();
-    }
-
-    public void GamepadSelectionChanged()
-    {
-        if (_gamepadSelector?.SelectedGamepad == null)
-            _updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
-        else
-            _updateTimer.Change(0, UPDATE_INTERVAL);
     }
 
     protected override async Task OnInitializedAsync()
@@ -172,33 +180,18 @@
         await UpdatePresets();
     }
 
-    private void Update(object? _)
-    {
-        bool ProcessGamepadInputOK = ProcessGamepadInput();
-        if (ProcessGamepadInputOK)
-        {
-            // Set teleop if controller being used
-            _opService.SetTeleop();
-        }
-        else if (_lastProcessGamepadInputOK)
-        {
-            // Stop Arm
-            _RoveCommService.Boards.Arm.OpenLoop(0, 0, 0, 0, 0, 0);
-            _RoveCommService.Boards.Arm.GripperOpenLoop(0);
-        }
-        _lastProcessGamepadInputOK = ProcessGamepadInputOK;
-        InvokeAsync(StateHasChanged);
-    }
-
     // Process gamepad input and return true if rovecomm packets were sent.
-    private bool ProcessGamepadInput()
+    private async Task<bool> ProcessGamepadInput()
     {
         long now = _stopwatch.ElapsedMilliseconds;
         float deltaT = Math.Min((_lastTime - now) / 1000f, 1f); // Cap deltaT to 1 second.
         _lastTime = now;
 
-        if (_gamepadSelector?.SelectedGamepad == null || !_gamepadSelector.SelectedGamepad.Connected) return false;
-        float[] inputs = _gamepadScheme.Update(_gamepadSelector.SelectedGamepad);
+        if (_gamepadSelector == null || _gamepadScheme == null) return false;
+        Gamepad gamepad = await _gamepadSelector.GetGamepad();
+        if (!gamepad.Connected) return false;
+        float[] inputs = _gamepadScheme.Update(gamepad);
+
         if (OutputDisabled) return false;
 
         _RoveCommService.Boards.Arm.GripperOpenLoop(inputs[8] * _preset.LinearServoSpeed);

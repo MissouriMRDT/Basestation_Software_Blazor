@@ -55,3 +55,12 @@ public class ControlScheme
         Binds = new Bind[axes];
     }
 }
+
+public class Gamepad
+{
+    public double[] Axes { get; set; } = [];
+    public bool[] Pressed { get; set; } = [];
+    public double[] Values { get; set; } = [];
+    public bool Connected { get; set; }
+    public string ID { get; set; } = "";
+}

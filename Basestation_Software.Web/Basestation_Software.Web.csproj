@@ -17,7 +17,6 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Toolbelt.Blazor.Gamepad" Version="10.0.0" />
   </ItemGroup>
 
   <PropertyGroup>

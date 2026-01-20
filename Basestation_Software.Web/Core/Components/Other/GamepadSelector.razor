@@ -1,35 +1,30 @@
 @implements IDisposable
-@inject Toolbelt.Blazor.Gamepad.GamepadList _GamepadList
+@inject IJSRuntime _IJSRuntime
 @attribute [ComponentAttributes.Ignore]
 
-<button @onclick=@(async _ => Gamepads = await _GamepadList.GetGamepadsAsync())>Update</button>
-<select @onchange="ChangeHandler">
+<button @onclick=Update>Update</button>
+<select @bind=_selectedIndex>
     <option value="-1">None</option>
-    @for (int i = 0; i < Gamepads.Count; i++)
+    @for (int i = 0; i < _ids.Count; i++)
     {
-        <option value="@i">@i - @Gamepads[i].Id</option>
+        <option value="@i">@_ids[i]</option>
     }
 </select>
 
 @code
 {
-    public delegate void GamepadSelectionChanged();
-
-    // Component parameters
-    [Parameter]
-    public GamepadSelectionChanged? ChangedCallback { get; set; }
-
     // State
-    private IReadOnlyList<Toolbelt.Blazor.Gamepad.Gamepad> Gamepads = new List<Toolbelt.Blazor.Gamepad.Gamepad>();
+    private List<string> _ids = new();
+    private int _selectedIndex = -1;
+    private Gamepad _selectedGamepad = new();
     private Dictionary<int, bool> LastPressed = new Dictionary<int, bool>();
-    public Toolbelt.Blazor.Gamepad.Gamepad? SelectedGamepad { get; private set; }
 
     // Returns true if the button is pressed now and wasn't the last time this was called.
+    // Uses the state of the gamepad from the last time GetGamepad was called.
     public bool SoftwareDebounce(int buttonIndex)
     {
-        if (SelectedGamepad == null) return false;
-        if (buttonIndex < 0 || buttonIndex >= SelectedGamepad.Buttons.Count) return false;
-        bool pressed = SelectedGamepad.Buttons[buttonIndex].Pressed;
+        if (buttonIndex < 0 || buttonIndex >= _selectedGamepad.Pressed.Length) return false;
+        bool pressed = _selectedGamepad.Pressed[buttonIndex];
         if (pressed && !LastPressed.GetValueOrDefault(buttonIndex, false))
         {
             LastPressed[buttonIndex] = pressed;
@@ -39,34 +34,35 @@
         return false;
     }
 
-    private void ChangeHandler(ChangeEventArgs args)
+    private async Task Update()
     {
-        if (int.TryParse(args.Value as string, out int selected) && selected >= 0 && selected < Gamepads.Count)
+        await GetGamepad();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private class GetGamepadReturn
+    {
+        public List<string> IDs { get; set; } = [];
+        public Gamepad Gamepad { get; set; } = new();
+    }
+
+    // Must be called from within OnAfterRenderAsync.
+    public async Task<Gamepad> GetGamepad()
+    {
+        try
         {
-            if (SelectedGamepad != Gamepads[selected])
-            {
-                SelectedGamepad = Gamepads[selected];
-                LastPressed.Clear();
-                ChangedCallback?.Invoke();
-            }
-            else
-            {
-                SelectedGamepad = Gamepads[selected];
-            }
+            GetGamepadReturn value = await _IJSRuntime.InvokeAsync<GetGamepadReturn>("window.gamepads.getGamepad", _selectedIndex);
+            _ids = value.IDs;
+            _selectedGamepad = value.Gamepad;
         }
-        else
+        catch
         {
-            if (SelectedGamepad != null)
-            {
-                SelectedGamepad = null;
-                ChangedCallback?.Invoke();
-            }
-            else
-            {
-                SelectedGamepad = null;
-            }
+            _ids.Clear();
+            _selectedGamepad.Connected = false;
         }
+        return _selectedGamepad;
     }
 
     void IDisposable.Dispose() { }
+
 }

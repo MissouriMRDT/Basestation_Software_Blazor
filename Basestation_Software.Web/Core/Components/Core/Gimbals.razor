@@ -6,7 +6,7 @@
     <h3>Gimbals</h3>
     <div class="vr">&nbsp;</div>
     <input type="checkbox" @bind=OutputDisabled title="Disable Output">
-    <GamepadSelector @ref=_gamepadSelector ChangedCallback=GamepadSelectionChanged />
+    <GamepadSelector @ref=_gamepadSelector />
 </div>
 <div class="component-body">
     <GamepadScheme @ref=_gamepadScheme AxisNames=_axisNames ControlScheme=_controlScheme />
@@ -15,8 +15,8 @@
 @code {
     // Declare member variables
     private bool OutputDisabled = false;
-    private GamepadSelector _gamepadSelector;
-    private GamepadScheme _gamepadScheme;
+    private GamepadSelector? _gamepadSelector;
+    private GamepadScheme? _gamepadScheme;
     private ControlScheme _controlScheme = new()
     {
         Binds = [Bind.LSX, Bind.LSY, Bind.RSX, Bind.RSY, Bind.DPadX, Bind.DPadY, Bind.LBumpTrig, Bind.RBumpTrig, Bind.XB, Bind.AY, Bind.None, Bind.None],
@@ -47,37 +47,31 @@
     public Gimbals()
     {
         // Run update function every 100ms
-        _updateTimer = new(Update);
+        _updateTimer = new(async _ =>
+        {
+            // Set teleop if controller being used.
+            if (await ProcessGamepadInput())
+                _opService.SetTeleop();
+            // It is safe for this component to take no action when the controller is disconnected.
+            await InvokeAsync(StateHasChanged);
+        }, null, 0, UPDATE_INTERVAL);
         _stopwatch.Start();
     }
 
-    public void GamepadSelectionChanged()
-    {
-        if (_gamepadSelector.SelectedGamepad == null)
-            _updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
-        else
-            _updateTimer.Change(0, UPDATE_INTERVAL);
-    }
-
-    private void Update(object? _)
-    {
-        // Set teleop if controller being used.
-        if (ProcessGamepadInput())
-            _opService.SetTeleop();
-        // It is safe for this component to take no action when the controller is disconnected.
-        InvokeAsync(StateHasChanged);
-    }
-
     // Process gamepad input and return true if rovecomm packets were sent.
-    private bool ProcessGamepadInput()
+    private async Task<bool> ProcessGamepadInput()
     {
         long now = _stopwatch.ElapsedMilliseconds;
         float deltaT = Math.Min((_lastTime - now) / 1000f, 1f); // Cap deltaT to 1 second.
         _lastTime = now;
 
-        if (_gamepadSelector?.SelectedGamepad == null || !_gamepadSelector.SelectedGamepad.Connected) return false;
-        float[] inputs = _gamepadScheme.Update(_gamepadSelector.SelectedGamepad);
+        if (_gamepadSelector == null || _gamepadScheme == null) return false;
+        Gamepad gamepad = await _gamepadSelector.GetGamepad();
+        if (!gamepad.Connected) return false;
+        float[] inputs = _gamepadScheme.Update(gamepad);
+
         if (OutputDisabled) return false;
+
         for (int i = 0; i < _angles.Length; i++)
             _angles[i] = Math.Clamp(_angles[i] + inputs[i] * GIMBAL_SPEED / deltaT, -180, 180);
         if (Math.Abs(inputs[0]) > 0 || Math.Abs(inputs[1]) > 0) _RoveCommService.Boards.Core.LeftGimbal((short)_angles[0], (short)_angles[1]);
