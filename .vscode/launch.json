@@ -9,9 +9,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Basestation_Software.Web/bin/Debug/net8.0/Basestation_Software.Web.dll",
+            "program": "${workspaceFolder}/Basestation_Software.Web/bin/Debug/net10.0/Basestation_Software.Web.dll",
             "linux": {
-                "program": "${workspaceFolder}/Basestation_Software.Web/bin/Debug/net8.0/linux-x64/Basestation_Software.Web.dll"
+                "program": "${workspaceFolder}/Basestation_Software.Web/bin/Debug/net10.0/linux-x64/Basestation_Software.Web.dll"
             },
             "args": [],
             "cwd": "${workspaceFolder}/Basestation_Software.Web",

@@ -1,11 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <link rel="stylesheet" href="Basestation_Software.Web.styles.css" />
+    <link rel="stylesheet" href="/Basestation_Software.Web.styles.css" />
 
     <link rel="stylesheet" href="/js/lib/leaflet/leaflet.css" />
     <link rel="stylesheet" href="/js/lib/leaflet-contextmenu/leaflet.contextmenu.min.css" />
@@ -19,11 +19,11 @@
 
 <body>
     <Routes @rendermode="InteractiveServer" />
-    <script src="_framework/blazor.web.js"></script>
+    <script src="/_framework/blazor.web.js"></script>
 
     @* Leaflet does not support JS modules *@
-    <script src="js/lib/leaflet/leaflet.js"></script>
-    <script src="js/lib/leaflet-contextmenu/leaflet.contextmenu.min.js"></script>
+    <script src="/js/lib/leaflet/leaflet.js"></script>
+    <script src="/js/lib/leaflet-contextmenu/leaflet.contextmenu.min.js"></script>
     @* Script needs to be imported only once for the page *@
     <script type="module">
         import * as cameras from "/js/cameras.js";
