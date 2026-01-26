@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.Drawing;
 using RoveComm;
 
@@ -8,17 +9,17 @@ public class OpService
 {
 
     private readonly RoveCommService _RoveCommService;
+    private readonly Color[] _opColors = [Color.Blue, Color.Red, Color.Green];
 
     public OpService(RoveCommService roveCommService)
     {
         _RoveCommService = roveCommService;
 
-        /*_RoveCommService.On<byte>("Autonomy", "ReachedGoal", async packet =>
+        _RoveCommService.Boards.Autonomy.OnStateDisplay(async packet =>
         {
-            SetReachedGoal();
-            await Task.Delay(5000);
-            SetAutonomy();
-        });*/
+            if (packet.Data.Count > 0 && packet.Data[0] < _opColors.Length)
+                OpColor = _opColors[packet.Data[0]];
+        });
     }
 
     public delegate void OpStateChangedCallback(Color? col);

@@ -1,6 +1,4 @@
 @using Microsoft.EntityFrameworkCore
-@using System.ComponentModel
-@using System.Globalization
 @implements IDisposable
 @inject DatabaseService _databaseService
 @inject IDbContextFactory<DatabaseContext> _dbContextFactory
@@ -27,7 +25,7 @@
     {
         int i = _i;
         GPSWaypoint waypoint = _waypoints[i];
-        <button class=@(_GPSWaypointState.SelectedWaypoint?.ID == waypoint.ID ? "success" : "") style="padding: 0" @onclick=@(() => Select(i)) title="Select Waypoint"><i class="bi-check" /></button>
+        <button class=@(_GPSWaypointState.SelectedWaypoint?.ID == waypoint.ID ? "success" : "") onclick=@(() => Select(i)) title="Select Waypoint"><i class="bi-check" /></button>
         <input style="padding: 0" @bind=waypoint.Name>
         <input style="padding: 0" @bind:get=@(waypoint.Latitude.ToString("000.000000;-000.000000")) @bind:set=@(value => waypoint.Latitude = GPSWaypoint.ConvertDMSToDegrees(value))>
         <input style="padding: 0" @bind:get=@(waypoint.Longitude.ToString("000.000000;-000.000000")) @bind:set=@(value => waypoint.Longitude = GPSWaypoint.ConvertDMSToDegrees(value))>
@@ -46,9 +44,9 @@
         {
             <img style="height: 24px" src="/images/unknown.png" />
         }
-        <button style="padding: 0" class="success" @onclick=@(async () => await Save(i)) title="Save Waypoint"><i class="bi-save2" /> </button>
-        <button style="padding: 0" class="warning" @onclick=@(async () => await Revert(i)) title="Revert Changes"><i class="bi-arrow-counterclockwise" /></button>
-        <button style="padding: 0" class="danger" @onclick=@(async () => await Delete(i)) title="Delete Waypoint"><i class="bi-trash" /></button>
+        <button class="success" @onclick=@(async () => await Save(i)) title="Save Waypoint"><i class="bi-save2" /> </button>
+        <button class="warning" @onclick=@(async () => await Revert(i)) title="Revert Changes"><i class="bi-arrow-counterclockwise" /></button>
+        <button class="danger" @onclick=@(async () => await Delete(i)) title="Delete Waypoint"><i class="bi-trash" /></button>
     }
 </div>
 

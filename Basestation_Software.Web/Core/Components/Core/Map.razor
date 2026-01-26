@@ -42,7 +42,7 @@
     private IJSObjectReference? _jsMap;
     private DotNetObjectReference<Map>? _objectReference;
 
-    protected override async Task OnInitializedAsync()
+    protected override void OnInitialized()
     {
         _RoveCommService.Boards.Nav.OnGPSLatLonAlt(async packet =>
         {
@@ -54,7 +54,6 @@
             _heading = packet.Data[1];
             await InvokeAsync(StateHasChanged);
         });
-        await InvokeAsync(StateHasChanged);
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
