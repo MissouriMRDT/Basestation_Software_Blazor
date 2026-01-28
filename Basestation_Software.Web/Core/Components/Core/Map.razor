@@ -17,9 +17,8 @@
         width: 50px;
         content: "";
         display: inline-block;
-        transform: rotateZ(
-                @(_heading)
-                deg);
+        transform:
+            @($"rotateZ({_RoveCommService.Boards.Nav.CompassData}deg);")
     }
 </style>
 
@@ -37,7 +36,6 @@
     [Parameter]
     public int InitialZoomLevel { get; set; } = 18;
 
-    private float _heading = 0;
     private ElementReference _mapContainer;
     private IJSObjectReference? _jsMap;
     private DotNetObjectReference<Map>? _objectReference;
@@ -46,14 +44,10 @@
     {
         _RoveCommService.Boards.Nav.OnGPSLatLonAlt(async packet =>
         {
-            await _jsMap!.InvokeVoidAsync("addRoverIcon", [packet.Data[0], packet.Data[1]]);
+            await _jsMap!.InvokeVoidAsync("addRoverIcon", [_RoveCommService.Boards.Nav.GPSLatLonAlt_Lat, _RoveCommService.Boards.Nav.GPSLatLonAlt_Lon]);
         });
 
-        _RoveCommService.Boards.Nav.OnCompassData(async packet =>
-        {
-            _heading = packet.Data[1];
-            await InvokeAsync(StateHasChanged);
-        });
+        _RoveCommService.Boards.Nav.OnCompassData(async packet => await InvokeAsync(StateHasChanged));
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

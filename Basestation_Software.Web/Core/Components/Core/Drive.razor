@@ -14,7 +14,7 @@
             <option value="@value">@value</option>
         }
     </select>
-    <GamepadSelector @ref=_gamepadSelector />
+    <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
 </div>
 <div class="component-body drive">
     <progress style="grid-area: left-backward; transform: rotate(180deg); place-self: stretch" value=@(LeftSpeed < 0 ? -LeftSpeed : 0) max=@DriveSpeed />
@@ -96,9 +96,6 @@
     // State
     private GamepadSelector? _gamepadSelector;
     private Scheme SelectedScheme;
-    private Timer _updateTimer;
-    private Stopwatch _stopwatch = new();
-    private long _lastTime;
     private bool OutputDisabled = false;
     private double DriveSpeed = 0.1;
     private double MidMult = 1.0;
@@ -115,30 +112,8 @@
     private bool LastProcessGamepadInputOK = false;
     private int GimbalSpeed = 4;
 
-    public Drive()
+    private void Gimbal(bool next, bool previous, float deltaT)
     {
-        _updateTimer = new Timer(async _ =>
-        {
-            bool ProcessGamepadInputOK = await ProcessGamepadInput();
-            if (ProcessGamepadInputOK)
-            {
-                _OpService.SetTeleop();
-            }
-            else if (LastProcessGamepadInputOK)
-            {
-                _RoveCommService.Boards.Core.DriveLeftRight(0, 0);
-            }
-            LastProcessGamepadInputOK = ProcessGamepadInputOK;
-            await InvokeAsync(StateHasChanged);
-        }, null, 0, UPDATE_INTERVAL);
-        _stopwatch.Start();
-    }
-
-    private void Gimbal(bool next, bool previous)
-    {
-        long now = _stopwatch.ElapsedMilliseconds;
-        float deltaT = Math.Min((_lastTime - now) / 1000f, 1f); // Cap deltaT to 1 second.
-        _lastTime = now;
         _angles[SelectedGimbal * 2] = Math.Clamp(_angles[SelectedGimbal * 2] + Pan * GIMBAL_SPEED / deltaT, -180, 180);
         _angles[SelectedGimbal * 2 + 1] = Math.Clamp(_angles[SelectedGimbal * 2 + 1] + Tilt * GIMBAL_SPEED / deltaT, -180, 180);
         if (!OutputDisabled && (Math.Abs(Pan) > 0 || Math.Abs(Tilt) > 0))
@@ -167,11 +142,25 @@
         }
     }
 
-    // Process gamepad input and return true if rovecomm packets were sent.
-    private async Task<bool> ProcessGamepadInput()
+    private async Task Update(Gamepad gamepad, float deltaT)
     {
-        if (_gamepadSelector == null) return false;
-        Gamepad gamepad = await _gamepadSelector.GetGamepad();
+        bool processGamepadInputOK = await ProcessGamepadInput(gamepad, deltaT);
+        if (processGamepadInputOK)
+        {
+            // Set teleop if controller being used.
+            _OpService.SetTeleop();
+        }
+        else if (LastProcessGamepadInputOK)
+        {
+            _RoveCommService.Boards.Core.DriveLeftRight(0, 0);
+        }
+        LastProcessGamepadInputOK = processGamepadInputOK;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // Process gamepad input and return true if rovecomm packets were sent.
+    private async Task<bool> ProcessGamepadInput(Gamepad gamepad, float deltaT)
+    {
         if (!gamepad.Connected) return false;
 
         switch (SelectedScheme)
@@ -250,7 +239,7 @@
                     // Gimbal controls:
                     Pan = gamepad.Axes[4] < -0.2 ? -5 : gamepad.Axes[4] > 0.2 ? 5 : 0;
                     Tilt = gamepad.Axes[5] < -0.2 ? 5 : gamepad.Axes[5] > 0.2 ? -5 : 0;
-                    Gimbal(_gamepadSelector.SoftwareDebounce(7), _gamepadSelector.SoftwareDebounce(6));
+                    Gimbal(_gamepadSelector.SoftwareDebounce(7), _gamepadSelector.SoftwareDebounce(6), deltaT);
 
                     break;
                 }
@@ -318,7 +307,7 @@
                     // Clamp deadzone.
                     Pan = Utils.ClampMap(Math.Abs(x) > DeadZone ? x : 0, -1.0, 1.0, -5, 5);
                     Tilt = Utils.ClampMap(Math.Abs(y) > DeadZone ? y : 0, -1.0, 1.0, -5, 5);
-                    Gimbal(_gamepadSelector.SoftwareDebounce(15), _gamepadSelector.SoftwareDebounce(14));
+                    Gimbal(_gamepadSelector.SoftwareDebounce(15), _gamepadSelector.SoftwareDebounce(14), deltaT);
 
                     break;
                 }
@@ -356,7 +345,7 @@
                     // Clamp deadzone.
                     Pan = Utils.ClampMap(Math.Abs(x) > DeadZone ? x : 0, -1.0, 1.0, -GimbalSpeed, GimbalSpeed);
                     Tilt = Utils.ClampMap(Math.Abs(y) > DeadZone ? y : 0, -1.0, 1.0, -GimbalSpeed, GimbalSpeed);
-                    Gimbal(_gamepadSelector.SoftwareDebounce(5), _gamepadSelector.SoftwareDebounce(4));
+                    Gimbal(_gamepadSelector.SoftwareDebounce(5), _gamepadSelector.SoftwareDebounce(4), deltaT);
 
                     double left = -gamepad.Axes[1];
                     double right = -gamepad.Axes[3];

@@ -39,7 +39,6 @@
     private int delay = 0;
 
     private Dictionary<char, List<float>> keys = new();
-    private float[] _lastPosTelemetry = new float[7];
 
     // X, Pitch
     private float[] _keyCacheQ = new float[2];
@@ -51,23 +50,23 @@
 
     private void CacheQ()
     {
-        _keyCacheQ[0] = _lastPosTelemetry[0];
-        _keyCacheQ[1] = _lastPosTelemetry[4];
+        _keyCacheQ[0] = _RoveCommService.Boards.Arm.Position_X;
+        _keyCacheQ[1] = _RoveCommService.Boards.Arm.Position_P;
         _isCached[0] = true;
     }
 
     private void CacheP()
     {
-        _keyCacheP[0] = _lastPosTelemetry[0];
-        _keyCacheP[1] = _lastPosTelemetry[4];
+        _keyCacheP[0] = _RoveCommService.Boards.Arm.Position_X;
+        _keyCacheP[1] = _RoveCommService.Boards.Arm.Position_P;
         _isCached[1] = true;
 
     }
 
     private void CacheA()
     {
-        _keyCacheA[0] = _lastPosTelemetry[0];
-        _keyCacheA[1] = _lastPosTelemetry[4];
+        _keyCacheA[0] = _RoveCommService.Boards.Arm.Position_X;
+        _keyCacheA[1] = _RoveCommService.Boards.Arm.Position_P;
         _isCached[2] = true;
 
     }
@@ -83,13 +82,7 @@
 
     protected override void OnInitialized()
     {
-        _RoveCommService.Boards.Arm.OnPosition(async packet =>
-        {
-            for (int i = 0; i < packet.DataCount; i++)
-                _lastPosTelemetry[i] = packet.Data[i];
-
-            await InvokeAsync(StateHasChanged);
-        });
+        _RoveCommService.Boards.Arm.OnPosition(async packet => await InvokeAsync(StateHasChanged));
     }
 
     private async Task PlayPhrase()
@@ -194,6 +187,10 @@
 
     private void Flip()
     {
-        _RoveCommService.Boards.Arm.TargetAngle(0, 0, 0, 0, _lastPosTelemetry[4] + 180f, 0);
+        float[] position = (float[])_RoveCommService.Boards.Arm.Position;
+        if (position[4] > 0)
+            _RoveCommService.Boards.Arm.TargetAngle(position[0], position[1], position[2], position[3], position[4] - 180f, position[5]);
+        else
+            _RoveCommService.Boards.Arm.TargetAngle(position[0], position[1], position[2], position[3], position[4] + 180f, position[5]);
     }
 }

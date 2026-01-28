@@ -5,36 +5,29 @@
 </div>
 <div class="component-body arm-quick-status">
     <p>X</p>
-    <p>@($"{_lastTelemetry[0]:+000.000;-000.000}")</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_X:+000.000;-000.000}")</p>
     <p>J2</p>
-    <p>@($"{_lastTelemetry[1]:+000.000;-000.000}")</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_J2:+000.000;-000.000}")</p>
     <p>J3</p>
-    <p>@($"{_lastTelemetry[2]:+000.000;-000.000}")</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_J3:+000.000;-000.000}")</p>
     <p>J4</p>
-    <p>@($"{_lastTelemetry[3]:+000.000;-000.000}")</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_J4:+000.000;-000.000}")</p>
     <p>Pitch</p>
-    <p>@($"{_lastTelemetry[4]:+000.000;-000.000}")</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_P:+000.000;-000.000}")</p>
     <p>PFG</p>
     <p>@($"{_pitchFromGround:+000.000;-000.000}")</p>
     <p>Roll</p>
-    <p>@($"{_lastTelemetry[5]:+000.000;-000.000}")</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_R:+000.000;-000.000}")</p>
     <p>Y</p>
-    <p>@($"{_lastTelemetry[6]:+000.000;-000.000}")</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_Y:+000.000;-000.000}")</p>
     <p>Z</p>
-    <p>@($"{_lastTelemetry[7]:+000.000;-000.000}")</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_Z:+000.000;-000.000}")</p>
 </div>
 
 @code {
-    private float[] _lastTelemetry = new float[8];
-    private float _pitchFromGround = 0;
+    private float _pitchFromGround { get => _RoveCommService.Boards.Arm.Position_P + (float)Math.Cos(_RoveCommService.Boards.Arm.Position_J4 * Math.PI / 180f) + _RoveCommService.Boards.Arm.Position_J2 + _RoveCommService.Boards.Arm.Position_J3; }
     protected override void OnInitialized()
     {
-        _RoveCommService.Boards.Arm.OnPosition(async packet =>
-        {
-            for (int i = 0; i < packet.DataCount; i++) _lastTelemetry[i] = packet.Data[i];
-            // Pitch * Cos(J4) + J2 + J3;
-            _pitchFromGround = _lastTelemetry[4] + (float)Math.Cos(_lastTelemetry[3] * Math.PI / 180f) + _lastTelemetry[1] + _lastTelemetry[3];
-            await InvokeAsync(StateHasChanged);
-        });
+        _RoveCommService.Boards.Arm.OnPosition(async packet => await InvokeAsync(StateHasChanged));
     }
 }

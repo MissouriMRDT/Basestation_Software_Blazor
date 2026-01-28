@@ -1,3 +1,5 @@
+using RoveComm;
+using RoveComm.Boards;
 using System.ComponentModel.DataAnnotations;
 
 namespace Basestation_Software.Web.Models;
@@ -35,4 +37,16 @@ public class ArmAxes
     public float J4 { get; set; }
     public float Pitch { get; set; }
     public float Roll { get; set; }
+
+    public void SetFromArm(Arm arm)
+    {
+        X = arm.Position_X;
+        Y = arm.Position_Y;
+        Z = arm.Position_Z;
+        J2 = arm.Position_J2;
+        J3 = arm.Position_J3;
+        J4 = arm.Position_J4;
+        Pitch = arm.Position_P;
+        Roll = arm.Position_R;
+    }
 }

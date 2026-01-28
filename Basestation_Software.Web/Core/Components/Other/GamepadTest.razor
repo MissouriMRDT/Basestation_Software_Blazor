@@ -1,9 +1,11 @@
+@using System.Diagnostics
 <div class="component-header">
     <h3>Gamepad Test</h3>
     <div class="vr">&nbsp;</div>
-    <GamepadSelector @ref=_gamepadSelector />
+    <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
 </div>
 <div class="component-body">
+    <p>DeltaT (s): @_deltaT</p>
     <p>Connected: @_gamepad.Connected</p>
     <table>
         <tr>
@@ -37,22 +39,12 @@
 {
     private GamepadSelector? _gamepadSelector;
     private Gamepad _gamepad = new();
+    float _deltaT;
 
-    Timer _updateTimer;
-
-    public GamepadTest()
+    private async Task Update(Gamepad gamepad, float deltaT)
     {
-        _updateTimer = new(async _ =>
-        {
-            if (_gamepadSelector != null)
-                _gamepad = await _gamepadSelector.GetGamepad();
-            await InvokeAsync(StateHasChanged);
-        });
-    }
-
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-            _updateTimer.Change(0, 100);
+        _gamepad = gamepad;
+        _deltaT = deltaT;
+        await InvokeAsync(StateHasChanged);
     }
 }

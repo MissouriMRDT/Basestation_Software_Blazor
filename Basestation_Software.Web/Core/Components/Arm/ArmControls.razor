@@ -16,7 +16,7 @@
             <option value="@mode">@mode</option>
         }
     </select>
-    <GamepadSelector @ref=_gamepadSelector />
+    <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
 </div>
 <div class="component-body">
     <div style="d-flex">
@@ -93,11 +93,6 @@
     private static readonly string[] _axisNames = ["X", "Y", "Z", "J2", "J3", "J4", "Pitch", "Roll", "Gripper", "Linear Servo", "Laser", "Cache"];
     private ControlMode _controlMode;
 
-    public int UPDATE_INTERVAL = 50; // ms
-    private Timer _updateTimer;
-    private Stopwatch _stopwatch = new();
-    private long _lastTime = 0;
-
     private bool _lastProcessGamepadInputOK = false;
     private bool[] _hardLimitOverrides = new bool[10];
     private bool[] _softLimitOverrides = new bool[10];
@@ -115,42 +110,12 @@
     private List<ArmPreset> _presets = [];
     private ArmPreset _preset = new();
 
-    public ArmControls()
-    {
-        // Run update function every 100ms
-        _updateTimer = new(async _ =>
-        {
-            bool ProcessGamepadInputOK = await ProcessGamepadInput();
-            if (ProcessGamepadInputOK)
-            {
-                // Set teleop if controller being used
-                _opService.SetTeleop();
-            }
-            else if (_lastProcessGamepadInputOK)
-            {
-                // Stop Arm
-                _RoveCommService.Boards.Arm.OpenLoop(0, 0, 0, 0, 0, 0);
-                _RoveCommService.Boards.Arm.GripperOpenLoop(0);
-            }
-            _lastProcessGamepadInputOK = ProcessGamepadInputOK;
-            await InvokeAsync(StateHasChanged);
-        }, null, 0, UPDATE_INTERVAL);
-        _stopwatch.Start();
-    }
-
     protected override async Task OnInitializedAsync()
     {
         _databaseService.SubscribeToTableChanges(typeof(ArmPreset), UpdatePresets);
         _RoveCommService.Boards.Arm.OnPosition(packet =>
         {
-            _position.X = packet.Data[0];
-            _position.J2 = packet.Data[1];
-            _position.J3 = packet.Data[2];
-            _position.J4 = packet.Data[3];
-            _position.Pitch = packet.Data[4];
-            _position.Roll = packet.Data[5];
-            _position.Y = packet.Data[6];
-            _position.Z = packet.Data[7];
+            _position.SetFromArm(_RoveCommService.Boards.Arm);
             // Set target to non-controlled axes so the target matches the current position when the control mode changes.
             switch (_controlMode)
             {
@@ -180,16 +145,28 @@
         await UpdatePresets();
     }
 
-    // Process gamepad input and return true if rovecomm packets were sent.
-    private async Task<bool> ProcessGamepadInput()
+    private async Task Update(Gamepad gamepad, float deltaT)
     {
-        long now = _stopwatch.ElapsedMilliseconds;
-        float deltaT = Math.Min((_lastTime - now) / 1000f, 1f); // Cap deltaT to 1 second.
-        _lastTime = now;
+        bool ProcessGamepadInputOK = await ProcessGamepadInput(gamepad, deltaT);
+        if (ProcessGamepadInputOK)
+        {
+            // Set teleop if controller being used
+            _opService.SetTeleop();
+        }
+        else if (_lastProcessGamepadInputOK)
+        {
+            // Stop Arm
+            _RoveCommService.Boards.Arm.OpenLoop(0, 0, 0, 0, 0, 0);
+            _RoveCommService.Boards.Arm.GripperOpenLoop(0);
+        }
+        _lastProcessGamepadInputOK = ProcessGamepadInputOK;
+        await InvokeAsync(StateHasChanged);
+    }
 
-        if (_gamepadSelector == null || _gamepadScheme == null) return false;
-        Gamepad gamepad = await _gamepadSelector.GetGamepad();
-        if (!gamepad.Connected) return false;
+    // Process gamepad input and return true if rovecomm packets were sent.
+    private async Task<bool> ProcessGamepadInput(Gamepad gamepad, float deltaT)
+    {
+        if (!gamepad.Connected || _gamepadScheme == null) return false;
         float[] inputs = _gamepadScheme.Update(gamepad);
 
         if (OutputDisabled) return false;

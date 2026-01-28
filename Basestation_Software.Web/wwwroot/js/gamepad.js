@@ -1,26 +1,32 @@
-export function getGamepad(index) {
-    const gamepads = navigator.getGamepads();
-    const ids = gamepads.map(gamepad => gamepad === null ? "" : gamepad.id);
-    if (gamepads[index] === undefined || gamepads[index] === undefined) {
-        return {
-            "IDs": ids,
-            "Gamepad": {
-                "Axes": [],
-                "Pressed": [],
-                "Values": [],
-                "Connected": false,
-                "ID": "",
+const MAX_PENDING = 20; // Stop sending data when this number of updates are pending.
+const UPDATE_INTERVAL = 100; // ms
+
+export function start(ref) {
+    let interval = setInterval(() => {
+        try {
+            const gamepads = navigator.getGamepads().map(gamepad => {
+                if (gamepad === null || gamepad === undefined) return {
+                    "Axes": [],
+                    "Pressed": [],
+                    "Values": [],
+                    "Connected": false,
+                    "ID": "",
+                };
+                else return {
+                    "Axes": gamepad.axes,
+                    "Pressed": gamepad.buttons.map(button => button.pressed),
+                    "Values": gamepad.buttons.map(button => button.value),
+                    "Connected": gamepad.connected,
+                    "ID": gamepad.id,
+                }
+            });
+            if (Object.keys(ref._callDispatcher._pendingAsyncCalls).length > MAX_PENDING) {
+                clearInterval(interval);
             }
-        };
-    }
-    return {
-        "IDs": ids,
-        "Gamepad": {
-            "Axes": gamepads[index].axes,
-            "Pressed": gamepads[index].buttons.map(button => button.pressed),
-            "Values": gamepads[index].buttons.map(button => button.value),
-            "Connected": gamepads[index].connected,
-            "ID": gamepads[index].id,
+            ref.invokeMethodAsync("Update", gamepads).catch(() => clearInterval(interval));
+        } catch {
+            clearInterval(interval);
         }
-    };
+    }, UPDATE_INTERVAL);
+    return interval;
 }

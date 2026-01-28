@@ -18,7 +18,7 @@
     private float _dotSize = 2f;
     private bool _showLines = false;
     private uint _integrationTime;
-    private List<ushort> _data = new();
+    private ushort[] _data = new ushort[2048];
 
     private void Export()
     {
@@ -27,34 +27,27 @@
 
     protected override void OnInitialized()
     {
-        // Initialize ramanGraph
-        for (int i = 0; i < 2048; i++)
-        {
-            _data.Add(0);
-        }
-
-        //Receiving RoveComm packets if they are sent in
         _RoveCommService.Boards.Raman.OnRamanReading_Part1(async packet =>
         {
-            for (int i = 0; i < 512; i++) _data[i] = packet.Data[i];
+            _RoveCommService.Boards.Raman.RamanReading_Part1.CopyTo(_data, 0);
             await InvokeAsync(StateHasChanged);
         });
 
         _RoveCommService.Boards.Raman.OnRamanReading_Part2(async packet =>
         {
-            for (int i = 0; i < 512; i++) _data[i + 512] = packet.Data[i];
+            _RoveCommService.Boards.Raman.RamanReading_Part2.CopyTo(_data, 512);
             await InvokeAsync(StateHasChanged);
         });
 
         _RoveCommService.Boards.Raman.OnRamanReading_Part3(async packet =>
         {
-            for (int i = 0; i < 512; i++) _data[i + 1024] = packet.Data[i];
+            _RoveCommService.Boards.Raman.RamanReading_Part3.CopyTo(_data, 1024);
             await InvokeAsync(StateHasChanged);
         });
 
         _RoveCommService.Boards.Raman.OnRamanReading_Part4(async packet =>
         {
-            for (int i = 0; i < 512; i++) _data[i + 1536] = packet.Data[i];
+            _RoveCommService.Boards.Raman.RamanReading_Part4.CopyTo(_data, 1536);
             await InvokeAsync(StateHasChanged);
         });
     }

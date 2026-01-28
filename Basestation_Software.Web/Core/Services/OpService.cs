@@ -17,8 +17,8 @@ public class OpService
 
         _RoveCommService.Boards.Autonomy.OnStateDisplay(async packet =>
         {
-            if (packet.Data.Count > 0 && packet.Data[0] < _opColors.Length)
-                OpColor = _opColors[packet.Data[0]];
+            if (_RoveCommService.Boards.Autonomy.StateDisplay < _opColors.Length)
+                OpColor = _opColors[_RoveCommService.Boards.Autonomy.StateDisplay];
         });
     }
 

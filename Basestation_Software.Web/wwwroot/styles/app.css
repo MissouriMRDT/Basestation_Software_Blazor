@@ -81,6 +81,10 @@ select {
     top: 0.5rem;
 }
 
+.secondary-bg {
+    background-color: var(--secondary-bg);
+}
+
 button {
     cursor: pointer;
     color: var(--btn-color);
@@ -274,7 +278,7 @@ input[type=checkbox]:checked {
     padding: 1px 1px 1px 3px;
     touch-action: none;
     user-select: none;
-    z-index: 5;
+    z-index: 900;
     left: 0;
     top: 0;
     width: 16px;
@@ -286,7 +290,7 @@ input[type=checkbox]:checked {
     position: absolute;
     touch-action: none;
     user-select: none;
-    z-index: 5;
+    z-index: 900;
     right: 0;
     bottom: 0;
     width: 20px;
@@ -298,7 +302,7 @@ input[type=checkbox]:checked {
     position: absolute;
     color: #fff;
     padding: 1.5px 4px;
-    z-index: 5;
+    z-index: 900;
     right: 0;
     top: 0;
 }

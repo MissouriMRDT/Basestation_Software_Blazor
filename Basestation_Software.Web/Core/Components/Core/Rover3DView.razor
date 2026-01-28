@@ -30,7 +30,15 @@
 
     protected override void OnInitialized()
     {
-        _RoveCommService.Boards.Core.OnAccelerometerData(OnAccelerometer);
+        _RoveCommService.Boards.Core.OnAccelerometerData(async packet =>
+        {
+            // CoreBoard: y-forward, z-up, x-right
+            // ThreeJS (WebGL): -z-forward, y-up, x-right
+            if (jsRoverView != null)
+            {
+                await jsRoverView!.InvokeVoidAsync("updateAnglesFromUpVector", [_RoveCommService.Boards.Core.AccelerometerData_X, _RoveCommService.Boards.Core.AccelerometerData_Z, -_RoveCommService.Boards.Core.AccelerometerData_Y]);
+            }
+        });
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -61,16 +69,6 @@
         }
 
         await InvokeAsync(StateHasChanged);
-    }
-
-    private async Task OnAccelerometer(RoveCommPacket<float> packet)
-    {
-        // CoreBoard: y-forward, z-up, x-right
-        // ThreeJS (WebGL): -z-forward, y-up, x-right
-        if (jsRoverView != null)
-        {
-            await jsRoverView!.InvokeVoidAsync("updateAnglesFromUpVector", [packet.Data[0], packet.Data[2], -packet.Data[1]]);
-        }
     }
 
     async ValueTask IAsyncDisposable.DisposeAsync()

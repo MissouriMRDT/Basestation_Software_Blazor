@@ -55,12 +55,10 @@
 
         _RoveCommService.Boards.Autonomy.OnCurrentState(async packet =>
         {
-            byte currState = packet.Data[0];
-
             _stateElements[_lastState]?.SetAttributeValue("fill", _inactiveCol);
-            _stateElements[currState]?.SetAttributeValue("fill", _activeCol);
+            _stateElements[_RoveCommService.Boards.Autonomy.CurrentState]?.SetAttributeValue("fill", _activeCol);
 
-            _lastState = currState;
+            _lastState = _RoveCommService.Boards.Autonomy.CurrentState;
 
             await InvokeAsync(StateHasChanged);
         });

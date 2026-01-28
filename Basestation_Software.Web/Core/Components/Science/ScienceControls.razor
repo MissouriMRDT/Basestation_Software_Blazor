@@ -5,201 +5,39 @@
     <h3>Science Controls</h3>
     <div class="vr">&nbsp;</div>
     <input type="checkbox" @bind=OutputDisabled>
-    <GamepadSelector @ref=_gamepadSelector />
+    <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
 </div>
 <div class="component-body">
-    <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
-        <p style="width:auto; text-align: center"><b>Calibration</b></p>
-        <div class="btn-group d-flex justify-items-center gap-1" role="group">
-            <button class="secondary" @onclick=@(() => _RoveCommService.Boards.Auger.CalibrateEncoder())>AugerAxis</button>
-            <button class="secondary" @onclick=@(() => _RoveCommService.Boards.Raman.CalibrateEncoder())>InstrumentsAxis</button>
-        </div>
-    </div>
-    <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
-        <p style="width:auto; text-align: center"><b>Speeds</b></p>
-        <label>Auger: <input type="number" step="0.1" @bind=_augerMult /></label>
-        <label>Auger Axis: <input type="number" step="0.1" @bind=_augerAxisMult /></label>
-        <label>Instruments: <input type="number" step="0.1" @bind=_instrumentAxisMult /></label>
-    </div>
-
-    <div class="d-flex justify-content-evenly">
-        <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
-            <p style="width:auto; text-align: center"><b>UV LED</b></p>
-            <div class="btn-group d-flex justify-items-center" role="group">
-                <button class="success" @onclick=@(() => _RoveCommService.Boards.Auger.LED(0, 255, 255, 255))>On</button>
-                <button @onclick=@(() => _RoveCommService.Boards.Auger.LED(0, 0, 0, 0))>Off</button>
-            </div>
-        </div>
-
-        <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
-            <p style="width:auto; text-align: center"><b>WH LED</b></p>
-            <div class="btn-group d-flex justify-items-center" role="group">
-                <button class="success" @onclick=@(() => _RoveCommService.Boards.Auger.LED(255, 0, 0, 0))>On</button>
-                <button @onclick=@(() => _RoveCommService.Boards.Auger.LED(0, 0, 0, 0))>Off</button>
-            </div>
-        </div>
-
-        <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
-            <p style="width:auto; text-align: center"><b>Laser</b></p>
-            <div class="btn-group d-flex justify-items-center" role="group">
-                <button class="success" @onclick=@(() => _RoveCommService.Boards.Raman.Laser(1))>On</button>
-                <button @onclick=@(() => _RoveCommService.Boards.Raman.Laser(0))>Off</button>
-            </div>
-        </div>
-
-        <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
-            <p style="width:auto; text-align: center"><b>Watchdog</b></p>
-            <div class="btn-group d-flex justify-items-center" role="group">
-                <button class="success" @onclick=@(() => _RoveCommService.Boards.Auger.WatchdogOverride(1))>On</button>
-                <button @onclick=@(() => _RoveCommService.Boards.Auger.WatchdogOverride(0))>Off</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="d-flex justify-content-center gap-2">
-        <div class="d-flex flex-column my-2 justify-content-center align-content-center bg-body-secondary rounded p-2">
-            <label class="form-label">Dead Zone: </label>
-            <div class="d-flex align-content-center gap-2">
-                <input type="range" @bind=DeadZone min="0" max="0.5" step="0.001" style="width: 5rem; align-self: center">
-                <input type="number" class="form-control-sm" min="0" max="0.5" step="0.001" @bind=DeadZone>
-            </div>
-        </div>
-    </div>
-
-    <div style="display: flex; flex-wrap: wrap; justify-content: center;">
-        <div class="control-box">
-            <p>Invert Auger Axis</p>
-            <input type="checkbox">
-            <div class="break"></div>
-            <select class="form-select-sm w-100" @bind=AugerAxisBind name="ControlBind">
-                @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
-                {
-                    <option value="@bind">@bind</option>
-                }
-            </select>
-            <div style="display: flex; width:100%">
-                <meter value="@meterValues[0]" min="-1.0" max="1.0" style="width: 100%" />
-            </div>
-
-        </div>
-        <div class="control-box">
-            <p>Invert Instruments Axis</p>
-            <input type="checkbox">
-            <div class="break"></div>
-            <select class="form-select-sm w-100" @bind=InstrumentsAxisBind name="ControlBind">
-                @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
-                {
-                    <option value="@bind">@bind</option>
-                }
-            </select>
-            <div style="display: flex; width:100%">
-                <meter value="@meterValues[1]" min="-1.0" max="1.0" style="width: 100%" />
-            </div>
-
-        </div>
-        <div class="control-box">
-            <p>Invert Auger</p>
-            <input type="checkbox">
-            <div class="break"></div>
-            <select class="form-select-sm w-100" @bind=AugerBind name="ControlBind">
-                @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
-                {
-                    <option value="@bind">@bind</option>
-                }
-            </select>
-            <div style="display: flex; width:100%">
-                <meter value="@meterValues[2]" min="-1.0" max="1.0" style="width: 100%" />
-            </div>
-
-        </div>
-        <div class="control-box">
-            <p>Multiplexer Servo</p>
-            <input type="checkbox">
-            <div class="break"></div>
-            <select class="form-select-sm w-100" @bind=MultiplexerServoBind name="ControlBind">
-                @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
-                {
-                    <option value="@bind">@bind</option>
-                }
-            </select>
-            <div style="display: flex; width:100%">
-                <meter value="@meterValues[3]" min="-1.0" max="1.0" style="width: 100%" />
-            </div>
-
-        </div>
-        <div class="control-box">
-            <p>Invert Gimbal Roll</p>
-            <input type="checkbox">
-            <div class="break"></div>
-            <select class="form-select-sm w-100" @bind=GimbalPanBind name="ControlBind">
-                @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
-                {
-                    <option value="@bind">@bind</option>
-                }
-            </select>
-            <div style="display: flex; width:100%">
-                <meter value="@meterValues[4]" min="-1.0" max="1.0" style="width: 100%" />
-            </div>
-
-        </div>
-        <div class="control-box">
-            <p>Invert Gimbal Tilt</p>
-            <input type="checkbox">
-            <div class="break"></div>
-            <select class="form-select-sm w-100" @bind=GimbalTiltBind name="ControlBind">
-                @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
-                {
-                    <option value="@bind">@bind</option>
-                }
-            </select>
-            <div style="display: flex; width:100%">
-                <meter value="@meterValues[5]" min="-1.0" max="1.0" style="width: 100%" />
-            </div>
-
-        </div>
-    </div>
-
+    <GamepadScheme @ref=_gamepadScheme AxisNames=_axisNames ControlScheme=_scheme />
 </div>
 
 @code {
     // Member variables
     private bool OutputDisabled = false;
     private GamepadSelector? _gamepadSelector;
-    public int UPDATE_INTERVAL = 100;
-    private Timer _updateTimer;
     private bool LastProcessGamepadInputOK = false;
-    private double DeadZone = 0.5;
-    Bind AugerAxisBind = Bind.RSY;
-    Bind InstrumentsAxisBind = Bind.LSY;
-    Bind AugerBind = Bind.Bumpers;
-    Bind MultiplexerServoBind = Bind.AB;
-    Bind GimbalPanBind = Bind.DPadX;
-    Bind GimbalTiltBind = Bind.DPadY;
-    double[] meterValues = [0d, 0d, 0d, 0d, 0d, 0d];
-    // To be changed experimentally
-    private const short multiplexerMin = 0;
-    private const short _multiplexerMax = 180;
+    private GamepadScheme? _gamepadScheme;
+    private ControlScheme _scheme = new(); // TODO: Set a good default control scheme as done in Gimbals.razor.
+    private static readonly string[] _axisNames = []; // TODO: Set axis names.
 
-    public ScienceControls()
+    private async Task Update(Gamepad gamepad, float deltaT)
     {
-        // Run update function every 100ms
-        _updateTimer = new(Update);
-    }
-
-    private void Update(object? _)
-    {
-        bool ProcessGamepadInputOK = ProcessGamepadInput();
+        bool ProcessGamepadInputOK = await ProcessGamepadInput(gamepad, deltaT);
         if (ProcessGamepadInputOK)
         {
-            // set teleop if controller being used
+            // Set teleop if controller being used.
             _RoveCommService.Boards.Core.StateDisplay(0);
         }
+        else if (LastProcessGamepadInputOK)
+        {
+            // TODO: do something safe when no longer getting input
+        }
         LastProcessGamepadInputOK = ProcessGamepadInputOK;
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
 
     // Process gamepad input and return true if rovecomm packets were sent.
-    private bool ProcessGamepadInput()
+    private async Task<bool> ProcessGamepadInput(Gamepad gamepad, float deltaT)
     {
         // TODO: implement
         return false;

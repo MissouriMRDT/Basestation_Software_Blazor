@@ -4,22 +4,14 @@
 </div>
 <div class="component-body" style="display: grid; grid-template-columns: auto auto; gap: 2px; height: unset">
     <p>Temperature</p>
-    <p>@_temperature&deg</p>
+    <p>@($"{_RoveCommService.Boards.Auger.Environmental_Temperature:000.00}")&deg</p>
     <p>Humidity</p>
-    <p>@_humidity%</p>
+    <p>@($"{_RoveCommService.Boards.Auger.Environmental_Humidity:000.00}")%</p>
 </div>
 
 @code {
-    private float _temperature = -1;
-    private float _humidity = -1;
-
     protected override void OnInitialized()
     {
-        _RoveCommService.Boards.Auger.OnEnvironmental(async packet =>
-        {
-            _temperature = (float)Math.Round(packet.Data[0], 2);
-            _humidity = (float)Math.Round(packet.Data[1], 2);
-            await InvokeAsync(StateHasChanged);
-        });
+        _RoveCommService.Boards.Auger.OnEnvironmental(async packet => await InvokeAsync(StateHasChanged));
     }
 }

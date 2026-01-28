@@ -22,7 +22,7 @@
     {
         _RoveCommService.Boards.Autonomy.OnThreadFPS(async packet =>
         {
-            _fpsValues[(int)packet.Data[0]] = packet.Data[1];
+            _fpsValues[(int)_RoveCommService.Boards.Autonomy.ThreadFPS_Thread] = _RoveCommService.Boards.Autonomy.ThreadFPS_FPS;
             await InvokeAsync(StateHasChanged);
         });
     }

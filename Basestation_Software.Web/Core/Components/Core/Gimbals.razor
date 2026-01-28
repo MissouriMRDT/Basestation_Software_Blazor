@@ -6,7 +6,7 @@
     <h3>Gimbals</h3>
     <div class="vr">&nbsp;</div>
     <input type="checkbox" @bind=OutputDisabled title="Disable Output">
-    <GamepadSelector @ref=_gamepadSelector />
+    <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
 </div>
 <div class="component-body">
     <GamepadScheme @ref=_gamepadScheme AxisNames=_axisNames ControlScheme=_controlScheme />
@@ -22,11 +22,7 @@
         Binds = [Bind.LSX, Bind.LSY, Bind.RSX, Bind.RSY, Bind.DPadX, Bind.DPadY, Bind.LBumpTrig, Bind.RBumpTrig, Bind.XB, Bind.AY, Bind.None, Bind.None],
         Inversions = [false, true, false, true, false, true, false, false, false, true, false, false]
     };
-    public int UPDATE_INTERVAL = 50; // ms
     public double GIMBAL_SPEED = 80; // deg/s
-    private Timer _updateTimer;
-    private Stopwatch _stopwatch = new();
-    private long _lastTime = 0;
 
     private static readonly string[] _axisNames = [
     "Left Pan",
@@ -44,30 +40,19 @@
 ];
     private static double[] _angles = new double[12];
 
-    public Gimbals()
+    private async Task Update(Gamepad gamepad, float deltaT)
     {
-        // Run update function every 100ms
-        _updateTimer = new(async _ =>
-        {
+        if (await ProcessGamepadInput(gamepad, deltaT))
             // Set teleop if controller being used.
-            if (await ProcessGamepadInput())
-                _opService.SetTeleop();
-            // It is safe for this component to take no action when the controller is disconnected.
-            await InvokeAsync(StateHasChanged);
-        }, null, 0, UPDATE_INTERVAL);
-        _stopwatch.Start();
+            _opService.SetTeleop();
+        // It is safe for this component to take no action when the controller is disconnected.
+        await InvokeAsync(StateHasChanged);
     }
 
     // Process gamepad input and return true if rovecomm packets were sent.
-    private async Task<bool> ProcessGamepadInput()
+    private async Task<bool> ProcessGamepadInput(Gamepad gamepad, float deltaT)
     {
-        long now = _stopwatch.ElapsedMilliseconds;
-        float deltaT = Math.Min((_lastTime - now) / 1000f, 1f); // Cap deltaT to 1 second.
-        _lastTime = now;
-
-        if (_gamepadSelector == null || _gamepadScheme == null) return false;
-        Gamepad gamepad = await _gamepadSelector.GetGamepad();
-        if (!gamepad.Connected) return false;
+        if (!gamepad.Connected || _gamepadScheme == null) return false;
         float[] inputs = _gamepadScheme.Update(gamepad);
 
         if (OutputDisabled) return false;

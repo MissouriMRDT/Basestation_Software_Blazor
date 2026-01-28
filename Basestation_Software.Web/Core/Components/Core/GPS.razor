@@ -10,26 +10,26 @@
         <i class="bi-plus-circle" />
     </button>
 </div>
-<div class="component-body" style="display: grid; grid: repeat(11, 1fr) 210px / repeat(3, 1fr); justify-items: center;">
+<div class="component-body gps">
     <p>Lat [&#176;]</p>
     <p>Lon [&#176;]</p>
     <p>Alt [m]</p>
-    <p>@($"{Lat:00.0000000}")</p>
-    <p>@($"{Lon:000.0000000}")</p>
-    <p>@($"{Alt:000.00}")</p>
+    <p>@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_Lat:00.0000000}")</p>
+    <p>@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_Lon:000.0000000}")</p>
+    <p>@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_Alt:000.00}")</p>
     <p>Satellites</p>
     <p />
     <p>Hdg [&#176;]</p>
-    <p>@($"{Satellites:00}")</p>
-    <p />
-    <p>@($"{Heading:00.00000}")</p>
-    <p>Horiz [m]</p>
-    <p>Vert [m]</p>
-    <p>Hdg [&#176;]</p>
-    <p>@($"{AccurHor:0000.000}")</p>
-    <p>@($"{AccurVer:0000.000}")</p>
-    <p>@($"{AccurHdg:000.00000}")</p>
-    <p style="grid-area: 7 / 1 / 8 / 4">@FixType Fix @if (IsDifferential == 1.0f) {
+    <p>@($"{_RoveCommService.Boards.Nav.SatelliteCountData:00}")</p>
+    <p class="secondary-bg">Accuracy</p>
+    <p>@($"{_RoveCommService.Boards.Nav.CompassData:00.00000}")</p>
+    <p class="secondary-bg">Horiz [m]</p>
+    <p class="secondary-bg">Vert [m]</p>
+    <p class="secondary-bg">Hdg [&#176;]</p>
+    <p class="secondary-bg">@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_HorizontalAccuracy:0000.000}")</p>
+    <p class="secondary-bg">@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_VerticalAccuracy:0000.000}")</p>
+    <p class="secondary-bg">@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_HeadingAccuracy:000.00000}")</p>
+    <p style="grid-area: 7 / 1 / 8 / 4">@FixType Fix @if (IsDifferential) {
         <span style="color: green">With Differential</span>
                 }
                 else
@@ -38,15 +38,15 @@
         }
     </p>
     <p>Pitch [&#176;]</p>
-    <p>Yaw [&#176;]</p>
+    <p />
     <p>Roll [&#176;]</p>
     <p>@($"{Pitch:00.0}")</p>
-    <p>@($"{Yaw:00.0}")</p>
+    <p />
     <p>@($"{Roll:00.0}")</p>
     <p style="grid-area: 10 / 1 / 11 / 4">XYZ Acceleration [ms&#8315;&#178;]</p>
-    <p>@($"{AccelX:00.0}")</p>
-    <p>@($"{AccelY:00.0}")</p>
-    <p>@($"{AccelZ:00.0}")</p>
+    <p>@($"{_RoveCommService.Boards.Core.AccelerometerData_X:00.0}")</p>
+    <p>@($"{_RoveCommService.Boards.Core.AccelerometerData_Y:00.0}")</p>
+    <p>@($"{_RoveCommService.Boards.Core.AccelerometerData_Z:00.0}")</p>
     <svg style="grid-area: 12 / 1 / 13 / 4; place-self: stretch stretch;" viewBox="0 0 60 60">
         <style>
             .elev {
@@ -241,24 +241,16 @@
 @code
 {
     // State
-    private double Lat = 0, Lon = 0, Alt = 0, AccurHor = 0, AccurVer = 0, AccurHdg = 0, IsDifferential = 0;
     private string FixType = "";
-    private float Heading = 0;
-    private uint Satellites = 0;
-    private float Pitch = 0, Yaw = 0, Roll = 0;
-    private float AccelX = 0, AccelY = 0, AccelZ = 0;
+    private bool IsDifferential;
+    private float Pitch { get => Math.Clamp(_RoveCommService.Boards.Core.IMUData_Pitch, -90, 90); }
+    private float Roll { get => Math.Clamp(_RoveCommService.Boards.Core.IMUData_Roll, -180, 180); }
 
     protected override void OnInitialized()
     {
         _RoveCommService.Boards.Nav.OnGPSLatLonAlt(async (packet) =>
         {
-            Lat = packet.Data[0];
-            Lon = packet.Data[1];
-            Alt = packet.Data[2];
-            AccurHor = packet.Data[3];
-            AccurVer = packet.Data[4];
-            AccurHdg = packet.Data[5];
-            switch (packet.Data[6])
+            switch (_RoveCommService.Boards.Nav.GPSLatLonAlt_FixType)
             {
                 case 0f:
                     FixType = "No";
@@ -282,46 +274,25 @@
                     FixType = "Undefined";
                     break;
             }
-        ;
-            IsDifferential = packet.Data[7];
+            IsDifferential = _RoveCommService.Boards.Nav.GPSLatLonAlt_IsDifferential > 0.5;
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.Boards.Core.OnIMUData(async packet =>
-        {
-            // Roll relative to upright [-180L, 180R]
-            Roll = Math.Clamp(packet.Data[0], -180, 180);
-            // Pitch relative to upright [-90D,90U]
-            Pitch = Math.Clamp(packet.Data[1], -90, 90);
-            Yaw = packet.Data[2];
-            await InvokeAsync(StateHasChanged);
-        });
+        _RoveCommService.Boards.Nav.OnCompassData(Update);
+        _RoveCommService.Boards.Core.OnIMUData(Update);
+        _RoveCommService.Boards.Nav.OnSatelliteCountData(Update);
+        _RoveCommService.Boards.Core.OnAccelerometerData(Update);
+    }
 
-        _RoveCommService.Boards.Nav.OnCompassData(async packet =>
-        {
-            Heading = packet.Data[0];
-            await InvokeAsync(StateHasChanged);
-        });
-
-        _RoveCommService.Boards.Nav.OnSatelliteCountData(async packet =>
-        {
-            Satellites = packet.Data[0];
-            await InvokeAsync(StateHasChanged);
-        });
-
-        _RoveCommService.Boards.Core.OnAccelerometerData(async packet =>
-        {
-            AccelX = packet.Data[0];
-            AccelY = packet.Data[1];
-            AccelZ = packet.Data[2];
-            await InvokeAsync(StateHasChanged);
-        });
+    async Task Update<T>(RoveCommPacket<T> _)
+    {
+        await InvokeAsync(StateHasChanged);
     }
 
     async Task AddWaypoint()
     {
         using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
-        await databaseContext.Waypoints.AddAsync(new() { ID = Guid.NewGuid(), Name = DateTime.Now.ToString(), Latitude = Lat, Longitude = Lon, TagID = 0 });
+        await databaseContext.Waypoints.AddAsync(new() { ID = Guid.NewGuid(), Name = DateTime.Now.ToString(), Latitude = _RoveCommService.Boards.Nav.GPSLatLonAlt_Lat, Longitude = _RoveCommService.Boards.Nav.GPSLatLonAlt_Lon, TagID = 0 });
         await databaseContext.SaveChangesAsync(_databaseService);
     }
 }
