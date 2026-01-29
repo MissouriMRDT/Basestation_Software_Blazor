@@ -6,26 +6,54 @@
     <h3>PMS</h3>
 </div>
 <div class="component-body pms">
-    <div style="grid-area: motors; background-color: @(BusStatus[0] == BusState.Enabled ? "yellow" : "grey")">Motors<button @onclick="() => toggleBus(0)">@(BusStatus[0] == BusState.Enabled ? "Disable" : (BusStatus[0] == BusState.Disabled ? "Enable" : "Pending..."))</button></div>
-    <div style="grid-area: core; background-color: @(BusStatus[1] == BusState.Enabled ? "yellow" : "grey")">Core<button @onclick="() => toggleBus(1)">@(BusStatus[1] == BusState.Enabled ? "Disable" : (BusStatus[1] == BusState.Disabled ? "Enable" : "Pending..."))</button></div>
-    <div style="grid-area: aux; background-color: @(BusStatus[2] == BusState.Enabled ? "yellow" : "grey")">Aux<button @onclick="() => toggleBus(2)">@(BusStatus[2] == BusState.Enabled ? "Disable" : (BusStatus[2] == BusState.Disabled ? "Enable" : "Pending..."))</button></div>
-    <div style="grid-area: core-current; background-color: @Utils.ClampMap(PackCurrent - AuxCurrent, 7.2, 30, COLOR_OK, COLOR_ERROR)">Core Current<span>@($"{PackCurrent - AuxCurrent:0.00}") A</span></div>
-    <div style="grid-area: aux-current; background-color: @Utils.ClampMap(AuxCurrent, 5, 15, COLOR_OK, COLOR_ERROR)">Aux Current<span>@($"{AuxCurrent:0.00}") A</span></div>
-    <div style="grid-area: pack-current; background-color: @Utils.ClampMap(PackCurrent, 9.5, 45, COLOR_OK, COLOR_ERROR)">Pack Current<span>@($"{PackCurrent:0.00}") A</span></div>
-    <div style="grid-area: pack-capacity; background-color: @Utils.ClampMap(PackCapacity, 1, 2.3, COLOR_ERROR, COLOR_OK)">Pack Capactity<span>@($"{PackCapacity:0.00}") J</span></div>
-    <div style="grid-area: cs1-current; background-color: #fff">CS1<span>@($"{MiscCurrent[0]:0.00}") A</span></div>
-    <div style="grid-area: cs2-current; background-color: #fff">CS2<span>@($"{MiscCurrent[1]:0.00}") A</span></div>
-    <div style="grid-area: cs3-current; background-color: #fff">CS3<span>@($"{MiscCurrent[2]:0.00}") A</span></div>
-    <div style="grid-area: c1-voltage; background-color: @Utils.ClampMap(CellVoltage[0], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C1<span>@($"{CellVoltage[0]:0.00}") V</span></div>
-    <div style="grid-area: c2-voltage; background-color: @Utils.ClampMap(CellVoltage[1], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C2<span>@($"{CellVoltage[1]:0.00}") V</span></div>
-    <div style="grid-area: c3-voltage; background-color: @Utils.ClampMap(CellVoltage[2], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C3<span>@($"{CellVoltage[2]:0.00}") V</span></div>
-    <div style="grid-area: c4-voltage; background-color: @Utils.ClampMap(CellVoltage[3], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C4<span>@($"{CellVoltage[3]:0.00}") V</span></div>
-    <div style="grid-area: c5-voltage; background-color: @Utils.ClampMap(CellVoltage[4], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C5<span>@($"{CellVoltage[4]:0.00}") V</span></div>
-    <div style="grid-area: c6-voltage; background-color: @Utils.ClampMap(CellVoltage[5], 2.5, 4.2, COLOR_ERROR, COLOR_OK)">C6<span>@($"{CellVoltage[5]:0.00}") V</span></div>
-    <div style="grid-area: pack-voltage; background-color: @Utils.ClampMap(PackVoltage, 15, 25, COLOR_ERROR, COLOR_OK)">Pack Voltage<span>@($"{PackVoltage:0.00}") V</span></div>
-    <button style="grid-area: reboot" @onclick=Reboot>REBOOT</button>
-    <button style="grid-area: e-stop" @onclick=EStop>E-STOP</button>
-    <button style="grid-area: suicide" @onclick=Suicide>SUICIDE</button>
+    <p style="grid-area: pcl; align-self: end">Pack Current</p>
+    <p style="grid-area: pca; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_PackCurrent:00.0}") A</p>
+    <div style="grid-area: 1 / 1 / 5 / 2; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_PackCurrent, 36, 75)" class=@(_packOvercurrent ? "critical" : "")></div>
+    <button style="grid-area: mb; align-self: end" @onclick=@(() => ToggleBus(0))>Motor</button>
+    <p style="grid-area: ma; align-self: start">@($"{_motorCurrent:00.00}") A</p>
+    <div style="grid-area: 1 / 2 / 3 / 3; @Background(_motorCurrent, 30, 50)" class="@(_busStatus[0] == BusState.Enabled ? "" : "disabled")" />
+    <button style="grid-area: cb; align-self: end" @onclick=@(() => ToggleBus(1))>Core</button>
+    <p style="grid-area: ca; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_LowCurrent:00.0}") A</p>
+    <div style="grid-area: 1 / 3 / 3 / 4; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_LowCurrent, 2, 6)" class="@(_busStatus[1] == BusState.Enabled ? "" : "disabled")" />
+    <button style="grid-area: ab; align-self: end" @onclick=@(() => ToggleBus(2))>Aux</button>
+    <p style="grid-area: aa; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_AuxCurrent:00.0}") A</p>
+    <div style="grid-area: 1 / 4 / 3 / 5; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_AuxCurrent, 5, 15)" class="@(_busStatus[2] == BusState.Enabled ? "" : "disabled") @(_auxOvercurrent ? "critical" : "")" />
+    <p style="grid-area: rl; align-self: end">Radio M2</p>
+    <p style="grid-area: ra; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_RadioM2Current:00.0}") A</p>
+    <div style="grid-area: 3 / 2 / 5 / 3; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_RadioM2Current, 0.5, 2)" class="@(_busStatus[3] == BusState.Enabled ? "" : "disabled")" />
+    <p style="grid-area: sl; align-self: end">Radio M9</p>
+    <p style="grid-area: sa; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_RadioM9Current:00.0}") A</p>
+    <div style="grid-area: 3 / 3 / 5 / 4; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_RadioM9Current, 0.5, 2)" class="@(_busStatus[4] == BusState.Enabled ? "" : "disabled")" />
+    <p style="grid-area: nl; align-self: end">Network Switch</p>
+    <p style="grid-area: na; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_NetworkCurrent:00.0}") A</p>
+    <div style="grid-area: 3 / 4 / 5 / 5; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_NetworkCurrent, 1, 6)" class="@(_busStatus[5] == BusState.Enabled ? "" : "disabled")" />
+    <p style="grid-area: pcj">@($"{_packCapacity:00.00}") J</p>
+    <div style="grid-area: 5 / 1 / 6 / 5; background-image: linear-gradient(to right in oklab, #ff0000, #00ff00)" />
+    <div style="grid-area: 5 / 1 / 6 / 5; background-color: #fff; justify-self: end; width: @(100 - Math.Clamp(_packCapacity / 30.453 * 100, 0, 100))%" />
+    <p style="grid-area: pvl; align-self: end">Pack Voltage</p>
+    <p style="grid-area: pvv; align-self: start">@($"{_packVoltage:00.00}") V</p>
+    <div style="grid-area: 6 / 1 / 10 / 2; @Background(_packVoltage, 24.72, 16.8)" />
+    <p style="grid-area: c1l; align-self: end">C1</p>
+    <p style="grid-area: c1v; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_Cell1Voltage:0.00}") V</p>
+    <div style="grid-area: 6 / 2 / 8 / 3; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_Cell1Voltage, 4.2, 2.8)" class=@(_cellCritical[0] ? "critical" : _cellUndervoltage[0] ? "warning" : "") />
+    <p style="grid-area: c2l; align-self: end">C2</p>
+    <p style="grid-area: c2v; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_Cell2Voltage:0.00}") V</p>
+    <div style="grid-area: 6 / 3 / 8 / 4; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_Cell2Voltage, 4.2, 2.8)" class=@(_cellCritical[1] ? "critical" : _cellUndervoltage[1] ? "warning" : "") />
+    <p style="grid-area: c3l; align-self: end">C3</p>
+    <p style="grid-area: c3v; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_Cell3Voltage:0.00}") V</p>
+    <div style="grid-area: 6 / 4 / 8 / 5; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_Cell3Voltage, 4.2, 2.8)" class=@(_cellCritical[2] ? "critical" : _cellUndervoltage[2] ? "warning" : "") />
+    <p style="grid-area: c4l; align-self: end">C4</p>
+    <p style="grid-area: c4v; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_Cell4Voltage:0.00}") V</p>
+    <div style="grid-area: 8 / 2 / 10 / 3; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_Cell4Voltage, 4.2, 2.8)" class=@(_cellCritical[3] ? "critical" : _cellUndervoltage[3] ? "warning" : "") />
+    <p style="grid-area: c5l; align-self: end">C5</p>
+    <p style="grid-area: c5v; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_Cell5Voltage:0.00}") V</p>
+    <div style="grid-area: 8 / 3 / 10 / 4; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_Cell5Voltage, 4.2, 2.8)" class=@(_cellCritical[4] ? "critical" : _cellUndervoltage[4] ? "warning" : "") />
+    <p style="grid-area: c6l; align-self: end">C6</p>
+    <p style="grid-area: c6v; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_Cell6Voltage:0.00}") V</p>
+    <div style="grid-area: 8 / 4 / 10 / 5; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_Cell6Voltage, 4.2, 2.8)" class=@(_cellCritical[5] ? "critical" : _cellUndervoltage[5] ? "warning" : "") />
+    <button style="grid-area: r; place-self: stretch" class="danger" @onclick=Reboot>REBOOT</button>
+    <button style="grid-area: e; place-self: stretch" class="warning" @onclick=EStop>E-STOP</button>
+    <button style="grid-area: s; place-self: stretch" class="danger" @onclick=Suicide>SUICIDE</button>
 </div>
 
 @code
@@ -39,20 +67,27 @@
 
     // Constants
     public const uint TELEMETRY_TIMEOUT = 10_000; // ms
-    public static Color COLOR_ERROR = Color.FromArgb(255, 255, 0, 0);
-    public static Color COLOR_OK = Color.FromArgb(255, 0, 255, 0);
 
-    // State
-    private List<BusState> BusStatus = new List<BusState>() { BusState.Unknown, BusState.Unknown, BusState.Unknown }; // Motors, Core, Aux
-    private float PackCurrent = 0, PackVoltage = 0, AuxCurrent = 0;
-    private List<float> CellVoltage = new List<float>() { 0, 0, 0, 0, 0, 0 }; // C1 ... C6
-    private List<float> MiscCurrent = new List<float>() { 0, 0, 0 }; // CS1 ... CS3
     private System.Threading.Timer TelemetryWatchdog;
-    private double PackCapacity = 0;
+    private double _motorCurrent = 0;
+    private double _packVoltage = 0;
+    private double _packCapacity = 0;
+    private BusState[] _busStatus = new BusState[6];
+    private bool _packOvercurrent;
+    private bool[] _cellUndervoltage = new bool[6];
+    private bool[] _cellCritical = new bool[6];
+    private bool _auxOvercurrent;
 
-    PMS()
+    public PMS()
     {
         TelemetryWatchdog = new System.Threading.Timer(WatchdogTimeout);
+    }
+
+    private string Background(double x, double green, double red)
+    {
+        if (red > green)
+            return $"--bg: color-mix(in oklab, #ff0000 {Utils.ClampMap(x, green, red, 0.0, 100.0)}%, #00ff00)";
+        return $"--bg: color-mix(in oklab, #00ff00 {Utils.ClampMap(x, red, green, 0.0, 100.0)}%, #ff0000)";
     }
 
     protected override void OnInitialized()
@@ -61,20 +96,20 @@
 
         _RoveCommService.Boards.PMS.OnCurrentAndVoltage(async packet =>
         {
-            // TODO: Update current and voltage from telemetry
-            PackVoltage = _RoveCommService.Boards.PMS.CurrentAndVoltage[6..12].Sum();
-            double x = PackVoltage / 6;
+            _motorCurrent = _RoveCommService.Boards.PMS.CurrentAndVoltage_PackCurrent - _RoveCommService.Boards.PMS.CurrentAndVoltage[1..6].Sum();
+            _packVoltage = _RoveCommService.Boards.PMS.CurrentAndVoltage[6..12].Sum();
+            double x = _packVoltage / 6;
 
             if (x < 2.8)
-                PackCapacity = 0;
+                _packCapacity = 0;
             else if (x < 3.45)
-                PackCapacity = -144081.925 + 235284.736 * x - 153537.325 * x * x + 50048.2469 * x * x * x - 8149.57918 * x * x * x * x + 530.359797 * x * x * x * x * x;
+                _packCapacity = -144081.925 + 235284.736 * x - 153537.325 * x * x + 50048.2469 * x * x * x - 8149.57918 * x * x * x * x + 530.359797 * x * x * x * x * x;
             else if (x < 3.81)
-                PackCapacity = 6198350.17 - 8453983.154 * x + 4610248.291 * x * x - 1256560.878 * x * x * x + 171177.5361 * x * x * x * x - 9324.159109 * x * x * x * x * x;
+                _packCapacity = 6198350.17 - 8453983.154 * x + 4610248.291 * x * x - 1256560.878 * x * x * x + 171177.5361 * x * x * x * x - 9324.159109 * x * x * x * x * x;
             else if (x < 4.12)
-                PackCapacity = -2608191.44 + 3247156.22 * x - 1615884.19 * x * x + 401745.658 * x * x * x - 49900.4554 * x * x * x * x + 2477.08634 * x * x * x * x * x;
+                _packCapacity = -2608191.44 + 3247156.22 * x - 1615884.19 * x * x + 401745.658 * x * x * x - 49900.4554 * x * x * x * x + 2477.08634 * x * x * x * x * x;
             else
-                PackCapacity = 30.453;
+                _packCapacity = 30.453;
 
             ResetWatchdog();
             await InvokeAsync(StateHasChanged);
@@ -82,8 +117,36 @@
 
         _RoveCommService.Boards.PMS.OnBusStatus(async packet =>
         {
-            for (int i = 0; i < 3; i++)
-                BusStatus[i] = (_RoveCommService.Boards.PMS.BusStatus & (1 << i)) == 0 ? BusState.Disabled : BusState.Enabled;
+            for (int i = 0; i < 6; i++)
+                _busStatus[i] = (_RoveCommService.Boards.PMS.BusStatus & (1 << i)) == 0 ? BusState.Disabled : BusState.Enabled;
+            ResetWatchdog();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.Boards.PMS.OnPackOvercurrent(async packet =>
+        {
+            _packOvercurrent = true;
+            ResetWatchdog();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.Boards.PMS.OnCellUndervoltage(async packet =>
+        {
+            for (int i = 0; i < 6; i++) _cellUndervoltage[i] = (_RoveCommService.Boards.PMS.CellUndervoltage & (1 << i)) != 0;
+            ResetWatchdog();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.Boards.PMS.OnCellCritical(async packet =>
+        {
+            for (int i = 0; i < 6; i++) _cellCritical[i] = (_RoveCommService.Boards.PMS.CellCritical & (1 << i)) != 0;
+            ResetWatchdog();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.Boards.PMS.OnAuxOvercurrent(async packet =>
+        {
+            _auxOvercurrent = true;
             ResetWatchdog();
             await InvokeAsync(StateHasChanged);
         });
@@ -91,12 +154,11 @@
 
     async void WatchdogTimeout(object? _)
     {
-        AuxCurrent = 0;
-        PackCurrent = 0;
-        PackVoltage = 0;
-        CellVoltage = [0, 0, 0, 0, 0, 0];
-        BusStatus = [BusState.Unknown, BusState.Unknown, BusState.Unknown];
-        MiscCurrent = [0, 0, 0];
+        _busStatus = [BusState.Unknown, BusState.Unknown, BusState.Unknown, BusState.Unknown, BusState.Unknown, BusState.Unknown];
+        _packOvercurrent = false;
+        _cellUndervoltage = new bool[6];
+        _cellCritical = new bool[6];
+        _auxOvercurrent = false;
         await InvokeAsync(StateHasChanged);
     }
 
@@ -105,13 +167,13 @@
         TelemetryWatchdog.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
     }
 
-    void toggleBus(int i)
+    void ToggleBus(int i)
     {
-        if (BusStatus[i] == BusState.Disabled)
-            _RoveCommService.Boards.PMS.EnableBus((byte)(1 << i));
-        else if (BusStatus[i] == BusState.Enabled)
+        if (_busStatus[i] == BusState.Enabled)
             _RoveCommService.Boards.PMS.DisableBus((byte)(1 << i));
-        BusStatus[i] = BusState.Unknown;
+        else
+            _RoveCommService.Boards.PMS.EnableBus((byte)(1 << i));
+        _busStatus[i] = BusState.Unknown;
     }
 
     async Task Reboot()

@@ -161,7 +161,7 @@
     // Process gamepad input and return true if rovecomm packets were sent.
     private async Task<bool> ProcessGamepadInput(Gamepad gamepad, float deltaT)
     {
-        if (!gamepad.Connected) return false;
+        if (_gamepadSelector == null || !gamepad.Connected) return false;
 
         switch (SelectedScheme)
         {
