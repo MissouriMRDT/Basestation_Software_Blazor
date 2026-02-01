@@ -11,11 +11,10 @@
 
 <div @ref="videoContainer" class="component-body camera-display">
     <div class="source-buttons-container">
-        @for (int i = 0; i < 8; i++)
+        @for (int _i = 0; _i < 8; _i++)
         {
-            // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
-            var _i = i;
-            <button class="@("secondary " + ((sourceIndex == _i) ? "camera-selected" : ""))" @onclick=@(() => SetSource(_i))>@_i</button>
+            var i = _i;
+            <button class="@("secondary " + ((sourceIndex == i) ? "camera-selected" : ""))" @onclick=@(() => SetSource(i))>@i</button>
         }
     </div>
     <button class="camera-display-rotate" @onclick=Rotate><i class="bi-arrow-clockwise"></i></button>

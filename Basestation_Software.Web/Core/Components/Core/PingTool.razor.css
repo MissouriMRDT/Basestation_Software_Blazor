@@ -1,9 +1,8 @@
 .ping-tool {
     display: grid;
-    overflow-y: auto;
+    overflow: auto;
     align-items: center;
-    height: calc(100% - 19px);
-    grid-template-columns: max-content auto max-content max-content 50px 50px;
+    grid-template-columns: min-content 85px 60px auto max-content;
 }
 
 .ping-tool>p {

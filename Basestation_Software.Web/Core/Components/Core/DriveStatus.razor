@@ -11,9 +11,8 @@
     <p style="color: #fff">Motor Current (A)</p>
     <p style="color: #fff">Speed (%)</p>
     <p style="color: #fff">Fault</p>
-    @for (int i_ = 0; i_ < 6; i_++)
+    @for (int i = 0; i < 6; i++)
     {
-        int i = i_;
         <p style="background-color: @(_faultCodes[i] == FaultCode.NONE ? "#000" : "#dc3545"); color: #fff;">@_motorNames[i]</p>
         @if (_motorTimeout)
         {
