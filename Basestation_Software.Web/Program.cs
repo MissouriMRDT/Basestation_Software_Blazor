@@ -45,4 +45,7 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode();
 
+app.MapGet("/MapTiles/{z}/{y}/{x}.png", TileController.GetMapTileImage);
+app.MapGet("/LidarTiles/{z}/{y}/{x}.png", TileController.GetLidarTileImage);
+
 app.Run();

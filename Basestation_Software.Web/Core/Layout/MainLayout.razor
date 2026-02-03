@@ -336,7 +336,7 @@
     {
         using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
         Page_.ID = Guid.NewGuid();
-        await databaseContext.Pages.AddAsync(Page_);
+        databaseContext.Pages.Add(Page_);
         await databaseContext.SaveChangesAsync(_databaseService);
         await Navigate(Page_.ID);
     }

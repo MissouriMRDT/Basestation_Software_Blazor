@@ -1,6 +1,7 @@
 @using Microsoft.EntityFrameworkCore
 @implements IDisposable
 @inject DatabaseService _databaseService
+@inject RoveCommService _roveCommService
 @inject IDbContextFactory<DatabaseContext> _dbContextFactory
 @using static RoveComm.Boards.Autonomy
 @inject GPSWaypointState _GPSWaypointState
@@ -10,7 +11,7 @@
     <div class="vr">&nbsp;</div>
     <button @onclick=New><i class="bi-plus" /></button>
 </div>
-<div class="component-body" style="display: grid; overflow-y: scroll; height: unset; max-height: calc(100% - 19px); grid-template-columns: min-content 100px 80px 80px 20px 30px 20px repeat(4, min-content)">
+<div class="component-body" style="display: grid; overflow-y: scroll; flex-grow: 0; grid-template-columns: min-content 100px 80px 80px 20px 30px 20px repeat(4, min-content)">
     <p></p>
     <p>Name</p>
     <p>Latitude</p>
@@ -77,7 +78,7 @@
     private async Task New()
     {
         using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
-        await databaseContext.Waypoints.AddAsync(new() { ID = Guid.NewGuid() });
+        databaseContext.Waypoints.Add(new() { ID = Guid.NewGuid(), Latitude = _roveCommService.Boards.Nav.GPSLatLonAlt_Lat, Longitude = _roveCommService.Boards.Nav.GPSLatLonAlt_Lon });
         await databaseContext.SaveChangesAsync(_databaseService);
     }
 

@@ -1,7 +1,7 @@
 .ping-tool {
     display: grid;
     overflow: auto;
-    align-items: center;
+    flex-grow: 0;
     grid-template-columns: min-content 85px 60px auto max-content;
 }
 

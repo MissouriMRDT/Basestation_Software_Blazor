@@ -292,7 +292,7 @@
     async Task AddWaypoint()
     {
         using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
-        await databaseContext.Waypoints.AddAsync(new() { ID = Guid.NewGuid(), Name = DateTime.Now.ToString(), Latitude = _RoveCommService.Boards.Nav.GPSLatLonAlt_Lat, Longitude = _RoveCommService.Boards.Nav.GPSLatLonAlt_Lon, TagID = 0 });
+        databaseContext.Waypoints.Add(new() { ID = Guid.NewGuid(), Name = DateTime.Now.ToString(), Latitude = _RoveCommService.Boards.Nav.GPSLatLonAlt_Lat, Longitude = _RoveCommService.Boards.Nav.GPSLatLonAlt_Lon, TagID = 0 });
         await databaseContext.SaveChangesAsync(_databaseService);
     }
 }

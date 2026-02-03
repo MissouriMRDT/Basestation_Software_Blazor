@@ -19,7 +19,7 @@
     <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
 </div>
 <div class="component-body">
-    <div style="d-flex">
+    <div>
         <label>Preset:</label>
         <select @bind:get=@(_preset.ID) @bind:set=LoadPreset>
             @foreach (ArmPreset preset in _presets)
@@ -235,7 +235,7 @@
     {
         using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
         _preset.ID = Guid.NewGuid();
-        await databaseContext.ControlPresets.AddAsync(_preset);
+        databaseContext.ControlPresets.Add(_preset);
         await databaseContext.SaveChangesAsync(_databaseService);
     }
 

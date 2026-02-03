@@ -255,6 +255,9 @@ input[type=checkbox]:checked {
 .component {
     border: 1px solid #000;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
 }
 
 .component-header {
@@ -269,7 +272,7 @@ input[type=checkbox]:checked {
 }
 
 .component-body {
-    height: calc(100% - 19px);
+    flex-grow: 1;
 }
 
 .component-move {

@@ -89,14 +89,15 @@
             i++;
         }
 
-        _RoveCommService.On<long>(RoveCommManifest.SystemPackets.PING_REPLY, async packet =>
+        /*_RoveCommService.On<long>(RoveCommManifest.SystemPackets.PING_REPLY, async packet =>
         {
-            if (packet.Data.Count < 2) return;
-            int i = (int)packet.Data[0];
-            long sentAt = packet.Data[1];
-            if (i >= 0 && i < _devices.Count)
-                _devices[i].RoveCommPingStatus = ((DateTime.UtcNow.Ticks - sentAt) / TimeSpan.TicksPerSecond).ToString();
+        if (packet.Data.Count < 2) return;
+        int i = (int)packet.Data[0];
+        long sentAt = packet.Data[1];
+        if (i >= 0 && i < _devices.Count)
+        _devices[i].RoveCommPingStatus = ((DateTime.UtcNow.Ticks - sentAt) / TimeSpan.TicksPerSecond).ToString();
         });
+        */
 
         _RoveCommService.On<sbyte>(0, RoveCommActivity);
         _RoveCommService.On<byte>(0, RoveCommActivity);
