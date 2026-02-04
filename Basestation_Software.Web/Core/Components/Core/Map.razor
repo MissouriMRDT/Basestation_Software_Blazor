@@ -67,14 +67,102 @@
     int _zoom = 0;
     bool _downloading = false;
 
+    private int _pathTrackingTimeout = 120 * 1000;
+    // Token to track when to clear paths after data stops being received
+    private CancellationTokenSource _pathCts = new CancellationTokenSource();
+
+    private List<List<double>> _roverPoints = new List<List<double>>();
+    private List<List<double>> _plannedPathPoints = new List<List<double>>();
+
     protected override void OnInitialized()
     {
         _RoveCommService.Boards.Nav.OnGPSLatLonAlt(async packet =>
         {
+            double lat = packet.Data[0];
+            double lon = packet.Data[1];
+
+            List<double> point = new List<double>();
+            point.Add(lat);
+            point.Add(lon);
+
+            // Display the path the rover is taking
+            _roverPoints.Add(point);
+            DisplayRoverPath(_roverPoints);
+
+
+            // Remove the paths if no data is sent after the given delay
+            _pathCts.Cancel();
+            _pathCts = new CancellationTokenSource();
+
+            try {
+                await Task.Delay(_pathTrackingTimeout, _pathCts.Token);
+                _roverPoints.Clear();
+                RemoveRoverPath();
+                RemovePath();
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (TaskCanceledException) {
+
+            }
+            await InvokeAsync(StateHasChanged);
+
             await _jsMap!.InvokeVoidAsync("addRoverIcon", [_RoveCommService.Boards.Nav.GPSLatLonAlt_Lat, _RoveCommService.Boards.Nav.GPSLatLonAlt_Lon]);
         });
 
         _RoveCommService.Boards.Nav.OnCompassData(async packet => await InvokeAsync(StateHasChanged));
+    
+        _RoveCommService.On<double>(11104, async (packet) =>
+        {
+            List<List<double>> pairs = new List<List<double>>();
+
+            // Get waypoint pairs from packet data
+            for (int i = 0; i < packet.Data.Count; i += 2)
+            {
+                if (i + 1 < packet.Data.Count)
+                {
+                    pairs.Add(new List<double> { packet.Data[i], packet.Data[i + 1] });
+                }
+            }
+
+            // Store new path pairs
+            _plannedPathPoints.Clear();
+            _plannedPathPoints = pairs;
+
+            // Display new planned path
+            DisplayPath(pairs);
+
+             // Remove the paths if no data is sent after the given delay
+            _pathCts.Cancel();
+            _pathCts = new CancellationTokenSource();
+
+            try {
+                await Task.Delay(_pathTrackingTimeout, _pathCts.Token);
+                _roverPoints.Clear();
+                _plannedPathPoints.Clear();
+                RemoveRoverPath();
+                RemovePath();
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (TaskCanceledException) {
+
+            }
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<double>(11105, async (packet) =>
+        {
+            double timeRemaining = packet.Data[0];
+            double now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            double ETA = now + timeRemaining;
+
+            // Rover was not moving, so set ETA to -1 to signify that
+            if (timeRemaining == -1) {
+                ETA = -1;
+            }
+
+            await SetETA(ETA);
+            await InvokeAsync(StateHasChanged);
+        });
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -124,6 +212,26 @@
     private async Task OnWaypointSelected(GPSWaypoint? waypoint)
     {
         if (waypoint != null) await PanToCoordinates(waypoint.Latitude, waypoint.Longitude);
+    }
+
+    public async Task SetETA(double ETA) {
+        await _jsMap!.InvokeVoidAsync("setETA", ETA);
+    }
+
+    public async Task DisplayRoverPath(List<List<double>> points) {
+        await _jsMap!.InvokeVoidAsync("displayRoverPath", points);
+    }
+
+    public async Task DisplayPath(List<List<double>> points) {
+        await _jsMap!.InvokeVoidAsync("displayPath", points);
+    }
+
+    public async Task RemovePath() {
+        await _jsMap!.InvokeVoidAsync("removePath");
+    }
+
+    public async Task RemoveRoverPath() {
+        await _jsMap!.InvokeVoidAsync("removeRoverPath");
     }
 
     public async Task PanToCoordinates(double lat, double lon)
