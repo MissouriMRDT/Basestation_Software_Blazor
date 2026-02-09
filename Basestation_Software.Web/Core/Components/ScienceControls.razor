@@ -25,7 +25,19 @@
     flex-basis: 100%;
     height: 0;
     }
-
+    .led-filter-grid{
+        display: grid;
+        grid-template-columns: auto auto auto;
+        gap: 0.4rem 0.6rem;
+        align-items: center;
+    }
+    .led-filter-header{
+        font-weigt: bold;
+        text-align: center;
+    }
+    .led-filter.grid button{
+        width: 100%;
+    }
 </style>
 
 <div class="card full-height">
@@ -43,10 +55,13 @@
     </div>
     <div class="card-body">
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
-            <p style="width:auto; text-align: center"<b>Auger Telemetry</b></p>
+            <p style="width:auto; text-align: center"><b>Auger Telemetry</b></p>
             <label>Auger Speed: @_augerSpeed</label>
             <label>Auger Depth: @_augerDepth</label>
             <label>Auger Current: @_augerCurrent</label>
+            <label>Gantry Position: @_position</label>
+            <label>Limit Switch Status: @_limitSwitchStatus</label>
+            <label>Limit Switch Position: @_limitSwitchPosition</label>
         </div>
         <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
             <p style="width:auto; text-align: center"><b>Calibration</b></p>
@@ -79,7 +94,40 @@
                     <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>(9009, [(byte)0b00], RoveCommManifest.Boards["Auger"].IP))>Off</button>
                 </div>
             </div>
+            <div class="rounded p-2 justify-items-center bg-body-seconday mb-2">
+                <p style="width:auto; text-align: center"><b>AF LED / Filter</b></p>
 
+                <div class="led-filter-grid">
+                    <div class="led-filter-header">Brightness</div>
+                    <div class="led-filter-header">LED</div>
+                    <div class="led-filter-header">Filter</div>
+
+                    <InputNumber TValue="int" min="0" max="255" class="form-control-sm" @bind-Value="LedBrightness" />
+                    <button class="btn btn-primary" @onclick=@(() => SendAFLED(1))>White</button>
+                    <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "Filter", [0]))>None</button>
+
+                    <div></div>
+                    <button class="btn btn-primary" @onclick=@(() => SendAFLED(2))>365</button>
+                    <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "Filter", [1]))>440 NAD</button>
+
+                    <div></div>
+                    <button class="btn btn-primary" @onclick=@(() => SendAFLED(3))>405</button>
+                    <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "Filter", [2]))>525 FAD</button>
+
+                    <div></div>
+                    <button class="btn btn-primary" @onclick=@(() => SendAFLED(4))>500</button>
+                    <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Auger", "Filter", [3]))>600 Carotenoids, Porphyrin</button>
+                    <div></div>
+                    <button class="btn btn-primary" @onclick=@(() => SendAFLED(0))>Off</button>
+                </div>  
+            </div>
+            <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
+                <p style="width:auto; text-align: center"><b>Soil Trapdoor</b></p>
+                <div class="btn-group d-flex justify-items-center" role="group">
+                    <button class="btn btn-success" @onclick=@(() => _RoveCommService.SendAsync<byte>("Raman", "SoilTrapdoor", [1]))>AF</button>
+                    <button class="btn btn-primary" @onclick=@(() => _RoveCommService.SendAsync<byte>("Raman", "SoilTrapdoor", [0]))>Cache</button>
+                </div>
+            </div>
             <div class="rounded p-2 justify-items-center bg-body-secondary mb-2">
                 <p style="width:auto; text-align: center"><b>Laser</b></p>
                 <div class="btn-group d-flex justify-items-center" role="group">
@@ -279,6 +327,7 @@
     // To be changed experimentally
     private const short multiplexerMin = 0;
     private const short _multiplexerMax = 180;
+    private byte LedBrightness = 100;
 
     public void GamepadSelectionChanged()
     {
@@ -287,7 +336,14 @@
         else
             UpdateTimer.Change(0, UPDATE_INTERVAL);
     }
-
+    private void SendAFLED(byte mode)
+    {
+        _ = _RoveCommService.SendAsync<byte>(
+            "Auger",
+            "AFLED",
+            new byte[] { mode, LedBrightness }
+        );
+    }
     protected override void OnInitialized()
     {
         // Run update function every 100ms
@@ -308,6 +364,37 @@
         _RoveCommService.Subscribe<float>("Auger", "AugerCurrent", val =>
         {
             _augerCurrent = (float) Math.Round(val.Data[0],2);
+            InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.Subscribe<float>("Auger", "Position", val =>
+        {
+            _position = (float) Math.Round(val.Data[0],2);
+            InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.Subscribe<byte>("Auger", "LimitSwitchTriggered", val =>
+        {
+            byte b = val.Data[0];
+
+            bool plus  = (b & 0b01) != 0;
+            bool minus = (b & 0b10) != 0;
+
+                if (plus && minus){
+                    _limitSwitchStatus = "+: ON, -: ON";
+                    _limitSwitchPosition = "Fault";
+                }
+                else if (plus){
+                    _limitSwitchStatus = "+: ON, -: OFF";
+                    _limitSwitchPosition = "+ Limit";
+                }
+                else if (minus){
+                    _limitSwitchStatus = "+: OFF, -: ON";
+                    _limitSwitchPosition = "- Limit";
+                }
+                else{
+                    _limitSwitchStatus = "+: OFF, -: OFF";
+                    _limitSwitchPosition = "In Range";
+                }
+
             InvokeAsync(StateHasChanged);
         });
     }
@@ -381,7 +468,11 @@
     private float _instrumentAxisMult = 0.4f;
     private float _augerSpeed = -1;
     private float _augerDepth = -1;
-    private float _augerCurrent = --1;
+    private float _augerCurrent = -1;
+    private float _position = 0;
+    private string _limitSwitchStatus = "Unknown";
+    private string _limitSwitchPosition = "Unknown";
+
 
     void IDisposable.Dispose() { }
 }

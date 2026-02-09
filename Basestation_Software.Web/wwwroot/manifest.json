@@ -599,6 +599,18 @@
           "dataType": "UINT8_T",
           "dataCount": 2,
           "comments": "Request a reading of the NPK sensor data at the end of the auger"
+        },
+        "AFLED": { 
+          "dataId": 9012, 
+          "dataType": "UINT8_T", 
+          "dataCount": 2, 
+          "comments": "[mode, brightness] mode: 0-off, 1-white, 2-365, 3-405, 4-500" 
+        },
+        "Filter": {
+          "dataId": 9013, 
+          "dataType": "UINT8_T", 
+          "dataCount": 1, 
+          "comments": "Filter (0-off, 1-440nm , 2-500nm, 3-525nm)" 
         }
       },
       "Telemetry": {
@@ -657,7 +669,7 @@
           "comments": ""
         },
         "AugerCurrent": {
-          "dataId": 9108,
+          "dataId": 9109,
           "dataType": "FLOAT_T",
           "dataCount": 1,
           "comments": ""
@@ -1004,6 +1016,12 @@
           "dataType": "UINT32_T",
           "dataCount": 1,
           "comments": "Start a Raman reading, with the provided integration time (milliseconds)"
+        },
+        "SoilTrapdoor"{
+          "dataId": 16006,
+          "dataType": "UINT8_T",
+          "dataCount": 1,
+          "comments": "[0-cache, 1-AF]"
         }
       },
       "Telemetry": {
