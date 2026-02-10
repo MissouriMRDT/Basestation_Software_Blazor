@@ -37,5 +37,5 @@ class Handler(SimpleHTTPRequestHandler):
             con.close()
 
 
-httpd = ThreadingHTTPServer(("127.0.0.1", 5000), Handler)
+httpd = ThreadingHTTPServer(("192.168.100.10", 5000), Handler)
 httpd.serve_forever()

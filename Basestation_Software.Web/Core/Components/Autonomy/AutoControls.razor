@@ -94,7 +94,7 @@
 
     public void AddMarkerLeg()
     {
-        if (_selectedWaypoint != null && _selectedWaypoint.TagID >= 0 && _selectedWaypoint.SearchRadius >= 0)
+        if (_selectedWaypoint != null && _selectedWaypoint.SearchRadius >= 0)
             _RoveCommService.Boards.Autonomy.AddMarkerLeg(_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.TagID, _selectedWaypoint.SearchRadius);
     }
 

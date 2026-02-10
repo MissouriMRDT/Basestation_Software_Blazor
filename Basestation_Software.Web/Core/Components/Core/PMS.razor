@@ -27,9 +27,9 @@
     <p style="grid-area: nl; align-self: end">Network Switch</p>
     <p style="grid-area: na; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_NetworkCurrent:00.0}") A</p>
     <div style="grid-area: 3 / 4 / 5 / 5; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_NetworkCurrent, 1, 6)" class="@(_busStatus[5] == BusState.Enabled ? "" : "disabled")" />
-    <p style="grid-area: pcj">@($"{_packCapacity:00.00}") J</p>
+    <p style="grid-area: pcj">@($"{_packCapacity*3.6:000.0}") kJ</p>
     <div style="grid-area: 5 / 1 / 6 / 5; background-image: linear-gradient(to right in oklab, #ff0000, #00ff00)" />
-    <div style="grid-area: 5 / 1 / 6 / 5; background-color: #fff; justify-self: end; width: @(100 - Math.Clamp(_packCapacity / 30.453 * 100, 0, 100))%" />
+    <div style="grid-area: 5 / 1 / 6 / 5; background-color: #fff; justify-self: end; width: @(100 - Math.Clamp(_packCapacity / 30.453 / 6 * 100, 0, 100))%" />
     <p style="grid-area: pvl; align-self: end">Pack Voltage</p>
     <p style="grid-area: pvv; align-self: start">@($"{_packVoltage:00.00}") V</p>
     <div style="grid-area: 6 / 1 / 10 / 2; @Background(_packVoltage, 24.72, 16.8)" />
@@ -96,7 +96,7 @@
 
         _RoveCommService.Boards.PMS.OnCurrentAndVoltage(async packet =>
         {
-            _motorCurrent = _RoveCommService.Boards.PMS.CurrentAndVoltage_PackCurrent - _RoveCommService.Boards.PMS.CurrentAndVoltage[1..6].Sum();
+            _motorCurrent = Math.Max(0, _RoveCommService.Boards.PMS.CurrentAndVoltage_PackCurrent - _RoveCommService.Boards.PMS.CurrentAndVoltage[1..6].Sum());
             _packVoltage = _RoveCommService.Boards.PMS.CurrentAndVoltage[6..12].Sum();
             double x = _packVoltage / 6;
 
@@ -110,6 +110,7 @@
                 _packCapacity = -2608191.44 + 3247156.22 * x - 1615884.19 * x * x + 401745.658 * x * x * x - 49900.4554 * x * x * x * x + 2477.08634 * x * x * x * x * x;
             else
                 _packCapacity = 30.453;
+            _packCapacity *= 6;
 
             ResetWatchdog();
             await InvokeAsync(StateHasChanged);

@@ -48,7 +48,7 @@
     private String CameraArgumentsValue = "";
     private ElementReference videoContainer;
 
-    CameraControls()
+    public CameraControls()
     {
         TelemetryWatchdog1 = new System.Threading.Timer(WatchdogTimeout, 1, Timeout.Infinite, Timeout.Infinite);
         TelemetryWatchdog2 = new System.Threading.Timer(WatchdogTimeout, 2, Timeout.Infinite, Timeout.Infinite);

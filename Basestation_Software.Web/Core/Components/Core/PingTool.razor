@@ -29,17 +29,17 @@
         {
             <p></p>
         }
-        <p style=@device.Style>@device.Name</p>
-        <p style=@device.Style>@device.IpAddress</p>
+        <p style="color: #ff; background-color: @(device.Ok ? "#198754" : "#dc3545")">@device.Name</p>
+        <p style="color: #ff; background-color: @(device.Ok ? "#198754" : "#dc3545")">@device.IpAddress</p>
     }
 </div>
 
 @code
 {
-    public static long ROVECOMM_ACTIVITY_TIMEOUT = 5 * TimeSpan.TicksPerSecond;
+    public static long ROVECOMM_ACTIVITY_TIMEOUT = 1500 * TimeSpan.TicksPerSecond;
 
     private Timer _autoPingTimer;
-    private Timer _roveActivityTimer;
+    private Timer _roveCommActivityTimer;
     private Dictionary<int, int> _iLookup = [];
 
     private bool _autoPingAll = false;
@@ -52,7 +52,7 @@
     public PingTool()
     {
         _autoPingTimer = new(AutoPing);
-        _roveActivityTimer = new(CheckRoveCommActivity);
+        _roveCommActivityTimer = new(CheckRoveCommActivity);
     }
 
     protected override void OnInitialized()
@@ -89,16 +89,15 @@
             i++;
         }
 
-        /*_RoveCommService.On<long>(RoveCommManifest.SystemPackets.PING_REPLY, async packet =>
+        _RoveCommService.On<uint>(RoveCommManifest.SystemPackets.PING_REPLY, async packet =>
         {
-        if (packet.Data.Count < 2) return;
-        int i = (int)packet.Data[0];
-        long sentAt = packet.Data[1];
-        if (i >= 0 && i < _devices.Count)
-        _devices[i].RoveCommPingStatus = ((DateTime.UtcNow.Ticks - sentAt) / TimeSpan.TicksPerSecond).ToString();
+            if (packet.Data.Count < 3) return;
+            int i = (int)packet.Data[0];
+            long sentAt = (long)packet.Data[1] << 32 | packet.Data[2];
+            if (i >= 0 && i < _devices.Count)
+                _devices[i].RoveCommPingStatus = ((DateTime.UtcNow.Ticks - sentAt) / TimeSpan.TicksPerMillisecond).ToString();
         });
-        */
-
+        
         _RoveCommService.On<sbyte>(0, RoveCommActivity);
         _RoveCommService.On<byte>(0, RoveCommActivity);
         _RoveCommService.On<short>(0, RoveCommActivity);
@@ -110,12 +109,13 @@
         _RoveCommService.On<char>(0, RoveCommActivity);
 
         _autoPingTimer.Change(_autoPingDelay, Timeout.Infinite);
+        _roveCommActivityTimer.Change(0, 1000);
     }
 
     private async Task RoveCommActivity<T>(RoveCommPacket<T> packet)
     {
         if (_iLookup.TryGetValue(packet.DataID, out int i))
-            _devices[i].LastRovePacket = DateTime.UtcNow.Ticks;
+            _devices[i].LastRoveCommPacket = DateTime.UtcNow.Ticks;
     }
 
     private void CheckRoveCommActivity(object? _)
@@ -124,7 +124,7 @@
         foreach (Device device in _devices)
         {
             if (device.HasRoveComm)
-                device.Style = device.LastRovePacket < timeout ? "background-color: #198754" : "background-color: #dc3545";
+                device.Ok = device.LastRoveCommPacket > timeout;
         }
         InvokeAsync(StateHasChanged);
     }
@@ -136,7 +136,7 @@
             PingReply reply = await _PingService.PingAsync(ipAddress, _pingTimeout);
             device.PingStatus = reply.Status == IPStatus.Success ? reply.RoundtripTime.ToString() : reply.Status.ToString();
             if (!device.HasRoveComm)
-                device.Style = reply.Status == IPStatus.Success ? "background-color: #198754" : "background-color: #dc3545";
+                device.Ok = reply.Status == IPStatus.Success;
 
             await InvokeAsync(StateHasChanged);
         }
@@ -162,7 +162,8 @@
 
     private async Task RoveCommPingBoard(Device device)
     {
-        await _RoveCommService.SendAsync<long>(RoveCommManifest.SystemPackets.PING, [device.I, DateTime.UtcNow.Ticks], device.IpAddress);
+        long now = DateTime.UtcNow.Ticks;
+        await _RoveCommService.SendAsync<uint>(RoveCommManifest.SystemPackets.PING, [(uint)device.I, (uint)(now >> 32), (uint)now], device.IpAddress);
     }
 
     public class Device
@@ -172,9 +173,9 @@
         public int I = 0; // Workaround not being able to get the IP of received RoveComm packets.
         public string PingStatus = "None";
         public string RoveCommPingStatus = "None";
-        public string Style = "background-color: #dc3545";
+        public bool Ok = false;
         public bool AutoPing = false;
         public bool HasRoveComm = false;
-        public long LastRovePacket = 0;
+        public long LastRoveCommPacket = 0;
     }
 }

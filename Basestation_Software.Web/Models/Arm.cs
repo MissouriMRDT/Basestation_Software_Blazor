@@ -20,8 +20,8 @@ public class ArmPreset : ControlScheme
     public float J2Speed { get; set; } = 1;
     public float J3Speed { get; set; } = 1;
     public float J4Speed { get; set; } = 1;
-    public float PitchSpeed { get; set; } = 1;
-    public float RollSpeed { get; set; } = 1;
+    public float J5Speed { get; set; } = 1;
+    public float J6Speed { get; set; } = 1;
     public float GripperSpeed { get; set; } = 1;
     public float LinearServoSpeed { get; set; } = 1;
     public float CacheSpeed { get; set; } = 1;
@@ -35,8 +35,8 @@ public class ArmAxes
     public float J2 { get; set; }
     public float J3 { get; set; }
     public float J4 { get; set; }
-    public float Pitch { get; set; }
-    public float Roll { get; set; }
+    public float J5 { get; set; }
+    public float J6 { get; set; }
 
     public void SetFromArm(Arm arm)
     {
@@ -46,7 +46,7 @@ public class ArmAxes
         J2 = arm.Position_J2;
         J3 = arm.Position_J3;
         J4 = arm.Position_J4;
-        Pitch = arm.Position_P;
-        Roll = arm.Position_R;
+        J5 = arm.Position_J5;
+        J6 = arm.Position_J6;
     }
 }

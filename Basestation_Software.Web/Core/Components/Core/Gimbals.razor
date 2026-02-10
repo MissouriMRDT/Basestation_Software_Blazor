@@ -5,22 +5,28 @@
 <div class="component-header">
     <h3>Gimbals</h3>
     <div class="vr">&nbsp;</div>
-    <input type="checkbox" @bind=OutputDisabled title="Disable Output">
+    <input type="checkbox" class="output-enabled" @bind=_outputEnabled title="Disable Output">
     <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
 </div>
 <div class="component-body">
     <GamepadScheme @ref=_gamepadScheme AxisNames=_axisNames ControlScheme=_controlScheme />
+    <div style="display: flex">
+    @for (int i = 0; i < 12; i++)
+    {
+        <p>@($"{_axisNames[i]}: {_angles[i]:000}")</p>
+    }
+    </div>
 </div>
 
 @code {
     // Declare member variables
-    private bool OutputDisabled = false;
+    private bool _outputEnabled = true;
     private GamepadSelector? _gamepadSelector;
     private GamepadScheme? _gamepadScheme;
     private ControlScheme _controlScheme = new()
     {
         Binds = [Bind.LSX, Bind.LSY, Bind.RSX, Bind.RSY, Bind.DPadX, Bind.DPadY, Bind.LBumpTrig, Bind.RBumpTrig, Bind.XB, Bind.AY, Bind.None, Bind.None],
-        Inversions = [false, true, false, true, false, true, false, false, false, true, false, false]
+        Inversions = [true, true, true, true, false, true, false, false, false, true, false, false]
     };
     public double GIMBAL_SPEED = 80; // deg/s
 
@@ -38,7 +44,7 @@
 "Auger Pan",
 "Auger Tilt",
 ];
-    private static double[] _angles = new double[12];
+    private static double[] _angles = [180, 137, 48, 113, 43, 82, 0, 0, 0, 0, 0, 0];
 
     private async Task Update(Gamepad gamepad, float deltaT)
     {
@@ -55,10 +61,10 @@
         if (!gamepad.Connected || _gamepadScheme == null) return false;
         float[] inputs = _gamepadScheme.Update(gamepad);
 
-        if (OutputDisabled) return false;
+        if (!_outputEnabled) return false;
 
         for (int i = 0; i < _angles.Length; i++)
-            _angles[i] = Math.Clamp(_angles[i] + inputs[i] * GIMBAL_SPEED / deltaT, -180, 180);
+            _angles[i] = Math.Clamp(_angles[i] + inputs[i] * GIMBAL_SPEED * deltaT, 0, 180);
         if (Math.Abs(inputs[0]) > 0 || Math.Abs(inputs[1]) > 0) _RoveCommService.Boards.Core.LeftGimbal((short)_angles[0], (short)_angles[1]);
         if (Math.Abs(inputs[2]) > 0 || Math.Abs(inputs[3]) > 0) _RoveCommService.Boards.Core.RightGimbal((short)_angles[2], (short)_angles[3]);
         if (Math.Abs(inputs[4]) > 0 || Math.Abs(inputs[5]) > 0) _RoveCommService.Boards.Core.BackGimbal((short)_angles[4], (short)_angles[5]);
