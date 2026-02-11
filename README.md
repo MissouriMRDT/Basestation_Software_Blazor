@@ -24,6 +24,7 @@ This project is the frontend web application built using Blazor. Blazor is a fra
 - [Bootstrap](https://getbootstrap.com/docs/5.3/getting-started/introduction/) for icons
 - [Leaflet](https://leafletjs.com/) for the interactive map
 - [three.js](https://threejs.org) for 3d rover
+- [Chart.js](https://www.chartjs.org) for Raman graph
 
 ## Getting Started
 
