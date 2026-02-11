@@ -333,3 +333,26 @@ input[type=checkbox].danger:checked {
 .form-label {
     margin: 8px 0;
 }
+
+.view-2d * {
+    stroke: #000;
+    stroke-width: 0.2;
+    fill: none;
+}
+
+.view-2d line.arrow {
+    stroke: #000;
+    stroke-width: 0.1;
+    fill: none;
+}
+
+.view-2d path.arrow {
+    stroke-width: 0;
+    fill: #000;
+}
+
+.view-2d text {
+    font-size: 0.8px;
+    fill: #f0f;
+    stroke: none;
+}
