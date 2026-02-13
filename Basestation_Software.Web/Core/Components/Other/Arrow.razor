@@ -1,0 +1,17 @@
+@attribute [ComponentAttributes.Ignore]
+
+<line class="arrow" x1=@x y1=@y1 x2=@x y2=@y2 />
+<path class="arrow" d="M @x,@Math.Min(y1, y2) l 0.3,1 l -0.6,0 z" />
+<path class="arrow" d="M @x,@Math.Max(y1, y2) l 0.3,-1 l -0.6,0 z" />
+<text x=@x y=@((y1 + y2) / 2)>@($"{y2 - y1:00.0}")</text>
+
+@code {
+    [Parameter, EditorRequired]
+    public float x { get; set; }
+
+    [Parameter, EditorRequired]
+    public float y1 { get; set; }
+
+    [Parameter, EditorRequired]
+    public float y2 { get; set; }
+}

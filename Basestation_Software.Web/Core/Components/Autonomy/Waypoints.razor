@@ -11,7 +11,7 @@
     <div class="vr">&nbsp;</div>
     <button @onclick=New><i class="bi-plus" /></button>
 </div>
-<div class="component-body" style="display: grid; overflow-y: scroll; flex-grow: 0; grid-template-columns: min-content 100px 80px 80px 20px 30px 20px repeat(4, min-content)">
+<div class="component-body" style="display: grid; overflow-y: scroll; flex-grow: 0; grid-template-columns: min-content 100px 80px 80px 20px 30px 100px repeat(4, min-content)">
     <p></p>
     <p>Name</p>
     <p>Latitude</p>
@@ -27,12 +27,17 @@
         int i = _i;
         GPSWaypoint waypoint = _waypoints[i];
         <button class=@(_GPSWaypointState.SelectedWaypoint?.ID == waypoint.ID ? "success" : "") onclick=@(() => Select(i)) title="Select Waypoint"><i class="bi-check" /></button>
-        <input style="padding: 0" @bind=waypoint.Name>
-        <input style="padding: 0" @bind:get=@(waypoint.Latitude.ToString("000.000000;-000.000000")) @bind:set=@(value => waypoint.Latitude = GPSWaypoint.ConvertDMSToDegrees(value))>
-        <input style="padding: 0" @bind:get=@(waypoint.Longitude.ToString("000.000000;-000.000000")) @bind:set=@(value => waypoint.Longitude = GPSWaypoint.ConvertDMSToDegrees(value))>
-        <input style="padding: 0" type="color" @bind:get=@($"#{waypoint.Color:X6}") @bind:set=@(value => waypoint.Color = int.Parse(value.Substring(1), System.Globalization.NumberStyles.HexNumber))>
-        <input style="padding: 0" @bind=waypoint.SearchRadius>
-        <input style="padding: 0" @bind=waypoint.TagID>
+        <input style="padding: 0" @bind=waypoint.Name />
+        <input style="padding: 0" @bind:get=@(waypoint.Latitude.ToString("000.000000;-000.000000")) @bind:set=@(value => waypoint.Latitude = GPSWaypoint.ConvertDMSToDegrees(value)) />
+        <input style="padding: 0" @bind:get=@(waypoint.Longitude.ToString("000.000000;-000.000000")) @bind:set=@(value => waypoint.Longitude = GPSWaypoint.ConvertDMSToDegrees(value)) />
+        <input style="padding: 0" type="color" @bind:get=@($"#{waypoint.Color:X6}") @bind:set=@(value => waypoint.Color = int.Parse(value.Substring(1), System.Globalization.NumberStyles.HexNumber)) />
+        <input style="padding: 0" @bind=waypoint.SearchRadius />
+        <select @bind=waypoint.TagID style="padding: 0">
+            @foreach (AUTONOMYWAYPOINTTYPES waypointType in Enum.GetValues<AUTONOMYWAYPOINTTYPES>())
+            {
+                <option value=@((int)waypointType)>@waypointType</option>
+            }
+        </select>
         @if (waypoint.TagID >= (int)AUTONOMYWAYPOINTTYPES.Tag0)
         {
             <ArucoTagDisplay ID="@waypoint.TagID" Scale="4" />
@@ -45,7 +50,7 @@
         {
             <img style="height: 24px" src="/images/unknown.png" />
         }
-        <button class="success" @onclick=@(async () => await Save(i)) title="Save Waypoint"><i class="bi-save2" /> </button>
+        <button class="success" @onclick=@(async () => await Save(i)) title="Save Waypoint"><i class="bi-save2" /></button>
         <button class="warning" @onclick=@(async () => await Revert(i)) title="Revert Changes"><i class="bi-arrow-counterclockwise" /></button>
         <button class="danger" @onclick=@(async () => await Delete(i)) title="Delete Waypoint"><i class="bi-trash" /></button>
     }

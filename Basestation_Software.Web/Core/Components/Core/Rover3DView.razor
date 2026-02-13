@@ -17,13 +17,6 @@
 
 @code
 {
-    /* WARNING: THIS COMPONENT IS EVIL AND UNTRUSTWORTHY!!!
-    * We enabled it and it ate all of basestation's performance. It appears there is no good way to clean up a Three.js scene.
-    * Three.js is only meant to be initialized once and remain until the browser reloads. This means it does not play nice
-    * with Blazor's SignalIR-JS-injection-voodoo-rendering tomfoolery.
-    * USE AT YOUR OWN RISK!
-    */
-
     private ElementReference CanvasContainer;
     private IJSObjectReference? jsRoverView;
     private bool _dataLoaded = false;
@@ -36,7 +29,14 @@
             // ThreeJS (WebGL): -z-forward, y-up, x-right
             if (jsRoverView != null)
             {
-                await jsRoverView!.InvokeVoidAsync("updateAnglesFromUpVector", [_RoveCommService.Boards.Core.AccelerometerData_X, _RoveCommService.Boards.Core.AccelerometerData_Z, -_RoveCommService.Boards.Core.AccelerometerData_Y]);
+                await jsRoverView.InvokeVoidAsync("updateAnglesFromUpVector", [_RoveCommService.Boards.Core.AccelerometerData_X, _RoveCommService.Boards.Core.AccelerometerData_Z, -_RoveCommService.Boards.Core.AccelerometerData_Y]);
+            }
+        });
+        _RoveCommService.Boards.Arm.OnPosition(async packet => {
+            if (jsRoverView != null) {
+                await jsRoverView.InvokeVoidAsync("updateArm", [
+                _RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J2, _RoveCommService.Boards.Arm.Position_J3,
+                _RoveCommService.Boards.Arm.Position_J4, _RoveCommService.Boards.Arm.Position_J5, _RoveCommService.Boards.Arm.Position_J6]);
             }
         });
     }

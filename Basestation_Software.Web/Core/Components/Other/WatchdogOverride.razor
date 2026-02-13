@@ -1,0 +1,20 @@
+@inject RoveCommService _RoveCommService
+<div class="component-header">
+    <h3>Watchdog Override</h3>
+</div>
+<div class="component-body" style="display: grid; place-items: center; grid-template-columns: repeat(2, max-content); flex-grow: 0;">
+    <p>Core</p>
+    <input type="checkbox" class="danger" @bind=_set[0] @bind:after=@(() => _RoveCommService.Boards.Core.WatchdogOverride((byte)(_set[0] ? 1 : 0))) />
+    <p>Signal Stack</p>
+    <input type="checkbox" class="danger" @bind=_set[1] @bind:after=@(() => _RoveCommService.Boards.SignalStack.WatchdogOverride((byte)(_set[1] ? 1 : 0))) />
+    <p>Arm</p>
+    <input type="checkbox" class="danger" @bind=_set[2] @bind:after=@(() => _RoveCommService.Boards.Arm.WatchdogOverride((byte)(_set[2] ? 1 : 0))) />
+    <p>Auger</p>
+    <input type="checkbox" class="danger" @bind=_set[3] @bind:after=@(() => _RoveCommService.Boards.Auger.WatchdogOverride((byte)(_set[3] ? 1 : 0))) />
+    <p>Raman</p>
+    <input type="checkbox" class="danger" @bind=_set[4] @bind:after=@(() => _RoveCommService.Boards.Raman.WatchdogOverride((byte)(_set[4] ? 1 : 0))) />
+</div>
+
+@code {
+    private static bool[] _set = new bool[5];
+}

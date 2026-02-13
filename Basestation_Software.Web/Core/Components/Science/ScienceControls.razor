@@ -5,20 +5,81 @@
     <h3>Science Controls</h3>
     <div class="vr">&nbsp;</div>
     <input type="checkbox" class="output-enabled" @bind=_outputEnabled>
-    <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
-</div>
-<div class="component-body">
-    <GamepadScheme @ref=_gamepadScheme AxisNames=_axisNames ControlScheme=_scheme />
-</div>
+        <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
+    </div>
+    <div class="component-body">
+        <GamepadScheme @ref=_gamepadScheme AxisNames=_axisNames ControlScheme=_scheme />
+        <div style="display: grid; grid-template-columns: 180px repeat(6, min-content); place-items: center">
+            <p>Calibrate</p>
+            <p style="grid-column: 2 / 4">L+</p>
+            <p style="grid-column: 4 / 6">L-</p>
+            <p>(in)</p>
+            <p>CAN</p>
+            <button @onclick=@(() => _RoveCommService.Boards.Auger.CalibrateEncoder())>Auger Gantry</button>
+            <div style="width: 16px; height: 16px; background-color: #@((_RoveCommService.Boards.Auger.LimitSwitch & (1 << 0)) != 0 ? "fb0" : "520")"></div>
+            <input type="checkbox" class="danger" @bind=_limitOverrides[0] @bind:after=@(() => _RoveCommService.Boards.Auger.LimitSwitchOverride((byte)((_limitOverrides[0] ? 1 : 0) | (_limitOverrides[1] ? 2 : 0)))) />
+            <div style="width: 16px; height: 16px; background-color: #@((_RoveCommService.Boards.Auger.LimitSwitch & (1 << 1)) != 0 ? "fb0" : "520")"></div>
+            <input type="checkbox" class="danger" @bind=_limitOverrides[1] @bind:after=@(() => _RoveCommService.Boards.Auger.LimitSwitchOverride((byte)((_limitOverrides[0] ? 1 : 0) | (_limitOverrides[1] ? 2 : 0)))) />
+            <p>@($"{_RoveCommService.Boards.Auger.Position:00.0}")</p>
+            <p>@(_RoveCommService.Boards.Auger.SMOCOPing < 500 ? "OK" : "ERR")</p>
+            <button @onclick=@(() => _RoveCommService.Boards.Raman.CalibrateEncoder())>Instruments Gantry</button>
+            <div style="width: 16px; height: 16px; background-color: #@((_RoveCommService.Boards.Raman.LimitSwitch & (1 << 0)) != 0 ? "fb0" : "520")"></div>
+            <input type="checkbox" class="danger" @bind=_limitOverrides[2] @bind:after=@(() => _RoveCommService.Boards.Raman.LimitSwitchOverride((byte)((_limitOverrides[2] ? 1 : 0) | (_limitOverrides[3] ? 2 : 0)))) />
+            <div style="width: 16px; height: 16px; background-color: #@((_RoveCommService.Boards.Raman.LimitSwitch & (1 << 1)) != 0 ? "fb0" : "520")"></div>
+            <input type="checkbox" class="danger" @bind=_limitOverrides[3] @bind:after=@(() => _RoveCommService.Boards.Raman.LimitSwitchOverride((byte)((_limitOverrides[2] ? 1 : 0) | (_limitOverrides[3] ? 2 : 0)))) />
+            <p>@($"{_RoveCommService.Boards.Raman.Position_InstrumentsAxis:00000}")</p>
+            <p>@(_RoveCommService.Boards.Raman.SMOCOPing < 500 ? "OK" : "ERR")</p>
+        </div>
+        <p>Auger @($"{_RoveCommService.Boards.Auger.AugerCurrent:00.00}A {_RoveCommService.Boards.Auger.AugerSpeed:000}rpm")</p>
+        <div style="display: grid; grid-template-columns: repeat(4, max-content); place-items: center">
+            <p>Soil Trapdoor</p>
+            <button @onclick=@(() => SoilTrapdoor(false))>AF</button>
+            <button @onclick=@(() => SoilTrapdoor(true))>Cache</button>
+            <p>@($"{_soilTrapdoorPosition:000}")</p>
+            <p></p>
+            <p style="grid-column: 1 / 5">Autofluorescence</p>
+            <p>Brightness</p>
+            <p>LED</p>
+            <p>Filter</p>
+            <p>@($"{_afFilterPosition:000}")</p>
+            <input @bind=_brightness[0] type="range" min="0" max="255" step="1" />
+            <button @onclick=@(() => _RoveCommService.Boards.Auger.LED(_brightness[0], 0, 0, 0))>White</button>
+            <button @onclick=@(() => AFFilter(0))>None</button>
+            <p>None</p>
+            <input @bind=_brightness[1] type="range" min="0" max="255" step="1" />
+            <button @onclick=@(() => _RoveCommService.Boards.Auger.LED(0, _brightness[1], 0, 0))>365nm</button>
+            <button @onclick=@(() => AFFilter(1))>440nm</button>
+            <p>NAD</p>
+            <input @bind=_brightness[2] type="range" min="0" max="255" step="1" />
+            <button @onclick=@(() => _RoveCommService.Boards.Auger.LED(0, 0, _brightness[2], 0))>405nm</button>
+            <button @onclick=@(() => AFFilter(2))>525nm</button>
+            <p>FAD</p>
+            <input @bind=_brightness[3] type="range" min="0" max="255" step="1" />
+            <button @onclick=@(() => _RoveCommService.Boards.Auger.LED(0, 0, 0, _brightness[3]))>500nm</button>
+            <button @onclick=@(() => AFFilter(3))>600nm</button>
+            <p>Carotenoids</p>
+        </div>
+    </div>
 
 @code {
     // Member variables
     private bool _outputEnabled = true;
+    private bool _outputEnabled = true;
     private GamepadSelector? _gamepadSelector;
     private bool LastProcessGamepadInputOK = false;
     private GamepadScheme? _gamepadScheme;
-    private ControlScheme _scheme = new(); // TODO: Set a good default control scheme as done in Gimbals.razor.
-    private static readonly string[] _axisNames = []; // TODO: Set axis names.
+    private ControlScheme _scheme = new()
+    {
+        Binds = [Bind.LSY, Bind.Triggers, Bind.RSY],
+        Inversions = [false, false, false]
+    }; // TODO: Set a good default control scheme as done in Gimbals.razor.
+    private static readonly string[] _axisNames = ["Auger Gantry", "Auger", "Instruments Gantry"]; // TODO: Set axis names.
+    bool[] _limitOverrides = new bool[4];
+    byte[] _brightness = [255, 255, 255, 255];
+    public static readonly short[] AFFilterPositions = [0, 0, 0, 0]; // None, 440nm, 525nm, 600nm
+    public static readonly short[] SoilTrapdorPositions = [0, 0]; // AF, Soil Cache
+    private short _afFilterPosition = AFFilterPositions[0];
+    private short _soilTrapdoorPosition = SoilTrapdorPositions[0];
 
     private async Task Update(Gamepad gamepad, float deltaT)
     {
@@ -30,7 +91,10 @@
         }
         else if (LastProcessGamepadInputOK)
         {
-            // TODO: do something safe when no longer getting input
+            // Stop motors when input stops.
+            _RoveCommService.Boards.Auger.AugerAxis(0);
+            _RoveCommService.Boards.Auger.RunAuger(0);
+            _RoveCommService.Boards.Raman.InstrumentsAxis(0);
         }
         LastProcessGamepadInputOK = ProcessGamepadInputOK;
         await InvokeAsync(StateHasChanged);
@@ -39,13 +103,30 @@
     // Process gamepad input and return true if rovecomm packets were sent.
     private async Task<bool> ProcessGamepadInput(Gamepad gamepad, float deltaT)
     {
-        // TODO: implement
+        if (!gamepad.Connected || _gamepadScheme == null) return false;
+        float[] inputs = _gamepadScheme.Update(gamepad);
+
+        if (!_outputEnabled) return false;
+
+        _RoveCommService.Boards.Auger.AugerAxis((short)Math.Clamp(inputs[0] * short.MaxValue, short.MinValue, short.MaxValue));
+        _RoveCommService.Boards.Auger.RunAuger((short)Math.Clamp(inputs[1] * 1000, -1000, 1000));
+        _RoveCommService.Boards.Raman.InstrumentsAxis((short)Math.Clamp(inputs[2] * short.MaxValue, short.MinValue, short.MaxValue));
+
         return false;
     }
 
-    private float _augerMult = -1f;
-    private float _augerAxisMult = -0.4f;
-    private float _instrumentAxisMult = 0.4f;
+    private void AFFilter(int i)
+    {
+        if (i < 0 || i >= AFFilterPositions.Length) return;
+        _afFilterPosition = AFFilterPositions[i];
+        if (_outputEnabled) _RoveCommService.Boards.Auger.AugerServo(_afFilterPosition, _soilTrapdoorPosition);
+    }
+
+    private void SoilTrapdoor(bool cahce)
+    {
+        _soilTrapdoorPosition = SoilTrapdorPositions[cahce ? 1 : 0];
+        if (_outputEnabled) _RoveCommService.Boards.Auger.AugerServo(_afFilterPosition, _soilTrapdoorPosition);
+    }
 
     void IDisposable.Dispose() { }
 }

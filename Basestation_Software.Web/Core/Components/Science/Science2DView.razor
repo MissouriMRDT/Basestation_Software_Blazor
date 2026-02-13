@@ -1,0 +1,33 @@
+﻿@inject RoveCommService _RoveCommService
+
+<div class="component-header">
+    <h3>Science 2D View</h3>
+</div>
+<div class="component-body">
+    <svg viewBox="-1 -24.3 21.5 50" class="view-2d">
+        <rect class="sci" width="19.5" height="7.5" x="0" y="-7.5" />
+        <g transform="translate(0, @_auger)">
+            <rect class="sci" width="8" height="23.3" x="1.25" y="-23.3" />
+            <rect class="sci" width="1.3" height=@_augerLength x="4.6" y="0" />
+        </g>
+        <rect class="sci" width="8" height="20.5" x="10.25" y="-20.5" transform="translate(0, @_raman)" />
+        <line class="sci" x1="-1" y1="0" x2="20.5" y2="0" stroke-dasharray="0.3, 0.3" transform="translate(0, @_ground)" />
+        <text x="-1" y="-8">(in)</text>
+        <Arrow x=0 y1=0 y2=@_ground />
+        <Arrow x=2.925f y1=0 y2=@_auger />
+        <Arrow x=2.925f y1=@_auger y2=@_ground />
+        <Arrow x=5.25f y1=0 y2=@(_auger + _augerLength) />
+        <Arrow x=7.575f y1=@(_auger + _augerLength) y2=@_ground />
+        <Arrow x=14.25f y1=0 y2=@_raman />
+        <Arrow x=14.25f y1=@_raman y2=@_ground />
+    </svg>
+</div>
+
+@code {
+    // Reduce typing:
+    private float _ground { get => _raman + _tof; }
+    private float _auger { get => _RoveCommService.Boards.Auger.Position; }
+    private float _raman { get => _RoveCommService.Boards.Raman.Position_InstrumentsAxis; }
+    private float _tof { get => _RoveCommService.Boards.Raman.Position_TOF; }
+    private static readonly float _augerLength = 7.5f;
+}
