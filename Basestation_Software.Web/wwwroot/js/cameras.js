@@ -83,7 +83,7 @@ export class CameraDisplay {
         for (let oldElement of this.videoContainer.getElementsByClassName("video-display")) {
             this.videoContainer.removeChild(oldElement);
         }
-        this.videoContainer.prepend(this.videoDisplay);
+        this.videoContainer.appendChild(this.videoDisplay);
     }
 
     resetCamera() {

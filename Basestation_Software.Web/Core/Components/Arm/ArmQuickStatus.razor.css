@@ -1,6 +1,7 @@
 .arm-quick-status {
     display: grid;
-    grid-template-columns: min-content min-content;
+    grid-template-columns: min-content min-content min-content;
+    column-gap: 10px;
 }
 
 .arm-quick-status>p {

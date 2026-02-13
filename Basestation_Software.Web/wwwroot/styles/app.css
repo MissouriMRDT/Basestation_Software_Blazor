@@ -252,6 +252,18 @@ input[type=checkbox]:checked {
     --checkbox-color: #2af371;
 }
 
+input[type=checkbox].output-enabled {
+    --checkbox-color: #dc3545;
+}
+
+input[type=checkbox].output-enabled:checked {
+    --checkbox-color: #2af371;
+}
+
+input[type=checkbox].danger:checked {
+    --checkbox-color: #dc3545;
+}
+
 .component {
     border: 1px solid #000;
     overflow: hidden;

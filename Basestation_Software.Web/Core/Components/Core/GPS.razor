@@ -1,4 +1,5 @@
 @using Microsoft.EntityFrameworkCore
+@using System.Numerics
 @inject IJSRuntime _IJSRuntime
 @inject RoveCommService _RoveCommService
 @inject DatabaseService _databaseService
@@ -243,8 +244,8 @@
     // State
     private string FixType = "";
     private bool IsDifferential;
-    private float Pitch { get => Math.Clamp(_RoveCommService.Boards.Core.IMUData_Pitch, -90, 90); }
-    private float Roll { get => Math.Clamp(_RoveCommService.Boards.Core.IMUData_Roll, -180, 180); }
+    private double Pitch;
+    private double Roll;
 
     protected override void OnInitialized()
     {
@@ -279,7 +280,23 @@
         });
 
         _RoveCommService.Boards.Nav.OnCompassData(Update);
-        _RoveCommService.Boards.Core.OnIMUData(Update);
+        _RoveCommService.Boards.Core.OnAccelerometerData(async packet => {
+            float x = _RoveCommService.Boards.Core.AccelerometerData_X;
+            float y = _RoveCommService.Boards.Core.AccelerometerData_Z;
+            float z = -_RoveCommService.Boards.Core.AccelerometerData_Y;
+
+            Vector3 upVector = new(x, y, z);
+            Vector3 normalizedUp = Vector3.Normalize(upVector);
+            Vector3 axisAround = Vector3.Normalize(Vector3.Cross(normalizedUp, Vector3.UnitY));
+            float angleAround = (float)Math.Acos((float)(Vector3.Dot(normalizedUp, Vector3.UnitY) / normalizedUp.Length()));
+            Roll = Math.Round((Math.Asin(normalizedUp.X) / Math.PI) * 180);
+            Pitch = -Math.Round((Math.Asin(normalizedUp.Z) / Math.PI) * 180);
+            // this still breaks for y < 0, but if the rover gets itself into that orientation, we have bigger problems
+            if (normalizedUp.Y < 0) {
+                Roll = 180 - Roll;
+                Pitch = 180 - Pitch;
+            }
+        });
         _RoveCommService.Boards.Nav.OnSatelliteCountData(Update);
         _RoveCommService.Boards.Core.OnAccelerometerData(Update);
     }

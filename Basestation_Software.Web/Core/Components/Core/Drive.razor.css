@@ -5,8 +5,6 @@
         "left-backward left-backward left-forward left-forward"
         "right-backward right-backward right-forward right-forward"
         "drivespeed-input drivespeed-buttons drivespeed-buttons gimbal"
-        "midspeed-input midspeed-input midspeed gimbal"
-        "outspeed-input outspeed-input outspeed gimbal"
         "deadzone-input deadzone-input deadzone gimbal"
         "none none none gimbal"
         "none none none gimbal";
@@ -16,7 +14,6 @@
 
 .drive>p {
     align-content: center;
-    color: #fff;
 }
 
 .drive>progress {

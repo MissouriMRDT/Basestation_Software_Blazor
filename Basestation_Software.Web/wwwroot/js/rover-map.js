@@ -35,7 +35,7 @@ export class RoverMap {
         this.dotNetComponent = dotNetComponent;
 
         const satelliteLayer = L.tileLayer(urlTemplate, {
-            attribution: "Basestation_Software.Api",
+            attribution: "Basestation_Software",
             maxNativeZoom: 18,
             minNativeZoom: 13,
             maxZoom: 21,
@@ -44,7 +44,7 @@ export class RoverMap {
         this.satelliteLayer = satelliteLayer;
 
         const shadowLayer = L.tileLayer(urlTemplate2, {
-            attribution: "Basestation_Software.Api",
+            attribution: "Basestation_Software",
             maxNativeZoom: 18,
             minNativeZoom: 13,
             maxZoom: 21,
