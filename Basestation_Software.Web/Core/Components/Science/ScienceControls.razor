@@ -22,13 +22,6 @@
             <input type="checkbox" class="danger" @bind=_limitOverrides[1] @bind:after=@(() => _RoveCommService.Boards.Auger.LimitSwitchOverride((byte)((_limitOverrides[0] ? 1 : 0) | (_limitOverrides[1] ? 2 : 0)))) />
             <p>@($"{_RoveCommService.Boards.Auger.Position:00.0}")</p>
             <p>@(_RoveCommService.Boards.Auger.SMOCOPing < 500 ? "OK" : "ERR")</p>
-            <button @onclick=@(() => _RoveCommService.Boards.Raman.CalibrateEncoder())>Instruments Gantry</button>
-            <div style="width: 16px; height: 16px; background-color: #@((_RoveCommService.Boards.Raman.LimitSwitch & (1 << 0)) != 0 ? "fb0" : "520")"></div>
-            <input type="checkbox" class="danger" @bind=_limitOverrides[2] @bind:after=@(() => _RoveCommService.Boards.Raman.LimitSwitchOverride((byte)((_limitOverrides[2] ? 1 : 0) | (_limitOverrides[3] ? 2 : 0)))) />
-            <div style="width: 16px; height: 16px; background-color: #@((_RoveCommService.Boards.Raman.LimitSwitch & (1 << 1)) != 0 ? "fb0" : "520")"></div>
-            <input type="checkbox" class="danger" @bind=_limitOverrides[3] @bind:after=@(() => _RoveCommService.Boards.Raman.LimitSwitchOverride((byte)((_limitOverrides[2] ? 1 : 0) | (_limitOverrides[3] ? 2 : 0)))) />
-            <p>@($"{_RoveCommService.Boards.Raman.Position_InstrumentsAxis:00000}")</p>
-            <p>@(_RoveCommService.Boards.Raman.SMOCOPing < 500 ? "OK" : "ERR")</p>
         </div>
         <p>Auger @($"{_RoveCommService.Boards.Auger.AugerCurrent:00.00}A {_RoveCommService.Boards.Auger.AugerSpeed:000}rpm")</p>
         <div style="display: grid; grid-template-columns: repeat(4, max-content); place-items: center">
@@ -63,9 +56,7 @@
 
 @code {
     // Member variables
-    private bool _outputEnabled = true;
-    private bool _outputEnabled = true;
-    private GamepadSelector? _gamepadSelector;
+    private bool _outputEnabled = true;    private GamepadSelector? _gamepadSelector;
     private bool LastProcessGamepadInputOK = false;
     private GamepadScheme? _gamepadScheme;
     private ControlScheme _scheme = new()

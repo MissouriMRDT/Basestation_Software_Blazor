@@ -128,7 +128,7 @@ export class Rover3DView {
     updateArm(x, j2, j3, j4, j5, j6) {
         this.armJoints.x.position.z = (x - 9.62) * 0.7;
         this.armJoints.j2.setRotationFromEuler(new THREE.Euler(0, 0, j2 * Math.PI / 180, "XYZ"));
-        this.armJoints.j3.setRotationFromEuler(new THREE.Euler(0, 0, j3 * Math.PI / 180, "XYZ"));
+        this.armJoints.j3.setRotationFromEuler(new THREE.Euler(0, 0, j3 * Math.PI / 180 - 90, "XYZ"));
         this.armJoints.j4.setRotationFromEuler(new THREE.Euler(j4 * Math.PI / 180, 0, 0, "XYZ"));
         this.armJoints.j5.setRotationFromEuler(new THREE.Euler(0, 0, j5 * Math.PI / 180, "XYZ"));
         this.armJoints.j6.setRotationFromEuler(new THREE.Euler(j6 * Math.PI / 180, 0, 0, "XYZ"));
