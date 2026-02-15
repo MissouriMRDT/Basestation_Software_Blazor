@@ -34,6 +34,8 @@ builder.Services.AddSingleton<DatabaseService>();
 builder.Services.AddDbContextFactory<DatabaseContext>();
 builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
+builder.Services.AddSingleton<SwitchMonitorService>();
+builder.Services.AddHostedService((sp) => sp.GetRequiredService<SwitchMonitorService>());
 
 var app = builder.Build();
 
