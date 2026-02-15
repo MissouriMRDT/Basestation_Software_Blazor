@@ -11,6 +11,10 @@
         @* <button class="btn" @onclick=UpdateInterfaceStats>Test Command</button> *@
         <div class=row>
             <div class="col-6">
+                <select @bind="Model">
+                    <option value="@SwitchModel.Cisco_IE_2000_16TC">Cisco IE-2000-16TC</option>
+                    <option value="@SwitchModel.Cisco_IE_3200_8T2S">Cisco IE-3200-8T2S</option>
+                </select>
                 <svg viewBox="0 0 100 100">
                     <style>
                         .port {
@@ -41,8 +45,10 @@
                             stroke: yellow;
                         }
                     </style>
-                    <image x="0" y="0" width="100" height="100" href="images/Cisco_IE_2000_16TC_GE.png" />
-                    @for(int i = 0; i < 18; i++)
+                    <image x="0" y="0" width="100" height="100" href="@(Model switch {
+                        SwitchModel.Cisco_IE_2000_16TC => "images/Cisco_IE_2000_16TC_GE.png",
+                        SwitchModel.Cisco_IE_3200_8T2S => "images/Cisco_IE_3200_8T2S.png"})" />
+                    @for(int i = 0; i < _ports.Length; i++)
                     {
                         var (x, y) = GetPortDisplayPosition(i);
                         int index = i;
@@ -105,6 +111,12 @@
 
 @code
 {
+    public enum SwitchModel
+    {
+        Cisco_IE_2000_16TC,
+        Cisco_IE_3200_8T2S
+    }
+
     class SignalTraffic
     {
         public string Band {get; set;}
@@ -122,40 +134,66 @@
         new SignalTraffic{Band = "VLAN 4"}
     };
 
-    private PortStatus[] _ports = new PortStatus[18];
-    private InterfaceInfo[] _portStats = new InterfaceInfo[18];
-    private InterfaceInfo[] _vlanStats = new InterfaceInfo[4];
+    private PortStatus[] _ports;
+    private InterfaceInfo[] _portStats;
+    private InterfaceInfo[] _vlanStats;
 
     private InterfaceInfo? _displayStats;
 
+    private SwitchModel _model;
+    public SwitchModel Model {
+        get { return _model; }
+        set {
+            switch (value)
+            {
+                case SwitchModel.Cisco_IE_2000_16TC:
+                    _ports = new PortStatus[18];
+                    _portStats = new InterfaceInfo[18];
+                    break;
+                case SwitchModel.Cisco_IE_3200_8T2S:
+                    _ports = new PortStatus[10];
+                    _portStats = new InterfaceInfo[10];
+                    break;
+            }
+            for (int i = 0; i < _ports.Length; i++)
+            {
+                _ports[i] = new();
+            }
+            for (int i = 0; i < _portStats.Length; i++)
+            {
+                _portStats[i] = new();
+            }
+            _vlanStats = new InterfaceInfo[4];
+            for (int i = 0; i < _vlanStats.Length; i++)
+            {
+                _vlanStats[i] = new();
+            }
+            Console.WriteLine($"CHANGED TO {value}");
+            _model = value;
+        }
+    }
+
     protected override void OnInitialized()
     {
-        for (int i = 0; i < 18; i++)
-        {
-            _ports[i] = new();
-            _portStats[i] = new();
-        }
-        for (int i = 0; i < 4; i++)
-        {
-            _vlanStats[i] = new();
-        }
+        Model = SwitchModel.Cisco_IE_2000_16TC;
         _SwitchMonitorService.OnInterfaceUpdate += UpdateInterfaceStats;
         _SwitchMonitorService.OnPortStatusUpdate += UpdatePortStatuses;
     }
 
     private void UpdateSignalTraffic()
     {
-        var m9 = Array.Find(_portStats, p => p.Description.Contains("900MHz"));
+        if (_portStats == null || _vlanStats == null) return;
+        var m9 = Array.Find(_portStats, p => p.Description?.Contains("900MHz") ?? false);
         if (m9 is not null)
         {
             _signalTraffic[0].Traffic = m9.Traffic.InputRatePackets + m9.Traffic.OutputRatePackets;
         }
-        var m2 = Array.Find(_portStats, p => p.Description.Contains("2.4GHz"));
+        var m2 = Array.Find(_portStats, p => p.Description?.Contains("2.4GHz") ?? false);
         if (m2 is not null)
         {
             _signalTraffic[1].Traffic = m2.Traffic.InputRatePackets + m2.Traffic.OutputRatePackets;
         }
-        var m5 = Array.Find(_portStats, p => p.Description.Contains("5.8GHz"));
+        var m5 = Array.Find(_portStats, p => p.Description?.Contains("5.8GHz") ?? false);
         if (m5 is not null)
         {
             _signalTraffic[2].Traffic = m5.Traffic.InputRatePackets + m5.Traffic.OutputRatePackets;
@@ -170,21 +208,37 @@
 
     private void UpdatePortStatuses(List<PortStatus> ports)
     {
-        for (int i = 0; i < 16; i++)
+        if (_ports == null) return;
+        switch (Model)
         {
-            var port = ports.Find(p => p.Port == $"Fa1/{i+1}");
-            if (port is not null)
-            {
-                _ports[i] = port;
-            }
-        }
-        for (int i = 0; i < 2; i++)
-        {
-            var port = ports.Find(p => p.Port == $"Gi1/{i+1}");
-            if (port is not null)
-            {
-                _ports[16+i] =  port;
-            }
+            case SwitchModel.Cisco_IE_2000_16TC:
+                for (int i = 0; i < 16; i++)
+                {
+                    var port = ports.Find(p => p.Port == $"Fa1/{i+1}");
+                    if (port is not null)
+                    {
+                        _ports[i] = port;
+                    }
+                }
+                for (int i = 0; i < 2; i++)
+                {
+                    var port = ports.Find(p => p.Port == $"Gi1/{i+1}");
+                    if (port is not null)
+                    {
+                        _ports[16+i] =  port;
+                    }
+                }
+                break;
+            case SwitchModel.Cisco_IE_3200_8T2S:
+                for (int i = 0; i < 10; i++)
+                {
+                    var port = ports.Find(p => p.Port == $"Gi1/{i+1}");
+                    if (port is not null)
+                    {
+                        _ports[i] =  port;
+                    }
+                }
+                break;
         }
         InvokeAsync(StateHasChanged);
     }
@@ -198,7 +252,7 @@
         else
         {
             _displayStats = _portStats[index];
-            Console.WriteLine($"Showing info for {_displayStats.Name}");
+            // Console.WriteLine($"Showing info for {_displayStats.Name}");
         }
         StateHasChanged();
     }
@@ -224,21 +278,37 @@
 
     private void UpdateInterfaceStats(List<InterfaceInfo> interfaces)
     {
-        for (int i = 0; i < 16; i++)
+        if (_portStats == null || _vlanStats == null) return;
+        switch (Model)
         {
-            var inter = interfaces.Find(inf => inf.Name == $"FastEthernet1/{i+1}");
-            if (inter is not null)
-            {
-                _portStats[i] = inter;
-            }
-        }
-        for (int i = 0; i < 2; i++)
-        {
-            var inter = interfaces.Find(inf => inf.Name == $"GigabitEthernet1/{i+1}");
-            if (inter is not null)
-            {
-                _portStats[16+i] = inter;
-            }
+            case SwitchModel.Cisco_IE_2000_16TC:
+                for (int i = 0; i < 16; i++)
+                {
+                    var inter = interfaces.Find(inf => inf.Name == $"FastEthernet1/{i+1}");
+                    if (inter is not null)
+                    {
+                        _portStats[i] = inter;
+                    }
+                }
+                for (int i = 0; i < 2; i++)
+                {
+                    var inter = interfaces.Find(inf => inf.Name == $"GigabitEthernet1/{i+1}");
+                    if (inter is not null)
+                    {
+                        _portStats[16+i] = inter;
+                    }
+                }
+                break;
+            case SwitchModel.Cisco_IE_3200_8T2S:
+                for (int i = 0; i < 10; i++)
+                {
+                    var inter = interfaces.Find(inf => inf.Name == $"GigabitEthernet1/{i+1}");
+                    if (inter is not null)
+                    {
+                        _portStats[i] = inter;
+                    }
+                }
+                break;
         }
         for (int i = 0; i < 4; i++)
         {
@@ -252,29 +322,54 @@
         InvokeAsync(StateHasChanged);
     }
 
-    private static (float, float) GetPortDisplayPosition(int index)
+    private (float, float) GetPortDisplayPosition(int index)
     {
-        if (index < 0 || index >= 18) {
-            throw new ArgumentOutOfRangeException();
-        }
-        if (index < 8)
+        switch (Model)
         {
-            return ((index%2+1)*11, (index/2+1)*11);
+            case SwitchModel.Cisco_IE_2000_16TC:
+                if (index < 0 || index >= 18) {
+                    // throw new ArgumentOutOfRangeException();
+                    return (0, 0);
+                }
+                if (index < 8)
+                {
+                    return ((index%2+1)*11, (index/2+1)*11);
+                }
+                if (index < 16)
+                {
+                    index -= 8;
+                    return (29+(index%2+1)*11, (index/2+1)*11);
+                }
+                if (index == 16)
+                {
+                    return (51, 62.5f);
+                }
+                if (index == 17)
+                {
+                    return (51, 80.5f);
+                }
+                break;
+            case SwitchModel.Cisco_IE_3200_8T2S:
+                if (index < 0 || index >= 10) {
+                    // throw new ArgumentOutOfRangeException();
+                    return (0, 0);
+                }
+                if (index < 2)
+                {
+                    return (46-index*10, 27);
+                }
+                if (index < 6)
+                {
+                    return (82-(index-2)*10.2f, 42);
+                }
+                if (index < 10)
+                {
+                    return (39-(index-6)*10.2f, 42);
+                }
+                break;
         }
-        if (index < 16)
-        {
-            index -= 8;
-            return (29+(index%2+1)*11, (index/2+1)*11);
-        }
-        if (index == 16)
-        {
-            return (51, 62.5f);
-        }
-        if (index == 17)
-        {
-            return (51, 80.5f);
-        }
-        throw new ArgumentOutOfRangeException(); 
+        // throw new ArgumentOutOfRangeException();
+        return (0, 0);
     }
 
     private void TestCommand()
