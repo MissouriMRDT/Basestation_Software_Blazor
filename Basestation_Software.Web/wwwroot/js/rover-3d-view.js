@@ -52,7 +52,7 @@ export class Rover3DView {
                 this.arm = loadedData.scene.children[0];
                 this.arm.scale.multiplyScalar(0.112);
                 this.arm.setRotationFromEuler(new THREE.Euler(Math.PI / 2, Math.PI / 2, -Math.PI / 2, "XYZ"));
-                this.arm.position.set(0.75, -0.67, -0.75);
+                this.arm.position.set(-0.75, -0.67, -0.75);
                 this.armJoints.x = this.arm.getObjectByName("Shoulder");
                 this.armJoints.j2 = this.arm.getObjectByName("Bicep");
                 this.armJoints.j3 = this.arm.getObjectByName("Forearm_Roll");
@@ -126,7 +126,7 @@ export class Rover3DView {
     }
 
     updateArm(x, j2, j3, j4, j5, j6) {
-        this.armJoints.x.position.z = (x - 9.62) * 0.7;
+        this.armJoints.x.position.z = x;
         this.armJoints.j2.setRotationFromEuler(new THREE.Euler(0, 0, j2 * Math.PI / 180, "XYZ"));
         this.armJoints.j3.setRotationFromEuler(new THREE.Euler(0, 0, j3 * Math.PI / 180, "XYZ"));
         this.armJoints.j4.setRotationFromEuler(new THREE.Euler(j4 * Math.PI / 180, 0, 0, "XYZ"));

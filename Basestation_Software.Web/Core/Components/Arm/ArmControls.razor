@@ -51,83 +51,68 @@
         <p style="align-self: right">Cache</p><input type="range" min="0.0" max="1.0" step="0.01" @bind=_preset.CacheSpeed><input @bind=_preset.CacheSpeed>
     </div>
     <GamepadScheme @ref=_gamepadScheme AxisNames=_axisNames ControlScheme=_preset />
-    <div style="display: grid; grid-template-columns: repeat(9, min-content); place-items: stretch; text-align: center">
-        <p style="grid-column: 1 / 10">Limit Status and Override</p>
-        <p></p>
-        <p style="grid-column: 2 / 6; border-right: 1px solid black">Limit Switch</p>
-        <p style="grid-column: 6 / 10">Soft Limit</p>
-        <p></p>
-        <p style="grid-column: 2 / 4; border-right: 1px solid black">+</p>
-        <p style="grid-column: 4 / 6; border-right: 1px solid black">-</p>
-        <p style="grid-column: 6 / 8; border-right: 1px solid black">+</p>
-        <p style="grid-column: 8 / 10">-</p>
-        @for (int _i = 0; _i < _limitNames.Length; _i++)
-        {
-            int i = _i;
-            <p style="width:30px">@_limitNames[i]</p>
-            <div style="width: 16px; height: 16px; background-color: #@(_limitSwitchDepressed[i * 2] ? "fb0" : "520")"></div>
-            <input type="checkbox" class="danger" @bind=@(_hardLimitOverrides[i * 2])>
-            <div style="width: 16px; height: 16px; background-color: #@(_limitSwitchDepressed[i * 2 + 1] ? "fb0" : "520")"></div>
-            <input type="checkbox" class="danger" @bind=@(_hardLimitOverrides[i * 2 + 1])>
-            <div style="width: 16px; height: 16px; background-color: #@(_softLimitTriggered[i * 2] ? "fb0" : "520")"></div>
-            <input type="checkbox" class="danger" @bind=@(_softLimitOverrides[i * 2])>
-            <div style="width: 16px; height: 16px; background-color: #@(_softLimitTriggered[i * 2 + 1] ? "fb0" : "520")"></div>
-            <input type="checkbox" class="danger" @bind=@(_softLimitOverrides[i * 2 + 1])>
-        }
-        <button class="success" style="grid-column: 2 / 6" @onclick=@(() => { ushort mask = 0; for (int i = 0; i < _hardLimitOverrides.Length; i++) { mask |= (ushort)((_hardLimitOverrides[i] ? 1 : 0) << i); } _RoveCommService.Boards.Arm.LimitSwitchOverride(mask); })><i class="bi-send" /></button>
-        <button class="success" style="grid-column: 6 / 10" @onclick=@(() => { ushort mask = 0; for (int i = 0; i < _softLimitOverrides.Length; i++) { mask |= (ushort)((_softLimitOverrides[i] ? 1 : 0) << i); } _RoveCommService.Boards.Arm.SoftLimitOverride(mask); })><i class="bi-send" /></button>
-    </div>
-    <div style="display: grid; grid-template-columns: repeat(5, max-content)">
-        <p></p>
-        <p>|Target</p>
-        <p>|Delta</p>
-        <p>|Telem</p>
-        <p>|Ping</p>
-        <p>X</p>
-        <p>|@($"{_target.X:+000.00;-000.00}")</p>
-        <p>|@($"{_target.X-_RoveCommService.Boards.Arm.Position_X:+000.00;-000.00}")</p>
-        <p>|@($"{_RoveCommService.Boards.Arm.Position_X:+000.00;-000.00}")</p>
-        <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_X < 500 ? "OK" : "ERR")</p>
-        <p>Y</p>
-        <p>|@($"{_target.Y:+000.00;-000.00}")</p>
-        <p>|@($"{_target.Y-_RoveCommService.Boards.Arm.Position_Y:+000.00;-000.00}")</p>
-        <p>|@($"{_RoveCommService.Boards.Arm.Position_Y:+000.00;-000.00}")</p>
-        <p>|</p>
-        <p>Z</p>
-        <p>|@($"{_target.Z:+000.00;-000.00}")</p>
-        <p>|@($"{_target.Z-_RoveCommService.Boards.Arm.Position_Z:+000.00;-000.00}")</p>
-        <p>|@($"{_RoveCommService.Boards.Arm.Position_Z:+000.00;-000.00}")</p>
-        <p>|</p>
-        <p>J2</p>
-        <p>|@($"{_target.J2:+000.00;-000.00}")</p>
-        <p>|@($"{_target.J2-_RoveCommService.Boards.Arm.Position_J2:+000.00;-000.00}")</p>
-        <p>|@($"{_RoveCommService.Boards.Arm.Position_J2:+000.00;-000.00}")</p>
-        <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J2 < 500 ? "OK" : "ERR")</p>
-        <p>J3</p>
-        <p>|@($"{_target.J3:+000.00;-000.00}")</p>
-        <p>|@($"{_target.J3-_RoveCommService.Boards.Arm.Position_J3:+000.00;-000.00}")</p>
-        <p>|@($"{_RoveCommService.Boards.Arm.Position_J3:+000.00;-000.00}")</p>
-        <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J3 < 500 ? "OK" : "ERR")</p>
-        <p>J4</p>
-        <p>|@($"{_target.J4:+000.00;-000.00}")</p>
-        <p>|@($"{_target.J4-_RoveCommService.Boards.Arm.Position_J4:+000.00;-000.00}")</p>
-        <p>|@($"{_RoveCommService.Boards.Arm.Position_J4:+000.00;-000.00}")</p>
-        <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J4 < 500 ? "OK" : "ERR")</p>
-        <p>J5</p>
-        <p>|@($"{_target.J5:+000.00;-000.00}")</p>
-        <p>|@($"{_target.J5-_RoveCommService.Boards.Arm.Position_J5:+000.00;-000.00}")</p>
-        <p>|@($"{_RoveCommService.Boards.Arm.Position_J5:+000.00;-000.00}")</p>
-        <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J5 < 500 ? "OK" : "ERR")</p>
-        <p>J6</p>
-        <p>|@($"{_target.J6:+000.00;-000.00}")</p>
-        <p>|@($"{_target.J6-_RoveCommService.Boards.Arm.Position_J6:+000.00;-000.00}")</p>
-        <p>|@($"{_RoveCommService.Boards.Arm.Position_J6:+000.00;-000.00}")</p>
-        <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J6 < 500 ? "OK" : "ERR")</p>
-        <p>Gripper</p>
-        <p>|</p>
-        <p>|</p>
-        <p>|</p>
-        <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_G < 500 ? "OK" : "ERR")</p>
+    <div style="display: flex; justify-content: space-around;">
+        <div style="display: grid; grid-template-columns: repeat(9, min-content); place-items: stretch; text-align: center">
+            <p style="grid-column: 1 / 10">Limit Status and Override</p>
+            <p></p>
+            <p style="grid-column: 2 / 6; border-right: 1px solid black">Limit Switch</p>
+            <p style="grid-column: 6 / 10">Soft Limit</p>
+            <p></p>
+            <p style="grid-column: 2 / 4; border-right: 1px solid black">+</p>
+            <p style="grid-column: 4 / 6; border-right: 1px solid black">-</p>
+            <p style="grid-column: 6 / 8; border-right: 1px solid black">+</p>
+            <p style="grid-column: 8 / 10">-</p>
+            @for (int _i = 0; _i < _limitNames.Length; _i++)
+            {
+                int i = _i;
+                <p style="width:30px">@_limitNames[i]</p>
+                <div style="width: 16px; height: 16px; background-color: #@(_limitSwitchDepressed[i * 2] ? "fb0" : "520")"></div>
+                <input type="checkbox" class="danger" @bind=@(_hardLimitOverrides[i * 2])>
+                <div style="width: 16px; height: 16px; background-color: #@(_limitSwitchDepressed[i * 2 + 1] ? "fb0" : "520")"></div>
+                <input type="checkbox" class="danger" @bind=@(_hardLimitOverrides[i * 2 + 1])>
+                <div style="width: 16px; height: 16px; background-color: #@(_softLimitTriggered[i * 2] ? "fb0" : "520")"></div>
+                <input type="checkbox" class="danger" @bind=@(_softLimitOverrides[i * 2])>
+                <div style="width: 16px; height: 16px; background-color: #@(_softLimitTriggered[i * 2 + 1] ? "fb0" : "520")"></div>
+                <input type="checkbox" class="danger" @bind=@(_softLimitOverrides[i * 2 + 1])>
+            }
+            <button class="success" style="grid-column: 2 / 6" @onclick=@(() => { ushort mask = 0; for (int i = 0; i < _hardLimitOverrides.Length; i++) { mask |= (ushort)((_hardLimitOverrides[i] ? 1 : 0) << i); } _RoveCommService.Boards.Arm.LimitSwitchOverride(mask); })><i class="bi-send" /></button>
+            <button class="success" style="grid-column: 6 / 10" @onclick=@(() => { ushort mask = 0; for (int i = 0; i < _softLimitOverrides.Length; i++) { mask |= (ushort)((_softLimitOverrides[i] ? 1 : 0) << i); } _RoveCommService.Boards.Arm.SoftLimitOverride(mask); })><i class="bi-send" /></button>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, max-content)">
+            <p></p>
+            <p>|Delta</p>
+            <p>|Ping</p>
+            <p>X</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_X:+000.00;-000.00}")</p>
+            <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_X < 500 ? "OK" : "ERR")</p>
+            <p>J2</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_J2:+000.00;-000.00}")</p>
+            <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J2 < 500 ? "OK" : "ERR")</p>
+            <p>J3</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_J3:+000.00;-000.00}")</p>
+            <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J3 < 500 ? "OK" : "ERR")</p>
+            <p>J4</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_J4:+000.00;-000.00}")</p>
+            <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J4 < 500 ? "OK" : "ERR")</p>
+            <p>J5</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_J5:+000.00;-000.00}")</p>
+            <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J5 < 500 ? "OK" : "ERR")</p>
+            <p>J6</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_J6:+000.00;-000.00}")</p>
+            <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J6 < 500 ? "OK" : "ERR")</p>
+            <p>Gripper</p>
+            <p>|</p>
+            <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_G < 500 ? "OK" : "ERR")</p>
+            <p>Gripper X</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_GX:+000.00;-000.00}")</p>
+            <p>|</p>
+            <p>Gripper Y</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_GY:+000.00;-000.00}")</p>
+            <p>|</p>
+            <p>Gripper Z</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_GZ:+000.00;-000.00}")</p>
+            <p>|</p>
+        </div>
     </div>
 </div>
 
@@ -136,7 +121,8 @@
     {
         OpenLoop,
         TargetAngles,
-        InverseKinematics
+        InverseKinematics,
+        LockMode,
     }
 
     // Member variables
@@ -157,11 +143,12 @@
     private float _linearServo = 0;
     private float _cache = 0;
     private float[] _lastInputs = new float[12];
-    private ArmAxes _target = new();
     private ArmAxes _position = new();
 
     private List<ArmPreset> _presets = [];
     private ArmPreset _preset = new();
+    public const float MaxDegreesPerSecond = 45.0f;
+    public const float MaxInchesPerSecond = 8.0f;
 
     protected override async Task OnInitializedAsync()
     {
@@ -169,30 +156,6 @@
         _RoveCommService.Boards.Arm.OnPosition(packet =>
         {
             _position.SetFromArm(_RoveCommService.Boards.Arm);
-            // Set target to non-controlled axes so the target matches the current position when the control mode changes.
-            switch (_controlMode)
-            {
-                case ControlMode.InverseKinematics:
-                    _target.Y = _position.Y;
-                    _target.Z = _position.Z;
-                    break;
-                case ControlMode.TargetAngles:
-                    _target.J4 = _position.J4;
-                    _target.J5 = _position.J5;
-                    _target.J6 = _position.J6;
-                    break;
-                default:
-                    _target.X = _position.X;
-                    _target.J2 = _position.J2;
-                    _target.J3 = _position.J3;
-                    _target.J4 = _position.J4;
-                    _target.J5 = _position.J5;
-                    _target.J6 = _position.J6;
-                    _target.Y = _position.Y;
-                    _target.Z = _position.Z;
-                    break;
-            }
-
             return Task.CompletedTask;
         });
         _RoveCommService.Boards.Arm.OnLimitSwitch(async packet =>
@@ -264,24 +227,38 @@
                 }
             case ControlMode.TargetAngles:
                 {
-                    _target.X += inputs[0] * _preset.XSpeed * deltaT;
-                    _target.J2 += inputs[3] * _preset.J2Speed * deltaT;
-                    _target.J3 += inputs[4] * _preset.J3Speed * deltaT;
-                    _target.J4 += inputs[5] * _preset.J4Speed * deltaT;
-                    _target.J5 += inputs[6] * _preset.J5Speed * deltaT;
-                    _target.J6 += inputs[7] * _preset.J6Speed * deltaT;
-                    _RoveCommService.Boards.Arm.TargetAngle(_target.X, _target.J2, _target.J3, _target.J4, _target.J5, _target.J6);
+                    _RoveCommService.Boards.Arm.TargetAngleIncrement(
+                    inputs[0] * _preset.XSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[3] * _preset.J2Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[4] * _preset.J3Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[5] * _preset.J4Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[6] * _preset.J5Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[7] * _preset.J6Speed * MaxDegreesPerSecond * deltaT
+                    );
                     break;
                 }
             case ControlMode.InverseKinematics:
                 {
-                    _target.X += inputs[0] * _preset.XSpeed * deltaT;
-                    _target.Y += inputs[1] * _preset.YSpeed * deltaT;
-                    _target.Z += inputs[2] * _preset.ZSpeed * deltaT;
-                    _target.J4 += inputs[5] * _preset.J4Speed * deltaT;
-                    _target.J5 += inputs[6] * _preset.J5Speed * deltaT;
-                    _target.J6 += inputs[7] * _preset.J6Speed * deltaT;
-                    _RoveCommService.Boards.Arm.IKPosition(_target.X, _target.Y, _target.Z, _target.J4, _target.J5, _target.J6);
+                    _RoveCommService.Boards.Arm.IKPositionIncrement(
+                    inputs[0] * _preset.XSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[1] * _preset.YSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[2] * _preset.ZSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[5] * _preset.J4Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[6] * _preset.J5Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[7] * _preset.J6Speed * MaxDegreesPerSecond * deltaT
+                    );
+                    break;
+                }
+            case ControlMode.LockMode:
+                {
+                    _RoveCommService.Boards.Arm.IKPoseIncrement(
+                    inputs[0] * _preset.XSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[1] * _preset.YSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[2] * _preset.ZSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[5] * _preset.J4Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[6] * _preset.J5Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[7] * _preset.J6Speed * MaxDegreesPerSecond * deltaT
+                    );
                     break;
                 }
             default: return false;

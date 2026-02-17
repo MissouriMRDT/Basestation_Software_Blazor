@@ -30,23 +30,25 @@ public class ArmPreset : ControlScheme
 public class ArmAxes
 {
     public float X { get; set; }
-    public float Y { get; set; }
-    public float Z { get; set; }
     public float J2 { get; set; }
     public float J3 { get; set; }
     public float J4 { get; set; }
     public float J5 { get; set; }
     public float J6 { get; set; }
+    public float GX { get; set; }
+    public float GY { get; set; }
+    public float GZ { get; set; }
 
     public void SetFromArm(Arm arm)
     {
         X = arm.Position_X;
-        Y = arm.Position_Y;
-        Z = arm.Position_Z;
         J2 = arm.Position_J2;
         J3 = arm.Position_J3;
         J4 = arm.Position_J4;
         J5 = arm.Position_J5;
         J6 = arm.Position_J6;
+        GX = arm.Position_GX;
+        GY = arm.Position_GY;
+        GZ = arm.Position_GZ;
     }
 }
