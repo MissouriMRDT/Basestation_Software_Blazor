@@ -43,7 +43,7 @@
         {
             return false;
         }
-        speed = Math.Abs(gamepad.Axes[0]) <= DeadZone ? (short)0 : (short)(gamepad.Axes[0] * 1000);
+        speed = Math.Abs(gamepad.Axes[0]) <= DeadZone ? (short)0 : (short)(gamepad.Axes[0] * 4000);
         _RoveCommService.Boards.SignalStack.OpenLoop(speed);
         return true;
     }
