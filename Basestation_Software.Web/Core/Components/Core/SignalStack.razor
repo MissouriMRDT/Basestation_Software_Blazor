@@ -1,0 +1,50 @@
+﻿@inject RoveCommService _RoveCommService
+
+<div class="component-header">
+    <h3>Signal Stack</h3>
+    <div class="vr">&nbsp;</div>
+    <input type="checkbox" class="output-enabled" @bind=_outputEnabled />
+    <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
+</div>
+<div class="component-body">
+    <div style="display: flex; background-color: var(--secondary-bg) ">
+        <p>Dead Zone</p>
+        <input type="range" @bind=DeadZone min="0" max="0.5" step="0.001" style="width: 100px; align-self: center" />
+        <input @bind=DeadZone style="width: 40px" />
+    </div>
+    <p>@speed</p>
+</div>
+
+
+@code {
+    bool LastProcessGamepadInputOK = false;
+    private bool _outputEnabled = true;
+    GamepadSelector _gamepadSelector = new();
+
+    public double DeadZone = 0.15;
+
+    short speed = 0;
+    private async Task Update(Gamepad gamepad, float deltaT)
+    {
+        bool processGamepadInputOK = await ProcessGamepadInput(gamepad, deltaT);
+        if (processGamepadInputOK)
+        {
+        }
+        else if (LastProcessGamepadInputOK)
+        {
+            _RoveCommService.Boards.SignalStack.OpenLoop(0);
+        }
+        LastProcessGamepadInputOK = processGamepadInputOK;
+        await InvokeAsync(StateHasChanged);
+    }
+    private async Task<bool> ProcessGamepadInput(Gamepad gamepad, float deltaT)
+    {
+        if (gamepad.Axes.Length < 1)
+        {
+            return false;
+        }
+        speed = Math.Abs(gamepad.Axes[0]) <= DeadZone ? (short)0 : (short)(gamepad.Axes[0] * 4000);
+        _RoveCommService.Boards.SignalStack.OpenLoop(speed);
+        return true;
+    }
+}
