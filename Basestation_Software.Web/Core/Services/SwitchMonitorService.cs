@@ -52,7 +52,7 @@ public class SwitchMonitorService : IHostedService, IDisposable
         public List<EigrpTopologyInfo> Topology { get; set; } = [];
     }
 
-    // private FileStream _logFile;
+    private FileStream? _logFile;
 
     private Queue<NetworkTrafficRecord> _timeAverageSamples = [];
     public static readonly TimeSpan TimeAverageDelta = TimeSpan.FromSeconds(10);
@@ -89,7 +89,23 @@ public class SwitchMonitorService : IHostedService, IDisposable
         });
 
         // TODO: Exception handling
-        // _logFile = File.Create($"NetworkSwitchMonitor_Log_{DateTime.Now:MM-dd-yyyy-hh:mm:tt}.txt");
+    }
+
+    public void EnableLogging(bool enabled = true)
+    {
+        if (enabled)
+        {
+            string filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "logs", $"NetworkSwitchMonitor_Log_{DateTime.Now:MM-dd-yyyy-hh:mm:tt}.txt");
+            Directory.CreateDirectory(Path.GetDirectoryName(filePath) ?? "/");
+            _logFile ??= File.Create(filePath);
+            Console.WriteLine($"Logging network traffic at {filePath}.");
+        }
+        else
+        {
+            Console.WriteLine("Stopping network logs.");
+            _logFile?.Close();
+            _logFile = null;
+        }
     }
 
     public Task StartAsync(CancellationToken stop)
@@ -429,7 +445,7 @@ public class SwitchMonitorService : IHostedService, IDisposable
         headerMatch = headerPattern.Match(tableHeader);
         using (var reader = new StringReader(result))
         {
-            while (reader.Peek() >= 0 && !reader!.ReadLine()!.StartsWith("Port"));
+            while (reader.Peek() >= 0 && !reader!.ReadLine()!.StartsWith("Port")) ;
             string? line;
             while ((line = reader.ReadLine()) != null)
             {
@@ -494,9 +510,12 @@ public class SwitchMonitorService : IHostedService, IDisposable
             _timeAverageSamples.Dequeue();
         }
 
-        // string jsonString = JsonSerializer.Serialize(entry);
-        // byte[] bytes = new UTF8Encoding(true).GetBytes(jsonString);
-        // await _logFile.WriteAsync(bytes);
+        if (_logFile != null)
+        {
+            string jsonString = JsonSerializer.Serialize(entry);
+            byte[] bytes = new UTF8Encoding(true).GetBytes(jsonString);
+            await _logFile.WriteAsync(bytes);
+        }
     }
 
     private async Task WriteNetworkTopology(List<EigrpTopologyInfo> topology)
@@ -507,9 +526,13 @@ public class SwitchMonitorService : IHostedService, IDisposable
             RoverPos = _roverPos,
             Topology = topology
         };
-        // string jsonString = JsonSerializer.Serialize(entry);
-        // byte[] bytes = new UTF8Encoding(true).GetBytes(jsonString);
-        // await _logFile.WriteAsync(bytes);
+
+        if (_logFile != null)
+        {
+            string jsonString = JsonSerializer.Serialize(entry);
+            byte[] bytes = new UTF8Encoding(true).GetBytes(jsonString);
+            await _logFile.WriteAsync(bytes);
+        }
     }
 
     public void Dispose()
@@ -517,7 +540,7 @@ public class SwitchMonitorService : IHostedService, IDisposable
         _getInterfacesTimer?.Dispose();
         _getEigrpTopologyTimer?.Dispose();
         _getPortsTimer?.Dispose();
-        // _logFile.Close();
+        _logFile?.Close();
     }
 
 }
