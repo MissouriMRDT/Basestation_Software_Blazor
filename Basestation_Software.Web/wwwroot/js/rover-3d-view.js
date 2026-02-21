@@ -1,9 +1,11 @@
 // Used by Rover3DView.razor
 
+console.log("Creating 3D view.");
 import * as THREE from "./lib/three/three.js";
 import { STLLoader } from "./lib/three/STLLoader.js";
 import { GLTFLoader } from "./lib/three/GLTFLoader.js";
 import { OrbitControls } from "./lib/three/OrbitControls.js";
+import { FontLoader } from "./lib/three/FontLoader.js";
 
 export const roverViews = {};
 
@@ -18,6 +20,8 @@ export class Rover3DView {
     roverMesh = null;
     arm = null;
     armJoints = {x: null, j2: null, j3: null, j4: null, j5: null, j6: null};
+    endEffectorSphere = null;
+    letters = null;
     lightingPanel = null;
     resizeObserver = null;
     frameId = 0;
@@ -28,6 +32,7 @@ export class Rover3DView {
         scene.castShadow = true;
         scene.receiveShadow = true;
         const stlLoader = new STLLoader();
+        const fontLoader = new FontLoader();
 
         stlLoader.load("/models/Rover.stl", (roverGeometry) => {
             const material = new THREE.MeshPhongMaterial({ color: 0x9a0000, specular: 0x111111, shininess: 200 });
@@ -49,17 +54,44 @@ export class Rover3DView {
 
             const gltfLoader = new GLTFLoader();
             gltfLoader.load("/models/AthenaArm.glb", (loadedData) => {
-                this.arm = loadedData.scene.children[0];
+                this.arm = new THREE.Group();
                 this.arm.scale.multiplyScalar(0.112);
-                this.arm.setRotationFromEuler(new THREE.Euler(Math.PI / 2, Math.PI / 2, -Math.PI / 2, "XYZ"));
                 this.arm.position.set(-0.75, -0.67, -0.75);
-                this.armJoints.x = this.arm.getObjectByName("Shoulder");
-                this.armJoints.j2 = this.arm.getObjectByName("Bicep");
-                this.armJoints.j3 = this.arm.getObjectByName("Forearm_Roll");
-                this.armJoints.j4 = this.arm.getObjectByName("Forearm");
-                this.armJoints.j5 = this.arm.getObjectByName("Wrist");
-                this.armJoints.j6 = this.arm.getObjectByName("Gripper");
+                const xAxis = loadedData.scene.getObjectByName("XAxis");
+                xAxis.setRotationFromEuler(new THREE.Euler(0, Math.PI / 2, 0, "XYZ"));
+                xAxis.x -= 4.519;
+                this.arm.add(xAxis);
+                this.armJoints.x = xAxis.getObjectByName("Shoulder");
+                this.armJoints.j2 = xAxis.getObjectByName("Bicep");
+                this.armJoints.j3 = xAxis.getObjectByName("Forearm_Roll");
+                this.armJoints.j4 = xAxis.getObjectByName("Forearm");
+                this.armJoints.j5 = xAxis.getObjectByName("Wrist");
+                this.armJoints.j6 = xAxis.getObjectByName("Gripper");
                 this.roverMesh.add(this.arm);
+
+                this.endEffectorSphere = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshBasicMaterial({color: 0xFFFF00}));
+                this.endEffectorSphere.visible = false;
+                this.arm.add(this.endEffectorSphere);
+
+                this.letters = {};
+                fontLoader.load( '/models/helvetiker_regular.typeface.json', ( font ) => {
+                    const letterMat = new THREE.MeshBasicMaterial({
+                        color: 0xFF0000,
+                        side: THREE.DoubleSide
+                    });
+                    const keyboard = "QWERTYUIOPASDFGHJKLZXCVBNM";
+                    const letterShapes = font.generateShapes(keyboard, 1);
+                    if (!letterShapes || letterShapes.length != keyboard.length) return;
+                    for (let i = 0; i < keyboard.length; i++) {
+                        const letterGeometry = new THREE.ShapeGeometry(letterShapes[i]);
+                        letterGeometry.center();
+                        letterGeometry.scale(0.5, 0.5, 0.5);
+                        const letterMesh = new THREE.Mesh(letterGeometry, letterMat);
+                        letterMesh.visible = false;
+                        this.arm.add(letterMesh);
+                        this.letters[keyboard[i]] = letterMesh;
+                    }
+                });
             });
         });
 
@@ -134,6 +166,11 @@ export class Rover3DView {
         this.armJoints.j6.setRotationFromEuler(new THREE.Euler(j6 * Math.PI / 180, 0, 0, "XYZ"));
     }
 
+    updateTarget(visible, x, y, z) {
+        this.endEffectorSphere.position.set(x, y, z);
+        this.endEffectorSphere.visible = visible;
+    }
+
     updateAnglesFromUpVector(x, y, z) {
         const upVector = new THREE.Vector3(x, y, z);
         const normalizedUp = upVector.clone().normalize();
@@ -158,6 +195,22 @@ export class Rover3DView {
 
     updateLighting(r, g, b) {
         this.lightingPanel?.material.emissive.setRGB(r / 255.0, g / 255.0, b / 255.0);
+    }
+
+    addKey(letter, x, y, z) {
+        if (letter.toUpperCase() in this.letters) {
+            const letterMesh = this.letters[letter.toUpperCase()];
+            letterMesh.position.set(x, y, z);
+            letterMesh.visible = true;
+        } else {
+            console.error(`Key ${letter} is unknown.`);
+        }
+    }
+
+    clearKeys() {
+        for (const letter of this.letters) {
+            letter.visible = false;
+        }
     }
 
     dispose() {

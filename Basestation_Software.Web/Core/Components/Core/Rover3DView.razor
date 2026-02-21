@@ -37,6 +37,7 @@
                 await jsRoverView.InvokeVoidAsync("updateArm", [
                 _RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J2, _RoveCommService.Boards.Arm.Position_J3,
                 _RoveCommService.Boards.Arm.Position_J4, _RoveCommService.Boards.Arm.Position_J5, _RoveCommService.Boards.Arm.Position_J6]);
+                await jsRoverView.InvokeVoidAsync("updateTarget", [true, _RoveCommService.Boards.Arm.Position_GX,  _RoveCommService.Boards.Arm.Position_GY,  _RoveCommService.Boards.Arm.Position_GZ]);
             }
         });
     }
@@ -48,10 +49,11 @@
             try
             {
                 await using var jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-3d-view.js");
-                jsRoverView = await jsModule.InvokeAsync<IJSObjectReference>("createRoverView", [CanvasContainer]);
+                jsRoverView = await jsModule!.InvokeAsync<IJSObjectReference>("createRoverView", [CanvasContainer]);
             }
-            catch
+            catch (JSException e)
             {
+                Console.WriteLine(e.Message);
                 jsRoverView = null;
             }
 
@@ -63,6 +65,9 @@
                 }
             });
 
+            await Task.Delay(1000);
+            await AddKeys("qwerty");
+
             _dataLoaded = true;
             await InvokeAsync(StateHasChanged);
             // component will resize once unhidden
@@ -70,6 +75,15 @@
 
         await InvokeAsync(StateHasChanged);
     }
+
+    async Task AddKeys(string keys) {
+        if (jsRoverView == null) return;
+        int i = 0;
+        foreach (char key in keys) {
+            await jsRoverView.InvokeVoidAsync("addKey", [key.ToString(), -3 + i++, 2, 4]);
+        }
+    }
+    
 
     async ValueTask IAsyncDisposable.DisposeAsync()
     {

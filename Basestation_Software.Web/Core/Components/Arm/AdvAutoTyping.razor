@@ -1,5 +1,6 @@
 ﻿@inject RoveCommService _RoveCommService
 @inject OpService _OpService
+@using System.Numerics
 
 <div class="component-header">
     <h3>Advanced Autonomous Typing</h3>
@@ -9,24 +10,23 @@
     <div style="display: flex; flex-direction: column; justify-content: center; align-items: center">
         <p class="font-monospace fs-3">@_phrase</p>
         <p>@_statusMessage</p>
-        <p>@(delay * 10)ms</p>
+        <p>@delay ms</p>
         <progress max="5000" value=@_charStatusMeter class="progress"></progress>
     </div>
 
     <div style="display: flex; gap: 2px; justify-content: center">
         <input @bind:get=_phrase @bind:set=@(value => { _phrase = value.ToUpper(); }) />
         <button @onclick=PlayPhrase>Start</button>
-        <button @onclick=Flip>180 Pitch</button>
         <button @onclick=ResetCache>Reset Cache</button>
     </div>
 
     <div style="display: grid; grid-template-columns: auto auto auto; text-align: center; padding: 0.5rem;">
         <button @onclick=CacheQ>Cache Q</button>
         <button @onclick=CacheP>Cache P</button>
-        <button @onclick=CacheA>Cache A</button>
-        <p>@(_isCached[0] ? "Cached!" : "Not Cached")</p>
-        <p>@(_isCached[1] ? "Cached!" : "Not Cached")</p>
-        <p>@(_isCached[2] ? "Cached!" : "Not Cached")</p>
+        <button @onclick=CacheZ>Cache Z</button>
+        <p>@(_keyCacheQ != null ? "Cached!" : "Not Cached")</p>
+        <p>@(_keyCacheP != null ? "Cached!" : "Not Cached")</p>
+        <p>@(_keyCacheZ != null ? "Cached!" : "Not Cached")</p>
     </div>
 </div>
 
@@ -36,46 +36,41 @@
     private int _currentCharIndex = 0;
     private int _charStatusMeter = 0;
 
+    private const int InchesPerSecond = 4;
     private int delay = 0;
 
-    private Dictionary<char, List<float>> keys = new();
+    private Dictionary<char, Vector3> _keyPositions = new();
+    private Matrix4x4 _keyPositionsPose = Matrix4x4.Identity;
 
     // X, Pitch
-    private float[] _keyCacheQ = new float[2];
-    private float[] _keyCacheP = new float[2];
-    private float[] _keyCacheA = new float[2];
+    private Vector3? _keyCacheQ = null;
+    private Vector3? _keyCacheP = null;
+    private Vector3? _keyCacheZ = null;
 
     // Q, P, A
     private bool[] _isCached = new bool[3];
 
     private void CacheQ()
     {
-        _keyCacheQ[0] = _RoveCommService.Boards.Arm.Position_X;
-        _keyCacheQ[1] = _RoveCommService.Boards.Arm.Position_J5;
-        _isCached[0] = true;
+        _keyCacheQ = new Vector3(_RoveCommService.Boards.Arm.Position_GX, _RoveCommService.Boards.Arm.Position_GY, _RoveCommService.Boards.Arm.Position_GZ);
     }
 
     private void CacheP()
     {
-        _keyCacheP[0] = _RoveCommService.Boards.Arm.Position_X;
-        _keyCacheP[1] = _RoveCommService.Boards.Arm.Position_J5;
-        _isCached[1] = true;
+        _keyCacheP = new Vector3(_RoveCommService.Boards.Arm.Position_GX, _RoveCommService.Boards.Arm.Position_GY, _RoveCommService.Boards.Arm.Position_GZ);
 
     }
 
-    private void CacheA()
+    private void CacheZ()
     {
-        _keyCacheA[0] = _RoveCommService.Boards.Arm.Position_X;
-        _keyCacheA[1] = _RoveCommService.Boards.Arm.Position_J5;
-        _isCached[2] = true;
-
+        _keyCacheZ = new Vector3(_RoveCommService.Boards.Arm.Position_GX, _RoveCommService.Boards.Arm.Position_GY, _RoveCommService.Boards.Arm.Position_GZ);
     }
 
     private void ResetCache()
     {
-        _isCached[0] = false;
-        _isCached[1] = false;
-        _isCached[2] = false;
+        _keyCacheQ = null;
+        _keyCacheP = null;
+        _keyCacheZ = null;
     }
 
 
@@ -90,36 +85,26 @@
         _OpService.SetAutonomy();
         CalculateKeyPositions();
         ResetCache();
-        List<float> totalOffset = [0f, 0f];
         for (int i = 0; i < _phrase.Length; i++)
         {
             _currentCharIndex = i;
-            if (!keys.ContainsKey(_phrase[i])) continue;
-            List<float> pos = keys[_phrase[i]];
-            pos[0] -= keys['Q'][0];
-            pos[1] -= keys['Q'][1];
+            if (!_keyPositions.ContainsKey(_phrase[i])) continue;
             _charStatusMeter = 0;
             _statusMessage = "Moving to " + _phrase[i];
-            if (pos != null)
+    
+            Vector3 currentPos = new(_RoveCommService.Boards.Arm.Position_GX, _RoveCommService.Boards.Arm.Position_GY, _RoveCommService.Boards.Arm.Position_GZ);
+            Vector3 nextPos = _keyPositions[_phrase[i]];
+            Vector3 delta = nextPos - currentPos;
+            _RoveCommService.Boards.Arm.IKPoseIncrement(delta.X, delta.Y, delta.Z, 0, 0, 0);
+
+            delay = (int)(Math.Abs(delta.X) * 1000 / InchesPerSecond);
+
+            await InvokeAsync(StateHasChanged);
+            for (int j = 0; j < delay; j++)
             {
-                // X
-                //_RoveCommService.Boards.Arm.IncrementJointTargetAngle(0, pos[0] - totalOffset[0]);
-
-                // Pitch
-                //_RoveCommService.Boards.Arm.IncrementJointTargetAngle(4, pos[1] - totalOffset[1]);
-
-                delay = (int)Math.Ceiling(Math.Abs(pos[0] - totalOffset[0])) * 100 + 100;
-
-                totalOffset[0] = pos[0];
-                totalOffset[1] = pos[1];
-
-                await InvokeAsync(StateHasChanged);
-                for (int j = 0; j < delay; j++)
-                {
-                    _charStatusMeter += 1 / delay;
-                    _ = InvokeAsync(StateHasChanged);
-                    await Task.Delay(10);
-                }
+                _charStatusMeter += 1 / delay;
+                _ = InvokeAsync(StateHasChanged);
+                await Task.Delay(10);
             }
 
             _statusMessage = "Running solenoid";
@@ -138,51 +123,29 @@
 
     private void CalculateKeyPositions()
     {
+        if (_keyCacheQ == null || _keyCacheP == null || _keyCacheZ == null) return;
+        Vector3 Q = _keyCacheQ ?? new();
+        Vector3 P = _keyCacheP ?? new();
+        Vector3 Z = _keyCacheZ ?? new();
         // Calculate keyboard measurements based on cached keys
-        float keydx = _keyCacheQ[0] - _keyCacheP[0];
-        float keydp = _keyCacheQ[1] - _keyCacheP[1];
-        if (!_isCached[1] || !_isCached[0])
-        {
-            keydx = -(10.67f - 4.03f);
-            keydp = 0f;
-        }
+        Vector3 QP = P - Q;
+        Vector3 QZ = Z - Q;
+        Vector3 basisX = QP / 9;
+        Vector3 basisY = QZ / 2;
 
-        float rowxd = _keyCacheQ[0] - _keyCacheA[0];
-        float rowxp = _keyCacheQ[0] - _keyCacheA[0];
-        if (!_isCached[2])
-        {
-            rowxp = 4f;
-            rowxd = -(11.49f - 11.28f);
-        }
+        string rowQ = "QWERTYUIOP";
+        string rowA = "ASDFGHJKL";
+        string rowZ = "ZCVBNM";
 
-        // Define X and Pitch positional diffs based on Q
-        // TODO look at this stupid bullshit. Refactor post URC
-        keys['Q'] = [0, 0f];
-        keys['W'] = [keydx * (1f / 9f), keydp * (1f / 9f)];
-        keys['E'] = [keydx * (2f / 9f), keydp * (2f / 9f)];
-        keys['R'] = [keydx * (3f / 9f), keydp * (3f / 9f)];
-        keys['T'] = [keydx * (4f / 9f), keydp * (4f / 9f)];
-        keys['Y'] = [keydx * (5f / 9f), keydp * (5f / 9f)];
-        keys['U'] = [keydx * (6f / 9f), keydp * (6f / 9f)];
-        keys['I'] = [keydx * (7f / 9f), keydp * (7f / 9f)];
-        keys['O'] = [keydx * (8f / 9f), keydp * (8f / 9f)];
-        keys['P'] = [keydx * (9f / 9f), keydp * (9f / 9f)];
-        keys['A'] = [rowxd + keydx * (0f / 9f), rowxp + keydp * (0f / 9f)];
-        keys['S'] = [rowxd + keydx * (1f / 9f), rowxp + keydp * (1f / 9f)];
-        keys['D'] = [rowxd + keydx * (2f / 9f), rowxp + keydp * (2f / 9f)];
-        keys['F'] = [rowxd + keydx * (3f / 9f), rowxp + keydp * (3f / 9f)];
-        keys['G'] = [rowxd + keydx * (4f / 9f), rowxp + keydp * (4f / 9f)];
-        keys['H'] = [rowxd + keydx * (5f / 9f), rowxp + keydp * (5f / 9f)];
-        keys['J'] = [rowxd + keydx * (6f / 9f), rowxp + keydp * (6f / 9f)];
-        keys['K'] = [rowxd + keydx * (7f / 9f), rowxp + keydp * (7f / 9f)];
-        keys['L'] = [rowxd + keydx * (8f / 9f), rowxp + keydp * (8f / 9f)];
-        keys['Z'] = [rowxd * 2f + keydx * (0f / 9f), rowxp * 2f + keydp * (0f / 9f)];
-        keys['X'] = [rowxd * 2f + keydx * (1f / 9f), rowxp * 2f + keydp * (1f / 9f)];
-        keys['C'] = [rowxd * 2f + keydx * (2f / 9f), rowxp * 2f + keydp * (2f / 9f)];
-        keys['V'] = [rowxd * 2f + keydx * (3f / 9f), rowxp * 2f + keydp * (3f / 9f)];
-        keys['B'] = [rowxd * 2f + keydx * (4f / 9f), rowxp * 2f + keydp * (4f / 9f)];
-        keys['N'] = [rowxd * 2f + keydx * (5f / 9f), rowxp * 2f + keydp * (5f / 9f)];
-        keys['M'] = [rowxd * 2f + keydx * (6f / 9f), rowxp * 2f + keydp * (6f / 9f)];
+        for (int i = 0; i < rowQ.Length; i++) {
+            _keyPositions[rowQ[i]] = Q + basisX * i;
+        }
+        for (int i = 0; i < rowA.Length; i++) {
+            _keyPositions[rowA[i]] = Q + basisX * i + basisY;
+        }
+        for (int i = 0; i < rowQ.Length; i++) {
+            _keyPositions[rowZ[i]] = Q + basisX * i + 2*basisY;
+        }
     }
 
     private void Flip()
