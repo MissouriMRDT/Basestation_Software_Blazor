@@ -9,7 +9,7 @@
     </button>
 </div>
 <div class="component-body packet-tester">
-    <input style="grid-area: code; resize: none" @bind=TextAreaValue autocomplete="off" autocorrect="off" wrap="off" autocapitalize="off" />
+    <textarea style="grid-area: code; resize: none" @bind=TextAreaValue autocomplete="off" autocorrect="off" wrap="off" autocapitalize="off" />
     @if (Running)
     {
         <button style="grid-area: start" class="warning" @onclick=Pause><i class="bi-pause" /></button>

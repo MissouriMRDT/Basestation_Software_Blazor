@@ -108,7 +108,7 @@ button:hover {
     background-color: color-mix(in oklab, var(--btn-fill) 90%, #000);
 }
 
-button:active {
+button:active, button[checked] {
     background-color: color-mix(in oklab, var(--btn-fill) 90%, #000);
     box-shadow: 0 -4px color-mix(in oklab, var(--btn-fill) 70%, #000);
     /* Cut off the bottom of the button to hide it underneath the page serface. shape() is required as the corners have a radius. Firefox 126-(at least 146): in about:config set layout.css.basic-shape-shape.enabled = true */

@@ -27,7 +27,7 @@
             <input type="checkbox" class="danger" @bind=_limitOverrides[2] @bind:after=@(() => _RoveCommService.Boards.Raman.LimitSwitchOverride((byte)((_limitOverrides[2] ? 1 : 0) | (_limitOverrides[3] ? 2 : 0)))) />
             <div style="width: 16px; height: 16px; background-color: #@((_RoveCommService.Boards.Raman.LimitSwitch & (1 << 1)) != 0 ? "fb0" : "520")"></div>
             <input type="checkbox" class="danger" @bind=_limitOverrides[3] @bind:after=@(() => _RoveCommService.Boards.Raman.LimitSwitchOverride((byte)((_limitOverrides[2] ? 1 : 0) | (_limitOverrides[3] ? 2 : 0)))) />
-            <p>@($"{_RoveCommService.Boards.Raman.Position_InstrumentsAxis:00000}")</p>
+            <p>@($"{_RoveCommService.Boards.Raman.Position_InstrumentsAxis:00.0}")</p>
             <p>@(_RoveCommService.Boards.Raman.SMOCOPing < 500 ? "OK" : "ERR")</p>
         </div>
         <p>Auger @($"{_RoveCommService.Boards.Auger.AugerCurrent:00.00}A {_RoveCommService.Boards.Auger.AugerSpeed:000}rpm")</p>
@@ -42,21 +42,21 @@
             <p>LED</p>
             <p>Filter</p>
             <p>@($"{_afFilterPosition:000}")</p>
-            <input @bind=_brightness[0] type="range" min="0" max="255" step="1" />
-            <button @onclick=@(() => _RoveCommService.Boards.Auger.LED(_brightness[0], 0, 0, 0))>White</button>
+            <p></p>
+            <button checked=@(_activeLED == 0) @onclick=@(() => LED(0))>White</button>
             <button @onclick=@(() => AFFilter(0))>None</button>
             <p>None</p>
             <input @bind=_brightness[1] type="range" min="0" max="255" step="1" />
-            <button @onclick=@(() => _RoveCommService.Boards.Auger.LED(0, _brightness[1], 0, 0))>365nm</button>
+            <button checked=@(_activeLED == 1) @onclick=@(() => LED(1))>365nm</button>
             <button @onclick=@(() => AFFilter(1))>440nm</button>
             <p>NAD</p>
             <input @bind=_brightness[2] type="range" min="0" max="255" step="1" />
-            <button @onclick=@(() => _RoveCommService.Boards.Auger.LED(0, 0, _brightness[2], 0))>405nm</button>
-            <button @onclick=@(() => AFFilter(2))>525nm</button>
+            <button checked=@(_activeLED == 2) @onclick=@(() => LED(2))>405nm</button>
+            <button style="--btn-fill: #2af371" @onclick=@(() => AFFilter(2))>525nm</button>
             <p>FAD</p>
             <input @bind=_brightness[3] type="range" min="0" max="255" step="1" />
-            <button @onclick=@(() => _RoveCommService.Boards.Auger.LED(0, 0, 0, _brightness[3]))>500nm</button>
-            <button @onclick=@(() => AFFilter(3))>600nm</button>
+            <button checked=@(_activeLED == 3) @onclick=@(() => LED(3))>500nm</button>
+            <button style="--btn-fill: #dc3545" @onclick=@(() => AFFilter(3))>600nm</button>
             <p>Carotenoids</p>
         </div>
     </div>
@@ -75,10 +75,11 @@
     private static readonly string[] _axisNames = ["Auger Gantry", "Auger", "Instruments Gantry"]; // TODO: Set axis names.
     bool[] _limitOverrides = new bool[4];
     byte[] _brightness = [255, 255, 255, 255];
-    public static readonly short[] AFFilterPositions = [0, 0, 0, 0]; // None, 440nm, 525nm, 600nm
-    public static readonly short[] SoilTrapdorPositions = [0, 0]; // AF, Soil Cache
+    public static readonly short[] AFFilterPositions = [150, 18, 90, 155]; // None, 440nm, 525nm, 600nm
+    public static readonly short[] SoilTrapdorPositions = [15, 150]; // AF, Soil Cache
     private short _afFilterPosition = AFFilterPositions[0];
     private short _soilTrapdoorPosition = SoilTrapdorPositions[0];
+    private int _activeLED = -1;
 
     private async Task Update(Gamepad gamepad, float deltaT)
     {
@@ -114,6 +115,29 @@
         return false;
     }
 
+    private void LED(int i)
+    {
+        if (_activeLED == i) i = -1; // Clicking the button for the active LED will turn it off.
+        _activeLED = i;
+        switch (_activeLED) {
+            case 0:
+            _RoveCommService.Boards.Auger.LED(255, 0, 0, 0);
+            break;
+            case 1:
+            _RoveCommService.Boards.Auger.LED(0, _brightness[1], 0, 0);
+            break;
+            case 2:
+            _RoveCommService.Boards.Auger.LED(0, 0, _brightness[2],0);
+            break;
+            case 3:
+            _RoveCommService.Boards.Auger.LED(0, 0, 0, _brightness[3]);
+            break;
+            default:
+            _RoveCommService.Boards.Auger.LED(0, 0, 0, 0);
+            break;
+        }
+    }
+
     private void AFFilter(int i)
     {
         if (i < 0 || i >= AFFilterPositions.Length) return;
@@ -121,9 +145,9 @@
         if (_outputEnabled) _RoveCommService.Boards.Auger.AugerServo(_afFilterPosition, _soilTrapdoorPosition);
     }
 
-    private void SoilTrapdoor(bool cahce)
+    private void SoilTrapdoor(bool cache)
     {
-        _soilTrapdoorPosition = SoilTrapdorPositions[cahce ? 1 : 0];
+        _soilTrapdoorPosition = SoilTrapdorPositions[cache ? 1 : 0];
         if (_outputEnabled) _RoveCommService.Boards.Auger.AugerServo(_afFilterPosition, _soilTrapdoorPosition);
     }
 

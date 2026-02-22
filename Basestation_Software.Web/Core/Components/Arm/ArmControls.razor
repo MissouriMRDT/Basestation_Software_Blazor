@@ -80,7 +80,7 @@
         </div>
         <div style="display: grid; grid-template-columns: repeat(3, max-content)">
             <p></p>
-            <p>|Delta</p>
+            <p>|Pos</p>
             <p>|Ping</p>
             <p>X</p>
             <p>|@($"{_RoveCommService.Boards.Arm.Position_X:+000.00;-000.00}")</p>
@@ -111,6 +111,15 @@
             <p>|</p>
             <p>Gripper Z</p>
             <p>|@($"{_RoveCommService.Boards.Arm.Position_GZ:+000.00;-000.00}")</p>
+            <p>|</p>
+            <p>Linear Servo</p>
+            <p>|@($"{_linearServo:+000.00;-000.00}")</p>
+            <p>|</p>
+            <p>Cache Servo</p>
+            <p>|@($"{_cache:+000.00;-000.00}")</p>
+            <p>|</p>
+            <p>Laser</p>
+            <p>|@(_laser ? "On" : "Off")</p>
             <p>|</p>
         </div>
     </div>
@@ -149,6 +158,7 @@
     private ArmPreset _preset = new();
     public const float MaxDegreesPerSecond = 45.0f;
     public const float MaxInchesPerSecond = 8.0f;
+    public const float LinearServoMaxDegreesPerSecond = 15.0f;
 
     protected override async Task OnInitializedAsync()
     {
@@ -200,8 +210,9 @@
         if (!_outputEnabled) return false;
 
         _RoveCommService.Boards.Arm.GripperOpenLoop((short)Math.Clamp(inputs[8] * _preset.GripperSpeed * short.MaxValue, short.MinValue, short.MaxValue));
-        _linearServo += inputs[9] * _preset.LinearServoSpeed * deltaT;
-        if (Math.Abs(inputs[9]) > 0) _RoveCommService.Boards.Arm.LinearServo((byte)_linearServo);
+        _linearServo = Math.Clamp(_linearServo + inputs[9] * _preset.LinearServoSpeed * LinearServoMaxDegreesPerSecond * deltaT, 0, 180);
+        _RoveCommService.Boards.Arm.LinearServo((byte)_linearServo);
+        // if (Math.Abs(inputs[9]) > 0) _RoveCommService.Boards.Arm.LinearServo((byte)_linearServo);
         // Toggle the laser if the axis rises above 0.5.
         if (inputs[10] > 0.5 && _lastInputs[10] <= 0.5)
         {
@@ -210,6 +221,8 @@
         }
         _cache += inputs[11] * _preset.CacheSpeed * deltaT;
         if (Math.Abs(inputs[11]) > 0) _RoveCommService.Boards.Arm.Cache((byte)_cache);
+
+        inputs.CopyTo(_lastInputs);
 
         switch (_controlMode)
         {

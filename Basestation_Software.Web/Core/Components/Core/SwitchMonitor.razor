@@ -48,7 +48,7 @@
                         .notconnect {
                             stroke: yellow;
                         }
-                    </style>
+                    </style> 
                     <image x="0" y="0" width="100" height="100" href="@(Model switch {
                         SwitchModel.Cisco_IE_2000_16TC => "images/Cisco_IE_2000_16TC_GE.png",
                         SwitchModel.Cisco_IE_3200_8T2S => "images/Cisco_IE_3200_8T2S.png",
@@ -71,8 +71,8 @@
                 </svg>
             </div>
             <div style="display: grid; align-items: center; grid-template-rows: 300px 300px auto">
-                <Chart Config="BandChartConfig" @ref="BandChart" Style="max-width:300px"></Chart>
-                <Chart Config="VlanChartConfig" @ref="VlanChart" Style="max-width:300px"></Chart>
+                <Chart Config="BandChartConfig" @ref="BandChart" Style="max-width:100px;"></Chart>
+                <Chart Config="VlanChartConfig" @ref="VlanChart" Style="max-width:100px;"></Chart>
             </div>
         </div>
         @if(_displayStats != null)
@@ -82,7 +82,7 @@
                     @_displayStats.Name;
                 </span>
             </h4>
-            <table class="table">
+            <table class="table" style="width:100%">
                 <thead>
                     <tr>
                         <th scope="col">Description</th>
@@ -199,7 +199,7 @@
                 }
             }
         };
-        BandChartConfig.Data.Labels.AddRange(_signalTraffic.Select(x => x.Band));
+        BandChartConfig.Data.Labels.AddRange(_signalTraffic.Take(2).Select(x => x.Band));
         BandChartConfig.Data.Datasets.Add(
             new PieDataset()
             {
@@ -207,9 +207,9 @@
                 BackgroundColor = [
                     "rgb(255, 99, 132)",
                     "rgb(54, 162, 235)",
-                    "rgb(255, 205, 86)"
+                    // "rgb(255, 205, 86)"
                 ],
-                Data = [1, 2, 3]
+                Data = [1, 1]
             }
         );
 
@@ -241,12 +241,12 @@
                     "rgb(54, 162, 235)",
                     "rgb(255, 205, 86)"
                 ],
-                Data = _vlanTraffic.Select(x => (decimal?)x.Traffic).ToList()
+                Data = [1, 1, 1]
             }
         );
     }
 
-    private void UpdateSignalTraffic()
+    private async Task UpdateSignalTraffic()
     {
         if (_portStats == null || _vlanStats == null) return;
         var m9 = Array.Find(_portStats, p => p.Description?.Contains("900MHz") ?? false);
@@ -264,12 +264,22 @@
         {
             _signalTraffic[2].Traffic = m5.Traffic.InputRatePackets + m5.Traffic.OutputRatePackets;
         }
+        Console.WriteLine($"M2: {_signalTraffic[1].Traffic}, M9: {_signalTraffic[0].Traffic}");
+        BandChartConfig?.Data.Datasets.First().Data.Clear();
+        BandChartConfig?.Data.Datasets.First().Data.AddRange( _signalTraffic.Take(2).Select(x => (decimal?)x.Traffic).ToList());
+
 
         // VLANS cause why not
         for (int i = 0; i < 3; i++)
         {
             _vlanTraffic[i].Traffic = _vlanStats[i+1].Traffic.InputRatePackets + _vlanStats[i+1].Traffic.OutputRatePackets;
         }
+
+        VlanChartConfig?.Data.Datasets.First().Data.Clear();
+        VlanChartConfig?.Data.Datasets.First().Data.AddRange( _vlanTraffic.Select(x => (decimal?)x.Traffic).ToList());
+
+
+        @* await InvokeAsync(StateHasChanged); *@
     }
 
     private void UpdatePortStatuses(List<PortStatus> ports)
@@ -342,7 +352,7 @@
         }
     }
 
-    private void UpdateInterfaceStats(List<InterfaceInfo> interfaces)
+    private async void UpdateInterfaceStats(List<InterfaceInfo> interfaces)
     {
         if (_portStats == null || _vlanStats == null) return;
         switch (Model)
@@ -385,7 +395,7 @@
             }
         }
         UpdateSignalTraffic();
-        InvokeAsync(StateHasChanged);
+        await InvokeAsync(StateHasChanged);
     }
 
     private (float, float) GetPortDisplayPosition(int index)

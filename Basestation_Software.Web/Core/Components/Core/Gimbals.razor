@@ -44,7 +44,7 @@
 "Auger Pan",
 "Auger Tilt",
 ];
-    private static double[] _angles = [180, 137, 48, 113, 43, 82, 0, 0, 0, 0, 0, 0];
+    private static double[] _angles = [270, 205, 65, 123, 72, 170, 0, 0, 0, 0, 0, 0];
 
     private async Task Update(Gamepad gamepad, float deltaT)
     {
@@ -64,7 +64,7 @@
         if (!_outputEnabled) return false;
 
         for (int i = 0; i < _angles.Length; i++)
-            _angles[i] = Math.Clamp(_angles[i] + inputs[i] * GIMBAL_SPEED * deltaT, 0, 180);
+            _angles[i] = Math.Clamp(_angles[i] + inputs[i] * GIMBAL_SPEED * deltaT, 0, 270);
         if (Math.Abs(inputs[0]) > 0 || Math.Abs(inputs[1]) > 0) _RoveCommService.Boards.Core.LeftGimbal((short)_angles[0], (short)_angles[1]);
         if (Math.Abs(inputs[2]) > 0 || Math.Abs(inputs[3]) > 0) _RoveCommService.Boards.Core.RightGimbal((short)_angles[2], (short)_angles[3]);
         if (Math.Abs(inputs[4]) > 0 || Math.Abs(inputs[5]) > 0) _RoveCommService.Boards.Core.BackGimbal((short)_angles[4], (short)_angles[5]);
