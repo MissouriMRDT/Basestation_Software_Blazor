@@ -54,6 +54,11 @@
     <button style="grid-area: r; place-self: stretch" class="danger" @onclick=Reboot>REBOOT</button>
     <button style="grid-area: e; place-self: stretch" class="warning" @onclick=EStop>E-STOP</button>
     <button style="grid-area: s; place-self: stretch" class="danger" @onclick=Suicide>SUICIDE</button>
+    <div style="grid-area: th; @Background(_RoveCommService.Boards.Core.Thermal_BoardTemperature, 20, 40, "dodgerblue", "orange")" class="thermal">
+        <p style="grid-area: rpm">@($"{_RoveCommService.Boards.Core.Thermal_FanSpeed:0.00}") RPM</p>
+        <img style="grid-area: fan; animation-duration: @(600 / _RoveCommService.Boards.Core.Thermal_FanSpeed)s;" class="fan" src="/images/fan-icon.png" />
+        <p style="grid-area: t1">@($"{_RoveCommService.Boards.Core.Thermal_BoardTemperature:0.00}")&deg;C</p>
+    </div>
 </div>
 
 @code
@@ -83,11 +88,11 @@
         TelemetryWatchdog = new System.Threading.Timer(WatchdogTimeout);
     }
 
-    private string Background(double x, double green, double red)
+    private string Background(double x, double good, double bad, string goodColor = "#00ff00", string badColor = "#ff0000")
     {
-        if (red > green)
-            return $"--bg: color-mix(in oklab, #ff0000 {Utils.ClampMap(x, green, red, 0.0, 100.0)}%, #00ff00)";
-        return $"--bg: color-mix(in oklab, #00ff00 {Utils.ClampMap(x, red, green, 0.0, 100.0)}%, #ff0000)";
+        if (bad > good)
+            return $"--bg: color-mix(in oklab, {badColor} {Utils.ClampMap(x, good, bad, 0.0, 100.0)}%, {goodColor})";
+        return $"--bg: color-mix(in oklab, {badColor} {Utils.ClampMap(x, bad, good, 0.0, 100.0)}%, {goodColor})";
     }
 
     protected override void OnInitialized()
@@ -149,6 +154,10 @@
         {
             _auxOvercurrent = true;
             ResetWatchdog();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.Boards.Core.OnThermal(async packet => {
             await InvokeAsync(StateHasChanged);
         });
     }
