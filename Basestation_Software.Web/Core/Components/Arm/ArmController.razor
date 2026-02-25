@@ -3,165 +3,138 @@
 @using System.Data
 @using System.Diagnostics
 @inject RoveCommService _roveCommService;
+@inject OpService _opService;
 
-<style>
-    .arm-controller {
-        display: grid;
-        grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
-        grid-template-areas:
-            "joint controller target arm delta speed"
-            "x cx tx ax dx sx"
-            "j2 c2 t2 a2 d2 s2"
-            "j3 c3 t3 a3 d3 s3"
-            "j4 c4 t4 a4 d4 s4"
-            "p cp tp ap dp sp";
-        place-items: stretch stretch;
-    }
-
-    .arm-controller p {
-        margin: 0;
-    }
-</style>
-
-<div class="card h-100">
-    <div class="card-header">
-        <div class="col-6 d-flex align-self-center">
-            <h5>Arm Controller</h5>
-            <div class="vr">&nbsp;</div>
-            <GamepadSelector @ref=GamepadSelector_ />
-        </div>
-    </div>
-    <div class="card-body arm-controller w-100">
-        <p style="grid-area: joint">Joint</p>
-        <p style="grid-area: controller">Controller</p>
-        <p style="grid-area: target">Target</p>
-        <p style="grid-area: arm">Arm</p>
-        <p style="grid-area: delta">Delta</p>
-        <p style="grid-area: speed">Speed</p>
-        <p style="grid-area: x">X</p>
-        <p style="grid-area: cx">@($"{_controller.X:000.0}")</p>
-        <p style="grid-area: tx">@($"{_target.X:000.0}")</p>
-        <p style="grid-area: ax">@($"{_arm.X:000.0}")</p>
-        <input type="number" min="0" max="10" @bind="RoverControllerDelta.X" style="grid-area: dx" />
-        <input type="number" min="0" max="10" @bind="Speed.X" style="grid-area: sx" />
-        <p style="grid-area: j2">J2</p>
-        <p style="grid-area: c2">@($"{_controller.J2:000.0}")</p>
-        <p style="grid-area: t2">@($"{_target.J2:000.0}")</p>
-        <p style="grid-area: a2">@($"{_arm.J2:000.0}")</p>
-        <input type="number" min="0" max="10" @bind="RoverControllerDelta.J2" style="grid-area: d2" />
-        <input type="number" min="0" max="10" @bind="Speed.J2" style="grid-area: s2" />
-        <p style="grid-area: j3">J3</p>
-        <p style="grid-area: c3">@($"{_controller.J3:000.0}")</p>
-        <p style="grid-area: t3">@($"{_target.J3:000.0}")</p>
-        <p style="grid-area: a3">@($"{_arm.J3:000.0}")</p>
-        <input type="number" min="0" max="10" @bind="RoverControllerDelta.J3" style="grid-area: d3" />
-        <input type="number" min="0" max="10" @bind="Speed.J3" style="grid-area: s3" />
-        <p style="grid-area: j4">J4</p>
-        <p style="grid-area: c4">@($"{_controller.J4:000.0}")</p>
-        <p style="grid-area: t4">@($"{_target.J4:000.0}")</p>
-        <p style="grid-area: a4">@($"{_arm.J4:000.0}")</p>
-        <input type="number" min="0" max="10" @bind="RoverControllerDelta.J4" style="grid-area: d4" />
-        <input type="number" min="0" max="10" @bind="Speed.J4" style="grid-area: s4" />
-        <p style="grid-area: p">Pitch</p>
-        <p style="grid-area: cp">@($"{_controller.Pitch:000.0}")</p>
-        <p style="grid-area: tp">@($"{_target.Pitch:000.0}")</p>
-        <p style="grid-area: ap">@($"{_arm.Pitch:000.0}")</p>
-        <input type="number" min="0" max="10" @bind="RoverControllerDelta.Pitch" style="grid-area: dp" />
-        <input type="number" min="0" max="10" @bind="Speed.Pitch" style="grid-area: sp" />
-    </div>
+<div class="component-header">
+    <h3>Arm Controller</h3>
+    <div class="vr">&nbsp;</div>
+    <input type="checkbox" class="output-enabled" @bind=_outputEnabled title="Disable Output" />
+    <GamepadSelector @ref=GamepadSelector_ OnUpdate=Update />
+</div>
+<div class="component-body" style="flex-grow: 0; display: grid; grid-template-columns: repeat(4, max-content) 100px 100px; place-items: stretch">
+    <p></p>
+    <p>|Ctrl</p>
+    <p>|Target</p>
+    <p>|Arm</p>
+    <p>Max Delta</p>
+    <p>Speed</p>
+    <p>X</p>
+    <p>|@($"{_controller.X:+000.0;-000.0}")</p>
+    <p>|@($"{_target.X:+000.0;-000.0}")</p>
+    <p>|@($"{_arm.X:+000.0;-000.0}")</p>
+    <input style=@(_overDelta[0] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.X" />
+    <input style=@(_overSpeed[0] ? "background-color: #ff0" : "") @bind="Speed.X" />
+    <p>J2</p>
+    <p>|@($"{_controller.J2:+000.0;-000.0}")</p>
+    <p>|@($"{_target.J2:+000.0;-000.0}")</p>
+    <p>|@($"{_arm.J2:+000.0;-000.0}")</p>
+    <input style=@(_overDelta[1] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J2" />
+    <input style=@(_overSpeed[1] ? "background-color: #ff0" : "") @bind="Speed.J2" />
+    <p>J3</p>
+    <p>|@($"{_controller.J3:+000.0;-000.0}")</p>
+    <p>|@($"{_target.J3:+000.0;-000.0}")</p>
+    <p>|@($"{_arm.J3:+000.0;-000.0}")</p>
+    <input style=@(_overDelta[2] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J3" />
+    <input style=@(_overSpeed[2] ? "background-color: #ff0" : "") @bind="Speed.J3" />
+    <p>J4</p>
+    <p>|@($"{_controller.J4:+000.0;-000.0}")</p>
+    <p>|@($"{_target.J4:+000.0;-000.0}")</p>
+    <p>|@($"{_arm.J4:+000.0;-000.0}")</p>
+    <input style=@(_overDelta[3] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J4" />
+    <input style=@(_overSpeed[3] ? "background-color: #ff0" : "") @bind="Speed.J4" />
+    <p>J5</p>
+    <p>|@($"{_controller.J5:+000.0;-000.0}")</p>
+    <p>|@($"{_target.J5:+000.0;-000.0}")</p>
+    <p>|@($"{_arm.J5:+000.0;-000.0}")</p>
+    <input style=@(_overDelta[4] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J5" />
+    <input style=@(_overSpeed[4] ? "background-color: #ff0" : "") @bind="Speed.J5" />
 </div>
 
 @code
 {
     // State
     private GamepadSelector? GamepadSelector_;
-    private JointValues _controller = new();
-    private JointValues _arm = new();
-    private JointValues _target = new();
-    public JointValues RoverControllerDelta = new()
+    private bool _outputEnabled = true;
+    private ArmAxes _controller = new();
+    private ArmAxes _target = new();
+    private ArmAxes _arm = new();
+    public ArmAxes RoverControllerDelta = new()
     {
         X = 1,
         J2 = 10,
         J3 = 10,
         J4 = 10,
-        Pitch = 10,
-        Roll = 10
+        J5 = 10,
+        J6 = 10
     };
-    public JointValues Speed = new()
+    public ArmAxes Speed = new()
     {
         X = 0.03f,
         J2 = 1,
         J3 = 1,
         J4 = 1,
-        Pitch = 1,
-        Roll = 1
+        J5 = 1,
+        J6 = 1
     };
-
-    private Timer _timer;
-    private Stopwatch _stopwatch;
-    private long lastTime;
-
+    private bool[] _overDelta = new bool[5];
+    private bool[] _overSpeed = new bool[5];
 
     public ArmController()
     {
-        _timer = new(_ => Update());
-        _stopwatch = new Stopwatch();
-        _stopwatch.Start();
-        lastTime = _stopwatch.ElapsedMilliseconds;
     }
 
     protected override void OnInitialized()
     {
-        _roveCommService.On<float>("Arm", "Positions", async (packet) =>
-        {
-            _arm.X = packet.Data[0];
-            _arm.J2 = packet.Data[1];
-            _arm.J3 = packet.Data[2];
-            _arm.J4 = packet.Data[3];
-            _arm.Roll = packet.Data[4];
-            _arm.Pitch = packet.Data[5];
-        });
-        _timer.Change(0, 100);
+        _roveCommService.Boards.Arm.OnPosition(async packet => { _arm.SetFromArm(_roveCommService.Boards.Arm); await InvokeAsync(StateHasChanged); });
     }
 
-    private void Update()
+    private async Task Update(Gamepad gamepad, float deltaT)
     {
-        long now = _stopwatch.ElapsedMilliseconds;
-        float deltaT = (now - lastTime) / 1000f;
-        lastTime = now;
+        if (await ProcessGamepadInput(gamepad, deltaT))
+            // Set teleop if controller being used.
+            _opService.SetTeleop();
+        // It is safe for this component to take no action when the controller is disconnected.
+        await InvokeAsync(StateHasChanged);
+    }
+    private async Task<bool> ProcessGamepadInput(Gamepad gamepad, float deltaT)
+    {
+        if (!gamepad.Connected || !_outputEnabled || gamepad.Axes.Length < 5) return false;
 
-        if (GamepadSelector_?.SelectedGamepad?.Axes.Count >= 7)
-        {
-            // Update controller position from selected gamepad's axes.
-            _controller.X = (float)GamepadSelector_.SelectedGamepad.Axes[0];
-            _controller.J2 = (float)GamepadSelector_.SelectedGamepad.Axes[1];
-            _controller.J3 = (float)GamepadSelector_.SelectedGamepad.Axes[2];
-            _controller.J4 = (float)GamepadSelector_.SelectedGamepad.Axes[5];
-            _controller.Pitch = (float)GamepadSelector_.SelectedGamepad.Axes[6];
+        // Update controller position from selected gamepad's axes.
+        _controller.X = (float)Utils.ClampMap(gamepad.Axes[0], -1.0, 1.0, -180.0, 180.0);
+        _controller.J2 = (float)Utils.ClampMap(gamepad.Axes[1], -1.0, 1.0, -180.0, 180.0);
+        _controller.J3 = (float)Utils.ClampMap(gamepad.Axes[2], -1.0, 1.0, -180.0, 180.0);
+        _controller.J4 = (float)Utils.ClampMap(gamepad.Axes[3], -1.0, 1.0, -180.0, 180.0);
+        _controller.J5 = (float)Utils.ClampMap(gamepad.Axes[4], -1.0, 1.0, -180.0, 180.0);
 
-            // Update target to the arm's position if the controller is further than RoverControllerDelta otherwise follow
-            // controller upto Speed maximum speed.
-            _target.X = Math.Abs(_controller.X - _arm.X) > RoverControllerDelta.X ? _arm.X :
-            LimitSpeed(_target.X, _controller.X, Speed.X, deltaT);
-            _target.J2 = Math.Abs(_controller.J2 - _arm.J2) > RoverControllerDelta.J2 ? _arm.J2 :
-            LimitSpeed(_target.J2, _controller.J2, Speed.J2, deltaT);
-            _target.J3 = Math.Abs(_controller.J3 - _arm.J3) > RoverControllerDelta.J3 ? _arm.J3 :
-            LimitSpeed(_target.J3, _controller.J3, Speed.J3, deltaT);
-            _target.J4 = Math.Abs(_controller.J4 - _arm.J4) > RoverControllerDelta.J4 ? _arm.J4 :
-            LimitSpeed(_target.J4, _controller.J4, Speed.J4, deltaT);
-            _target.Pitch = Math.Abs(_controller.Pitch - _arm.Pitch) > RoverControllerDelta.Pitch ? _arm.Pitch :
-            LimitSpeed(_target.Pitch, _controller.Pitch, Speed.Pitch, deltaT);
-            RoveComm.Boards.Arm.SetIndividualTargetAngles(_roveCommService, _controller.X, _controller.J2, _controller.J3,
-            _controller.J4, _controller.Pitch, _controller.Roll);
-        }
+        // Update target to the arm's position if the controller is further than RoverControllerDelta otherwise follow controller up to Speed maximum speed.
+        _overDelta[0] = Math.Abs(_controller.X - _arm.X) > RoverControllerDelta.X;
+        _overDelta[1] = Math.Abs(_controller.J2 - _arm.J2) > RoverControllerDelta.J2;
+        _overDelta[2] = Math.Abs(_controller.J3 - _arm.J3) > RoverControllerDelta.J3;
+        _overDelta[3] = Math.Abs(_controller.J4 - _arm.J4) > RoverControllerDelta.J4;
+        _overDelta[4] = Math.Abs(_controller.J5 - _arm.J5) > RoverControllerDelta.J5;
+        _target.X = _overDelta[0] ? _arm.X : LimitSpeed(_target.X, _controller.X, Speed.X, deltaT, out _overSpeed[0]);
+        _target.J2 = _overDelta[1] ? _arm.J2 : LimitSpeed(_target.J2, _controller.J2, Speed.J2, deltaT, out _overSpeed[1]);
+        _target.J3 = _overDelta[2] ? _arm.J3 : LimitSpeed(_target.J3, _controller.J3, Speed.J3, deltaT, out _overSpeed[2]);
+        _target.J4 = _overDelta[3] ? _arm.J4 : LimitSpeed(_target.J4, _controller.J4, Speed.J4, deltaT, out _overSpeed[3]);
+        _target.J5 = _overDelta[4] ? _arm.J5 : LimitSpeed(_target.J5, _controller.J5, Speed.J5, deltaT, out _overSpeed[4]);
+        _roveCommService.Boards.Arm.TargetAngle(_controller.X, _controller.J2, _controller.J3, _controller.J4, _controller.J5, _arm.J6);
+
+        return true;
     }
 
-    private float LimitSpeed(float lastTarget, float controller, float speed, float deltaT)
+    private float LimitSpeed(float lastTarget, float controller, float speed, float deltaT, out bool overSpeed)
     {
-        if (Math.Abs(controller - lastTarget) > speed * deltaT)
+        if (Math.Abs(controller - lastTarget) / deltaT > speed)
+        {
+            overSpeed = true;
             return lastTarget + Math.Sign(controller - lastTarget) * speed * deltaT;
+        }
         else
+        {
+            overSpeed = false;
             return controller;
+        }
     }
 
     void IDisposable.Dispose() { }
