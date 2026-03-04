@@ -21,31 +21,31 @@
     <p>X</p>
     <p>|@($"{_controller.X:+000.0;-000.0}")</p>
     <p>|@($"{_target.X:+000.0;-000.0}")</p>
-    <p>|@($"{_arm.X:+000.0;-000.0}")</p>
+    <p>|@($"{_arm?.X:+000.0;-000.0}")</p>
     <input style=@(_overDelta[0] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.X" />
     <input style=@(_overSpeed[0] ? "background-color: #ff0" : "") @bind="Speed.X" />
     <p>J2</p>
     <p>|@($"{_controller.J2:+000.0;-000.0}")</p>
     <p>|@($"{_target.J2:+000.0;-000.0}")</p>
-    <p>|@($"{_arm.J2:+000.0;-000.0}")</p>
+    <p>|@($"{_arm?.J2:+000.0;-000.0}")</p>
     <input style=@(_overDelta[1] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J2" />
     <input style=@(_overSpeed[1] ? "background-color: #ff0" : "") @bind="Speed.J2" />
     <p>J3</p>
     <p>|@($"{_controller.J3:+000.0;-000.0}")</p>
     <p>|@($"{_target.J3:+000.0;-000.0}")</p>
-    <p>|@($"{_arm.J3:+000.0;-000.0}")</p>
+    <p>|@($"{_arm?.J3:+000.0;-000.0}")</p>
     <input style=@(_overDelta[2] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J3" />
     <input style=@(_overSpeed[2] ? "background-color: #ff0" : "") @bind="Speed.J3" />
     <p>J4</p>
     <p>|@($"{_controller.J4:+000.0;-000.0}")</p>
     <p>|@($"{_target.J4:+000.0;-000.0}")</p>
-    <p>|@($"{_arm.J4:+000.0;-000.0}")</p>
+    <p>|@($"{_arm?.J4:+000.0;-000.0}")</p>
     <input style=@(_overDelta[3] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J4" />
     <input style=@(_overSpeed[3] ? "background-color: #ff0" : "") @bind="Speed.J4" />
     <p>J5</p>
     <p>|@($"{_controller.J5:+000.0;-000.0}")</p>
     <p>|@($"{_target.J5:+000.0;-000.0}")</p>
-    <p>|@($"{_arm.J5:+000.0;-000.0}")</p>
+    <p>|@($"{_arm?.J5:+000.0;-000.0}")</p>
     <input style=@(_overDelta[4] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J5" />
     <input style=@(_overSpeed[4] ? "background-color: #ff0" : "") @bind="Speed.J5" />
 </div>
@@ -57,7 +57,7 @@
     private bool _outputEnabled = true;
     private ArmAxes _controller = new();
     private ArmAxes _target = new();
-    private ArmAxes _arm = new();
+    private ArmAxes? _arm;
     public ArmAxes RoverControllerDelta = new()
     {
         X = 1,
@@ -85,7 +85,10 @@
 
     protected override void OnInitialized()
     {
-        _roveCommService.Boards.Arm.OnPosition(async packet => { _arm.SetFromArm(_roveCommService.Boards.Arm); await InvokeAsync(StateHasChanged); });
+        _roveCommService.Boards.Arm.OnPosition(async packet => {
+            if (_arm == null) _arm = new();
+            _arm.SetFromArm(_roveCommService.Boards.Arm);
+            await InvokeAsync(StateHasChanged); });
     }
 
     private async Task Update(Gamepad gamepad, float deltaT)
@@ -99,6 +102,7 @@
     private async Task<bool> ProcessGamepadInput(Gamepad gamepad, float deltaT)
     {
         if (!gamepad.Connected || !_outputEnabled || gamepad.Axes.Length < 5) return false;
+        if (_arm == null) return false;
 
         // Update controller position from selected gamepad's axes.
         _controller.X = (float)Utils.ClampMap(gamepad.Axes[0], -1.0, 1.0, -180.0, 180.0);
@@ -118,7 +122,7 @@
         _target.J3 = _overDelta[2] ? _arm.J3 : LimitSpeed(_target.J3, _controller.J3, Speed.J3, deltaT, out _overSpeed[2]);
         _target.J4 = _overDelta[3] ? _arm.J4 : LimitSpeed(_target.J4, _controller.J4, Speed.J4, deltaT, out _overSpeed[3]);
         _target.J5 = _overDelta[4] ? _arm.J5 : LimitSpeed(_target.J5, _controller.J5, Speed.J5, deltaT, out _overSpeed[4]);
-        _roveCommService.Boards.Arm.TargetAngle(_controller.X, _controller.J2, _controller.J3, _controller.J4, _controller.J5, _arm.J6);
+        _roveCommService.Boards.Arm.TargetAngle(_target.X, _target.J2, _target.J3, _target.J4, _target.J5, _arm.J6);
 
         return true;
     }
