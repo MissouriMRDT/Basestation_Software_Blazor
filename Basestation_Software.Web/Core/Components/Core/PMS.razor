@@ -92,7 +92,7 @@
     {
         if (bad > good)
             return $"--bg: color-mix(in oklab, {badColor} {Utils.ClampMap(x, good, bad, 0.0, 100.0)}%, {goodColor})";
-        return $"--bg: color-mix(in oklab, {badColor} {Utils.ClampMap(x, bad, good, 0.0, 100.0)}%, {goodColor})";
+        return $"--bg: color-mix(in oklab, {goodColor} {Utils.ClampMap(x, bad, good, 0.0, 100.0)}%, {badColor})";
     }
 
     protected override void OnInitialized()
