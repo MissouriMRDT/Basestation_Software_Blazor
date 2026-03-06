@@ -58,7 +58,7 @@
     private ArmAxes _controller = new();
     private ArmAxes _target = new();
     private ArmAxes? _arm;
-    public ArmAxes RoverControllerDelta = new()
+    public ArmAxes RoverControllerDelta = new ArmAxes()
     {
         X = 1,
         J2 = 10,
@@ -67,14 +67,23 @@
         J5 = 10,
         J6 = 10
     };
-    public ArmAxes Speed = new()
+    public ArmAxes Speed = new ArmAxes() // Angle Per Second
     {
         X = 0.03f,
-        J2 = 1,
-        J3 = 1,
-        J4 = 1,
-        J5 = 1,
-        J6 = 1
+        J2 = 30,
+        J3 = 30,
+        J4 = 30,
+        J5 = 30,
+        J6 = 30
+    };
+    public ArmAxes OffSet = new ArmAxes()
+    {
+        X = 0,
+        J2 = 0,
+        J3 = 0,
+        J4 = 0,
+        J5 = 0,
+        J6 = 0,
     };
     private bool[] _overDelta = new bool[5];
     private bool[] _overSpeed = new bool[5];
@@ -99,17 +108,29 @@
         // It is safe for this component to take no action when the controller is disconnected.
         await InvokeAsync(StateHasChanged);
     }
+
+    private void ResetMaxDelta(){ // Resets Angle Delta in order to Sync Arm and Arm Controller
+        RoverControllerDelta.X=1;
+        RoverControllerDelta.J2=10;
+        RoverControllerDelta.J3=10;
+        RoverControllerDelta.J4=10;            
+        RoverControllerDelta.J5=10;
+    }
     private async Task<bool> ProcessGamepadInput(Gamepad gamepad, float deltaT)
     {
-        if (!gamepad.Connected || !_outputEnabled || gamepad.Axes.Length < 5) return false;
+        if (!gamepad.Connected){ // If Controller is Physically Disconnected, Delta is Reset
+            ResetMaxDelta();
+            return false;
+        }    
+        if (gamepad.Axes.Length < 5) return false;
         if (_arm == null) return false;
 
         // Update controller position from selected gamepad's axes.
-        _controller.X = (float)Utils.ClampMap(gamepad.Axes[0], -1.0, 1.0, -180.0, 180.0);
-        _controller.J2 = (float)Utils.ClampMap(gamepad.Axes[1], -1.0, 1.0, -180.0, 180.0);
-        _controller.J3 = (float)Utils.ClampMap(gamepad.Axes[2], -1.0, 1.0, -180.0, 180.0);
-        _controller.J4 = (float)Utils.ClampMap(gamepad.Axes[3], -1.0, 1.0, -180.0, 180.0);
-        _controller.J5 = (float)Utils.ClampMap(gamepad.Axes[4], -1.0, 1.0, -180.0, 180.0);
+        _controller.X = OffSet.X + (float)Utils.ClampMap(gamepad.Axes[0], -1.0, 1.0, -180.0, 180.0);
+        _controller.J2 = OffSet.J2 + (float)Utils.ClampMap(gamepad.Axes[1], -1.0, 1.0, -180.0, 180.0);
+        _controller.J3 = OffSet.J3 + (float)Utils.ClampMap(gamepad.Axes[2], -1.0, 1.0, -180.0, 180.0);
+        _controller.J4 = OffSet.J4 + (float)Utils.ClampMap(gamepad.Axes[3], -1.0, 1.0, -180.0, 180.0);
+        _controller.J5 = OffSet.J5 + (float)Utils.ClampMap(gamepad.Axes[4], -1.0, 1.0, -180.0, 180.0);
 
         // Update target to the arm's position if the controller is further than RoverControllerDelta otherwise follow controller up to Speed maximum speed.
         _overDelta[0] = Math.Abs(_controller.X - _arm.X) > RoverControllerDelta.X;
@@ -117,13 +138,28 @@
         _overDelta[2] = Math.Abs(_controller.J3 - _arm.J3) > RoverControllerDelta.J3;
         _overDelta[3] = Math.Abs(_controller.J4 - _arm.J4) > RoverControllerDelta.J4;
         _overDelta[4] = Math.Abs(_controller.J5 - _arm.J5) > RoverControllerDelta.J5;
+
+        // If Angle of Encoder is in Range, Sets Over Delta to 360 Degrees
+        if (!_overDelta[0]){RoverControllerDelta.X=1;}
+        if (!_overDelta[1]){RoverControllerDelta.J2=360;}
+        if (!_overDelta[2]){RoverControllerDelta.J3=360;}
+        if (!_overDelta[3]){RoverControllerDelta.J4=360;}
+        if (!_overDelta[4]){RoverControllerDelta.J5=360;}
+
+        // Sets Target to Controller Angle or Arm Angle based on OverDelta
         _target.X = _overDelta[0] ? _arm.X : LimitSpeed(_target.X, _controller.X, Speed.X, deltaT, out _overSpeed[0]);
         _target.J2 = _overDelta[1] ? _arm.J2 : LimitSpeed(_target.J2, _controller.J2, Speed.J2, deltaT, out _overSpeed[1]);
         _target.J3 = _overDelta[2] ? _arm.J3 : LimitSpeed(_target.J3, _controller.J3, Speed.J3, deltaT, out _overSpeed[2]);
         _target.J4 = _overDelta[3] ? _arm.J4 : LimitSpeed(_target.J4, _controller.J4, Speed.J4, deltaT, out _overSpeed[3]);
         _target.J5 = _overDelta[4] ? _arm.J5 : LimitSpeed(_target.J5, _controller.J5, Speed.J5, deltaT, out _overSpeed[4]);
-        _roveCommService.Boards.Arm.TargetAngle(_target.X, _target.J2, _target.J3, _target.J4, _target.J5, _arm.J6);
+        if (!_outputEnabled) // Resets Angle Delta if Basestation App is not Enabled
+        {
+            ResetMaxDelta();
+            return false;
+        }
 
+        _roveCommService.Boards.Arm.TargetAngle(_target.X, _target.J2, _target.J3, _target.J4, _target.J5, _arm.J6);
+        Console.WriteLine("Connected AC");
         return true;
     }
 
