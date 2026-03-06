@@ -34,17 +34,17 @@
     <h3>Map</h3>
     <div class="vr" />
     <input type="checkbox" @bind=_isLidar>
-    @if (_downloading)
-    {
-        <button class="danger" @onclick=@(() => _downloading = false)><i class="bi-stop" /></button>
-        <p style="display: inline">@($"Downloading {_currentlyDownloadingTile} / {_totalDownloadingTiles} ({(float)_currentlyDownloadingTile / _totalDownloadingTiles * 100:000.00}%) {(_isLidar ? "lidar" : "map")} tiles {Math.Clamp(_zoom, 13, 18)}z - 18z")</p>
-    }
-    else
-    {
-        <button class="success" @onclick=Download><i class="bi-play" /></button>
-        <p style="display: inline">@($"Download {_totalDownloadingTiles} {(_isLidar ? "lidar" : "map")} tiles {Math.Clamp(_zoom, 13, 18)}z - 18z")</p>
-    }
-</div>
+        @if (_downloading)
+        {
+            <button class="danger" @onclick=@(() => _downloading = false)><i class="bi-stop" /></button>
+            <p style="display: inline">@($"Downloading {_currentlyDownloadingTile} / {_totalDownloadingTiles} ({(float)_currentlyDownloadingTile / _totalDownloadingTiles * 100:000.00}%) {(_isLidar ? "lidar" : "map")} tiles {Math.Clamp(_zoom, 13, 18)}z - 18z")</p>
+        }
+        else
+        {
+            <button class="success" @onclick=Download><i class="bi-play" /></button>
+            <p style="display: inline">@($"Download {_totalDownloadingTiles} {(_isLidar ? "lidar" : "map")} tiles {Math.Clamp(_zoom, 13, 18)}z - 18z")</p>
+        }
+    </div>
 <div @ref=_mapContainer class="component-body"></div>
 
 @code
@@ -66,15 +66,111 @@
     bool _isLidar = false;
     int _zoom = 0;
     bool _downloading = false;
+    private bool _pathTrackingActive = false;
+
+    private int _pathTrackingTimeout = 120 * 1000;
+
+    // Token to track when to clear paths after data stops being received
+    private CancellationTokenSource _pathCts = new CancellationTokenSource();
+
+    private List<List<double>> _roverPoints = new List<List<double>>();
+    private List<List<double>> _plannedPathPoints = new List<List<double>>();
 
     protected override void OnInitialized()
     {
+        _RoveCommService.On<double>(11104, async (packet) =>
+        {
+            Console.WriteLine($"We got waypoint!");
+            foreach (var value in packet.Data)
+            {
+                Console.WriteLine($"Lat: {value}");
+            }
+            List<List<double>> pairs = new List<List<double>>();
+
+            for (int i = 0; i < packet.Data.Count; i += 2)
+            {
+                if (i + 1 < packet.Data.Count)
+                {
+                    pairs.Add(new List<double> { packet.Data[i], packet.Data[i + 1] });
+                }
+            }
+
+
+            for (int i = 0; i < pairs.Count; i++)
+            {
+                Console.WriteLine($"Pair {i}: Lat = {pairs[i][0]}, Lon = {pairs[i][1]}");
+            }
+
+            _plannedPathPoints.Clear();
+            _plannedPathPoints = pairs;
+
+            DisplayPath(pairs);
+
+            _pathCts.Cancel();
+            _pathCts = new CancellationTokenSource();
+
+            try
+            {
+                await Task.Delay(_pathTrackingTimeout, _pathCts.Token);
+                _roverPoints.Clear();
+                _plannedPathPoints.Clear();
+                RemoveRoverPath();
+                RemovePath();
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (TaskCanceledException)
+            {
+
+            }
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.On<double>(11105, async (packet) =>
+        {
+            double timeRemaining = packet.Data[0];
+            double now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            double ETA = now + timeRemaining;
+
+            // Rover was not moving, so set ETA to -1 to signify that
+            if (timeRemaining == -1)
+            {
+                ETA = -1;
+            }
+
+            await SetETA(ETA);
+            await InvokeAsync(StateHasChanged);
+        });
+
+
         _RoveCommService.Boards.Nav.OnGPSLatLonAlt(async packet =>
         {
             await _jsMap!.InvokeVoidAsync("addRoverIcon", [_RoveCommService.Boards.Nav.GPSLatLonAlt_Lat, _RoveCommService.Boards.Nav.GPSLatLonAlt_Lon]);
-        });
 
-        _RoveCommService.Boards.Nav.OnCompassData(async packet => await InvokeAsync(StateHasChanged));
+            double lat = packet.Data[0];
+            double lon = packet.Data[1];
+
+            List<double> point = [lat, lon];
+
+            _roverPoints.Add(point);
+            await DisplayRoverPath(_roverPoints);
+
+            _pathCts.Cancel();
+            _pathCts = new CancellationTokenSource();
+
+            try
+            {
+                await Task.Delay(_pathTrackingTimeout, _pathCts.Token);
+                _roverPoints.Clear();
+                await RemoveRoverPath();
+                await RemovePath();
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (TaskCanceledException)
+            {
+
+            }
+            await InvokeAsync(StateHasChanged);
+        });
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -92,6 +188,31 @@
             _databaseService.SubscribeToTableChanges(typeof(GPSWaypoint), UpdateWaypoints);
             _GPSWaypointState.SubscribeToWaypointSelected(OnWaypointSelected);
         }
+    }
+
+    public async Task SetETA(double ETA)
+    {
+        await _jsMap!.InvokeVoidAsync("setETA", ETA);
+    }
+
+    public async Task DisplayRoverPath(List<List<double>> points)
+    {
+        await _jsMap!.InvokeVoidAsync("displayRoverPath", points);
+    }
+
+    public async Task DisplayPath(List<List<double>> points)
+    {
+        await _jsMap!.InvokeVoidAsync("displayPath", points);
+    }
+
+    public async Task RemovePath()
+    {
+        await _jsMap!.InvokeVoidAsync("removePath");
+    }
+
+    public async Task RemoveRoverPath()
+    {
+        await _jsMap!.InvokeVoidAsync("removeRoverPath");
     }
 
     private async Task UpdateWaypoints()
