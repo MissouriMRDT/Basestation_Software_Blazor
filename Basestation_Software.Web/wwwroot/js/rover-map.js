@@ -129,7 +129,7 @@ export class RoverMap {
         this.tagLayerGroup = L.layerGroup([]).addTo(this.lMap);
         this.pathLayerGroup = L.layerGroup([]).addTo(this.lMap);
         this.roverPathLayerGroup = L.layerGroup([]).addTo(this.lMap);
-        this.currentPlannedPoints = []
+        this.currentPlannedPoints = [];
         this.eta = 0;
 
         const baseMaps = {
@@ -321,14 +321,21 @@ export class RoverMap {
 
     // Display path rover has taken
     displayRoverPath(points) {
+        console.log("Display rover path")
         if (points.length == 0) {
             return;
         }
+
+        // Convert points to 2D lat lon list
+        const pointPairs = [];
+        for (i = 0; i < points.length; i += 2) {
+            pointPairs.push([points[i], points[i+1]]);
+        }
+
         this.roverPathLayerGroup.clearLayers();
-        L.polyline(points, { color: "red", weight: 5 }).addTo(
+        L.polyline(pointPairs, { color: "red", weight: 5 }).addTo(
             this.roverPathLayerGroup
         );
-
     }
 
     // Remove path rover has taken
@@ -341,28 +348,35 @@ export class RoverMap {
         if (points.length == 0) {
             return;
         }
-        this.currentPlannedPoints = points;
+
+        // Convert points to 2D lat lon list
+        const pointPairs = [];
+        for (i = 0; i < points.length; i += 2) {
+            pointPairs.push([points[i], points[i+1]]);
+        }
+
+        this.currentPlannedPoints = pointPairs;
         this.pathLayerGroup.clearLayers();
-        var path = L.polyline(points, { color: "blue", weight: 5 }).addTo(this.pathLayerGroup);
+        var path = L.polyline(pointPairs, { color: "blue", weight: 5 }).addTo(this.pathLayerGroup);
 
-        var lastPoint = points[points.length - 1];
+        var lastPoint = pointPairs[pointPairs.length - 1];
 
 
-        var timeDate = new Date(this.eta * 1000)
-        var ETAString = "ETA: " + timeDate.toString()
+        var timeDate = new Date(this.eta * 1000);
+        var ETAString = "ETA: " + timeDate.toString();
 
         // Do not show ETA if rover is not moving
         if (this.eta < 0) {
-            ETAString = "Waiting for movement update..."
+            ETAString = "Waiting for movement update...";
         }
 
-        L.marker([lastPoint[0], lastPoint[1]]).addTo(this.pathLayerGroup).bindTooltip(ETAString, { direction: "top" });;
+        L.marker([lastPoint[0], lastPoint[1]]).addTo(this.pathLayerGroup).bindTooltip(ETAString, { direction: "top" });
     }
 
     // Remove planned path
     removePath() {
         this.pathLayerGroup.clearLayers();
-        this.currentPlannedPoints = []
+        this.currentPlannedPoints = [];
     }
 
     // Set estimated time of arrival (seconds since epoch)

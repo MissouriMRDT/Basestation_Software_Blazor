@@ -73,38 +73,30 @@
     // Token to track when to clear paths after data stops being received
     private CancellationTokenSource _pathCts = new CancellationTokenSource();
 
-    private List<List<double>> _roverPoints = new List<List<double>>();
-    private List<List<double>> _plannedPathPoints = new List<List<double>>();
+    private List<double> _roverPoints = new List<double>();
+    private List<double> _plannedPathPoints = new List<double>();
 
     protected override void OnInitialized()
     {
-        _RoveCommService.On<double>(11104, async (packet) =>
+        _RoveCommService.Boards.Autonomy.OnPathWaypoints(async packet =>
         {
             Console.WriteLine($"We got waypoint!");
             foreach (var value in packet.Data)
             {
                 Console.WriteLine($"Lat: {value}");
             }
-            List<List<double>> pairs = new List<List<double>>();
 
-            for (int i = 0; i < packet.Data.Count; i += 2)
+            List<double> pairs = new List<double>();
+
+            for (int i = 0; i < packet.Data.Count; i++)
             {
-                if (i + 1 < packet.Data.Count)
-                {
-                    pairs.Add(new List<double> { packet.Data[i], packet.Data[i + 1] });
-                }
-            }
-
-
-            for (int i = 0; i < pairs.Count; i++)
-            {
-                Console.WriteLine($"Pair {i}: Lat = {pairs[i][0]}, Lon = {pairs[i][1]}");
+                pairs.Add(packet.Data[i]);
             }
 
             _plannedPathPoints.Clear();
             _plannedPathPoints = pairs;
 
-            DisplayPath(pairs);
+            DisplayPath(_plannedPathPoints);
 
             _pathCts.Cancel();
             _pathCts = new CancellationTokenSource();
@@ -125,9 +117,9 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.On<double>(11105, async (packet) =>
+        _RoveCommService.Boards.Autonomy.OnTimeRemaining(async packet =>
         {
-            double timeRemaining = packet.Data[0];
+            double timeRemaining = _RoveCommService.Boards.Autonomy.TimeRemaining;
             double now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             double ETA = now + timeRemaining;
 
@@ -149,9 +141,9 @@
             double lat = packet.Data[0];
             double lon = packet.Data[1];
 
-            List<double> point = [lat, lon];
+            _roverPoints.Add(lat);
+            _roverPoints.Add(lon);
 
-            _roverPoints.Add(point);
             await DisplayRoverPath(_roverPoints);
 
             _pathCts.Cancel();
@@ -195,12 +187,12 @@
         await _jsMap!.InvokeVoidAsync("setETA", ETA);
     }
 
-    public async Task DisplayRoverPath(List<List<double>> points)
+    public async Task DisplayRoverPath(List<double> points)
     {
         await _jsMap!.InvokeVoidAsync("displayRoverPath", points);
     }
 
-    public async Task DisplayPath(List<List<double>> points)
+    public async Task DisplayPath(List<double> points)
     {
         await _jsMap!.InvokeVoidAsync("displayPath", points);
     }
