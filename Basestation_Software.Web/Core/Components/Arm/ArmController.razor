@@ -54,7 +54,7 @@
 {
     // State
     private GamepadSelector? GamepadSelector_;
-    private bool _outputEnabled = true;
+    private bool _outputEnabled = false;
     private ArmAxes _controller = new();
     private ArmAxes _target = new();
     private ArmAxes? _arm;
@@ -122,16 +122,17 @@
             ResetMaxDelta();
             return false;
         }    
-        if (gamepad.Axes.Length < 5) return false;
+
+        if (gamepad.Axes.Length < 5 ) return false;
         if (_arm == null) return false;
 
         // Update controller position from selected gamepad's axes.
-        _controller.X = OffSet.X + (float)Utils.ClampMap(gamepad.Axes[0], -1.0, 1.0, -180.0, 180.0);
-        _controller.J2 = OffSet.J2 + (float)Utils.ClampMap(gamepad.Axes[1], -1.0, 1.0, -180.0, 180.0);
-        _controller.J3 = OffSet.J3 + (float)Utils.ClampMap(gamepad.Axes[2], -1.0, 1.0, -180.0, 180.0);
-        _controller.J4 = OffSet.J4 + (float)Utils.ClampMap(gamepad.Axes[3], -1.0, 1.0, -180.0, 180.0);
-        _controller.J5 = OffSet.J5 + (float)Utils.ClampMap(gamepad.Axes[4], -1.0, 1.0, -180.0, 180.0);
-
+        _controller.X = (float)Utils.ClampMap(gamepad.Axes[0], -1.0, 1.0, -180.0, 180.0);
+        _controller.J2 = (float)Utils.ClampMap(gamepad.Axes[1], -1.0, 1.0, -180.0, 180.0);
+        _controller.J3 = (float)Utils.ClampMap(gamepad.Axes[2], -1.0, 1.0, -180.0, 180.0);
+        _controller.J4 = (float)Utils.ClampMap(gamepad.Axes[3], -1.0, 1.0, -180.0, 180.0);
+        _controller.J5 = (float)Utils.ClampMap(gamepad.Axes[4]+OffSet.J5, -1.0, 1.0, -180.0, 180.0);
+        
         // Update target to the arm's position if the controller is further than RoverControllerDelta otherwise follow controller up to Speed maximum speed.
         _overDelta[0] = Math.Abs(_controller.X - _arm.X) > RoverControllerDelta.X;
         _overDelta[1] = Math.Abs(_controller.J2 - _arm.J2) > RoverControllerDelta.J2;
@@ -152,13 +153,15 @@
         _target.J3 = _overDelta[2] ? _arm.J3 : LimitSpeed(_target.J3, _controller.J3, Speed.J3, deltaT, out _overSpeed[2]);
         _target.J4 = _overDelta[3] ? _arm.J4 : LimitSpeed(_target.J4, _controller.J4, Speed.J4, deltaT, out _overSpeed[3]);
         _target.J5 = _overDelta[4] ? _arm.J5 : LimitSpeed(_target.J5, _controller.J5, Speed.J5, deltaT, out _overSpeed[4]);
-        if (!_outputEnabled) // Resets Angle Delta if Basestation App is not Enabled
+        
+        if (!_outputEnabled||_controller.X<180) // Resets Angle Delta if Basestation App is not Enabled or Enable Switch is disabled
         {
             ResetMaxDelta();
+            Console.WriteLine(_controller.X+"DISABLED");
             return false;
         }
 
-        _roveCommService.Boards.Arm.TargetAngle(_target.X, _target.J2, _target.J3, _target.J4, _target.J5, _arm.J6);
+        _roveCommService.Boards.Arm.TargetAngle(_arm.X, _target.J2, _target.J3, _target.J4, _target.J5, _arm.J6);
         Console.WriteLine("Connected AC");
         return true;
     }
