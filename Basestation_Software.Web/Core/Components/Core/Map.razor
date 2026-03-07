@@ -80,19 +80,12 @@
     {
         _RoveCommService.Boards.Autonomy.OnPathWaypoints(async packet =>
         {
-            Console.WriteLine($"We got waypoint!");
-            foreach (var value in packet.Data)
-            {
-                Console.WriteLine($"Lat: {value}");
-            }
-
             List<double> pairs = new List<double>();
-
+                
             for (int i = 0; i < packet.Data.Count; i++)
             {
                 pairs.Add(packet.Data[i]);
             }
-
             _plannedPathPoints.Clear();
             _plannedPathPoints = pairs;
 

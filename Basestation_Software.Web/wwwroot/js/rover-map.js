@@ -321,18 +321,17 @@ export class RoverMap {
 
     // Display path rover has taken
     displayRoverPath(points) {
-        console.log("Display rover path")
         if (points.length == 0) {
             return;
         }
 
         // Convert points to 2D lat lon list
         const pointPairs = [];
-        for (i = 0; i < points.length; i += 2) {
+        for (let i = 0; i < points.length; i += 2) {
             pointPairs.push([points[i], points[i+1]]);
         }
 
-        this.roverPathLayerGroup.clearLayers();
+        // this.roverPathLayerGroup.clearLayers();
         L.polyline(pointPairs, { color: "red", weight: 5 }).addTo(
             this.roverPathLayerGroup
         );
@@ -351,11 +350,12 @@ export class RoverMap {
 
         // Convert points to 2D lat lon list
         const pointPairs = [];
-        for (i = 0; i < points.length; i += 2) {
+        for (let i = 0; i < points.length - 1; i += 2) {
             pointPairs.push([points[i], points[i+1]]);
         }
 
-        this.currentPlannedPoints = pointPairs;
+        this.currentPlannedPoints = points;
+
         this.pathLayerGroup.clearLayers();
         var path = L.polyline(pointPairs, { color: "blue", weight: 5 }).addTo(this.pathLayerGroup);
 
