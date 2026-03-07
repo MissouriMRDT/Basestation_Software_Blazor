@@ -78,12 +78,10 @@
     };
     public ArmAxes OffSet = new ArmAxes()
     {
-        X = 0,
-        J2 = 0,
-        J3 = 0,
-        J4 = 0,
-        J5 = 0,
-        J6 = 0,
+        J2 = 0F,
+        J3 = 00.5F,
+        J4 = -0.5F,
+        J5 = 0.8F,
     };
     private bool[] _overDelta = new bool[5];
     private bool[] _overSpeed = new bool[5];
@@ -109,6 +107,17 @@
         await InvokeAsync(StateHasChanged);
     }
 
+    private float AddOffset(double axis, float offset){
+        float axisSum = (float)axis+offset;
+        if (axisSum>1){
+            return (axisSum)-2;
+        }
+        if (axisSum<-1){
+            return 2+(axisSum);
+        }
+        return axisSum;
+    }
+
     private void ResetMaxDelta(){ // Resets Angle Delta in order to Sync Arm and Arm Controller
         RoverControllerDelta.X=1;
         RoverControllerDelta.J2=10;
@@ -128,10 +137,10 @@
 
         // Update controller position from selected gamepad's axes.
         _controller.X = (float)Utils.ClampMap(gamepad.Axes[0], -1.0, 1.0, -180.0, 180.0);
-        _controller.J2 = (float)Utils.ClampMap(gamepad.Axes[1], -1.0, 1.0, -180.0, 180.0);
-        _controller.J3 = (float)Utils.ClampMap(gamepad.Axes[2], -1.0, 1.0, -180.0, 180.0);
-        _controller.J4 = (float)Utils.ClampMap(gamepad.Axes[3], -1.0, 1.0, -180.0, 180.0);
-        _controller.J5 = (float)Utils.ClampMap(gamepad.Axes[4]+OffSet.J5, -1.0, 1.0, -180.0, 180.0);
+        _controller.J2 = (float)Utils.ClampMap(AddOffset(-gamepad.Axes[1],OffSet.J2), -1.0, 1.0, -180.0, 180.0);
+        _controller.J3 = (float)Utils.ClampMap(AddOffset(-gamepad.Axes[2],OffSet.J3), -1.0, 1.0, -180.0, 180.0);
+        _controller.J4 = (float)Utils.ClampMap(AddOffset(gamepad.Axes[3],OffSet.J4), -1.0, 1.0, 0.0, 360.0);
+        _controller.J5 = (float)Utils.ClampMap(AddOffset(gamepad.Axes[4],OffSet.J5), -1.0, 1.0, -180.0, 180.0);
         
         // Update target to the arm's position if the controller is further than RoverControllerDelta otherwise follow controller up to Speed maximum speed.
         _overDelta[0] = Math.Abs(_controller.X - _arm.X) > RoverControllerDelta.X;
@@ -154,14 +163,15 @@
         _target.J4 = _overDelta[3] ? _arm.J4 : LimitSpeed(_target.J4, _controller.J4, Speed.J4, deltaT, out _overSpeed[3]);
         _target.J5 = _overDelta[4] ? _arm.J5 : LimitSpeed(_target.J5, _controller.J5, Speed.J5, deltaT, out _overSpeed[4]);
         
-        if (!_outputEnabled||_controller.X<180) // Resets Angle Delta if Basestation App is not Enabled or Enable Switch is disabled
+        if (!_outputEnabled|| _controller.X<1) // Resets Angle Delta if Basestation App is not Enabled or Enable Switch is disabled
         {
             ResetMaxDelta();
             Console.WriteLine(_controller.X+"DISABLED");
             return false;
         }
 
-        _roveCommService.Boards.Arm.TargetAngle(_arm.X, _target.J2, _target.J3, _target.J4, _target.J5, _arm.J6);
+         _roveCommService.Boards.Arm.TargetAngle(_arm.X, _target.J2, _target.J3, _target.J4, _target.J5, _arm.J6);
+        
         Console.WriteLine("Connected AC");
         return true;
     }
