@@ -1,0 +1,20 @@
+@inject OpService _OpState
+
+<div class="component-header">
+    <h3>Operator State</h3>
+</div>
+<div class="component-body" style="background-color: @_colorString"></div>
+
+@code {
+    // valid css color
+    private string _colorString = "rgb(0, 0, 0)";
+
+    protected override void OnInitialized()
+    {
+        _OpState.SubscribeToStateChanged((Color? c) =>
+        {
+            _colorString = String.Format("rgb({0}, {1}, {2})", c?.R, c?.G, c?.B);
+            InvokeAsync(StateHasChanged);
+        });
+    }
+}

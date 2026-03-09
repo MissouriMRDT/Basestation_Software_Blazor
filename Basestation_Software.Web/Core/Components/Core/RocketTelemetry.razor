@@ -1,0 +1,20 @@
+<div class="component-header">
+    <h3>Radio Connectivity</h3>
+    <select @bind=_currentRocket>
+        @foreach (var rocket in _rockets)
+        {
+            <option value=@rocket>@rocket</option>
+        }
+    </select>
+</div>
+<div class="component-body">
+    @if (_currentRocket != null)
+    {
+        <embed src="http://@(RoveCommManifest.Devices[_currentRocket].Ip)/index.cgi" style="width:100%; height:100%" />
+    }
+</div>
+
+@code {
+    private string[] _rockets = RoveCommManifest.Devices.Keys.Where(x => x.Contains("Rocket")).ToArray();
+    private string? _currentRocket = null;
+}

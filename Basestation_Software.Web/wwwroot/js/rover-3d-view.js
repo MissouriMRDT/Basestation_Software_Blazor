@@ -2,6 +2,7 @@
 
 import * as THREE from "./lib/three/three.js";
 import { STLLoader } from "./lib/three/STLLoader.js";
+import { GLTFLoader } from "./lib/three/GLTFLoader.js";
 import { OrbitControls } from "./lib/three/OrbitControls.js";
 
 export const roverViews = {};
@@ -15,6 +16,8 @@ export class Rover3DView {
     scene = null;
     camera = null;
     roverMesh = null;
+    arm = null;
+    armJoints = {x: null, j2: null, j3: null, j4: null, j5: null, j6: null};
     lightingPanel = null;
     resizeObserver = null;
     frameId = 0;
@@ -24,9 +27,9 @@ export class Rover3DView {
         const scene = new THREE.Scene();
         scene.castShadow = true;
         scene.receiveShadow = true;
-        const loader = new STLLoader();
+        const stlLoader = new STLLoader();
 
-        loader.load("models/Rover.stl", (roverGeometry) => {
+        stlLoader.load("/models/Rover.stl", (roverGeometry) => {
             const material = new THREE.MeshPhongMaterial({ color: 0x9a0000, specular: 0x111111, shininess: 200 });
             this.roverMesh = new THREE.Mesh(roverGeometry, material);
             this.roverMesh.position.set(0, 0, 0);
@@ -43,6 +46,21 @@ export class Rover3DView {
             this.roverMesh.add(this.lightingPanel);
 
             scene.add(this.roverMesh);
+
+            const gltfLoader = new GLTFLoader();
+            gltfLoader.load("/models/AthenaArm.glb", (loadedData) => {
+                this.arm = loadedData.scene.children[0];
+                this.arm.scale.multiplyScalar(0.112);
+                this.arm.setRotationFromEuler(new THREE.Euler(Math.PI / 2, Math.PI / 2, -Math.PI / 2, "XYZ"));
+                this.arm.position.set(-0.75, -0.67, -0.75);
+                this.armJoints.x = this.arm.getObjectByName("Shoulder");
+                this.armJoints.j2 = this.arm.getObjectByName("Bicep");
+                this.armJoints.j3 = this.arm.getObjectByName("Forearm_Roll");
+                this.armJoints.j4 = this.arm.getObjectByName("Forearm");
+                this.armJoints.j5 = this.arm.getObjectByName("Wrist");
+                this.armJoints.j6 = this.arm.getObjectByName("Gripper");
+                this.roverMesh.add(this.arm);
+            });
         });
 
         const groundPlane = new THREE.Mesh(
@@ -105,6 +123,15 @@ export class Rover3DView {
     updateAngles(pitch, yaw, roll) {
         console.log("Set angle:", pitch, yaw, roll);
         this.roverMesh?.rotation.set(pitch, yaw, roll);
+    }
+
+    updateArm(x, j2, j3, j4, j5, j6) {
+        this.armJoints.x.position.z = x;
+        this.armJoints.j2.setRotationFromEuler(new THREE.Euler(0, 0, j2 * Math.PI / 180, "XYZ"));
+        this.armJoints.j3.setRotationFromEuler(new THREE.Euler(0, 0, j3 * Math.PI / 180, "XYZ"));
+        this.armJoints.j4.setRotationFromEuler(new THREE.Euler(j4 * Math.PI / 180, 0, 0, "XYZ"));
+        this.armJoints.j5.setRotationFromEuler(new THREE.Euler(0, 0, j5 * Math.PI / 180, "XYZ"));
+        this.armJoints.j6.setRotationFromEuler(new THREE.Euler(j6 * Math.PI / 180, 0, 0, "XYZ"));
     }
 
     updateAnglesFromUpVector(x, y, z) {

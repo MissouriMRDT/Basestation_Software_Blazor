@@ -1,0 +1,130 @@
+@attribute [ComponentAttributes.Ignore]
+
+<div style="display: flex; background-color: var(--secondary-bg) ">
+    <p>Dead Zone</p>
+    <input type="range" @bind=DeadZone min="0" max="0.5" step="0.001" style="width: 100px; align-self: center" />
+    <input @bind=DeadZone style="width: 40px" />
+</div>
+<div style="display: flex; flex-wrap: wrap; justify-content: center; gap: 2px">
+    @* Iterating to _outputs.Length should be fine since Update adjusts all of the below to the same length. Stay safe by checking all of them in case they are externally modified. *@
+    @for (int _i = 0; _i < _outputs.Length && _i < AxisNames.Length && _i < ControlScheme.Inversions.Length && _i < ControlScheme.Binds.Length; _i++)
+    {
+        int i = _i;
+        <div class="control-box">
+            <p>@AxisNames[i]</p>
+            <input type="checkbox" @bind=ControlScheme.Inversions[i] title="Invert" />
+            <select @bind=ControlScheme.Binds[i] name="ControlBind">
+                @foreach (Bind bind in Bind.GetValues(typeof(Bind)))
+                {
+                    <option value="@bind">@bind</option>
+                }
+            </select>
+            <meter value="@_outputs[i]" min="-1.0" max="1.0" />
+        </div>
+    }
+</div>
+
+@code
+{
+    [Parameter, EditorRequired]
+    public string[] AxisNames { get; set; } = [];
+
+    [Parameter, EditorRequired]
+    public ControlScheme ControlScheme { get; set; } = new(0);
+
+    public double DeadZone = 0.15;
+    private float[] _outputs = [];
+    private bool _ltMoved = false;
+    private bool _rtMoved = false;
+
+    private static double GetButton(Gamepad gamepad, uint i)
+    {
+        if (i >= gamepad.Values.Length) return 0;
+        if (gamepad.ID != "xinput") return gamepad.Values[(int)i];
+        // Windows remapping.
+        if (i == 2) return 3 >= gamepad.Values.Length ? 0 : gamepad.Values[3]; // X and Y are swapped.
+        if (i == 3) return gamepad.Values[2]; // X and Y are swapped.
+        if (i == 6 || i == 7) return 0; // B6 and B7 don't exist.
+        return gamepad.Values[(int)i];
+    }
+
+    private double GetAxis(Gamepad gamepad, uint i)
+    {
+        if (gamepad.ID == "xinput")
+        {
+            // Windows remapping.
+            if (i == 4 && gamepad.Values.Length > 6) return gamepad.Values[6]; // LT is button 6 instead of axis 4 and has the desired range [0, 1].
+            if (i == 5 && gamepad.Values.Length > 7) return gamepad.Values[7]; // RT is button 7 instead of axis 5 and has the desired range [0, 1].
+            if (i >= gamepad.Axes.Length) return 0;
+            return gamepad.Axes[(int)i];
+        }
+
+        if (i >= gamepad.Axes.Length) return 0;
+        // Triggers send 0 until they are moved.
+        if (!_ltMoved && i == 4)
+        {
+            if (Math.Abs(gamepad.Axes[4]) < 0.01) return 0;
+            _ltMoved = true;
+        }
+        if (i == 4) return (gamepad.Axes[4] + 1) / 2; // Remap LT [-1, 1] to [0, 1].
+        if (!_rtMoved && i == 5)
+        {
+            if (Math.Abs(gamepad.Axes[5]) < 0.01) return 0;
+            _rtMoved = true;
+        }
+        if (i == 5) return (gamepad.Axes[5] + 1) / 2; // Remap RT [-1, 1] to [0, 1].
+        return gamepad.Axes[(int)i];
+    }
+
+    public float[] Update(Gamepad gamepad)
+    {
+        // Resize ControlScheme.{Binds,Inversions} to match AxisNames.
+        if (AxisNames.Length > ControlScheme.Binds.Length)
+            ControlScheme.Binds = ControlScheme.Binds.Concat(Enumerable.Repeat(Bind.None, AxisNames.Length - ControlScheme.Binds.Length)).ToArray();
+        else if (AxisNames.Length < ControlScheme.Binds.Length)
+            ControlScheme.Binds = ControlScheme.Binds[..AxisNames.Length];
+        if (AxisNames.Length > ControlScheme.Inversions.Length)
+            ControlScheme.Inversions = ControlScheme.Inversions.Concat(Enumerable.Repeat(false, AxisNames.Length - ControlScheme.Inversions.Length)).ToArray();
+        else if (AxisNames.Length < ControlScheme.Inversions.Length)
+            ControlScheme.Inversions = ControlScheme.Inversions[..AxisNames.Length];
+
+        double[] axes = [
+            GetButton(gamepad, 0), // A
+            GetButton(gamepad, 1), // B
+            GetButton(gamepad, 2), // Y
+            GetButton(gamepad, 3), // X
+            GetButton(gamepad, 4), // LB
+            GetButton(gamepad, 5), // RB
+            GetButton(gamepad, 6), // B6
+            GetButton(gamepad, 7), // B7
+            GetButton(gamepad, 8), // Select
+            GetButton(gamepad, 9), // Start
+            GetButton(gamepad, 10), // LSB
+            GetButton(gamepad, 11), // RSB
+            GetButton(gamepad, 12), // DpadU
+            GetButton(gamepad, 13), // DPadD
+            GetButton(gamepad, 14), // DPadL
+            GetButton(gamepad, 15), // DPadR
+            GetAxis(gamepad, 0), // LSX
+            GetAxis(gamepad, 1), // LSY
+            GetAxis(gamepad, 2), // RSX
+            GetAxis(gamepad, 3), // RSY
+            GetAxis(gamepad, 4), // LT
+            GetAxis(gamepad, 5), // RT
+            GetButton(gamepad, 1) - GetButton(gamepad, 3), // XB
+            GetButton(gamepad, 0) - GetButton(gamepad, 2), // YA
+            GetButton(gamepad, 1) - GetButton(gamepad, 0), // AB
+            GetButton(gamepad, 2) - GetButton(gamepad, 3), // XY
+            GetButton(gamepad, 5) - GetButton(gamepad, 4), // Bumpers
+            GetAxis(gamepad, 5) - GetAxis(gamepad, 4), // Triggers
+            GetAxis(gamepad, 4) - GetButton(gamepad, 4), // LBumpTrig
+            GetAxis(gamepad, 5) - GetButton(gamepad, 5), // RBumpTrig
+            GetButton(gamepad, 15) - GetButton(gamepad, 14), // DpadX
+            GetButton(gamepad, 13) - GetButton(gamepad, 12), // DpadY
+            GetButton(gamepad, 9) - GetButton(gamepad, 8), // SelectStart
+            0 // None
+        ];
+        _outputs = ControlScheme.Binds.Select((bind, i) => Math.Abs(axes[(int)bind]) < DeadZone ? 0f : (float)axes[(int)bind] * (ControlScheme.Inversions[i] ? -1 : 1)).ToArray();
+        return _outputs;
+    }
+}

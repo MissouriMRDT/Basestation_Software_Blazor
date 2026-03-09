@@ -1,12 +1,13 @@
 using Basestation_Software.Web.Core;
 using Basestation_Software.Web.Core.Services;
-using Basestation_Software.Web.Core.Services.States;
+using Basestation_Software.Web.Models;
 using Blazored.Toast;
-using Radzen;
 using RoveComm;
-using Toolbelt.Blazor.Extensions.DependencyInjection;
 
 #pragma warning disable IDE0211 // Convert to 'Program.Main' style program
+
+using (var context = new DatabaseContext()) { context.Database.EnsureCreated(); }
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Configure logging
@@ -25,39 +26,28 @@ builder.Services.AddServerSideBlazor()
             option.DisconnectedCircuitRetentionPeriod = TimeSpan.FromSeconds(10);
         })
         .AddHubOptions(option => option.MaximumReceiveMessageSize = 10_000_000); // Configures the message size for SignalR connections.
-builder.Services.AddRadzenComponents();
-builder.Services.AddGamepadList();
 builder.Services.AddScoped<CookieService>();
-builder.Services.AddHttpClient<GPSWaypointService>();
-builder.Services.AddSingleton<GPSWaypointService>();
 builder.Services.AddScoped<GPSWaypointState>();
-builder.Services.AddHttpClient<MapTileService>();
-builder.Services.AddSingleton<MapTileService>();
-builder.Services.AddHttpClient<LidarTileService>();
-builder.Services.AddSingleton<LidarTileService>();
-builder.Services.AddHttpClient<ConfigService>();
-builder.Services.AddSingleton<ConfigService>();
-builder.Services.AddSingleton<TaskTimerService>();
 builder.Services.AddSingleton<PingService>();
 builder.Services.AddSingleton<OpService>();
-builder.Services.AddSingleton<ArmSpeedState>();
-builder.Services.AddHttpClient<ArmAngularService>();
-builder.Services.AddSingleton<ArmAngularService>();
-builder.Services.AddSingleton<ArmControlService>();
+builder.Services.AddSingleton<DatabaseService>();
+builder.Services.AddDbContextFactory<DatabaseContext>();
 builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
-//builder.Services.AddSingleton<LoggerService_Deprecated>();
-//builder.Services.AddSingleton<LoggerCore.LoggerService>();
+builder.Services.AddSingleton<SwitchMonitorService>();
+builder.Services.AddHostedService((sp) => sp.GetRequiredService<SwitchMonitorService>());
 
 var app = builder.Build();
 
 app.UseHttpsRedirection();
 
-app.UseStaticFiles();
+app.MapStaticAssets();
 app.UseAntiforgery();
-
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode();
+
+app.MapGet("/MapTiles/{z}/{y}/{x}.png", TileController.GetMapTileImage);
+app.MapGet("/LidarTiles/{z}/{y}/{x}.png", TileController.GetLidarTileImage);
 
 app.Run();

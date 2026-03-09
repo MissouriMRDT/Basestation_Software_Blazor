@@ -1,0 +1,25 @@
+.source-buttons-container {
+    width: 100%;
+    padding: 0px 50px 0px 20px;
+    display: flex;
+    flex-direction: row;
+    margin-inline: 0;
+    margin-block: 0;
+}
+
+.source-buttons-container button {
+    margin: 1px;
+    flex: 1;
+    padding: 0;
+    color: white;
+}
+
+.camera-display-rotate {
+    position: absolute;
+    top: 0;
+    right: 20px;
+}
+
+.camera-selected {
+    color: black !important;
+}

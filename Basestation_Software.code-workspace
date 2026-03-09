@@ -3,5 +3,8 @@
 		{
 			"path": "."
 		}
-	]
+	],
+	"settings": {
+		"dotnet.defaultSolution": "Basestation_Software.sln"
+	}
 }

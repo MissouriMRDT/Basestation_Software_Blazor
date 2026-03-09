@@ -1,0 +1,77 @@
+@using System.Diagnostics
+@implements IAsyncDisposable
+@inject IJSRuntime _IJSRuntime
+@attribute [ComponentAttributes.Ignore]
+
+<select @bind=_selectedIndex>
+    <option value="-1">None</option>
+    @for (int i = 0; i < _ids.Count; i++)
+    {
+        <option value="@i">@_ids[i]</option>
+    }
+</select>
+
+@code
+{
+    private List<string> _ids = new();
+    private int _selectedIndex = -1;
+    private Dictionary<int, bool> LastPressed = new Dictionary<int, bool>();
+    private DotNetObjectReference<GamepadSelector>? _objectReference;
+    private uint? _intervalID;
+    private static readonly Gamepad _disconnected = new();
+    private Stopwatch _stopwatch = new();
+    private long _lastTime;
+
+    [Parameter]
+    public Func<Gamepad, float, Task>? OnUpdate { get; set; }
+    public Gamepad SelectedGamepad { get; private set; } = _disconnected;
+
+    public GamepadSelector() => _stopwatch.Start();
+
+    private class GetGamepadReturn
+    {
+        public List<string> IDs { get; set; } = [];
+        public Gamepad Gamepad { get; set; } = new();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _objectReference = DotNetObjectReference.Create(this);
+            _intervalID = await _IJSRuntime.InvokeAsync<uint>("window.gamepads.start", [_objectReference]);
+        }
+    }
+
+    [JSInvokable]
+    public async Task Update(Gamepad[] gamepads)
+    {
+        _ids = gamepads.Select(gamepad => gamepad.ID).ToList();
+        SelectedGamepad = _selectedIndex >= gamepads.Length || _selectedIndex < 0 ? _disconnected : gamepads[_selectedIndex];
+        await InvokeAsync(StateHasChanged);
+        long now = _stopwatch.ElapsedMilliseconds;
+        if (OnUpdate != null) await OnUpdate(SelectedGamepad, Math.Min((now - _lastTime) / 1000f, 1f)); // Cap deltaT to 1 second.
+        _lastTime = now;
+    }
+
+    // Returns true if the button is pressed now and wasn't the last time this was called.
+    // Uses the state of the gamepad from the last Update.
+    public bool SoftwareDebounce(int buttonIndex)
+    {
+        if (buttonIndex < 0 || buttonIndex >= SelectedGamepad.Pressed.Length) return false;
+        bool pressed = SelectedGamepad.Pressed[buttonIndex];
+        if (pressed && !LastPressed.GetValueOrDefault(buttonIndex, false))
+        {
+            LastPressed[buttonIndex] = pressed;
+            return true;
+        }
+        LastPressed[buttonIndex] = pressed;
+        return false;
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        if (_intervalID != null) try { await _IJSRuntime.InvokeVoidAsync("clearInterval", [_intervalID]); } catch { }
+        if (_objectReference != null) try { _objectReference.Dispose(); } catch { }
+    }
+}

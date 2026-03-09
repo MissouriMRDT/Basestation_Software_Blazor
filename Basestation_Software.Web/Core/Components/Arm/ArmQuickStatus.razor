@@ -1,0 +1,48 @@
+@inject RoveCommService _RoveCommService
+
+<div class="component-header">
+    <h3>Arm Quick Status</h3>
+</div>
+<div class="component-body arm-quick-status ">
+    <p>X</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_X:+000.000;-000.000}")</p>
+    <p>@($"{_RoveCommService.Boards.Arm.SMOCOPing_X:00000}")</p>
+    <p>J2</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_J2:+000.000;-000.000}")</p>
+    <p>@($"{_RoveCommService.Boards.Arm.SMOCOPing_J2:00000}")</p>
+    <p>J3</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_J3:+000.000;-000.000}")</p>
+    <p>@($"{_RoveCommService.Boards.Arm.SMOCOPing_J3:00000}")</p>
+    <p>J4</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_J4:+000.000;-000.000}")</p>
+    <p>@($"{_RoveCommService.Boards.Arm.SMOCOPing_J4:00000}")</p>
+    <p>J5</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_J5:+000.000;-000.000}")</p>
+    <p>@($"{_RoveCommService.Boards.Arm.SMOCOPing_J5:00000}")</p>
+    <p>PFG</p>
+    <p>@($"{_pitchFromGround:+000.000;-000.000}")</p>
+    <p></p>
+    <p>J6</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_J6:+000.000;-000.000}")</p>
+    <p>@($"{_RoveCommService.Boards.Arm.SMOCOPing_J6:00000}")</p>
+    <p>Gripper</p>
+    <p></p>
+    <p>@($"{_RoveCommService.Boards.Arm.SMOCOPing_J6:00000}")</p>
+    <p>Gripper X</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_GX:+000.000;-000.000}")</p>
+    <p></p>
+    <p>Gripper Y</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_GY:+000.000;-000.000}")</p>
+    <p></p>
+    <p>Gripper Z</p>
+    <p>@($"{_RoveCommService.Boards.Arm.Position_GZ:+000.000;-000.000}")</p>
+    <p></p>
+</div>
+
+@code {
+    private float _pitchFromGround { get => _RoveCommService.Boards.Arm.Position_J5 + (float)Math.Cos(_RoveCommService.Boards.Arm.Position_J4 * Math.PI / 180f) + _RoveCommService.Boards.Arm.Position_J2 + _RoveCommService.Boards.Arm.Position_J5; }
+    protected override void OnInitialized()
+    {
+        _RoveCommService.Boards.Arm.OnPosition(async packet => await InvokeAsync(StateHasChanged));
+    }
+}

@@ -1,0 +1,29 @@
+@inject RoveCommService _RoveCommService
+
+<div class="component-header">
+    <h3>Autonomy Monitor</h3>
+</div>
+<div class="component-body" style="display: grid; grid-template-columns: repeat(2, min-content)">
+    <p style="background-color: #000; color: #fff">Thread</p>
+    <p style="background-color: #000; color: #fff">FPS</p>
+    @for (int i = 0; i < _threadNames.Length; i++)
+    {
+        var _i = i;
+        <p style="background-color: color-mix(in oklab, green @(Math.Min(_fpsValues[_i], 60) / 60f * 100)%, red)">@_threadNames[_i]</p>
+        <p style="background-color: color-mix(in oklab, green @(Math.Min(_fpsValues[_i], 60) / 60f * 100)%, red); justify-self: right">@($"{_fpsValues[_i]:0000}")</p>
+    }
+</div>
+
+@code {
+    private uint[] _fpsValues = new uint[11];
+    private string[] _threadNames = Enum.GetNames(typeof(RoveComm.Boards.Autonomy.AUTONOMYTHREADS));
+
+    protected override void OnInitialized()
+    {
+        _RoveCommService.Boards.Autonomy.OnThreadFPS(async packet =>
+        {
+            _fpsValues[(int)_RoveCommService.Boards.Autonomy.ThreadFPS_Thread] = _RoveCommService.Boards.Autonomy.ThreadFPS_FPS;
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+}

@@ -1,47 +1,44 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="light">
+<html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <link rel="stylesheet" href="Basestation_Software.Web.styles.css" />
-    
-    <link rel="stylesheet" href="bootstrap/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="bootstrap/icons/font/bootstrap-icons.css"/>
+    <link rel="stylesheet" href="/Basestation_Software.Web.styles.css" />
 
-    <link rel="stylesheet" href="js/lib/leaflet/leaflet.css" />
-    <link rel="stylesheet" href="js/lib/leaflet-contextmenu/leaflet.contextmenu.min.css" />
-    
-    <link rel="stylesheet" href="styles/app.css?version=0.1" />
-    <link rel="stylesheet" href="styles/radzen-ext.css?version=0.1" />
-    <link rel="stylesheet" href="styles/bootstrap-ext.css?version=0.1s" />
+    <link rel="stylesheet" href="/js/lib/leaflet/leaflet.css" />
+    <link rel="stylesheet" href="/js/lib/leaflet-contextmenu/leaflet.contextmenu.min.css" />
+
+    <link rel="stylesheet" href="/styles/app.css" />
+    <link rel="stylesheet" href="/icons/bootstrap-icons.css" />
 
     <link rel="icon" type="image/png" href="favicon.png" />
     <HeadOutlet />
 </head>
 
 <body>
-    <Routes @rendermode="InteractiveServer"/>
-    <script src="_framework/blazor.web.js"></script>
-    <script src="bootstrap/js/bootstrap.min.js"></script>
-    <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Radzen.Colors).Assembly.GetName().Version)"></script>
+    <Routes @rendermode="InteractiveServer" />
+    <script src="/_framework/blazor.web.js"></script>
 
-    <!-- Leaflet does not support JS modules -->
-    <script src="js/lib/leaflet/leaflet.js"></script>
-    <script src="js/lib/leaflet-contextmenu/leaflet.contextmenu.min.js"></script>
-    <!-- Script needs to be imported only once for the page -->
+    @* Leaflet does not support JS modules *@
+    <script src="/js/lib/leaflet/leaflet.js"></script>
+    <script src="/js/lib/leaflet-contextmenu/leaflet.contextmenu.min.js"></script>
+
+    @* ChartJS libraries for Raman Graph *@
+    <script src="_content/PSC.Blazor.Components.Chartjs/lib/Chart.js/chart.js"></script>
+    <script src="_content/PSC.Blazor.Components.Chartjs/Chart.js" type="module"></script>
+
+    @* Script needs to be imported only once for the page *@
     <script type="module">
         import * as cameras from "/js/cameras.js";
         window.cameras = cameras;
+        import * as components from "/js/components.js";
+        window.components = components;
+        import * as gamepads from "/js/gamepad.js";
+        window.gamepads = gamepads;
     </script>
-
-    <!-- three.js and rover javascript code is imported with modules, so do not require a script tag -->
-
-    <script>
-        function changeTheme(theme) {
-            document.documentElement.setAttribute("data-bs-theme", theme);
-        }
-    </script>
+    @* three.js and 3D rover are imported with modules, so do not require a script tag *@
 </body>
+
 </html>

@@ -1,0 +1,199 @@
+@implements IDisposable
+@using Basestation_Software.Web.Utils;
+@using System.Data
+@using System.Diagnostics
+@inject RoveCommService _roveCommService;
+@inject OpService _opService;
+
+<div class="component-header">
+    <h3>Arm Controller</h3>
+    <div class="vr">&nbsp;</div>
+    <input type="checkbox" class="output-enabled" @bind=_outputEnabled title="Disable Output" />
+    <GamepadSelector @ref=GamepadSelector_ OnUpdate=Update />
+</div>
+<div class="component-body" style="flex-grow: 0; display: grid; grid-template-columns: repeat(4, max-content) 100px 100px; place-items: stretch">
+    <p></p>
+    <p>|Ctrl</p>
+    <p>|Target</p>
+    <p>|Arm</p>
+    <p>Max Delta</p>
+    <p>Speed</p>
+    <p>X</p>
+    <p>|@($"{_controller.X:+000.0;-000.0}")</p>
+    <p>|@($"{_target.X:+000.0;-000.0}")</p>
+    <p>|@($"{_arm?.X:+000.0;-000.0}")</p>
+    <input style=@(_overDelta[0] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.X" />
+    <input style=@(_overSpeed[0] ? "background-color: #ff0" : "") @bind="Speed.X" />
+    <p>J2</p>
+    <p>|@($"{_controller.J2:+000.0;-000.0}")</p>
+    <p>|@($"{_target.J2:+000.0;-000.0}")</p>
+    <p>|@($"{_arm?.J2:+000.0;-000.0}")</p>
+    <input style=@(_overDelta[1] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J2" />
+    <input style=@(_overSpeed[1] ? "background-color: #ff0" : "") @bind="Speed.J2" />
+    <p>J3</p>
+    <p>|@($"{_controller.J3:+000.0;-000.0}")</p>
+    <p>|@($"{_target.J3:+000.0;-000.0}")</p>
+    <p>|@($"{_arm?.J3:+000.0;-000.0}")</p>
+    <input style=@(_overDelta[2] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J3" />
+    <input style=@(_overSpeed[2] ? "background-color: #ff0" : "") @bind="Speed.J3" />
+    <p>J4</p>
+    <p>|@($"{_controller.J4:+000.0;-000.0}")</p>
+    <p>|@($"{_target.J4:+000.0;-000.0}")</p>
+    <p>|@($"{_arm?.J4:+000.0;-000.0}")</p>
+    <input style=@(_overDelta[3] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J4" />
+    <input style=@(_overSpeed[3] ? "background-color: #ff0" : "") @bind="Speed.J4" />
+    <p>J5</p>
+    <p>|@($"{_controller.J5:+000.0;-000.0}")</p>
+    <p>|@($"{_target.J5:+000.0;-000.0}")</p>
+    <p>|@($"{_arm?.J5:+000.0;-000.0}")</p>
+    <input style=@(_overDelta[4] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J5" />
+    <input style=@(_overSpeed[4] ? "background-color: #ff0" : "") @bind="Speed.J5" />
+</div>
+
+@code
+{
+    // State
+    private GamepadSelector? GamepadSelector_;
+    private bool _outputEnabled = false;
+    private ArmAxes _controller = new();
+    private ArmAxes _target = new();
+    private ArmAxes? _arm;
+    public ArmAxes RoverControllerDelta = new ArmAxes()
+    {
+        X = 1,
+        J2 = 10,
+        J3 = 10,
+        J4 = 10,
+        J5 = 10,
+        J6 = 10
+    };
+    public ArmAxes Speed = new ArmAxes() // Angle Per Second
+    {
+        X = 0.03f,
+        J2 = 30,
+        J3 = 30,
+        J4 = 30,
+        J5 = 30,
+        J6 = 30
+    };
+    public ArmAxes OffSet = new ArmAxes()
+    {
+        J2 = 0F,
+        J3 = 00.5F,
+        J4 = -0.5F,
+        J5 = 0.8F,
+    };
+    private bool[] _overDelta = new bool[5];
+    private bool[] _overSpeed = new bool[5];
+
+    public ArmController()
+    {
+    }
+
+    protected override void OnInitialized()
+    {
+        _roveCommService.Boards.Arm.OnPosition(async packet =>
+        {
+            if (_arm == null) _arm = new();
+            _arm.SetFromArm(_roveCommService.Boards.Arm);
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    private async Task Update(Gamepad gamepad, float deltaT)
+    {
+        if (await ProcessGamepadInput(gamepad, deltaT))
+            // Set teleop if controller being used.
+            _opService.SetTeleop();
+        // It is safe for this component to take no action when the controller is disconnected.
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private float AddOffset(double axis, float offset)
+    {
+        float axisSum = (float)axis + offset;
+        if (axisSum > 1)
+        {
+            return (axisSum) - 2;
+        }
+        if (axisSum < -1)
+        {
+            return 2 + (axisSum);
+        }
+        return axisSum;
+    }
+
+    private void ResetMaxDelta()
+    { // Resets Angle Delta in order to Sync Arm and Arm Controller
+        RoverControllerDelta.X = 1;
+        RoverControllerDelta.J2 = 10;
+        RoverControllerDelta.J3 = 10;
+        RoverControllerDelta.J4 = 10;
+        RoverControllerDelta.J5 = 10;
+    }
+    private async Task<bool> ProcessGamepadInput(Gamepad gamepad, float deltaT)
+    {
+        if (!gamepad.Connected)
+        { // If Controller is Physically Disconnected, Delta is Reset
+            ResetMaxDelta();
+            return false;
+        }
+
+        if (gamepad.Axes.Length < 5 || gamepad.Pressed.Length < 1) return false;
+        if (_arm == null) return false;
+
+        // Update controller position from selected gamepad's axes.
+        _controller.X = (float)Utils.ClampMap(gamepad.Axes[0], -1.0, 1.0, -180.0, 180.0);
+        _controller.J2 = (float)Utils.ClampMap(AddOffset(-gamepad.Axes[1], OffSet.J2), -1.0, 1.0, -180.0, 180.0);
+        _controller.J3 = (float)Utils.ClampMap(AddOffset(-gamepad.Axes[2], OffSet.J3), -1.0, 1.0, -180.0, 180.0);
+        _controller.J4 = (float)Utils.ClampMap(AddOffset(gamepad.Axes[3], OffSet.J4), -1.0, 1.0, 0.0, 360.0);
+        _controller.J5 = (float)Utils.ClampMap(AddOffset(gamepad.Axes[4], OffSet.J5), -1.0, 1.0, -180.0, 180.0);
+
+        // Update target to the arm's position if the controller is further than RoverControllerDelta otherwise follow controller up to Speed maximum speed.
+        _overDelta[0] = Math.Abs(_controller.X - _arm.X) > RoverControllerDelta.X;
+        _overDelta[1] = Math.Abs(_controller.J2 - _arm.J2) > RoverControllerDelta.J2;
+        _overDelta[2] = Math.Abs(_controller.J3 - _arm.J3) > RoverControllerDelta.J3;
+        _overDelta[3] = Math.Abs(_controller.J4 - _arm.J4) > RoverControllerDelta.J4;
+        _overDelta[4] = Math.Abs(_controller.J5 - _arm.J5) > RoverControllerDelta.J5;
+
+        // If Angle of Encoder is in Range, Sets Over Delta to 360 Degrees
+        if (!_overDelta[0]) { RoverControllerDelta.X = 1; }
+        if (!_overDelta[1]) { RoverControllerDelta.J2 = 360; }
+        if (!_overDelta[2]) { RoverControllerDelta.J3 = 360; }
+        if (!_overDelta[3]) { RoverControllerDelta.J4 = 360; }
+        if (!_overDelta[4]) { RoverControllerDelta.J5 = 360; }
+
+        // Sets Target to Controller Angle or Arm Angle based on OverDelta
+        _target.X = _overDelta[0] ? _arm.X : LimitSpeed(_target.X, _controller.X, Speed.X, deltaT, out _overSpeed[0]);
+        _target.J2 = _overDelta[1] ? _arm.J2 : LimitSpeed(_target.J2, _controller.J2, Speed.J2, deltaT, out _overSpeed[1]);
+        _target.J3 = _overDelta[2] ? _arm.J3 : LimitSpeed(_target.J3, _controller.J3, Speed.J3, deltaT, out _overSpeed[2]);
+        _target.J4 = _overDelta[3] ? _arm.J4 : LimitSpeed(_target.J4, _controller.J4, Speed.J4, deltaT, out _overSpeed[3]);
+        _target.J5 = _overDelta[4] ? _arm.J5 : LimitSpeed(_target.J5, _controller.J5, Speed.J5, deltaT, out _overSpeed[4]);
+
+        if (!_outputEnabled || !gamepad.Pressed[0]) // Resets Angle Delta if Basestation App is not Enabled or Enable Switch is disabled
+        {
+            ResetMaxDelta();
+            return false;
+        }
+
+        _roveCommService.Boards.Arm.TargetAngle(_arm.X, _target.J2, _target.J3, _target.J4, _target.J5, _arm.J6);
+
+        return true;
+    }
+
+    private float LimitSpeed(float lastTarget, float controller, float speed, float deltaT, out bool overSpeed)
+    {
+        if (Math.Abs(controller - lastTarget) / deltaT > speed)
+        {
+            overSpeed = true;
+            return lastTarget + Math.Sign(controller - lastTarget) * speed * deltaT;
+        }
+        else
+        {
+            overSpeed = false;
+            return controller;
+        }
+    }
+
+    void IDisposable.Dispose() { }
+}

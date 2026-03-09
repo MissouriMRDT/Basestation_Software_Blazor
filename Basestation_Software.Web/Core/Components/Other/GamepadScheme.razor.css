@@ -1,0 +1,18 @@
+.control-box {
+    display: flex;
+    flex-direction: column;
+    border-radius: 3px;
+    background-color: var(--secondary-bg);
+    padding: 5px;
+    width: 100px;
+}
+
+.control-box>p {
+    text-align: center;
+    flex-grow: 1;
+}
+
+.control-box>input[type=checkbox] {
+    margin-bottom: 6px;
+    place-self: center;
+}

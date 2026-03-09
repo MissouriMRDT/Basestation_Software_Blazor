@@ -1,0 +1,123 @@
+@using static RoveComm.Boards.Autonomy
+@inject GPSWaypointState _GPSWaypointState
+@inject RoveCommService _RoveCommService
+@inject OpService _OpService
+
+<div class="component-header">
+    <h3>Autonomy Controls</h3>
+</div>
+<div class="component-body" style="display: flex; flex-direction: column; align-items: center">
+    <div style="background-color: @(_selectedWaypoint?.Color.ToString() ?? "var(--secondary-bg)")">
+        <p><b>Selected:</b> @(_selectedWaypoint != null ? _selectedWaypoint.Name : "None")</p>
+        @if (_selectedWaypoint != null)
+        {
+            @if (_selectedWaypoint.TagID >= (int)AUTONOMYWAYPOINTTYPES.Tag0)
+            {
+                <ArucoTagDisplay ID="@_selectedWaypoint.TagID" Scale="4" />
+            }
+            else if (Waypoints.WaypointImages.ContainsKey(_selectedWaypoint.TagID))
+            {
+                <img style="height: 60px" src=@(Waypoints.WaypointImages[_selectedWaypoint.TagID]) />
+            }
+            else
+            {
+                <img style="height: 60px" src="/images/unknown.png" />
+            }
+        }
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 2px; justify-content: center">
+        <button style="width: min-content" class="secondary" @onclick=AddPositionLeg>Add Position Leg</button>
+        <button style="width: min-content" class="secondary" @onclick=AddMarkerLeg>Add Marker Leg</button>
+        <button style="width: min-content" class="secondary" @onclick=AddObjectLeg>Add Object Leg</button>
+        <button style="width: min-content" class="secondary" @onclick=AddObstacle>Add Obstacle</button>
+        <button style="width: min-content" class="secondary" @onclick=ClearWaypoints>Clear Waypoints</button>
+        <button style="width: min-content" class="secondary" @onclick=ClearObstacles>Clear Obstacles</button>
+    </div>
+
+    <div>
+        <button title="Start Autonomy" class="@(_doStuckRoutine ? "info" : "success")" @onclick=StartAutonomy><i class="bi-caret-right-fill"></i></button><button title="Stop Autonomy" class="danger" @onclick=StopAutonomy><i class="bi-pause-fill"></i></button>
+    </div>
+
+    <div style="background-color: var(--secondary-bg); display: grid; grid-template-columns: auto 50px; place-items: center center">
+        <p style="grid-column: 1 / 3; justify-self: center"><b>GET ME OUTTA HERE!!</b></p>
+        <p>Enable</p><input type="checkbox" @bind=_doStuckRoutine>
+        <p>Speed</p><input style="width: 50px" @bind=_unstuckSpeed>
+        <p>Time</p><input style="width: 50px" @bind=_unstuckTime>
+    </div>
+</div>
+
+@code
+{
+    private GPSWaypoint? _selectedWaypoint = null;
+
+    private bool _doStuckRoutine = false;
+    // [0.0 - 1.0]
+    private float _unstuckSpeed = 0.5f;
+    // ms
+    private int _unstuckTime = 3000;
+
+    public async Task StartAutonomy()
+    {
+        _RoveCommService.SubscribeAll();
+        if (_doStuckRoutine)
+        {
+            // Send drive packets every 100ms to avoid triggering watchdog
+            for (int i = 0; i < _unstuckTime; i += 100)
+            {
+                _RoveCommService.Boards.Core.DriveLeftRight(-_unstuckSpeed, -_unstuckSpeed);
+                await Task.Delay(100);
+            }
+        }
+        _RoveCommService.Boards.Autonomy.StartAutonomy(0);
+    }
+
+    public void StopAutonomy()
+    {
+        _RoveCommService.Boards.Autonomy.DisableAutonomy(0);
+    }
+
+    public void ClearWaypoints()
+    {
+        _RoveCommService.Boards.Autonomy.ClearWaypoints(0);
+    }
+
+    public void ClearObstacles()
+    {
+        _RoveCommService.Boards.Autonomy.ClearObstacles(0);
+    }
+
+    public void AddPositionLeg()
+    {
+        if (_selectedWaypoint != null)
+            _RoveCommService.Boards.Autonomy.AddPositionLeg(_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.TagID);
+    }
+
+    public void AddMarkerLeg()
+    {
+        if (_selectedWaypoint != null && _selectedWaypoint.SearchRadius >= 0)
+            _RoveCommService.Boards.Autonomy.AddMarkerLeg(_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.TagID, _selectedWaypoint.SearchRadius);
+    }
+
+    public void AddObjectLeg()
+    {
+        if (_selectedWaypoint != null && _selectedWaypoint.SearchRadius >= 0)
+            _RoveCommService.Boards.Autonomy.AddObjectLeg(_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.TagID, _selectedWaypoint.SearchRadius);
+    }
+
+    public void AddObstacle()
+    {
+        if (_selectedWaypoint != null && _selectedWaypoint.SearchRadius >= 0)
+            _RoveCommService.Boards.Autonomy.AddObstacle(_selectedWaypoint.Latitude, _selectedWaypoint.Longitude, _selectedWaypoint.SearchRadius);
+    }
+
+    protected override void OnInitialized()
+    {
+        _GPSWaypointState.SubscribeToWaypointSelected(OnWaypointSelected);
+    }
+
+    private async Task OnWaypointSelected(GPSWaypoint? waypoint)
+    {
+        _selectedWaypoint = waypoint;
+        await InvokeAsync(StateHasChanged);
+    }
+}

@@ -1,0 +1,17 @@
+@inject RoveCommService _RoveCommService
+<div class="component-header">
+    <h3>Science Enviromental</h3>
+</div>
+<div class="component-body" style="display: grid; grid-template-columns: auto auto; gap: 2px; height: unset">
+    <p>Temperature</p>
+    <p>@($"{_RoveCommService.Boards.Auger.Environmental_Temperature:000.00}")&deg</p>
+    <p>Humidity</p>
+    <p>@($"{_RoveCommService.Boards.Auger.Environmental_Humidity:000.00}")%</p>
+</div>
+
+@code {
+    protected override void OnInitialized()
+    {
+        _RoveCommService.Boards.Auger.OnEnvironmental(async packet => await InvokeAsync(StateHasChanged));
+    }
+}

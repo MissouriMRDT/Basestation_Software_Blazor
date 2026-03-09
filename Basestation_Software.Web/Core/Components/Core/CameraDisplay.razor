@@ -1,0 +1,72 @@
+@inject RoveCommService _RoveCommService
+@inject IJSRuntime _IJSRuntime
+@implements IAsyncDisposable
+
+<style>
+    /*Does not work when placed in CameraDisplay.razor.css*/
+    .component:has(.camera-display)>.component-move {
+        color: #000;
+    }
+
+    .video-display {
+        height: 100%;
+        width: 100%;
+    }
+</style>
+
+<div @ref="videoContainer" class="component-body camera-display">
+    <div class="source-buttons-container">
+        @for (int _i = 0; _i < 8; _i++)
+        {
+            var i = _i;
+            <button class="@("secondary " + ((sourceIndex == i) ? "camera-selected" : ""))" @onclick=@(() => SetSource(i))>@i</button>
+        }
+    </div>
+    <button class="camera-display-rotate" @onclick=Rotate><i class="bi-arrow-clockwise"></i></button>
+</div>
+
+@code {
+    private int sourceIndex = 0;
+    private ElementReference videoContainer;
+    private IJSObjectReference? jsCameraDisplay;
+
+    private async void Rotate()
+    {
+        if (jsCameraDisplay != null)
+        {
+            await jsCameraDisplay.InvokeVoidAsync("rotate", 90);
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            jsCameraDisplay = await _IJSRuntime.InvokeAsync<IJSObjectReference>("cameras.createCameraDisplay", videoContainer);
+        }
+    }
+
+    private async Task SetSource(int newSourceIndex)
+    {
+        sourceIndex = newSourceIndex;
+        StateHasChanged();
+        if (jsCameraDisplay != null)
+        {
+            await jsCameraDisplay.InvokeVoidAsync("setCamera", sourceIndex);
+        }
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        try
+        {
+            if (jsCameraDisplay != null)
+            {
+                await jsCameraDisplay.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+}

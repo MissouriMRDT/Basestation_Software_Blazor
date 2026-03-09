@@ -1,0 +1,213 @@
+<div class="component-header">
+    <h3>Logger</h3>
+</div>
+<div class="component-body">
+    <div class="optionBar">
+        <div class="optionBarColumn">
+            <button class="success" @onclick=ExportLogs>Export</button>
+        </div>
+        <div class="optionBarColumn">
+            <button class="danger" @onclick=ClearLogs>Clear</button>
+        </div>
+        <div class="optionBarColumn">
+            <input type="checkbox" style="margin:8px 0px 8px 8px;" @bind=LoggerCore.LoggerService.autoExport />
+        </div>
+        <div class="optionBarColumn">
+            <label class="optionText">Auto Export</label>
+        </div>
+        <div class="optionBarColumn optionTextColumn">
+            <label class="optionText">Auto Export Size</label>
+        </div>
+        <div class="optionBarColumn optionTextBoxColumn">
+            <input class="optionTextBox" @bind=LoggerCore.LoggerService.autoExportSize />
+        </div>
+        <div class="optionBarColumn optionTextColumn">
+            <label class="optionText">Manual Export/Clear Range</label>
+        </div>
+        <div class="optionBarColumn optionTextBoxColumn">
+            <input class="optionTextBox" @bind=ExportRangeFirst />
+        </div>
+        <div class="optionBarColumn optionTextBoxColumn">
+            <input class="optionTextBox" @bind=ExportRangeLast />
+        </div>
+        <div class="optionBarColumn optionTextColumn">
+            <label class="optionText">Auto Scroll</label>
+        </div>
+        <div class="optionBarColumn optionTextBoxColumn">
+            <input style="margin:8px 0px 8px 8px;" @bind=AutoScroll type="checkbox" />
+        </div>
+        <div class="optionBarColumn optionTextColumn">
+            <label class="optionText">Page Size</label>
+        </div>
+        <div class="optionBarColumn optionTextBoxColumn">
+            <input class="optionTextBox" @bind=PageSize />
+        </div>
+    </div>
+
+    <div class="logEntry">
+        <div class="logEntryColumn">
+            <label>Message</label>
+        </div>
+        <div class="logEntryColumn">
+            <label>Source</label>
+        </div>
+        <div class="logEntryColumn">
+            <label>Time Stamp: @(SearchTimestamp)</label>
+        </div>
+        <div class="logEntryColumn">
+            <label>Channel</label>
+        </div>
+        <div class="logEntryColumn">
+            <label>Level</label>
+        </div>
+        <div class="logEntryColumn">
+            <label>Data</label>
+        </div>
+    </div>
+
+    <div class="logEntry">
+        <div class="logEntryColumn">
+            <input @bind=SearchMessage @bind:after=FilterLogs />
+        </div>
+        <div class="logEntryColumn">
+            <input @bind=SearchSource @bind:after=FilterLogs />
+        </div>
+        <div class="logEntryColumn">
+            <input @bind=SearchTimestamp @bind:after=FilterLogs />
+        </div>
+        <div class="logEntryColumn">
+            <input @bind=SearchChannel @bind:after=FilterLogs />
+        </div>
+        <div class="logEntryColumn">
+            <input @bind=SearchLevel @bind:after=FilterLogs />
+        </div>
+        <div class="logEntryColumn">
+            <input @bind=SearchData @bind:after=FilterLogs />
+        </div>
+    </div>
+
+    <div class="navBar">
+        <div class="navBarColumn_left">
+            <button class="navBarButton" @click=previousPage>
+                <img src="/icons/chevron-left.svg" width="16" height="16" />
+            </button>
+        </div>
+        <div class="navBarColumn_center">
+            <label Style="margin:0px">@PageStartingIndex - @PageEndingIndex / @(FilteredLogs.Count())</label>
+        </div>
+        <div class="navBarColumn_right">
+            <button class="navBarButton" @onclick=NextPage>
+                <img src="/icons/chevron-right.svg" width="16" height="16" />
+            </button>
+        </div>
+    </div>
+
+    @if (AutoScroll)
+    {
+        PageStartingIndex = Math.Max(PageEndingIndex - PageSize, 0);
+    }
+    @foreach (var log in FilteredLogs[PageStartingIndex..PageEndingIndex])
+    {
+        <div class="logEntry">
+            <div class="logEntryColumn">
+                <label>@log.Message</label>
+            </div>
+            <div class="logEntryColumn">
+                <label>@log.Source</label>
+            </div>
+            <div class="logEntryColumn">
+                <label>@log.TimeStamp</label>
+            </div>
+            <div class="logEntryColumn">
+                <label>@log.Channel</label>
+            </div>
+            <div class="logEntryColumn">
+                <label>@log.Level</label>
+            </div>
+            <div class="logEntryColumn">
+                <label>@log.Data</label>
+            </div>
+        </div>
+    }
+
+    <div class="navBar">
+        <div class="navBarColumn_left">
+            <button class="navBarButton" @click=previousPage>
+                <img src="/icons/chevron-left.svg" width="16" height="16" />
+            </button>
+        </div>
+        <div class="navBarColumn_center">
+            <label Style="margin:0px">@PageStartingIndex - @PageEndingIndex / @(FilteredLogs.Count())</label>
+        </div>
+        <div class="navBarColumn_right">
+            <button class="navBarButton" @onclick=NextPage>
+                <img src="/icons/chevron-right.svg" width="16" height="16" />
+            </button>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    string SearchMessage = "";
+    string SearchSource = "";
+    string SearchTimestamp = "";
+    string SearchChannel = "";
+    string SearchLevel = "";
+    string SearchData = "";
+
+    int PageSize = 25;
+    int PageStartingIndex = 0;
+    int PageEndingIndex { get { return Math.Min(PageStartingIndex + PageSize, FilteredLogs.Count()); } }
+
+    int ExportRangeFirst = 0;
+    int ExportRangeLast = 1000000000;
+
+    bool AutoScroll = true;
+
+    List<LoggerCore.LoggerService.LogEntry> FilteredLogs = [];
+
+    // Export Button Functionality
+    private async Task ExportLogs()
+    {
+        LoggerCore.LoggerService.ExportLogs(ExportRangeFirst, ExportRangeLast);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // Clear Button Functionality
+    private async Task ClearLogs()
+    {
+        LoggerCore.LoggerService.ClearActiveLogs(ExportRangeFirst, ExportRangeLast);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        LoggerCore.LoggerService.Subscribe(FilterLogs);
+        await FilterLogs();
+    }
+
+    private async void NextPage()
+    {
+        PageStartingIndex = Math.Min(PageStartingIndex + PageSize, FilteredLogs.Count() - PageSize);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async void PreviousPage()
+    {
+        PageStartingIndex = Math.Min(PageStartingIndex - PageSize, 0);
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task FilterLogs()
+    {
+        FilteredLogs = LoggerCore.LoggerService.GetLogs().Where(log => (SearchMessage == "" || log.Message.Contains(SearchMessage)) &&
+        (SearchSource == "" || log.Source == null || log.Source.Contains(SearchSource)) &&
+        (SearchTimestamp == "" || log.TimeStamp.ToString().Contains(SearchTimestamp)) &&
+        (SearchChannel == "" || log.Channel == null || log.Channel.Contains(SearchChannel)) &&
+        (SearchLevel == "" || log.Level == null || log.Level.Contains(SearchLevel)) &&
+        (SearchData == "" || log.Data == null || log.Data.Contains(SearchData))).ToList();
+        PageStartingIndex = 0;
+        await InvokeAsync(StateHasChanged);
+    }
+}

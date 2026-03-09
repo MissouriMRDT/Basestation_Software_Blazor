@@ -5,41 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": ".NET Core Launch (Api)",
-            "type": "coreclr",
+            "name": "C#: Basestation Debug",
+            "type": "dotnet",
             "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Basestation_Software.Api/bin/Debug/net8.0/Basestation_Software.Api.dll",
-            "args": [],
-            "cwd": "${workspaceFolder}/Basestation_Software.Api",
-            "stopAtEntry": false,
-            "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development",
-                "ASPNETCORE_URLS": "http://localhost:5000"
-            },
-        },
-        {
-            "name": ".NET Core Launch (web)",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build",
-            "program": "${workspaceFolder}/Basestation_Software.Web/bin/Debug/net8.0/Basestation_Software.Web.dll",
-            "args": [],
-            "cwd": "${workspaceFolder}/Basestation_Software.Web",
-            "stopAtEntry": false,
-            "serverReadyAction": {
-                "action": "openExternally",
-                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
-            },
-            "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development",
-                "ASPNETCORE_URLS": "http://localhost:8080"
-
-            },
-            "sourceFileMap": {
-                "/Views": "${workspaceFolder}/Basestation_Software.Web/Views"
-            }
+            "projectPath": "${workspaceFolder}/Basestation_Software.Web/Basestation_Software.Web.csproj"
         }
-
     ]
 }

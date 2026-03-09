@@ -1,0 +1,415 @@
+@using Microsoft.EntityFrameworkCore
+@using System.Diagnostics
+@implements IAsyncDisposable
+@inject DatabaseService _databaseService
+@inject IDbContextFactory<DatabaseContext> _dbContextFactory
+@inject GPSWaypointState _GPSWaypointState
+@inject NavigationManager _NavigationManager
+@inject IJSRuntime _IJSRuntime
+@inject RoveCommService _RoveCommService
+
+<style>
+    .rover-map-icon:after {
+        background-image: url(images/marker.png);
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 50px;
+        width: 50px;
+        content: "";
+        display: inline-block;
+        transform:
+            @($"rotateZ({_RoveCommService.Boards.Nav.CompassData}deg);")
+    }
+
+    .tile-hover-border {
+        pointer-events: none;
+        stroke: #ff7800;
+        stroke-width: 3;
+        fill: none;
+    }
+</style>
+
+<div class="component-header">
+    <h3>Map</h3>
+    <div class="vr" />
+    <input type="checkbox" @bind=_isLidar>
+        @if (_downloading)
+        {
+            <button class="danger" @onclick=@(() => _downloading = false)><i class="bi-stop" /></button>
+            <p style="display: inline">@($"Downloading {_currentlyDownloadingTile} / {_totalDownloadingTiles} ({(float)_currentlyDownloadingTile / _totalDownloadingTiles * 100:000.00}%) {(_isLidar ? "lidar" : "map")} tiles {Math.Clamp(_zoom, 13, 18)}z - 18z")</p>
+        }
+        else
+        {
+            <button class="success" @onclick=Download><i class="bi-play" /></button>
+            <p style="display: inline">@($"Download {_totalDownloadingTiles} {(_isLidar ? "lidar" : "map")} tiles {Math.Clamp(_zoom, 13, 18)}z - 18z")</p>
+        }
+    </div>
+<div @ref=_mapContainer class="component-body"></div>
+
+@code
+{
+    [Parameter]
+    public double InitialLat { get; set; } = 37.951764;
+    [Parameter]
+    public double InitialLong { get; set; } = -91.778441;
+    [Parameter]
+    public int InitialZoomLevel { get; set; } = 18;
+
+    private ElementReference _mapContainer;
+    private IJSObjectReference? _jsMap;
+    private DotNetObjectReference<Map>? _objectReference;
+
+    int _totalDownloadingTiles = 0;
+    int _currentlyDownloadingTile = 0;
+    double[] _region = new double[4];
+    bool _isLidar = false;
+    int _zoom = 0;
+    bool _downloading = false;
+    // private bool _pathTrackingActive = false;
+
+    // private int _pathTrackingTimeout = 120 * 1000;
+
+    // Token to track when to clear paths after data stops being received
+    private CancellationTokenSource _pathCts = new CancellationTokenSource();
+
+    private List<double> _roverPoints = new List<double>();
+    private List<double> _plannedPathPoints = new List<double>();
+
+    protected override void OnInitialized()
+    {
+        // Disabled for safety until performance issues are resolved.
+        /*_RoveCommService.Boards.Autonomy.OnPathWaypoints(async packet =>
+        {
+            return;
+            List<double> pairs = new List<double>();
+
+            for (int i = 0; i < packet.Data.Count; i++)
+            {
+                pairs.Add(packet.Data[i]);
+            }
+            _plannedPathPoints.Clear();
+            _plannedPathPoints = pairs;
+
+            DisplayPath(_plannedPathPoints);
+
+            _pathCts.Cancel();
+            _pathCts = new CancellationTokenSource();
+
+            try
+            {
+                await Task.Delay(_pathTrackingTimeout, _pathCts.Token);
+                _roverPoints.Clear();
+                _plannedPathPoints.Clear();
+                RemoveRoverPath();
+                RemovePath();
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (TaskCanceledException)
+            {
+
+            }
+            await InvokeAsync(StateHasChanged);
+        });*/
+
+        _RoveCommService.Boards.Autonomy.OnTimeRemaining(async packet =>
+        {
+            double timeRemaining = _RoveCommService.Boards.Autonomy.TimeRemaining;
+            double now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            double ETA = now + timeRemaining;
+
+            // Rover was not moving, so set ETA to -1 to signify that
+            if (timeRemaining == -1)
+            {
+                ETA = -1;
+            }
+
+            await SetETA(ETA);
+            await InvokeAsync(StateHasChanged);
+        });
+
+
+        _RoveCommService.Boards.Nav.OnGPSLatLonAlt(async packet =>
+        {
+            await _jsMap!.InvokeVoidAsync("addRoverIcon", [_RoveCommService.Boards.Nav.GPSLatLonAlt_Lat, _RoveCommService.Boards.Nav.GPSLatLonAlt_Lon]);
+
+            // Disabled for safety until performance issues are resolved.
+            /*double lat = packet.Data[0];
+            double lon = packet.Data[1];
+
+            _roverPoints.Add(lat);
+            _roverPoints.Add(lon);
+
+            await DisplayRoverPath(_roverPoints);
+
+            _pathCts.Cancel();
+            _pathCts = new CancellationTokenSource();
+
+            try
+            {
+                await Task.Delay(_pathTrackingTimeout, _pathCts.Token);
+                _roverPoints.Clear();
+                await RemoveRoverPath();
+                await RemovePath();
+                await InvokeAsync(StateHasChanged);
+            }
+            catch (TaskCanceledException)
+            {
+
+            }*/
+            await InvokeAsync(StateHasChanged);
+        });
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await using var jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-map.js");
+            // Create leaflet map.
+            Uri baseUri = new Uri(_NavigationManager.BaseUri);
+            _objectReference = DotNetObjectReference.Create(this);
+            _jsMap = await jsModule.InvokeAsync<IJSObjectReference>("createRoverMap", [_mapContainer, _objectReference, $"{baseUri.Scheme}://{baseUri.Host}:{baseUri.Port}/MapTiles/{{z}}/{{y}}/{{x}}.png", $"{baseUri.Scheme}://{baseUri.Host}:{baseUri.Port}/LidarTiles/{{z}}/{{y}}/{{x}}.png", InitialLat, InitialLong, InitialZoomLevel]);
+
+            // Plot waypoints and keep them updated.
+            await PlotWaypoints();
+            _databaseService.SubscribeToTableChanges(typeof(GPSWaypoint), UpdateWaypoints);
+            _GPSWaypointState.SubscribeToWaypointSelected(OnWaypointSelected);
+        }
+    }
+
+    public async Task SetETA(double ETA)
+    {
+        await _jsMap!.InvokeVoidAsync("setETA", ETA);
+    }
+
+    public async Task DisplayRoverPath(List<double> points)
+    {
+        await _jsMap!.InvokeVoidAsync("displayRoverPath", points);
+    }
+
+    public async Task DisplayPath(List<double> points)
+    {
+        await _jsMap!.InvokeVoidAsync("displayPath", points);
+    }
+
+    public async Task RemovePath()
+    {
+        await _jsMap!.InvokeVoidAsync("removePath");
+    }
+
+    public async Task RemoveRoverPath()
+    {
+        await _jsMap!.InvokeVoidAsync("removeRoverPath");
+    }
+
+    private async Task UpdateWaypoints()
+    {
+        // Update waypoint markers.
+        await _jsMap!.InvokeVoidAsync("clearWaypointMarkers");
+        await PlotWaypoints();
+    }
+
+    private async Task PlotWaypoints()
+    {
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        List<GPSWaypoint> waypoints = await databaseContext.Waypoints.ToListAsync();
+        await Task.WhenAll(waypoints.ConvertAll<Task>(waypoint => _jsMap!.InvokeVoidAsync("addWaypointMarker", [waypoint.Latitude, waypoint.Longitude, waypoint.SearchRadius, ColorTranslator.ToHtml(Color.FromArgb(waypoint.Color)), waypoint.TagID]).AsTask()));
+    }
+
+    [JSInvokable]
+    public async Task AddWaypoint(double lat, double lon)
+    {
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        databaseContext.Waypoints.Add(new()
+        {
+            ID = Guid.NewGuid(),
+            Latitude = lat,
+            Longitude = lon,
+        });
+        await databaseContext.SaveChangesAsync(_databaseService);
+    }
+
+    private async Task OnWaypointSelected(GPSWaypoint? waypoint)
+    {
+        if (waypoint != null) await PanToCoordinates(waypoint.Latitude, waypoint.Longitude);
+    }
+
+    public async Task PanToCoordinates(double lat, double lon)
+    {
+        await _jsMap!.InvokeVoidAsync("panToCoordinates", [lat, lon]);
+    }
+
+    [JSInvokable]
+    public async Task SetRange(double lat1, double lon1, double lat2, double lon2, int zoom)
+    {
+        _zoom = zoom;
+        _region[0] = lon1;
+        _region[1] = lat1;
+        _region[2] = lon2;
+        _region[3] = lat2;
+        int x1 = LonToTileX(_region[0], _zoom);
+        int y1 = LatToTileY(_region[1], _zoom);
+        int x2 = LonToTileX(_region[2], _zoom);
+        int y2 = LatToTileY(_region[3], _zoom);
+        int minX = Math.Min(x1, x2);
+        int maxX = Math.Max(x1, x2);
+        int minY = Math.Min(y1, y2);
+        int maxY = Math.Max(y1, y2);
+        _totalDownloadingTiles = 0;
+        for (int z = _zoom; z <= 18; z++)
+        {
+            if (z >= 13)
+                for (int y = minY; y <= maxY; y++)
+                    for (int x = minX; x <= maxX; x++)
+                        _totalDownloadingTiles += 1;
+            minX *= 2;
+            maxX = maxX * 2 + 1;
+            minY *= 2;
+            maxY = maxY * 2 + 1;
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async Task Download()
+    {
+        if (_downloading) return;
+        _downloading = true;
+
+        Timer updateUI = new(_ => InvokeAsync(StateHasChanged), null, 0, 1000);
+
+        using HttpClient client = new HttpClient();
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:147.0) Gecko/20100101 Firefox/147.0");
+        client.DefaultRequestHeaders.Referrer = new Uri("http://mt1.google.com");
+
+        int x1 = LonToTileX(_region[0], _zoom);
+        int y1 = LatToTileY(_region[1], _zoom);
+        int x2 = LonToTileX(_region[2], _zoom);
+        int y2 = LatToTileY(_region[3], _zoom);
+        int minX = Math.Min(x1, x2);
+        int maxX = Math.Max(x1, x2);
+        int minY = Math.Min(y1, y2);
+        int maxY = Math.Max(y1, y2);
+        _currentlyDownloadingTile = 0;
+        for (int z = _zoom; z <= 18; z++)
+        {
+            if (z >= 13)
+            {
+                for (int y = minY; y <= maxY; y++)
+                {
+                    for (int x = minX; x <= maxX; x++)
+                    {
+                        if (!_downloading) { updateUI.Change(Timeout.Infinite, Timeout.Infinite); return; }
+
+                        _currentlyDownloadingTile += 1;
+                        // Skip downloaded tiles.
+                        if (_isLidar ? databaseContext.LidarTiles.Count(tile => tile.X == x && tile.Y == y && tile.Z == z) != 0 : databaseContext.MapTiles.Count(tile => tile.X == x && tile.Y == y && tile.Z == z) != 0)
+                            continue;
+
+                        // Determine download URL for tile.
+                        string url;
+                        if (_isLidar)
+                        {
+                            double lat1_ = LatToEPSG3857(TileYToLat(y, z));
+                            double lon1_ = LonToEPSG3857(TileXToLon(x, z));
+                            double lat2_ = LatToEPSG3857(TileYToLat(y + 1, z));
+                            double lon2_ = LonToEPSG3857(TileXToLon(x + 1, z));
+                            url = $"https://elevation.nationalmap.gov/arcgis/services/3DEPElevation/ImageServer/WMSServer?&service=WMS&request=GetMap&layers=3DEPElevation%3AHillshade%20Gray&styles=&format=image%2Fjpeg&transparent=false&version=1.1.1&width=256&height=256&srs=EPSG%3A3857&bbox={lon1_},{lat2_},{lon2_},{lat1_}";
+                        }
+                        else
+                        {
+                            url = $"http://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}";
+                        }
+                        Console.WriteLine($"Downloading tile {_currentlyDownloadingTile} / {_totalDownloadingTiles} ({(double)_currentlyDownloadingTile / _totalDownloadingTiles * 100:000.00}%) from {url}.");
+
+                        // Download tile and ensure success.
+                        var response = await client.GetAsync(url);
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            Console.WriteLine($"Error {response.StatusCode}.");
+                            updateUI.Change(Timeout.Infinite, Timeout.Infinite);
+                            _downloading = false;
+                            return;
+                        }
+                        byte[] data = await response.Content.ReadAsByteArrayAsync();
+                        if (_isLidar)
+                            databaseContext.LidarTiles.Add(new LidarTile { X = x, Y = y, Z = z, ImageData = data });
+                        else
+                            databaseContext.MapTiles.Add(new MapTile { X = x, Y = y, Z = z, ImageData = data });
+                        await databaseContext.SaveChangesAsync(_databaseService);
+                    }
+                }
+            }
+            minX *= 2;
+            maxX = maxX * 2 + 1;
+            minY *= 2;
+            maxY = maxY * 2 + 1;
+        }
+        updateUI.Change(Timeout.Infinite, Timeout.Infinite);
+        _downloading = false;
+        Console.WriteLine("Done downloading tiles.");
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // Coordinate conversion functions
+    private double TileXToLon(int tileX, int zoom)
+    {
+        return tileX / Math.Pow(2, zoom) * 360 - 180;
+    }
+
+    private double TileYToLat(int tileY, int zoom)
+    {
+        return Math.Atan(Math.Sinh(Math.PI * (1 - 2 * tileY / Math.Pow(2, zoom)))) * 180.0 / Math.PI;
+    }
+
+    private int LonToTileX(double lon, int zoom)
+    {
+        return (int)Math.Floor((lon + 180.0) / 360.0 * Math.Pow(2.0, zoom));
+    }
+
+    private int LatToTileY(double lat, int zoom)
+    {
+        return (int)Math.Floor((1 - Math.Log(Math.Tan(lat * Math.PI / 180.0) + 1 / Math.Cos(lat * Math.PI / 180.0)) / Math.PI) / 2.0 * Math.Pow(2.0, zoom));
+    }
+
+    private double LonToEPSG3857(double lon)
+    {
+        return (lon * 20037508.34) / 180f;
+    }
+
+    private double LatToEPSG3857(double lat)
+    {
+        return (Math.Log(Math.Tan((lat + 90) * (Math.PI / 360f))) / (Math.PI / 180f)) * (20037508.34 / 180);
+    }
+
+    [JSInvokable]
+    public async Task OnWaypointSelected(double lat, double lon)
+    {
+        // Find closest match by lat and lon
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        List<GPSWaypoint> waypoints = await databaseContext.Waypoints.ToListAsync();
+        if (waypoints.Count > 0)
+        {
+            GPSWaypoint closestWaypoint = waypoints.OrderBy(w => Math.Abs(Math.Pow(w.Latitude - lat, 2) + Math.Pow(w.Longitude - lon, 2))).First();
+            _GPSWaypointState.SelectedWaypoint = closestWaypoint;
+        }
+    }
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        _databaseService.UnsubscribeFromTableChanges(typeof(GPSWaypoint), UpdateWaypoints);
+        _GPSWaypointState.UnsubscribeFromWaypointSelected(OnWaypointSelected);
+        _objectReference?.Dispose();
+        try
+        {
+            if (_jsMap != null)
+            {
+                await _jsMap.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+}

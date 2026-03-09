@@ -1,0 +1,181 @@
+@using System.Net.NetworkInformation;
+@using System.Diagnostics;
+@using System.ComponentModel;
+
+@inject PingService _PingService
+@inject RoveCommService _RoveCommService
+
+<div class="component-header">
+    <h3>Ping Tool</h3>
+</div>
+<div class="component-body ping-tool">
+    <p style="grid-column: 1 / 4">Auto Ping Delay (ms)</p>
+    <input style="grid-column: 4 / 6" @bind=_autoPingDelay />
+    <p style="grid-column: 1 / 4">Ping Timeout (ms)</p>
+    <input style="grid-column: 4 / 6" @bind=_pingTimeout />
+    <input type="checkbox" @bind=_autoPingAll @bind:after=@(() => { foreach (Device device in _devices) device.AutoPing = _autoPingAll; }) />
+    <p style="text-align: center">ICMP</p>
+    <p style="text-align: center">Rove</p>
+    <div style="grid-column: 4 / 6; background-color: #000; height: 1px" />
+    @foreach (Device device in _devices)
+    {
+        <input type="checkbox" @bind=device.AutoPing />
+        <button title=@device.PingStatus @onclick=@(async () => await PingIpAddressAsync(device, device.IpAddress))>@device.PingStatus</button>
+        @if (device.HasRoveComm)
+        {
+            <button @onclick=@(async () => await RoveCommPingBoard(device))>@device.RoveCommPingStatus</button>
+        }
+        else
+        {
+            <p></p>
+        }
+        <p style="color: #ff; background-color: @(device.Ok ? "#198754" : "#dc3545")">@device.Name</p>
+        <p style="color: #ff; background-color: @(device.Ok ? "#198754" : "#dc3545")">@device.IpAddress</p>
+    }
+</div>
+
+@code
+{
+    public static long ROVECOMM_ACTIVITY_TIMEOUT = 1500 * TimeSpan.TicksPerSecond;
+
+    private Timer _autoPingTimer;
+    private Timer _roveCommActivityTimer;
+    private Dictionary<int, int> _iLookup = [];
+
+    private bool _autoPingAll = false;
+    private int _autoPingDelay = 5000;
+    private int _pingTimeout = 1000;
+
+    private List<Device> _devices = [];
+
+
+    public PingTool()
+    {
+        _autoPingTimer = new(AutoPing);
+        _roveCommActivityTimer = new(CheckRoveCommActivity);
+    }
+
+    protected override void OnInitialized()
+    {
+        int i = 0;
+        foreach (var netDevice in RoveCommManifest.Devices)
+        {
+            _devices.Add(new Device
+            {
+                Name = netDevice.Key,
+                IpAddress = netDevice.Value.Ip,
+                I = i,
+            });
+            i++;
+        }
+
+        foreach (var board in RoveCommManifest.Boards)
+        {
+            // Workaround not being able to get the IP of received RoveComm packets.
+            foreach (int dataID in board.Value.Commands.Values.Select(command => command.DataID))
+                _iLookup[dataID] = i;
+            foreach (int dataID in board.Value.Telemetry.Values.Select(command => command.DataID))
+                _iLookup[dataID] = i;
+            foreach (int dataID in board.Value.Error.Values.Select(command => command.DataID))
+                _iLookup[dataID] = i;
+
+            _devices.Add(new Device
+            {
+                Name = board.Key,
+                IpAddress = board.Value.IP,
+                HasRoveComm = true,
+                I = i,
+            });
+            i++;
+        }
+
+        _RoveCommService.On<uint>(RoveCommManifest.SystemPackets.PING_REPLY, async packet =>
+        {
+            if (packet.Data.Count < 3) return;
+            int i = (int)packet.Data[0];
+            long sentAt = (long)packet.Data[1] << 32 | packet.Data[2];
+            if (i >= 0 && i < _devices.Count)
+                _devices[i].RoveCommPingStatus = ((DateTime.UtcNow.Ticks - sentAt) / TimeSpan.TicksPerMillisecond).ToString();
+        });
+
+        _RoveCommService.On<sbyte>(0, RoveCommActivity);
+        _RoveCommService.On<byte>(0, RoveCommActivity);
+        _RoveCommService.On<short>(0, RoveCommActivity);
+        _RoveCommService.On<ushort>(0, RoveCommActivity);
+        _RoveCommService.On<int>(0, RoveCommActivity);
+        _RoveCommService.On<uint>(0, RoveCommActivity);
+        _RoveCommService.On<float>(0, RoveCommActivity);
+        _RoveCommService.On<double>(0, RoveCommActivity);
+        _RoveCommService.On<char>(0, RoveCommActivity);
+
+        _autoPingTimer.Change(_autoPingDelay, Timeout.Infinite);
+        _roveCommActivityTimer.Change(0, 1000);
+    }
+
+    private async Task RoveCommActivity<T>(RoveCommPacket<T> packet)
+    {
+        if (_iLookup.TryGetValue(packet.DataID, out int i))
+            _devices[i].LastRoveCommPacket = DateTime.UtcNow.Ticks;
+    }
+
+    private void CheckRoveCommActivity(object? _)
+    {
+        long timeout = DateTime.UtcNow.Ticks - ROVECOMM_ACTIVITY_TIMEOUT;
+        foreach (Device device in _devices)
+        {
+            if (device.HasRoveComm)
+                device.Ok = device.LastRoveCommPacket > timeout;
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    private async Task PingIpAddressAsync(Device device, string ipAddress)
+    {
+        try
+        {
+            PingReply reply = await _PingService.PingAsync(ipAddress, _pingTimeout);
+            device.PingStatus = reply.Status == IPStatus.Success ? reply.RoundtripTime.ToString() : reply.Status.ToString();
+            if (!device.HasRoveComm)
+                device.Ok = reply.Status == IPStatus.Success;
+
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            device.PingStatus += ex.Message;
+        }
+    }
+
+    private async void AutoPing(object? _)
+    {
+        try
+        {
+            await Task.WhenAll(_devices.Where(device => device.AutoPing).Select(device => PingIpAddressAsync(device, device.IpAddress)));
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error auto pinging: {ex}");
+        }
+        _autoPingTimer.Change(_autoPingDelay, Timeout.Infinite);
+    }
+
+    private async Task RoveCommPingBoard(Device device)
+    {
+        long now = DateTime.UtcNow.Ticks;
+        await _RoveCommService.SendAsync<uint>(RoveCommManifest.SystemPackets.PING, [(uint)device.I, (uint)(now >> 32), (uint)now], device.IpAddress);
+    }
+
+    public class Device
+    {
+        public string Name = "";
+        public string IpAddress = "127.0.0.1";
+        public int I = 0; // Workaround not being able to get the IP of received RoveComm packets.
+        public string PingStatus = "None";
+        public string RoveCommPingStatus = "None";
+        public bool Ok = false;
+        public bool AutoPing = false;
+        public bool HasRoveComm = false;
+        public long LastRoveCommPacket = 0;
+    }
+}

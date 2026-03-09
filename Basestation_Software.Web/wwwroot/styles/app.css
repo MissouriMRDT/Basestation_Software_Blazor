@@ -1,80 +1,366 @@
+@font-face {
+    font-family: 'B612 Mono';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(/fonts/B612Mono.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'B612';
+    font-style: italic;
+    font-weight: 400;
+    font-display: swap;
+    src: url(/fonts/B612-Italic.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'B612';
+    font-style: italic;
+    font-weight: 700;
+    font-display: swap;
+    src: url(/fonts/B612-BoldItalic.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'B612';
+    font-style: normal;
+    font-weight: 400;
+    font-display: swap;
+    src: url(/fonts/B612-Regular.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'B612';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url(/fonts/B612-Bold.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'Luna';
+    font-style: normal;
+    font-weight: 700;
+    font-display: swap;
+    src: url(/fonts/LunaV4-Regular.woff2) format('woff2');
+}
+
+* {
+    box-sizing: border-box;
+}
+
 html,
-body {
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    margin: 0rem;
+body,
+p {
+    --secondary-bg: #e9ecef;
+    margin: 0;
+    font-size: 13px;
 }
 
-.container,
-.container-lg,
-.container-md,
-.container-sm,
-.container-xl,
-.container-xxl {
-    max-width: 100%;
+body,
+button,
+select {
+    font-family: "B612", Helvetica, Arial, sans-serif;
+    font-size: 13px;
 }
 
-.bold {
-    font-weight: bold;
+#blazor-error-ui {
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
 }
 
-a,
-.btn-link {
-    color: #006bb7;
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
 }
 
-.btn-primary {
-    color: #fff;
-    background-color: #1b6ec2;
-    border-color: #1861ac;
+.secondary-bg {
+    background-color: var(--secondary-bg);
 }
 
-.btn:focus,
-.btn:active:focus,
-.btn-link.nav-link:focus,
-.form-control:focus,
-.form-check-input:focus {
-    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+button {
+    cursor: pointer;
+    color: var(--btn-color);
+    background-color: var(--btn-fill);
+    padding: 4px 8px;
+    border: none;
+    border-radius: 3px;
+    --btn-color: #fff;
+    --btn-fill: #0d6efd;
 }
 
-.content {
-    padding-top: 1.1rem;
+button:hover {
+    background-color: color-mix(in oklab, var(--btn-fill) 90%, #000);
 }
 
-h1:focus {
-    outline: none;
+button:active, button[checked] {
+    background-color: color-mix(in oklab, var(--btn-fill) 90%, #000);
+    box-shadow: 0 -4px color-mix(in oklab, var(--btn-fill) 70%, #000);
+    /* Cut off the bottom of the button to hide it underneath the page serface. shape() is required as the corners have a radius. Firefox 126-(at least 146): in about:config set layout.css.basic-shape-shape.enabled = true */
+    clip-path: shape(from 0 -4px,
+            hline to 100%,
+            vline by calc(100% - 3px),
+            arc by -3px 3px of 3px cw,
+            hline to 3px,
+            arc by -3px -3px of 3px cw,
+            close);
+    transform: translateY(4px);
 }
 
-.valid.modified:not([type=checkbox]) {
-    outline: 1px solid #26b050;
+button:disabled {
+    background-color: #888;
 }
 
-.invalid {
-    outline: 1px solid #e50000;
+button.secondary {
+    --btn-fill: #0d6efd;
+    --btn-hover-bg: #0b5ed7;
+    --btn-active-bg: #0a58ca;
+    --btn-disabled-bg: #0d6efd;
 }
 
-.validation-message {
-    color: #e50000;
+button.success {
+    --btn-fill: #198754;
+    --btn-hover-bg: #157347;
+    --btn-active-bg: #146c43;
+    --btn-disabled-bg: #198754;
 }
 
-.blazor-error-boundary {
-    background: url(data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTYiIGhlaWdodD0iNDkiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyIgeG1sbnM6eGxpbms9Imh0dHA6Ly93d3cudzMub3JnLzE5OTkveGxpbmsiIG92ZXJmbG93PSJoaWRkZW4iPjxkZWZzPjxjbGlwUGF0aCBpZD0iY2xpcDAiPjxyZWN0IHg9IjIzNSIgeT0iNTEiIHdpZHRoPSI1NiIgaGVpZ2h0PSI0OSIvPjwvY2xpcFBhdGg+PC9kZWZzPjxnIGNsaXAtcGF0aD0idXJsKCNjbGlwMCkiIHRyYW5zZm9ybT0idHJhbnNsYXRlKC0yMzUgLTUxKSI+PHBhdGggZD0iTTI2My41MDYgNTFDMjY0LjcxNyA1MSAyNjUuODEzIDUxLjQ4MzcgMjY2LjYwNiA1Mi4yNjU4TDI2Ny4wNTIgNTIuNzk4NyAyNjcuNTM5IDUzLjYyODMgMjkwLjE4NSA5Mi4xODMxIDI5MC41NDUgOTIuNzk1IDI5MC42NTYgOTIuOTk2QzI5MC44NzcgOTMuNTEzIDI5MSA5NC4wODE1IDI5MSA5NC42NzgyIDI5MSA5Ny4wNjUxIDI4OS4wMzggOTkgMjg2LjYxNyA5OUwyNDAuMzgzIDk5QzIzNy45NjMgOTkgMjM2IDk3LjA2NTEgMjM2IDk0LjY3ODIgMjM2IDk0LjM3OTkgMjM2LjAzMSA5NC4wODg2IDIzNi4wODkgOTMuODA3MkwyMzYuMzM4IDkzLjAxNjIgMjM2Ljg1OCA5Mi4xMzE0IDI1OS40NzMgNTMuNjI5NCAyNTkuOTYxIDUyLjc5ODUgMjYwLjQwNyA1Mi4yNjU4QzI2MS4yIDUxLjQ4MzcgMjYyLjI5NiA1MSAyNjMuNTA2IDUxWk0yNjMuNTg2IDY2LjAxODNDMjYwLjczNyA2Ni4wMTgzIDI1OS4zMTMgNjcuMTI0NSAyNTkuMzEzIDY5LjMzNyAyNTkuMzEzIDY5LjYxMDIgMjU5LjMzMiA2OS44NjA4IDI1OS4zNzEgNzAuMDg4N0wyNjEuNzk1IDg0LjAxNjEgMjY1LjM4IDg0LjAxNjEgMjY3LjgyMSA2OS43NDc1QzI2Ny44NiA2OS43MzA5IDI2Ny44NzkgNjkuNTg3NyAyNjcuODc5IDY5LjMxNzkgMjY3Ljg3OSA2Ny4xMTgyIDI2Ni40NDggNjYuMDE4MyAyNjMuNTg2IDY2LjAxODNaTTI2My41NzYgODYuMDU0N0MyNjEuMDQ5IDg2LjA1NDcgMjU5Ljc4NiA4Ny4zMDA1IDI1OS43ODYgODkuNzkyMSAyNTkuNzg2IDkyLjI4MzcgMjYxLjA0OSA5My41Mjk1IDI2My41NzYgOTMuNTI5NSAyNjYuMTE2IDkzLjUyOTUgMjY3LjM4NyA5Mi4yODM3IDI2Ny4zODcgODkuNzkyMSAyNjcuMzg3IDg3LjMwMDUgMjY2LjExNiA4Ni4wNTQ3IDI2My41NzYgODYuMDU0N1oiIGZpbGw9IiNGRkU1MDAiIGZpbGwtcnVsZT0iZXZlbm9kZCIvPjwvZz48L3N2Zz4=) no-repeat 1rem/1.8rem, #b32121;
-    padding: 1rem 1rem 1rem 3.7rem;
-    color: white;
+button.info {
+    --btn-color: #000;
+    --btn-fill: #0dcaf0;
+    --btn-hover-bg: #31d2f2;
+    --btn-active-bg: #3dd5f3;
+    --btn-disabled-bg: #0dcaf0;
 }
 
-.blazor-error-boundary::after {
-    content: "An error has occurred."
+button.warning {
+    --btn-color: #000;
+    --btn-fill: #ffc107;
+    --btn-hover-bg: #ffca2c;
+    --btn-active-bg: #ffcd39;
+    --btn-disabled-bg: #ffc107;
 }
 
-.darker-border-checkbox.form-check-input {
-    border-color: #929292;
-}
-
-.mat-glass {
-    background: hsla(0, 0%, 100%, 0.05);
-    backdrop-filter: blur(8px);
+button.danger {
+    --btn-fill: #dc3545;
+    --btn-hover-bg: #bb2d3b;
+    --btn-active-bg: #b02a37;
+    --btn-disabled-bg: #dc3545;
 }
 
 input {
-    color: var(--bs-card-color) !important;
+    border: 1px solid #000;
+    border-radius: 3px;
+}
+
+input:focus {
+    outline: none;
+    background-color: #2af371;
+}
+
+input[type=checkbox] {
+    box-shadow: none;
+}
+
+input[type=range] {
+    box-shadow: none;
+    margin: 0;
+    --range-bg: #2af371;
+    --range-color: #0d6efd;
+}
+
+input[type=range] {
+    width: 100%;
+    /* Specific width is required for Firefox. */
+    background: transparent;
+    height: 16px;
+}
+
+input[type=range]::-moz-range-thumb {
+    border: none;
+    height: 16px;
+    width: 16px;
+    border-radius: 3px;
+    background: var(--range-color);
+    cursor: pointer;
+    box-shadow: 0 4px color-mix(in oklab, var(--range-color) 70%, #000);
+    transform: translateY(-4px);
+}
+
+input[type=range]::-moz-range-thumb:hover {
+    background-color: color-mix(in oklab, var(--range-color) 90%, #000);
+}
+
+input[type=range]::-moz-range-thumb:hover:active {
+    background-color: color-mix(in oklab, var(--range-color) 90%, #000);
+    box-shadow: 0 2px color-mix(in oklab, var(--range-color) 70%, #000);
+    transform: translateY(-2px);
+}
+
+input[type=range]::-moz-range-track {
+    width: 100%;
+    height: 16px;
+    cursor: pointer;
+    box-shadow: none;
+    background: none;
+    border-radius: 3px;
+    border: none;
+    padding: 0;
+}
+
+input[type=range]::-moz-range-progress {
+    background-color: var(--range-bg);
+    height: 14px;
+    border-radius: 3px;
+}
+
+input[type=checkbox] {
+    background-color: var(--checkbox-color);
+    border: none;
+    border-radius: 3px;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    position: relative;
+    top: 5px;
+    transform: translateY(-4px);
+    box-shadow: 0 4px color-mix(in oklab, var(--checkbox-color) 70%, #000);
+    --checkbox-color: #0d6efd;
+}
+
+input[type=checkbox]:hover {
+    background-color: color-mix(in oklab, var(--checkbox-color) 90%, #000);
+    box-shadow: 0 4px color-mix(in oklab, var(--checkbox-color) 70%, #000);
+}
+
+div[style*="display: grid"]>input[type=checkbox] {
+    position: static;
+}
+
+input[type=checkbox]:checked {
+    background-color: var(--checkbox-color);
+    box-shadow: 0 1px color-mix(in oklab, var(--checkbox-color) 70%, #000);
+    transform: translateY(-1px);
+    --checkbox-color: #2af371;
+}
+
+input[type=checkbox].output-enabled {
+    --checkbox-color: #dc3545;
+}
+
+input[type=checkbox].output-enabled:checked {
+    --checkbox-color: #2af371;
+}
+
+input[type=checkbox].danger:checked {
+    --checkbox-color: #dc3545;
+}
+
+.component {
+    border: 1px solid #000;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.component-header {
+    padding-left: 21px;
+    color: #fff;
+    background-color: #000;
+}
+
+.component-header>h3 {
+    display: inline;
+    margin: 0;
+}
+
+.component-body {
+    flex-grow: 1;
+}
+
+.component-move {
+    position: absolute;
+    color: #fff;
+    padding: 1px 1px 1px 3px;
+    touch-action: none;
+    user-select: none;
+    z-index: 900;
+    left: 0;
+    top: 0;
+    width: 16px;
+    height: 16px;
+    cursor: move;
+}
+
+.component-resize {
+    position: absolute;
+    touch-action: none;
+    user-select: none;
+    z-index: 900;
+    right: 0;
+    bottom: 0;
+    width: 20px;
+    height: 20px;
+    cursor: se-resize;
+}
+
+.component-delete {
+    position: absolute;
+    color: #fff;
+    padding: 1.5px 4px;
+    z-index: 900;
+    right: 0;
+    top: 0;
+}
+
+.vr {
+    width: 1px;
+    margin-inline: 10px;
+    display: inline-block;
+    align-self: stretch;
+    background-color: #fff;
+}
+
+.form-label {
+    margin: 8px 0;
+}
+
+.view-2d * {
+    stroke: #000;
+    stroke-width: 0.2;
+    fill: none;
+}
+
+.view-2d line.arrow {
+    stroke: #000;
+    stroke-width: 0.1;
+    fill: none;
+}
+
+.view-2d path.arrow {
+    stroke-width: 0;
+    fill: #000;
+}
+
+.view-2d text {
+    font-size: 0.8px;
+    fill: #f0f;
+    stroke: none;
 }

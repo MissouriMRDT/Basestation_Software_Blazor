@@ -1,0 +1,9 @@
+.arm-quick-status {
+    display: grid;
+    grid-template-columns: max-content min-content min-content;
+    column-gap: 10px;
+}
+
+.arm-quick-status>p {
+    font-size: 2rem;
+}

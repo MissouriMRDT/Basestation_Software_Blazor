@@ -1,0 +1,179 @@
+@implements IDisposable
+@inject RoveCommService _RoveCommService
+
+<div class="component-header">
+    <h3>Packet Tester</h3>
+    <div class="vr">&nbsp;</div>
+    <button class="info packet-tester-help"><i class="bi-question-circle"></i>
+        <pre>PostDelay BoardName CommandName [Data ...]&#10;PostDelay BoardName CommandName [Data ...]&#10;...&#10;&#10;Any number of Data elements may be specified.&#10;Data may be a single value or a minimum (inclusive) and maximum (exclusive) value separated by &quot;/&quot;.&#10;PostDelay is the number of milliseconds until the next line is sent.</pre>
+    </button>
+</div>
+<div class="component-body packet-tester">
+    <textarea style="grid-area: code; resize: none" @bind=TextAreaValue autocomplete="off" autocorrect="off" wrap="off" autocapitalize="off" />
+    @if (Running)
+    {
+        <button style="grid-area: start" class="warning" @onclick=Pause><i class="bi-pause" /></button>
+    }
+    else
+    {
+        <button style="grid-area: start" class="success" @onclick=Start><i class="bi-play" /></button>
+    }
+    <button style="grid-area: stop" class="danger" @onclick=Stop><i class="bi-stop" /></button>
+    <p style="grid-area: line">L@(Line)</p>
+    <p style="grid-area: info">@Info</p>
+    <p style="grid-area: ip-label">Override IP:</p>
+    <input style="grid-area: ip-checkbox" type="checkbox" @bind=OverrideIP />
+    <input style="grid-area: ip" @bind=IP disabled=@(!OverrideIP) />
+    <p style="grid-area: port-label">Port:</p>
+    <input style="grid-area: port" @bind=Port />
+    <p style="grid-area: tcp-label">Use TCP:</p>
+    <input style="grid-area: tcp" type="checkbox" @bind=UseTCP />
+</div>
+
+@code {
+    private bool Running = false;
+    private string TextAreaValue = "";
+    private bool OverrideIP = false;
+    private string IP = "127.0.0.1";
+    private int Port = 11000;
+    private bool UseTCP = false;
+    private List<string> Lines = new();
+    private int Line = 0;
+    private Timer _updateTimer;
+    private string Info = "";
+
+    public PacketTester()
+    {
+        _updateTimer = new Timer(Step);
+    }
+
+    private void Start()
+    {
+        Running = true;
+        Info = "";
+        Lines.Clear();
+        Lines.AddRange(TextAreaValue.Split("\n"));
+        _updateTimer.Change(0, Timeout.Infinite);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void Pause()
+    {
+        Running = false;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void Stop()
+    {
+        Line = 0;
+        Running = false;
+        _updateTimer.Change(Timeout.Infinite, Timeout.Infinite);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void Step(object? _)
+    {
+        // Validate line.
+        if (Line < 0 || Line >= Lines.Count)
+        {
+            Stop();
+            return;
+        }
+        string[] tokens = Lines[Line].Split(" ");
+        if (tokens.Length < 3)
+        {
+            Info = $"Error line {Line}: Missing required argument(s).";
+            Pause();
+            return;
+        }
+        if (!Int32.TryParse(tokens[0], out int postDelay))
+        {
+            Info = $"Error line {Line}: Could not parse postDelay {tokens[0]} as an int.";
+            Pause();
+            return;
+        }
+        RoveCommUtils.FindDataIDByName(tokens[1], tokens[2], out var boardDesc, out var packetDesc);
+        if (boardDesc == null)
+        {
+            Info = $"Error line {Line}: Board {tokens[1]} does not exist.";
+            Pause();
+            return;
+        }
+        if (packetDesc == null)
+        {
+            Info = $"Error line {Line}: Command {tokens[2]} does not exist for board {tokens[1]}.";
+            Pause();
+            return;
+        }
+
+        // Parse data and send packet.
+        if (tokens.Length - 3 != packetDesc.DataCount)
+        {
+            Info = $"Warning line {Line}: Data count mismatch; {tokens.Length - 3} elements given, manifest specifies {packetDesc.DataCount}.";
+        }
+        if (!(packetDesc.DataType switch
+        { // :3
+            RoveCommDataType.INT8_T => ParseTokensAndSend<SByte>(SByte.TryParse, tokens, packetDesc.DataID, OverrideIP ? IP : boardDesc.IP),
+            RoveCommDataType.UINT8_T => ParseTokensAndSend<Byte>(Byte.TryParse, tokens, packetDesc.DataID, OverrideIP ? IP : boardDesc.IP),
+            RoveCommDataType.INT16_T => ParseTokensAndSend<Int16>(Int16.TryParse, tokens, packetDesc.DataID, OverrideIP ? IP : boardDesc.IP),
+            RoveCommDataType.UINT16_T => ParseTokensAndSend<UInt16>(UInt16.TryParse, tokens, packetDesc.DataID, OverrideIP ? IP : boardDesc.IP),
+            RoveCommDataType.INT32_T => ParseTokensAndSend<Int32>(Int32.TryParse, tokens, packetDesc.DataID, OverrideIP ? IP : boardDesc.IP),
+            RoveCommDataType.UINT32_T => ParseTokensAndSend<UInt32>(UInt32.TryParse, tokens, packetDesc.DataID, OverrideIP ? IP : boardDesc.IP),
+            RoveCommDataType.FLOAT => ParseTokensAndSend<Single>(Single.TryParse, tokens, packetDesc.DataID, OverrideIP ? IP : boardDesc.IP),
+            RoveCommDataType.DOUBLE => ParseTokensAndSend<Double>(Double.TryParse, tokens, packetDesc.DataID, OverrideIP ? IP : boardDesc.IP),
+            RoveCommDataType.CHAR => ParseTokensAndSend<Char>(Char.TryParse, tokens, packetDesc.DataID, OverrideIP ? IP : boardDesc.IP),
+            _ => throw new Exception("Invalid RoveCommDataType in rovecomm manifest."),
+        }))
+        {
+            Pause();
+            return;
+        }
+
+        // Execute the next line after postDelay.
+        Line++;
+        _updateTimer.Change(postDelay, Timeout.Infinite);
+        InvokeAsync(StateHasChanged);
+    }
+
+    public delegate bool TryParseHandler<T>(string value, out T result);
+
+    private bool ParseTokensAndSend<T>(TryParseHandler<T> handler, string[] tokens, int DataID, string IP_) where T : System.Numerics.INumber<T>
+    {
+        List<T> data = new();
+        foreach (string token in tokens.AsEnumerable().Skip(3))
+        {
+            string[] parts = token.Split("/");
+
+            if (parts.Length == 2)
+            {
+                // Parse random range [rangeStart, rangeEnd).
+                if (!handler(parts[0], out T rangeStart))
+                {
+                    Info = $"Error line {Line}: Failed to parse {token} as a {typeof(T).Name} value.";
+                    return false;
+                }
+                if (!handler(parts[1], out T rangeEnd))
+                {
+                    Info = $"Error line {Line}: Failed to parse {token} as a {typeof(T).Name} value.";
+                    return false;
+                }
+
+                // Works with characters.
+                data.Add(T.CreateSaturating<double>(Random.Shared.NextDouble() * double.CreateSaturating<T>(rangeEnd - rangeStart)) + rangeStart);
+            }
+            else
+            {
+                if (!handler(token, out T element))
+                {
+                    Info = $"Error line {Line}: Failed to parse {token} as a {typeof(T).Name} value.";
+                    return false;
+                }
+                data.Add(element);
+            }
+        }
+        _RoveCommService.Send<T>(DataID, data, IP_, Port, UseTCP);
+        return true;
+    }
+
+    void IDisposable.Dispose() { }
+}

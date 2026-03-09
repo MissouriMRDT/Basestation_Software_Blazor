@@ -1,0 +1,184 @@
+@inject RoveCommService _RoveCommService
+@inject IJSRuntime _IJSRuntime
+
+<div class="component-header">
+    <h3>Camera Controls</h3>
+</div>
+<div @ref="videoContainer" class="component-body camera-controls">
+    <div class="source-buttons-container">
+        @for (int i = 0; i < 8; i++)
+        {
+            // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
+            var _i = i;
+            <button class="secondary @(sourceIndex == _i ? "camera-selected" : "") @(GetClass(_i))" title=@GetTitle(_i) @onclick=@(() => SetSource(_i))>@_i</button>
+        }
+    </div>
+    <p style="grid-area: utilization-1">@($"cpu0: {_RoveCommService.Boards.Camera1.Utilization_cpu0:000}% 1: {_RoveCommService.Boards.Camera1.Utilization_cpu1:000}% 2: {_RoveCommService.Boards.Camera1.Utilization_cpu2:000}% 3: {_RoveCommService.Boards.Camera1.Utilization_cpu3:000}% mem: {_RoveCommService.Boards.Camera1.Utilization_mem:000}% sd: {_RoveCommService.Boards.Camera1.Utilization_storage:000}%")</p>
+    <p style="grid-area: utilization-2">@($"cpu0: {_RoveCommService.Boards.Camera2.Utilization_cpu0:000}% 1: {_RoveCommService.Boards.Camera2.Utilization_cpu1:000}% 2: {_RoveCommService.Boards.Camera2.Utilization_cpu2:000}% 3: {_RoveCommService.Boards.Camera2.Utilization_cpu3:000}% mem: {_RoveCommService.Boards.Camera2.Utilization_mem:000}% sd: {_RoveCommService.Boards.Camera2.Utilization_storage:000}%")</p>
+    <button style="grid-area: connect" @onclick=ConnectCameras>Connect</button>
+    <button style="grid-area: disconnect" @onclick=DisconnectCameras>Disconnect</button>
+    <button style="grid-area: restart" @onclick=@(() => ToggleSource(sourceIndex, true))>Restart Camera</button>
+    <button style="grid-area: shutdown" @onclick=@(() => ToggleSource(sourceIndex, false))>Shutdown Camera</button>
+    <button style="grid-area: screenshot" @onclick=TakePicture>Take Picture</button>
+    <button style="grid-area: save" @onclick=SaveImage>Save Image</button>
+    <button style="grid-area: panorama" @onclick=TakePano>Take Pano</button>
+    <button style="grid-area: arguments" @onclick=@(_ => CameraArgumentsVisible = true)>Arguments</button>
+</div>
+@if (CameraArgumentsVisible)
+{
+    <div class="camera-arguments">
+        <InputTextArea @bind-Value="@CameraArgumentsValue" style="grid-area: 1 / 1 / 2 / 4" />
+        <button @onclick=@(_ => CameraArgumentsVisible = false) class="warning" title="Close"><i class="bi-x-circle" /></button>
+        <button @onclick=SetFFMPEGArguments class="success" title="Set FFMPEG Arguments"><i class="bi-camera-video" /></button>
+        <button @onclick=SetPictureArguments class="success" title="Set Picture Arguments"><i class="bi-image" /></button>
+    </div>
+}
+
+@code {
+    public const uint TELEMETRY_TIMEOUT = 10_000; // ms
+    private System.Threading.Timer TelemetryWatchdog1;
+    private System.Threading.Timer TelemetryWatchdog2;
+
+    private int sourceIndex = 0;
+
+    private bool connected1 = false;
+    private bool connected2 = false;
+
+    private bool CameraArgumentsVisible = false;
+    private String CameraArgumentsValue = "";
+    private ElementReference videoContainer;
+
+    public CameraControls()
+    {
+        TelemetryWatchdog1 = new System.Threading.Timer(WatchdogTimeout, 1, Timeout.Infinite, Timeout.Infinite);
+        TelemetryWatchdog2 = new System.Threading.Timer(WatchdogTimeout, 2, Timeout.Infinite, Timeout.Infinite);
+    }
+
+    protected override void OnInitialized()
+    {
+        TelemetryWatchdog1.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
+        TelemetryWatchdog2.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
+
+        _RoveCommService.Boards.Camera1.OnAvailableCameras(ResetWatchdog);
+        _RoveCommService.Boards.Camera1.OnStreamingCameras(ResetWatchdog);
+        _RoveCommService.Boards.Camera1.OnUtilization(ResetWatchdog);
+        _RoveCommService.Boards.Camera2.OnAvailableCameras(ResetWatchdog);
+        _RoveCommService.Boards.Camera2.OnStreamingCameras(ResetWatchdog);
+        _RoveCommService.Boards.Camera2.OnUtilization(ResetWatchdog);
+    }
+
+    async void WatchdogTimeout(object? pi)
+    {
+        if ((int?)pi == 1) connected1 = false;
+        if ((int?)pi == 2) connected2 = false;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    async Task ResetWatchdog(RoveCommPacket<byte> packet)
+    {
+        if (packet.DataID / 1000 == 12)
+        {
+            connected1 = true;
+            TelemetryWatchdog1.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
+        }
+        else if (packet.DataID / 1000 == 13)
+        {
+            connected2 = true;
+            TelemetryWatchdog2.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private String GetClass(int i)
+    {
+        if (i < 4)
+            return !connected1 ? "camera-disconnected" : i < _RoveCommService.Boards.Camera1.StreamingCameras ? "camera-streaming" : i < _RoveCommService.Boards.Camera1.AvailableCameras ? "camera-available" : "camera-none";
+        else
+            return !connected2 ? "camera-disconnected" : i - 4 < _RoveCommService.Boards.Camera2.StreamingCameras ? "camera-streaming" : i - 4 < _RoveCommService.Boards.Camera2.AvailableCameras ? "camera-available" : "camera-none";
+    }
+
+    private String GetTitle(int i)
+    {
+        if (i < 4)
+            return !connected1 ? "Camera server has not sent RoveComm telemetry to Basestation Server within the last 10s." : i < _RoveCommService.Boards.Camera1.StreamingCameras ? "Camera server detects camera, ffmpeg stream started." : i < _RoveCommService.Boards.Camera1.AvailableCameras ? "Camera server detects camera, ffmpeg stream not started." : "Camera server does not detect camera.";
+        else
+            return !connected2 ? "Camera server has not sent RoveComm telemetry to Basestation Server within the last 10s." : i - 4 < _RoveCommService.Boards.Camera2.StreamingCameras ? "Camera server detects camera, ffmpeg stream started." : i - 4 < _RoveCommService.Boards.Camera2.AvailableCameras ? "Camera server detects camera, ffmpeg stream not started." : "Camera server does not detect camera.";
+    }
+
+    private async Task ConnectCameras()
+    {
+        await _IJSRuntime.InvokeVoidAsync("cameras.connect");
+    }
+
+    private async Task DisconnectCameras()
+    {
+        await _IJSRuntime.InvokeVoidAsync("cameras.disconnect");
+    }
+
+    private async Task SetSource(int newSourceIndex)
+    {
+        sourceIndex = newSourceIndex;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void TakePicture()
+    {
+        if (sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.TakePicture((byte)(sourceIndex % 4), 1);
+        else
+            _RoveCommService.Boards.Camera2.TakePicture((byte)(sourceIndex % 4), 1);
+    }
+
+    private void SaveImage()
+    {
+        try
+        {
+            File.WriteAllBytes("CameraScreenshot_" + ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds() + ".png", Convert.FromBase64String("oiwebjfvdkhjgfdghjkwe"));
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error saving image: {e.Message}");
+        }
+    }
+
+    private async Task TakePano()
+    {
+        _RoveCommService.Boards.Core.LeftGimbal(-180, 0);
+        await Task.Delay(4000);
+        TakePicture();
+        await Task.Delay(40000);
+        for (int i = 0; i < 3; i++)
+        {
+            _RoveCommService.Boards.Core.LeftGimbal((short)(i * 60 - 180), 0);
+            await Task.Delay(2000);
+            TakePicture();
+            await Task.Delay(40000);
+        }
+    }
+
+    private void ToggleSource(int source, bool restartStream)
+    {
+        if (sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.ToggleStream((byte)(sourceIndex % 4), (byte)(restartStream ? 1 : 0));
+        else
+            _RoveCommService.Boards.Camera2.ToggleStream((byte)(sourceIndex % 4), (byte)(restartStream ? 1 : 0));
+    }
+
+    private void SetFFMPEGArguments()
+    {
+        char[] characters = (String.Join("\x1f", CameraArgumentsValue.Split("\n")) + '\x04').ToCharArray();
+        if (sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.SetFFMPEGArguments(characters);
+        else
+            _RoveCommService.Boards.Camera2.SetFFMPEGArguments(characters);
+    }
+
+    private void SetPictureArguments()
+    {
+        char[] characters = (String.Join("\x1f", CameraArgumentsValue.Split("\n")) + '\x04').ToCharArray();
+        if (sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.SetPictureArguments(characters);
+        else
+            _RoveCommService.Boards.Camera2.SetPictureArguments(characters);
+    }
+}

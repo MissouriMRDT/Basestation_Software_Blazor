@@ -1,0 +1,327 @@
+@using Microsoft.EntityFrameworkCore
+@using System.Diagnostics
+@implements IDisposable
+@inject RoveCommService _RoveCommService
+@inject DatabaseService _databaseService
+@inject IDbContextFactory<DatabaseContext> _dbContextFactory
+@inject OpService _opService
+
+<div class="component-header">
+    <h3>Arm Controls</h3>
+    <div class="vr">&nbsp;</div>
+    <input type="checkbox" class="output-enabled" @bind=_outputEnabled />
+    <select @bind=_controlMode>
+        @foreach (ControlMode mode in Enum.GetValues<ControlMode>())
+        {
+            <option value="@mode">@mode</option>
+        }
+    </select>
+    <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
+</div>
+<div class="component-body">
+    <div>
+        <label>Preset:</label>
+        <select @bind:get=@(_preset.ID) @bind:set=LoadPreset>
+            @foreach (ArmPreset preset in _presets)
+            {
+                <option value=@preset.ID>@preset.Name</option>
+            }
+        </select>
+        <input @bind=_preset.Name />
+        <button class="success" @onclick=NewPreset><i class="bi-plus" /></button>
+        <button class="success" @onclick=SavePreset><i class="bi-floppy" /></button>
+        <button class="danger" @onclick=DeletePreset><i class="bi-trash" /></button>
+    </div>
+    <button class="warning" @onclick=@(() => _outputEnabled = false)>STOP</button>
+    <button class="danger" @onclick=@(() => _RoveCommService.Boards.PMS.DisableBus(1 << 2))>ESTOP</button>
+    <button class="warning" @onclick=@(() => _RoveCommService.Boards.PMS.EnableBus(1 << 2))>UNESTOP</button>
+    <button @onclick=@(() => _RoveCommService.Boards.Arm.CalibrateEncoder(1 << 0))>Calibrate X</button>
+    <button @onclick=@(() => _RoveCommService.Boards.Arm.CalibrateEncoder(1 << 1))>Calibrate J6</button>
+    <div style="display: grid; align-items: center; grid-template-columns: min-content auto 40px">
+        <p style="align-self: right">X</p><input type="range" min="0.0" max="1.0" step="0.01" @bind=_preset.XSpeed><input @bind=_preset.XSpeed>
+        <p style="align-self: right">Y</p><input type="range" min="0.0" max="1.0" step="0.01" @bind=_preset.YSpeed><input @bind=_preset.YSpeed>
+        <p style="align-self: right">Z</p><input type="range" min="0.0" max="1.0" step="0.01" @bind=_preset.ZSpeed><input @bind=_preset.ZSpeed>
+        <p style="align-self: right">J2</p><input type="range" min="0.0" max="1.0" step="0.01" @bind=_preset.J2Speed><input @bind=_preset.J2Speed>
+        <p style="align-self: right">J3</p><input type="range" min="0.0" max="1.0" step="0.01" @bind=_preset.J3Speed><input @bind=_preset.J3Speed>
+        <p style="align-self: right">J4</p><input type="range" min="0.0" max="1.0" step="0.01" @bind=_preset.J4Speed><input @bind=_preset.J4Speed>
+        <p style="align-self: right">J5</p><input type="range" min="0.0" max="1.0" step="0.01" @bind=_preset.J5Speed><input @bind=_preset.J5Speed>
+        <p style="align-self: right">J6</p><input type="range" min="0.0" max="1.0" step="0.01" @bind=_preset.J6Speed><input @bind=_preset.J6Speed>
+        <p style="align-self: right">Gripper</p><input type="range" min="0.0" max="1.0" step="0.01" @bind=_preset.GripperSpeed><input @bind=_preset.GripperSpeed>
+        <p style="align-self: right">Linear Servo</p><input type="range" min="0.0" max="1.0" step="0.01" @bind=_preset.LinearServoSpeed><input @bind=_preset.LinearServoSpeed>
+        <p style="align-self: right">Cache</p><input type="range" min="0.0" max="1.0" step="0.01" @bind=_preset.CacheSpeed><input @bind=_preset.CacheSpeed>
+    </div>
+    <GamepadScheme @ref=_gamepadScheme AxisNames=_axisNames ControlScheme=_preset />
+    <div style="display: flex; justify-content: space-around;">
+        <div style="display: grid; grid-template-columns: repeat(9, min-content); place-items: stretch; text-align: center">
+            <p style="grid-column: 1 / 10">Limit Status and Override</p>
+            <p></p>
+            <p style="grid-column: 2 / 6; border-right: 1px solid black">Limit Switch</p>
+            <p style="grid-column: 6 / 10">Soft Limit</p>
+            <p></p>
+            <p style="grid-column: 2 / 4; border-right: 1px solid black">+</p>
+            <p style="grid-column: 4 / 6; border-right: 1px solid black">-</p>
+            <p style="grid-column: 6 / 8; border-right: 1px solid black">+</p>
+            <p style="grid-column: 8 / 10">-</p>
+            @for (int _i = 0; _i < _limitNames.Length; _i++)
+            {
+                int i = _i;
+                <p style="width:30px">@_limitNames[i]</p>
+                <div style="width: 16px; height: 16px; background-color: #@(_limitSwitchDepressed[i * 2] ? "fb0" : "520")"></div>
+                <input type="checkbox" class="danger" @bind=@(_hardLimitOverrides[i * 2]) />
+                <div style="width: 16px; height: 16px; background-color: #@(_limitSwitchDepressed[i * 2 + 1] ? "fb0" : "520")"></div>
+                <input type="checkbox" class="danger" @bind=@(_hardLimitOverrides[i * 2 + 1]) />
+                <div style="width: 16px; height: 16px; background-color: #@(_softLimitTriggered[i * 2] ? "fb0" : "520")"></div>
+                <input type="checkbox" class="danger" @bind=@(_softLimitOverrides[i * 2]) />
+                <div style="width: 16px; height: 16px; background-color: #@(_softLimitTriggered[i * 2 + 1] ? "fb0" : "520")"></div>
+                <input type="checkbox" class="danger" @bind=@(_softLimitOverrides[i * 2 + 1]) />
+            }
+            <button class="success" style="grid-column: 2 / 6" @onclick=@(() => { ushort mask = 0; for (int i = 0; i < _hardLimitOverrides.Length; i++) { mask |= (ushort)((_hardLimitOverrides[i] ? 1 : 0) << i); } _RoveCommService.Boards.Arm.LimitSwitchOverride(mask); })><i class="bi-send" /></button>
+            <button class="success" style="grid-column: 6 / 10" @onclick=@(() => { ushort mask = 0; for (int i = 0; i < _softLimitOverrides.Length; i++) { mask |= (ushort)((_softLimitOverrides[i] ? 1 : 0) << i); } _RoveCommService.Boards.Arm.SoftLimitOverride(mask); })><i class="bi-send" /></button>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(3, max-content)">
+            <p></p>
+            <p>|Pos</p>
+            <p>|Ping</p>
+            <p>X</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_X:+000.00;-000.00}")</p>
+            <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_X < 500 ? "OK" : "ERR")</p>
+            <p>J2</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_J2:+000.00;-000.00}")</p>
+            <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J2 < 500 ? "OK" : "ERR")</p>
+            <p>J3</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_J3:+000.00;-000.00}")</p>
+            <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J3 < 500 ? "OK" : "ERR")</p>
+            <p>J4</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_J4:+000.00;-000.00}")</p>
+            <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J4 < 500 ? "OK" : "ERR")</p>
+            <p>J5</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_J5:+000.00;-000.00}")</p>
+            <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J5 < 500 ? "OK" : "ERR")</p>
+            <p>J6</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_J6:+000.00;-000.00}")</p>
+            <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J6 < 500 ? "OK" : "ERR")</p>
+            <p>Gripper</p>
+            <p>|</p>
+            <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_G < 500 ? "OK" : "ERR")</p>
+            <p>Gripper X</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_GX:+000.00;-000.00}")</p>
+            <p>|</p>
+            <p>Gripper Y</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_GY:+000.00;-000.00}")</p>
+            <p>|</p>
+            <p>Gripper Z</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Position_GZ:+000.00;-000.00}")</p>
+            <p>|</p>
+            <p>Linear Servo</p>
+            <p>|@($"{_linearServo:+000.00;-000.00}")</p>
+            <p>|</p>
+            <p>Cache Servo</p>
+            <p>|@($"{_cache:+000.00;-000.00}")</p>
+            <p>|</p>
+            <p>Laser</p>
+            <p>|@(_laser ? "On" : "Off")</p>
+            <p>|</p>
+        </div>
+    </div>
+</div>
+
+@code {
+    enum ControlMode
+    {
+        OpenLoop,
+        TargetAngles,
+        InverseKinematics,
+        LockMode,
+    }
+
+    // Member variables
+    private bool _outputEnabled = true;
+    private GamepadSelector? _gamepadSelector;
+    private GamepadScheme? _gamepadScheme;
+    private static readonly string[] _axisNames = ["X", "Y", "Z", "J2", "J3", "J4", "J5", "J6", "Gripper", "Linear Servo", "Laser", "Cache"];
+    private ControlMode _controlMode;
+
+    private bool _lastProcessGamepadInputOK = false;
+    private bool[] _hardLimitOverrides = new bool[10];
+    private bool[] _softLimitOverrides = new bool[10];
+    private bool[] _limitSwitchDepressed = new bool[10];
+    private bool[] _softLimitTriggered = new bool[10];
+    private static readonly string[] _limitNames = ["X", "J2", "J3", "J4", "P"];
+
+    private bool _laser = false;
+    private float _linearServo = 0;
+    private float _cache = 0;
+    private float[] _lastInputs = new float[12];
+    private ArmAxes _position = new();
+
+    private List<ArmPreset> _presets = [];
+    private ArmPreset _preset = new();
+    public const float MaxDegreesPerSecond = 45.0f;
+    public const float MaxInchesPerSecond = 8.0f;
+    public const float LinearServoMaxDegreesPerSecond = 15.0f;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _databaseService.SubscribeToTableChanges(typeof(ArmPreset), UpdatePresets);
+        _RoveCommService.Boards.Arm.OnPosition(packet =>
+        {
+            _position.SetFromArm(_RoveCommService.Boards.Arm);
+            return Task.CompletedTask;
+        });
+        _RoveCommService.Boards.Arm.OnLimitSwitch(async packet =>
+        {
+            for (int i = 0; i < 10; i++)
+                _limitSwitchDepressed[i] = (_RoveCommService.Boards.Arm.LimitSwitch & (1 << i)) != 0;
+            await InvokeAsync(StateHasChanged);
+        });
+        _RoveCommService.Boards.Arm.OnSoftLimit(async packet =>
+        {
+            for (int i = 0; i < 10; i++)
+                _softLimitTriggered[i] = (_RoveCommService.Boards.Arm.SoftLimit & (1 << i)) != 0;
+            await InvokeAsync(StateHasChanged);
+        });
+        await UpdatePresets();
+    }
+
+    private async Task Update(Gamepad gamepad, float deltaT)
+    {
+        bool ProcessGamepadInputOK = await ProcessGamepadInput(gamepad, deltaT);
+        if (ProcessGamepadInputOK)
+        {
+            // Set teleop if controller being used
+            _opService.SetTeleop();
+        }
+        else if (_lastProcessGamepadInputOK)
+        {
+            // Stop Arm
+            _RoveCommService.Boards.Arm.OpenLoop(0, 0, 0, 0, 0, 0);
+            _RoveCommService.Boards.Arm.GripperOpenLoop(0);
+        }
+        _lastProcessGamepadInputOK = ProcessGamepadInputOK;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    // Process gamepad input and return true if rovecomm packets were sent.
+    private async Task<bool> ProcessGamepadInput(Gamepad gamepad, float deltaT)
+    {
+        if (!gamepad.Connected || _gamepadScheme == null) return false;
+        float[] inputs = _gamepadScheme.Update(gamepad);
+
+        if (!_outputEnabled) return false;
+
+        _RoveCommService.Boards.Arm.GripperOpenLoop((short)Math.Clamp(inputs[8] * _preset.GripperSpeed * short.MaxValue, short.MinValue, short.MaxValue));
+        _linearServo = Math.Clamp(_linearServo + inputs[9] * _preset.LinearServoSpeed * LinearServoMaxDegreesPerSecond * deltaT, 0, 180);
+        _RoveCommService.Boards.Arm.LinearServo((byte)_linearServo);
+        // if (Math.Abs(inputs[9]) > 0) _RoveCommService.Boards.Arm.LinearServo((byte)_linearServo);
+        // Toggle the laser if the axis rises above 0.5.
+        if (inputs[10] > 0.5 && _lastInputs[10] <= 0.5)
+        {
+            _laser = !_laser;
+            _RoveCommService.Boards.Arm.Laser(_laser ? (byte)0 : (byte)1);
+        }
+        _cache += inputs[11] * _preset.CacheSpeed * deltaT;
+        if (Math.Abs(inputs[11]) > 0) _RoveCommService.Boards.Arm.Cache((byte)_cache);
+
+        inputs.CopyTo(_lastInputs);
+
+        switch (_controlMode)
+        {
+            case ControlMode.OpenLoop:
+                {
+                    _RoveCommService.Boards.Arm.OpenLoop(
+                    (short)Math.Clamp(inputs[0] * _preset.XSpeed * short.MaxValue, short.MinValue, short.MaxValue),
+                    (short)Math.Clamp(inputs[3] * _preset.J2Speed * short.MaxValue, short.MinValue, short.MaxValue),
+                    (short)Math.Clamp(inputs[4] * _preset.J3Speed * short.MaxValue, short.MinValue, short.MaxValue),
+                    (short)Math.Clamp(inputs[5] * _preset.J4Speed * short.MaxValue, short.MinValue, short.MaxValue),
+                    (short)Math.Clamp(inputs[6] * _preset.J5Speed * short.MaxValue, short.MinValue, short.MaxValue),
+                    (short)Math.Clamp(inputs[7] * _preset.J6Speed * short.MaxValue, short.MinValue, short.MaxValue)
+                    );
+                    break;
+                }
+            case ControlMode.TargetAngles:
+                {
+                    _RoveCommService.Boards.Arm.TargetAngleIncrement(
+                    inputs[0] * _preset.XSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[3] * _preset.J2Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[4] * _preset.J3Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[5] * _preset.J4Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[6] * _preset.J5Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[7] * _preset.J6Speed * MaxDegreesPerSecond * deltaT
+                    );
+                    break;
+                }
+            case ControlMode.InverseKinematics:
+                {
+                    _RoveCommService.Boards.Arm.IKPositionIncrement(
+                    inputs[0] * _preset.XSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[1] * _preset.YSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[2] * _preset.ZSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[5] * _preset.J4Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[6] * _preset.J5Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[7] * _preset.J6Speed * MaxDegreesPerSecond * deltaT
+                    );
+                    break;
+                }
+            case ControlMode.LockMode:
+                {
+                    _RoveCommService.Boards.Arm.IKPoseIncrement(
+                    inputs[0] * _preset.XSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[1] * _preset.YSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[2] * _preset.ZSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[5] * _preset.J4Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[6] * _preset.J5Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[7] * _preset.J6Speed * MaxDegreesPerSecond * deltaT
+                    );
+                    break;
+                }
+            default: return false;
+        }
+        return true;
+    }
+
+    private async Task UpdatePresets()
+    {
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        _presets = await databaseContext.ControlPresets.ToListAsync();
+        await LoadPreset(_preset.ID);
+    }
+
+    private async Task NewPreset()
+    {
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        _preset.ID = Guid.NewGuid();
+        databaseContext.ControlPresets.Add(_preset);
+        await databaseContext.SaveChangesAsync(_databaseService);
+    }
+
+    private async Task SavePreset()
+    {
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        databaseContext.ControlPresets.Update(_preset);
+        await databaseContext.SaveChangesAsync(_databaseService);
+    }
+
+    private async Task DeletePreset()
+    {
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        databaseContext.ControlPresets.Remove(_preset);
+        await databaseContext.SaveChangesAsync(_databaseService);
+    }
+
+    private async Task LoadPreset(Guid value)
+    {
+        ArmPreset? preset = _presets.Find(preset => preset.ID == value);
+        if (preset == null)
+        {
+            if (_presets.Count == 0) { await NewPreset(); return; }
+            preset = _presets[0];
+        }
+        _preset = preset;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    void IDisposable.Dispose()
+    {
+        _databaseService.UnsubscribeFromTableChanges(typeof(ArmPreset), UpdatePresets);
+    }
+}
