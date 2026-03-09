@@ -3,138 +3,22 @@
 <div class="component-header">
     <h3>Signal Stack</h3>
     <div class="vr">&nbsp;</div>
-    <div class="header-controls">
-        <label>Enable Output:</label>
-        <input type="checkbox" class="output-enabled" @bind=_outputEnabled />
-    </div>
+    <input type="checkbox" class="output-enabled" @bind=_outputEnabled />
     <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
 </div>
-
-<div class="component-body stack-container">
-    <div class="control-panel">
-        <div class="stat-card">
-            <label>Current Speed</label>
-            <div class="speed-display">@speed <small>RPM</small></div>
-        </div>
-
-        <div class="manual-controls">
-            <button class="btn btn-sm btn-primary" @onclick="() => SetSpeed(500)">Slow</button>
-            <button class="btn btn-sm btn-warning" @onclick="() => SetSpeed(0)">STOP</button>
-            <button class="btn btn-sm btn-danger" @onclick="() => SetSpeed(4000)">Max</button>
-        </div>
-
-        <div class="settings-group">
-            <p>Dead Zone: <strong>@DeadZone</strong></p>
-            <input type="range" @bind=DeadZone min="0" max="0.5" step="0.001" class="slider" />
-        </div>
+<div class="component-body">
+    <div style="display: flex; background-color: var(--secondary-bg) ">
+        <p>Dead Zone</p>
+        <input type="range" @bind=DeadZone min="0" max="0.5" step="0.001" style="width: 100px; align-self: center" />
+        <input @bind=DeadZone style="width: 40px" />
     </div>
-
-    <div class="visual-panel">
-        <div class="radar-box">
-            <p>Signal Orientation</p>
-            <svg viewBox="0 0 100 100" class="radar-svg">
-                <circle cx="50" cy="50" r="45" class="radar-grid" />
-                <circle cx="50" cy="50" r="30" class="radar-grid" />
-                <circle cx="50" cy="50" r="15" class="radar-grid" />
-
-                <g style="transform: rotate(@(CalculateRotation())deg); transform-origin: center;">
-                    <line x1="50" y1="50" x2="50" y2="5" class="radar-beam" />
-                    <path d="M50 50 L50 5 A45 45 0 0 1 85 25 Z" class="radar-sweep" />
-                </g>
-
-                <circle cx="@RoverX" cy="@RoverY" r="4" class="rover-dot" />
-                <text x="@(RoverX + 5)" y="@(RoverY)" class="rover-label">ROVER</text>
-            </svg>
-        </div>
-    </div>
+    <p>@(speed* RPM_PER_SPEED) RPM</p>
+    <input type="range" @bind=_scale min="0" max="4000" step="100" style="width: 100px; align-self: center" />
+    <button @onclick=@(() => _scale = 0)>0</button>
+    <button @onclick=@(() => _scale = 500)>500</button>
+    <button @onclick=@(() => _scale = 4000)>4000</button>
+    <input @bind=_scale style="width: 40px" />
 </div>
-
-<style>
-    .stack-container {
-        display: flex;
-        gap: 20px;
-        padding: 15px;
-    }
-
-    .control-panel {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .visual-panel {
-        flex: 1.5;
-        background: #111;
-        border-radius: 8px;
-        padding: 10px;
-        border: 1px solid #333;
-    }
-
-    .stat-card {
-        background: #222;
-        padding: 10px;
-        border-radius: 5px;
-        text-align: center;
-    }
-
-    .speed-display {
-        font-size: 2rem;
-        color: #00ff00;
-        font-family: 'Courier New', Courier, monospace;
-    }
-
-    .radar-box {
-        text-align: center;
-        color: #444;
-        font-size: 0.8rem;
-    }
-
-    .radar-svg {
-        max-width: 250px;
-    }
-
-    .radar-grid {
-        fill: none;
-        stroke: #222;
-        stroke-width: 0.5;
-    }
-
-    .radar-beam {
-        stroke: #00ff00;
-        stroke-width: 2;
-        stroke-linecap: round;
-    }
-
-    .radar-sweep {
-        fill: rgba(0, 255, 0, 0.2);
-        transition: transform 0.1s linear;
-    }
-
-    .rover-dot {
-        fill: #ff4444;
-        stroke: white;
-        stroke-width: 1;
-        filter: drop-shadow(0 0 5px red);
-    }
-
-    .rover-label {
-        fill: white;
-        font-size: 4px;
-        font-weight: bold;
-    }
-
-    .manual-controls {
-        display: flex;
-        gap: 5px;
-        justify-content: center;
-    }
-
-    .slider {
-        width: 100%;
-        cursor: pointer;
-    }
-</style>
 
 @code {
     bool LastProcessGamepadInputOK = false;
@@ -142,36 +26,15 @@
     GamepadSelector _gamepadSelector = new();
 
     public double DeadZone = 0.15;
-    short speed = 0;
-
-    // Placeholder GPS Coordinates for the "Dot"
-    // 50, 50 is the center of the radar
-    private double RoverX = 75;
-    private double RoverY = 30;
-
-    // Logic to make the radar rotate based on speed
-    private double currentRotation = 0;
-    private double CalculateRotation()
-    {
-        // This is a simple logic: as speed increases, we update rotation
-        // In a real loop, you'd use a timer, but for Blazor, we can simulate
-        currentRotation = (currentRotation + (speed / 100.0)) % 360;
-        return currentRotation;
-    }
-
-    private void SetSpeed(short val)
-    {
-        speed = val;
-        _RoveCommService.Boards.SignalStack.OpenLoop(speed);
-    }
+    public static readonly double RPM_PER_SPEED = 1;
+    private short speed { get => _speed; set { _speed = value; if (_outputEnabled) _RoveCommService.Boards.SignalStack.OpenLoop(_speed); } }
+    private double _scale = 4000;
+    short _speed = 0;
 
     private async Task Update(Gamepad gamepad, float deltaT)
     {
         bool processGamepadInputOK = await ProcessGamepadInput(gamepad, deltaT);
-        if (!processGamepadInputOK && LastProcessGamepadInputOK)
-        {
-            _RoveCommService.Boards.SignalStack.OpenLoop(0);
-        }
+        if (!processGamepadInputOK && LastProcessGamepadInputOK) speed = 0;
         LastProcessGamepadInputOK = processGamepadInputOK;
         await InvokeAsync(StateHasChanged);
     }
@@ -179,9 +42,7 @@
     private async Task<bool> ProcessGamepadInput(Gamepad gamepad, float deltaT)
     {
         if (gamepad.Axes.Length < 1) return false;
-
-        speed = Math.Abs(gamepad.Axes[0]) <= DeadZone ? (short)0 : (short)(gamepad.Axes[0] * 4000);
-        _RoveCommService.Boards.SignalStack.OpenLoop(speed);
-        return true;
+        speed = Math.Abs(gamepad.Axes[0]) <= DeadZone ? (short)0 : (short)(gamepad.Axes[0] * _scale);
+        return _outputEnabled;
     }
 }

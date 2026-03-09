@@ -70,10 +70,10 @@
                     }
                 </svg>
             </div>
-            <div style="display: grid; align-items: center; grid-template-rows: 300px 300px auto">
-                <Chart Config="BandChartConfig" @ref="BandChart" Style="max-width:100px;"></Chart>
+            <Chart Config="BandChartConfig" @ref="BandChart" Style="max-width:100px;"></Chart>
+            @* <div style="display: grid; align-items: center; grid-template-rows: 300px 300px auto">
                 <Chart Config="VlanChartConfig" @ref="VlanChart" Style="max-width:100px;"></Chart>
-            </div>
+            </div> *@
         </div>
         @if(_displayStats != null)
         {
@@ -109,8 +109,8 @@
 
     private PieChartConfig? BandChartConfig;
     private Chart? BandChart;
-    private PieChartConfig? VlanChartConfig;
-    private Chart? VlanChart;
+    @* private PieChartConfig? VlanChartConfig;
+    private Chart? VlanChart; *@
 
     public enum SwitchModel
     {
@@ -142,7 +142,7 @@
     private InterfaceInfo? _displayStats;
     private bool _loggingEnabled { get; set {_SwitchMonitorService.EnableLogging(value); field = value;} }
 
-    private SwitchModel _model;
+    private SwitchModel _model = SwitchModel.Cisco_IE_3200_8T2S;
     public SwitchModel Model {
         get { return _model; }
         set {
@@ -168,9 +168,8 @@
             _vlanStats = new InterfaceInfo[4];
             for (int i = 0; i < _vlanStats.Length; i++)
             {
-                _vlanStats[i] = new();
+                _vlanStats[i] = new InterfaceInfo();
             }
-            Console.WriteLine($"CHANGED TO {value}");
             _model = value;
         }
     }
@@ -213,7 +212,7 @@
             }
         );
 
-        VlanChartConfig = new PieChartConfig()
+        @* VlanChartConfig = new PieChartConfig()
         {
             Options = new PieOptions()
             {
@@ -243,7 +242,7 @@
                 ],
                 Data = [1, 1, 1]
             }
-        );
+        ); *@
     }
 
     private async Task UpdateSignalTraffic()
@@ -264,9 +263,9 @@
         {
             _signalTraffic[2].Traffic = m5.Traffic.InputRatePackets + m5.Traffic.OutputRatePackets;
         }
-        Console.WriteLine($"M2: {_signalTraffic[1].Traffic}, M9: {_signalTraffic[0].Traffic}");
+        @* Console.WriteLine($"M2: {_signalTraffic[1].Traffic}, M9: {_signalTraffic[0].Traffic}");
         BandChartConfig?.Data.Datasets.First().Data.Clear();
-        BandChartConfig?.Data.Datasets.First().Data.AddRange( _signalTraffic.Take(2).Select(x => (decimal?)x.Traffic).ToList());
+        BandChartConfig?.Data.Datasets.First().Data.AddRange( _signalTraffic.Take(2).Select(x => (decimal?)x.Traffic).ToList()); *@
 
 
         // VLANS cause why not
@@ -274,12 +273,73 @@
         {
             _vlanTraffic[i].Traffic = _vlanStats[i+1].Traffic.InputRatePackets + _vlanStats[i+1].Traffic.OutputRatePackets;
         }
-
+@* 
         VlanChartConfig?.Data.Datasets.First().Data.Clear();
-        VlanChartConfig?.Data.Datasets.First().Data.AddRange( _vlanTraffic.Select(x => (decimal?)x.Traffic).ToList());
+        VlanChartConfig?.Data.Datasets.First().Data.AddRange( _vlanTraffic.Select(x => (decimal?)x.Traffic).ToList()); *@
 
+        BandChartConfig = new PieChartConfig()
+        {
+            Options = new PieOptions()
+            {
+                Responsive = true,
+                RegisterDataLabels = true,
+                MaintainAspectRatio = false,
+                Animation = false,
+                Plugins = new()
+                {
+                    Title = new()
+                    {
+                        Text =  "Signal Band Utilization",
+                        Display = true
+                    }
+                }
+            }
+        };
+        BandChartConfig.Data.Labels.AddRange(_signalTraffic.Take(2).Select(x => x.Band));
+        BandChartConfig.Data.Datasets.Add(
+            new PieDataset()
+            {
+                // Label = "Signal Band Utilization",
+                BackgroundColor = [
+                    "rgb(255, 99, 132)",
+                    "rgb(54, 162, 235)",
+                    // "rgb(255, 205, 86)"
+                ],
+                Data = _signalTraffic.Take(2).Select(x => (decimal?)x.Traffic).ToList()
+            }
+        );
 
-        @* await InvokeAsync(StateHasChanged); *@
+        @* VlanChartConfig = new PieChartConfig()
+        {
+            Options = new PieOptions()
+            {
+                Responsive = true,
+                RegisterDataLabels = true,
+                MaintainAspectRatio = false,
+                Animation = false,
+                Plugins = new()
+                {
+                    Title = new()
+                    {
+                        Text =  "VLAN Traffic",
+                        Display = true
+                    }
+                }
+            }
+        };
+        VlanChartConfig.Data.Labels.AddRange(_vlanTraffic.Select(x => x.Band));
+        VlanChartConfig.Data.Datasets.Add(
+            new PieDataset()
+            {
+                // Label = "Signal Band Utilization",
+                BackgroundColor = [
+                    "rgb(255, 99, 132)",
+                    "rgb(54, 162, 235)",
+                    "rgb(255, 205, 86)"
+                ],
+                Data = _vlanTraffic.Select(x => (decimal?)x.Traffic).ToList()
+            }
+        ); *@
     }
 
     private void UpdatePortStatuses(List<PortStatus> ports)

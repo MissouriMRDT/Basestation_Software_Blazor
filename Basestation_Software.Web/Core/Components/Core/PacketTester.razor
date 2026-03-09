@@ -22,12 +22,12 @@
     <p style="grid-area: line">L@(Line)</p>
     <p style="grid-area: info">@Info</p>
     <p style="grid-area: ip-label">Override IP:</p>
-    <input style="grid-area: ip-checkbox" type="checkbox" @bind=OverrideIP>
-    <input style="grid-area: ip" @bind=IP disabled=@(!OverrideIP)>
+    <input style="grid-area: ip-checkbox" type="checkbox" @bind=OverrideIP />
+    <input style="grid-area: ip" @bind=IP disabled=@(!OverrideIP) />
     <p style="grid-area: port-label">Port:</p>
-    <input style="grid-area: port" @bind=Port>
+    <input style="grid-area: port" @bind=Port />
     <p style="grid-area: tcp-label">Use TCP:</p>
-    <input style="grid-area: tcp" type="checkbox" @bind=UseTCP>
+    <input style="grid-area: tcp" type="checkbox" @bind=UseTCP />
 </div>
 
 @code {

@@ -10,7 +10,7 @@
     <div style="display: flex; flex-direction: column; justify-content: center; align-items: center">
         <p class="font-monospace fs-3">@_phrase</p>
         <p>@_statusMessage</p>
-        @*<p>@_elapsed / @_delay ms</p>*@
+        <p>@_elapsed / @_delay ms</p>
         <progress max="1" value=@((float)_elapsed / _delay) class="progress"></progress>
     </div>
 
@@ -19,7 +19,7 @@
         <button @onclick=Start>Start</button>
         <button @onclick=@(() => _running = false)>Stop</button>
     </div>
-    @*<div style="display: grid; grid-template-columns: max-content 100px 100px 100px 100px">
+    <div style="display: grid; grid-template-columns: max-content 100px 100px 100px 100px">
         <p>X</p>
         <input @bind=_start.X />
         <input @bind=_start.J2 />
@@ -55,7 +55,7 @@
         <input @bind=_mrdt[13] />
         <input @bind=_mrdt[14] />
         <input @bind=_mrdt[15] />
-    </div>*@
+    </div>
 </div>
 
 @code {
@@ -125,7 +125,8 @@
         _running = false;
     }
 
-    private async Task Run() {
+    private async Task Run()
+    {
         _statusMessage = "Moving to start";
         _RoveCommService.Boards.Arm.TargetAngle(_start.X, _start.J2, _start.J3, _start.J4, _start.J5, _start.J6);
         if (!await Delay(5000)) return;

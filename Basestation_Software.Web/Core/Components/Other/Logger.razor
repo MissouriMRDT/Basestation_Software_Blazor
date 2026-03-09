@@ -10,7 +10,7 @@
             <button class="danger" @onclick=ClearLogs>Clear</button>
         </div>
         <div class="optionBarColumn">
-            <input type="checkbox" style="margin:8px 0px 8px 8px;" @bind=LoggerCore.LoggerService.autoExport>
+            <input type="checkbox" style="margin:8px 0px 8px 8px;" @bind=LoggerCore.LoggerService.autoExport />
         </div>
         <div class="optionBarColumn">
             <label class="optionText">Auto Export</label>
@@ -19,28 +19,28 @@
             <label class="optionText">Auto Export Size</label>
         </div>
         <div class="optionBarColumn optionTextBoxColumn">
-            <input class="optionTextBox" @bind=LoggerCore.LoggerService.autoExportSize>
+            <input class="optionTextBox" @bind=LoggerCore.LoggerService.autoExportSize />
         </div>
         <div class="optionBarColumn optionTextColumn">
             <label class="optionText">Manual Export/Clear Range</label>
         </div>
         <div class="optionBarColumn optionTextBoxColumn">
-            <input class="optionTextBox" @bind=ExportRangeFirst>
+            <input class="optionTextBox" @bind=ExportRangeFirst />
         </div>
         <div class="optionBarColumn optionTextBoxColumn">
-            <input class="optionTextBox" @bind=ExportRangeLast>
+            <input class="optionTextBox" @bind=ExportRangeLast />
         </div>
         <div class="optionBarColumn optionTextColumn">
             <label class="optionText">Auto Scroll</label>
         </div>
         <div class="optionBarColumn optionTextBoxColumn">
-            <input style="margin:8px 0px 8px 8px;" @bind=AutoScroll type="checkbox">
+            <input style="margin:8px 0px 8px 8px;" @bind=AutoScroll type="checkbox" />
         </div>
         <div class="optionBarColumn optionTextColumn">
             <label class="optionText">Page Size</label>
         </div>
         <div class="optionBarColumn optionTextBoxColumn">
-            <input class="optionTextBox" @bind=PageSize>
+            <input class="optionTextBox" @bind=PageSize />
         </div>
     </div>
 
@@ -67,22 +67,22 @@
 
     <div class="logEntry">
         <div class="logEntryColumn">
-            <input @bind=SearchMessage @bind:after=FilterLogs>
+            <input @bind=SearchMessage @bind:after=FilterLogs />
         </div>
         <div class="logEntryColumn">
-            <input @bind=SearchSource @bind:after=FilterLogs>
+            <input @bind=SearchSource @bind:after=FilterLogs />
         </div>
         <div class="logEntryColumn">
-            <input @bind=SearchTimestamp @bind:after=FilterLogs>
+            <input @bind=SearchTimestamp @bind:after=FilterLogs />
         </div>
         <div class="logEntryColumn">
-            <input @bind=SearchChannel @bind:after=FilterLogs>
+            <input @bind=SearchChannel @bind:after=FilterLogs />
         </div>
         <div class="logEntryColumn">
-            <input @bind=SearchLevel @bind:after=FilterLogs>
+            <input @bind=SearchLevel @bind:after=FilterLogs />
         </div>
         <div class="logEntryColumn">
-            <input @bind=SearchData @bind:after=FilterLogs>
+            <input @bind=SearchData @bind:after=FilterLogs />
         </div>
     </div>
 

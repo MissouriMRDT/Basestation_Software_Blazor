@@ -321,6 +321,7 @@ export class RoverMap {
 
     // Display path rover has taken
     displayRoverPath(points) {
+        return; // Disabled for safety until performance issues are resolved.
         if (points.length == 0) {
             return;
         }
@@ -328,7 +329,7 @@ export class RoverMap {
         // Convert points to 2D lat lon list
         const pointPairs = [];
         for (let i = 0; i < points.length; i += 2) {
-            pointPairs.push([points[i], points[i+1]]);
+            pointPairs.push([points[i], points[i + 1]]);
         }
 
         // this.roverPathLayerGroup.clearLayers();
@@ -344,6 +345,7 @@ export class RoverMap {
 
     // Display planned Path
     displayPath(points) {
+        return; // Disabled for safety until performance issues are resolved.
         if (points.length == 0) {
             return;
         }
@@ -351,7 +353,7 @@ export class RoverMap {
         // Convert points to 2D lat lon list
         const pointPairs = [];
         for (let i = 0; i < points.length - 1; i += 2) {
-            pointPairs.push([points[i], points[i+1]]);
+            pointPairs.push([points[i], points[i + 1]]);
         }
 
         this.currentPlannedPoints = points;

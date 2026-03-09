@@ -78,10 +78,12 @@
 
     protected override void OnInitialized()
     {
-        _RoveCommService.Boards.Autonomy.OnPathWaypoints(async packet =>
+        // Disabled for safety until performance issues are resolved.
+        /*_RoveCommService.Boards.Autonomy.OnPathWaypoints(async packet =>
         {
+            return;
             List<double> pairs = new List<double>();
-                
+
             for (int i = 0; i < packet.Data.Count; i++)
             {
                 pairs.Add(packet.Data[i]);
@@ -108,7 +110,7 @@
 
             }
             await InvokeAsync(StateHasChanged);
-        });
+        });*/
 
         _RoveCommService.Boards.Autonomy.OnTimeRemaining(async packet =>
         {
@@ -131,7 +133,8 @@
         {
             await _jsMap!.InvokeVoidAsync("addRoverIcon", [_RoveCommService.Boards.Nav.GPSLatLonAlt_Lat, _RoveCommService.Boards.Nav.GPSLatLonAlt_Lon]);
 
-            double lat = packet.Data[0];
+            // Disabled for safety until performance issues are resolved.
+            /*double lat = packet.Data[0];
             double lon = packet.Data[1];
 
             _roverPoints.Add(lat);
@@ -153,7 +156,7 @@
             catch (TaskCanceledException)
             {
 
-            }
+            }*/
             await InvokeAsync(StateHasChanged);
         });
     }

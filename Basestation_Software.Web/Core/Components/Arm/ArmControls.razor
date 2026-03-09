@@ -9,7 +9,7 @@
 <div class="component-header">
     <h3>Arm Controls</h3>
     <div class="vr">&nbsp;</div>
-    <input type="checkbox" class="output-enabled" @bind=_outputEnabled>
+    <input type="checkbox" class="output-enabled" @bind=_outputEnabled />
     <select @bind=_controlMode>
         @foreach (ControlMode mode in Enum.GetValues<ControlMode>())
         {
@@ -27,7 +27,7 @@
                 <option value=@preset.ID>@preset.Name</option>
             }
         </select>
-        <input @bind=_preset.Name>
+        <input @bind=_preset.Name />
         <button class="success" @onclick=NewPreset><i class="bi-plus" /></button>
         <button class="success" @onclick=SavePreset><i class="bi-floppy" /></button>
         <button class="danger" @onclick=DeletePreset><i class="bi-trash" /></button>
@@ -67,13 +67,13 @@
                 int i = _i;
                 <p style="width:30px">@_limitNames[i]</p>
                 <div style="width: 16px; height: 16px; background-color: #@(_limitSwitchDepressed[i * 2] ? "fb0" : "520")"></div>
-                <input type="checkbox" class="danger" @bind=@(_hardLimitOverrides[i * 2])>
+                <input type="checkbox" class="danger" @bind=@(_hardLimitOverrides[i * 2]) />
                 <div style="width: 16px; height: 16px; background-color: #@(_limitSwitchDepressed[i * 2 + 1] ? "fb0" : "520")"></div>
-                <input type="checkbox" class="danger" @bind=@(_hardLimitOverrides[i * 2 + 1])>
+                <input type="checkbox" class="danger" @bind=@(_hardLimitOverrides[i * 2 + 1]) />
                 <div style="width: 16px; height: 16px; background-color: #@(_softLimitTriggered[i * 2] ? "fb0" : "520")"></div>
-                <input type="checkbox" class="danger" @bind=@(_softLimitOverrides[i * 2])>
+                <input type="checkbox" class="danger" @bind=@(_softLimitOverrides[i * 2]) />
                 <div style="width: 16px; height: 16px; background-color: #@(_softLimitTriggered[i * 2 + 1] ? "fb0" : "520")"></div>
-                <input type="checkbox" class="danger" @bind=@(_softLimitOverrides[i * 2 + 1])>
+                <input type="checkbox" class="danger" @bind=@(_softLimitOverrides[i * 2 + 1]) />
             }
             <button class="success" style="grid-column: 2 / 6" @onclick=@(() => { ushort mask = 0; for (int i = 0; i < _hardLimitOverrides.Length; i++) { mask |= (ushort)((_hardLimitOverrides[i] ? 1 : 0) << i); } _RoveCommService.Boards.Arm.LimitSwitchOverride(mask); })><i class="bi-send" /></button>
             <button class="success" style="grid-column: 6 / 10" @onclick=@(() => { ushort mask = 0; for (int i = 0; i < _softLimitOverrides.Length; i++) { mask |= (ushort)((_softLimitOverrides[i] ? 1 : 0) << i); } _RoveCommService.Boards.Arm.SoftLimitOverride(mask); })><i class="bi-send" /></button>

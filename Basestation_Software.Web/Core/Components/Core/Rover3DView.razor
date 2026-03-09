@@ -32,8 +32,10 @@
                 await jsRoverView.InvokeVoidAsync("updateAnglesFromUpVector", [_RoveCommService.Boards.Core.AccelerometerData_X, _RoveCommService.Boards.Core.AccelerometerData_Z, -_RoveCommService.Boards.Core.AccelerometerData_Y]);
             }
         });
-        _RoveCommService.Boards.Arm.OnPosition(async packet => {
-            if (jsRoverView != null) {
+        _RoveCommService.Boards.Arm.OnPosition(async packet =>
+        {
+            if (jsRoverView != null)
+            {
                 await jsRoverView.InvokeVoidAsync("updateArm", [
                 _RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J2, _RoveCommService.Boards.Arm.Position_J3,
                 _RoveCommService.Boards.Arm.Position_J4, _RoveCommService.Boards.Arm.Position_J5, _RoveCommService.Boards.Arm.Position_J6]);

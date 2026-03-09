@@ -27,7 +27,7 @@
     <p style="grid-area: nl; align-self: end">Network Switch</p>
     <p style="grid-area: na; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_NetworkCurrent:00.0}") A</p>
     <div style="grid-area: 3 / 4 / 5 / 5; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_NetworkCurrent, 1, 6)" class="@(_busStatus[5] == BusState.Enabled ? "" : "disabled")" />
-    <p style="grid-area: pcj">@($"{_packCapacity*3.6:000.0}") kJ</p>
+    <p style="grid-area: pcj">@($"{_packCapacity * 3.6:000.0}") kJ</p>
     <div style="grid-area: 5 / 1 / 6 / 5; background-image: linear-gradient(to right in oklab, #ff0000, #00ff00)" />
     <div style="grid-area: 5 / 1 / 6 / 5; background-color: #fff; justify-self: end; width: @(100 - Math.Clamp(_packCapacity / 30.453 / 6 * 100, 0, 100))%" />
     <p style="grid-area: pvl; align-self: end">Pack Voltage</p>
@@ -157,7 +157,8 @@
             await InvokeAsync(StateHasChanged);
         });
 
-        _RoveCommService.Boards.Core.OnThermal(async packet => {
+        _RoveCommService.Boards.Core.OnThermal(async packet =>
+        {
             await InvokeAsync(StateHasChanged);
         });
     }
