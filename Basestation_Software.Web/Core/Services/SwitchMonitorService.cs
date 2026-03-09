@@ -1,12 +1,6 @@
-using System;
-using System.IO;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using System.Text.RegularExpressions;
 using RoveComm;
 using Renci.SshNet;
-using Microsoft.Extensions.Hosting;
 using System.Text;
 using System.Text.Json;
 using Basestation_Software.Web.Models;
@@ -15,12 +9,12 @@ namespace Basestation_Software.Web.Core.Services;
 
 public class SwitchMonitorService : IHostedService, IDisposable
 {
-    private static readonly string RoverSwitchUser = "admin";
-    private static readonly string RoverSwitchPassword = "nandgate";
-    private static readonly string RoverSwitchIP = RoveCommManifest.Devices["RoverSwitch"].Ip;
-    private static readonly string BasestationSwitchUser = "admin";
-    private static readonly string BasestationSwitchPassword = "nandgate";
-    private static readonly string BasestationSwitchIP = RoveCommManifest.Devices["BasestationSwitch"].Ip;
+    public string RoverSwitchUser = "";
+    public string RoverSwitchPassword = "";
+    private static readonly string _roverSwitchIP = RoveCommManifest.Devices["RoverSwitch"].Ip;
+    public string BasestationSwitchUser = "";
+    public string BasestationSwitchPassword = "";
+    private static readonly string _basestationSwitchIP = RoveCommManifest.Devices["BasestationSwitch"].Ip;
 
     // A single JSON object entry
 
@@ -108,19 +102,35 @@ public class SwitchMonitorService : IHostedService, IDisposable
         }
     }
 
+    public bool Running { get; private set; } = false;
+
     public Task StartAsync(CancellationToken stop)
     {
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken stop)
+    {
+        Stop();
+        return Task.CompletedTask;
+    }
+
+    public void Start()
+    {
+        if (Running) return;
+        Running = true;
         _getInterfacesTimer = new Timer(state => GetInterfaces(), null, TimeSpan.Zero, TimeSpan.FromSeconds(2));
         _getEigrpTopologyTimer = new Timer(state => GetEigrpTopology(), null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
         _getPortsTimer = new Timer(state => GetPorts(), null, TimeSpan.Zero, TimeSpan.FromSeconds(10));
-        return Task.CompletedTask;
     }
-    public Task StopAsync(CancellationToken stop)
+
+    public void Stop()
     {
+        if (!Running) return;
+        Running = false;
         _getInterfacesTimer?.Change(Timeout.Infinite, 0);
         _getEigrpTopologyTimer?.Change(Timeout.Infinite, 0);
         _getPortsTimer?.Change(Timeout.Infinite, 0);
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -185,9 +195,9 @@ public class SwitchMonitorService : IHostedService, IDisposable
     {
         string result = "";
         var interfaces = new List<InterfaceInfo>();
-        using var client = new SshClient(RoverSwitchIP, RoverSwitchUser, RoverSwitchPassword);
         try
         {
+            using var client = new SshClient(_roverSwitchIP, RoverSwitchUser, RoverSwitchPassword);
             client.Connect();
             using SshCommand command = client.RunCommand("show interfaces");
             result = command.Result;
@@ -335,9 +345,9 @@ public class SwitchMonitorService : IHostedService, IDisposable
     {
         string result = "";
         var topology = new List<EigrpTopologyInfo>();
-        using var client = new SshClient(BasestationSwitchIP, BasestationSwitchUser, BasestationSwitchPassword);
         try
         {
+            using var client = new SshClient(_basestationSwitchIP, BasestationSwitchUser, BasestationSwitchPassword);
             client.Connect();
             using SshCommand command = client.RunCommand("show ip eigrp topology");
             result = command.Result;
@@ -421,9 +431,9 @@ public class SwitchMonitorService : IHostedService, IDisposable
     {
         string result = "";
         var ports = new List<PortStatus>();
-        using var client = new SshClient(RoverSwitchIP, RoverSwitchUser, RoverSwitchPassword);
         try
         {
+            using var client = new SshClient(_roverSwitchIP, RoverSwitchUser, RoverSwitchPassword);
             client.Connect();
             using SshCommand command = client.RunCommand("show interface status");
             result = command.Result;

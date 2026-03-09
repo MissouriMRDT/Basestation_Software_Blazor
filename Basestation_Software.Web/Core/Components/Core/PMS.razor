@@ -55,8 +55,8 @@
     <button style="grid-area: e; place-self: stretch" class="warning" @onclick=EStop>E-STOP</button>
     <button style="grid-area: s; place-self: stretch" class="danger" @onclick=Suicide>SUICIDE</button>
     <div style="grid-area: th; @Background(_RoveCommService.Boards.Core.Thermal_BoardTemperature, 20, 40, "dodgerblue", "orange")" class="thermal">
-        <p style="grid-area: rpm">@($"{_RoveCommService.Boards.Core.Thermal_FanSpeed:0.00}") RPM</p>
-        <img style="grid-area: fan; animation-duration: @(600 / _RoveCommService.Boards.Core.Thermal_FanSpeed)s;" class="fan" src="/images/fan-icon.png" />
+        <p style="grid-area: rpm">@($"{_RoveCommService.Boards.Core.Thermal_FanSpeed:000.00}") RPM</p>
+        <img style="grid-area: fan; animation-duration: @(_RoveCommService.Boards.Core.Thermal_FanSpeed > 0 ? 600 / _RoveCommService.Boards.Core.Thermal_FanSpeed : 0)s;" class="fan" src="/images/fan-icon.png" />
         <p style="grid-area: t1">@($"{_RoveCommService.Boards.Core.Thermal_BoardTemperature:0.00}")&deg;C</p>
     </div>
 </div>
