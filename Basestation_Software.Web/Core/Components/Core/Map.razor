@@ -98,22 +98,8 @@
 
             DisplayPath(_plannedPathPoints);
 
-            _pathCts.Cancel();
-            _pathCts = new CancellationTokenSource();
+            ResetPathClearTimer();
 
-            try
-            {
-                await Task.Delay(_pathTrackingTimeout, _pathCts.Token);
-                _roverPoints.Clear();
-                _plannedPathPoints.Clear();
-                RemoveRoverPath();
-                RemovePath();
-                await InvokeAsync(StateHasChanged);
-            }
-            catch (TaskCanceledException)
-            {
-
-            }
             await InvokeAsync(StateHasChanged);
         });
 
@@ -137,27 +123,11 @@
         _RoveCommService.Boards.Nav.OnGPSLatLonAlt(async packet =>
         {
             await _jsMap!.InvokeVoidAsync("addRoverIcon", [_RoveCommService.Boards.Nav.GPSLatLonAlt_Lat, _RoveCommService.Boards.Nav.GPSLatLonAlt_Lon]);
-
-            // Cancel clearing path since an update was received
-            _pathCts.Cancel();
-            _pathCts = new CancellationTokenSource();
-
-            // Clear path after delay if no updates are received
-            try
-            {
-                await Task.Delay(_pathTrackingTimeout, _pathCts.Token);
-                _roverPoints.Clear();
-                await RemoveRoverPath();
-                await RemovePath();
-                await InvokeAsync(StateHasChanged);
-            }
-            catch (TaskCanceledException)
-            {
-
-            }
+            
 
             // Update position on rover path
             if ((DateTime.UtcNow - _lastPathPointTime).TotalSeconds > _roverPathUpdateInterval) {
+                _lastPathPointTime = DateTime.UtcNow;
                 double lat = packet.Data[0];
                 double lon = packet.Data[1];
 
@@ -187,8 +157,10 @@
                 }
 
                 await DisplayRoverPath(_roverPoints);
+
+                ResetPathClearTimer();
             }
-            
+
             await InvokeAsync(StateHasChanged);
         });
     }
@@ -209,6 +181,29 @@
             _GPSWaypointState.SubscribeToWaypointSelected(OnWaypointSelected);
         }
     }
+
+    private void ResetPathClearTimer() {
+        _pathCts.Cancel();
+        _pathCts.Dispose();
+        _pathCts = new CancellationTokenSource();
+
+        _ = ClearPathAfterDelayAsync(_pathCts.Token);
+    }
+
+    private async Task ClearPathAfterDelayAsync(CancellationToken token) {
+        try
+        {
+            await Task.Delay(_pathTrackingTimeout, _pathCts.Token);
+            _roverPoints.Clear();
+            await RemoveRoverPath();
+            await RemovePath();
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (TaskCanceledException)
+        {
+
+        }
+}
 
     public async Task SetETA(double ETA)
     {
