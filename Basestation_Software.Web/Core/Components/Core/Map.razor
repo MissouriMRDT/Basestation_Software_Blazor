@@ -137,17 +137,6 @@
         {
             await _jsMap!.InvokeVoidAsync("addRoverIcon", [_RoveCommService.Boards.Nav.GPSLatLonAlt_Lat, _RoveCommService.Boards.Nav.GPSLatLonAlt_Lon]);
 
-            // Update position on rover path
-            if ((DateTime.UtcNow - _lastPathPointTime).Seconds > 3) {
-                double lat = packet.Data[0];
-                double lon = packet.Data[1];
-
-                _roverPoints.Add(lat);
-                _roverPoints.Add(lon);
-
-                await DisplayRoverPath(_roverPoints);
-            }
-
             // Cancel clearing path since an update was received
             _pathCts.Cancel();
             _pathCts = new CancellationTokenSource();
@@ -164,6 +153,32 @@
             catch (TaskCanceledException)
             {
 
+            }
+
+            // Update position on rover path
+            if ((DateTime.UtcNow - _lastPathPointTime).TotalSeconds > 3) {
+                double lat = packet.Data[0];
+                double lon = packet.Data[1];
+
+                // Skip point if it was too close to the last one
+                if (_roverPoints.Count > 1) {
+                    double minDiff = 0.00004;
+                    double lastLat = _roverPoints[_roverPoints.Count - 2];
+                    double lastLon = _roverPoints[_roverPoints.Count - 1];
+
+                    // Difference between last point and this point
+                    double diff = Math.Abs(lat - lastLat) + Math.Abs(lon - lastLon);
+
+                    if (diff < minDiff)
+                    {
+                        return;
+                    }
+                }
+
+                _roverPoints.Add(lat);
+                _roverPoints.Add(lon);
+
+                await DisplayRoverPath(_roverPoints);
             }
             
             await InvokeAsync(StateHasChanged);
