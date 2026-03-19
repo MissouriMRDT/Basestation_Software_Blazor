@@ -172,10 +172,12 @@
 
                     if (diff < minDiff)
                     {
+                        await InvokeAsync(StateHasChanged);
                         return;
                     }
                 }
 
+                // Add lat lon to rover path
                 _roverPoints.Add(lat);
                 _roverPoints.Add(lon);
 
