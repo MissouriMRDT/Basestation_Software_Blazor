@@ -66,7 +66,6 @@
     bool _isLidar = false;
     int _zoom = 0;
     bool _downloading = false;
-    private bool _pathTrackingActive = false;
 
     private int _pathTrackingTimeout = 120 * 1000;
 
@@ -80,6 +79,8 @@
 
     // Delay between adding new lat lon points to rover path (seconds)
     private int _roverPathUpdateInterval = 3;
+
+    private int _roverPathMaxPoints = 2000;
 
     protected override void OnInitialized()
     {
@@ -156,7 +157,7 @@
             }
 
             // Update position on rover path
-            if ((DateTime.UtcNow - _lastPathPointTime).TotalSeconds > 3) {
+            if ((DateTime.UtcNow - _lastPathPointTime).TotalSeconds > _roverPathUpdateInterval) {
                 double lat = packet.Data[0];
                 double lon = packet.Data[1];
 
@@ -177,6 +178,11 @@
 
                 _roverPoints.Add(lat);
                 _roverPoints.Add(lon);
+
+                // Remove first 200 points if path exceeds max points
+                if ((_roverPoints.Count / 2) >= _roverPathMaxPoints) {
+                    _roverPoints.RemoveRange(0, 400);
+                }
 
                 await DisplayRoverPath(_roverPoints);
             }
