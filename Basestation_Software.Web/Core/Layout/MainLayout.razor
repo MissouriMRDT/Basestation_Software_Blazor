@@ -13,7 +13,6 @@
 @inject IDbContextFactory<DatabaseContext> _dbContextFactory
 @inject NavigationManager UriHelper
 @inject RoveCommService _RoveCommService
-@inject IJSRuntime _jSRuntime
 
 <PageTitle>MRDT Basestation</PageTitle>
 
@@ -52,6 +51,10 @@
     #copy-area button {
         font-size: 5vh;
     }
+
+    html.light #resubscribe>img {
+        filter: invert(100%);
+    }
 </style>
 @if (_luna)
 {
@@ -70,7 +73,7 @@
         }
     </select>
     <button class="success" @onclick=NewComponent title="New Component"><i class="bi-node-plus" /></button>
-    <button class="primary" title="RoveComm Resubscribe All" @onclick="_RoveCommService.SubscribeAll">
+    <button id="resubscribe" title="RoveComm Resubscribe All" @onclick="_RoveCommService.SubscribeAll">
         <img src="/images/rovecomm-sil.png" style="height: 13px">
     </button>
     <button class="success" @onclick=NewPage title="New Page"><i class="bi-file-earmark-plus" /></button>
@@ -78,12 +81,17 @@
     <button class="success" @onclick=OpenCopyArea title="Edit Page"><i class="bi-pencil" /></button>
     <button class="success" @onclick=SavePage title="Save Page"><i class="bi-floppy" /></button>
     <button @onclick=@(() => _luna = !_luna)><i class="bi-moon" /></button>
+    <button checked=@_light @onclick=ToggleLightMode><i class="bi-sun" /></button>
     <select id="pageSelect" value="@PageID" @onchange=@(async (ChangeEventArgs __e) => { if (Guid.TryParse(__e?.Value as string, out Guid guid)) await Navigate(guid); })>
         <option value="00000000-0000-0000-0000-000000000000">Default</option>
         @SelectOptions
     </select>
 </div>
-<BlazoredToasts ShowProgressBar="true" Position=Blazored.Toast.Configuration.ToastPosition.TopRight DisableTimeout />
+<BlazoredToasts ShowProgressBar="false" Timeout="10">
+    <CloseButtonContent>
+        <i class="bi-x-circle" />
+    </CloseButtonContent>
+</BlazoredToasts>
 <div id="layout-grid">
     @CustomRender
 </div>
@@ -117,6 +125,7 @@
     private List<string> ComponentNames = new();
     private string ComponentName = "";
     private bool _luna = false;
+    private bool _light = false;
 
     [CascadingParameter]
     RouteData RouteData_ { get; set; } = new(typeof(MainLayout), new ReadOnlyDictionary<string, object?>(new Dictionary<string, object?>()));
@@ -161,12 +170,18 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
-            await _jSRuntime.InvokeVoidAsync("components.setDotNetComponent", ObjectReference);
+            await _IJSRuntime.InvokeVoidAsync("components.setDotNetComponent", ObjectReference);
         if (firstRender || RegisterComponents)
         {
-            await _jSRuntime.InvokeVoidAsync("components.registerComponents");
+            await _IJSRuntime.InvokeVoidAsync("components.registerComponents");
             RegisterComponents = false;
         }
+    }
+
+    private async Task ToggleLightMode()
+    {
+        _light = !_light;
+        await _IJSRuntime.InvokeVoidAsync("eval", $"document.getElementsByTagName('html')[0].className = \"{(_light ? "light" : "")}\"");
     }
 
     [JSInvokable]
@@ -278,26 +293,23 @@
         // Sequence number i will increase with little change between renders
         builder.OpenRegion(0); // so we can start i at 0
         int i = 0;
-        int componentIndex = 0;
-        foreach (Component component in Page_.Components)
+        foreach ((int componentIndex, Component component) in Page_.Components.Index().OrderBy(x => 100 * x.Item.Y + x.Item.X))
         {
             Type? componentType = Type.GetType("Basestation_Software.Web.Core.Components." + component.Type);
             if (componentType == null)
             {
-                _ToastService.ShowWarning($"Component type {component.Type} not found.");
+                _ToastService.ShowWarning($"Component type \"{component.Type}\" not found.");
                 continue;
             }
 
             if (componentType.IsDefined(typeof(ComponentAttributes.Ignore)))
             {
-                _ToastService.ShowWarning($"Component type {component.Type} is not valid.");
+                _ToastService.ShowWarning($"Component type \"{component.Type}\" is not valid.");
                 continue;
             }
 
             builder.OpenElement(i, "div"); // <div style="left: X%; top: Y%; width: Width%; height: Height%" class="component" idx=componentIndex>
-            builder.AddAttribute(i + 1, "style",
-        $"left: {component.X}%; top: {component.Y}%; width: {component.Width}%; height: {component.Height}%"
-        );
+            builder.AddAttribute(i + 1, "style", $"left: {component.X}%; top: {component.Y}%; width: {component.Width}%; height: {component.Height}%");
             builder.AddAttribute(i + 2, "class", "component");
             builder.AddAttribute(i + 3, "idx", componentIndex);
 
@@ -321,8 +333,6 @@
             builder.CloseElement(); // </div>
 
             i += 10;
-            componentIndex++;
-
         }
         builder.CloseRegion();
     };
@@ -363,6 +373,7 @@
 
     private async Task NewComponent()
     {
+        if (ComponentName == "") return;
         Page_.Components.Add(new Component
         {
             X = 5,
@@ -384,7 +395,16 @@
     private async Task ImportPage()
     {
         CopyAreaVisible = false;
-        Page_ = JsonSerializer.Deserialize<Page?>(CopyAreaValue) ?? Page_;
+        Page? page;
+        try
+        {
+            page = JsonSerializer.Deserialize<Page?>(CopyAreaValue);
+        }
+        catch (JsonException)
+        {
+            return;
+        }
+        Page_ = page ?? Page_;
         await SavePage();
     }
 

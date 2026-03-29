@@ -5,24 +5,25 @@
 <style>
     /*Does not work when placed in CameraDisplay.razor.css*/
     .component:has(.camera-display)>.component-move {
-        color: #000;
+        color: var(--secondary);
     }
 
-    .video-display {
-        height: 100%;
-        width: 100%;
+    .component:has(.camera-display)>.component-delete {
+        --primary: var(--primary);
+        --secondary: var(--secondary);
     }
 </style>
 
-<div @ref="videoContainer" class="component-body camera-display">
+<div class="component-body camera-display">
     <div class="source-buttons-container">
         @for (int _i = 0; _i < 8; _i++)
         {
             var i = _i;
-            <button class="@("secondary " + ((sourceIndex == i) ? "camera-selected" : ""))" @onclick=@(() => SetSource(i))>@i</button>
+            <button checked=@(sourceIndex == i) class="secondary" @onclick=@(() => SetSource(i))>@i</button>
         }
+        <button class="camera-display-rotate" @onclick=Rotate><i class="bi-arrow-clockwise"></i></button>
     </div>
-    <button class="camera-display-rotate" @onclick=Rotate><i class="bi-arrow-clockwise"></i></button>
+    <div class="video-container" @ref="videoContainer"></div>
 </div>
 
 @code {
@@ -62,10 +63,11 @@
         {
             if (jsCameraDisplay != null)
             {
+                await jsCameraDisplay.InvokeVoidAsync("dispose");
                 await jsCameraDisplay.DisposeAsync();
             }
         }
-        catch (JSDisconnectedException)
+        catch (Exception)
         {
         }
     }

@@ -13,10 +13,13 @@
         "pvv c4v c5v c6v"
         "r e s th";
     place-items: center;
-    color: #000;
     font-weight: bold;
     gap: 1px;
     background-color: #000;
+}
+
+.pms>p {
+    color: #000;
 }
 
 .pms>p,

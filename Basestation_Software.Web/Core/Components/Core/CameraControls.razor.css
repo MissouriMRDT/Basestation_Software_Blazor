@@ -22,13 +22,13 @@
     flex-direction: row;
     margin-inline: 0;
     margin-block: 0;
+    --btn-color: white;
 }
 
 .source-buttons-container button {
     margin: 1px;
     flex: 1;
     padding: 0;
-    color: white;
 }
 
 .source-buttons-container button:hover::after {
@@ -36,10 +36,6 @@
     position: relative;
     top: +100%;
     background-color: #f00;
-}
-
-.camera-selected {
-    color: black !important;
 }
 
 .camera-streaming {
