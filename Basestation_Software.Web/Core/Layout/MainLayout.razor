@@ -293,26 +293,23 @@
         // Sequence number i will increase with little change between renders
         builder.OpenRegion(0); // so we can start i at 0
         int i = 0;
-        int componentIndex = 0;
-        foreach (Component component in Page_.Components)
+        foreach ((int componentIndex, Component component) in Page_.Components.Index().OrderBy(x => 100 * x.Item.Y + x.Item.X))
         {
             Type? componentType = Type.GetType("Basestation_Software.Web.Core.Components." + component.Type);
             if (componentType == null)
             {
-                _ToastService.ShowWarning($"Component type {component.Type} not found.");
+                _ToastService.ShowWarning($"Component type \"{component.Type}\" not found.");
                 continue;
             }
 
             if (componentType.IsDefined(typeof(ComponentAttributes.Ignore)))
             {
-                _ToastService.ShowWarning($"Component type {component.Type} is not valid.");
+                _ToastService.ShowWarning($"Component type \"{component.Type}\" is not valid.");
                 continue;
             }
 
             builder.OpenElement(i, "div"); // <div style="left: X%; top: Y%; width: Width%; height: Height%" class="component" idx=componentIndex>
-            builder.AddAttribute(i + 1, "style",
-        $"left: {component.X}%; top: {component.Y}%; width: {component.Width}%; height: {component.Height}%"
-        );
+            builder.AddAttribute(i + 1, "style", $"left: {component.X}%; top: {component.Y}%; width: {component.Width}%; height: {component.Height}%");
             builder.AddAttribute(i + 2, "class", "component");
             builder.AddAttribute(i + 3, "idx", componentIndex);
 
@@ -336,8 +333,6 @@
             builder.CloseElement(); // </div>
 
             i += 10;
-            componentIndex++;
-
         }
         builder.CloseRegion();
     };
@@ -378,6 +373,7 @@
 
     private async Task NewComponent()
     {
+        if (ComponentName == "") return;
         Page_.Components.Add(new Component
         {
             X = 5,
@@ -399,7 +395,16 @@
     private async Task ImportPage()
     {
         CopyAreaVisible = false;
-        Page_ = JsonSerializer.Deserialize<Page?>(CopyAreaValue) ?? Page_;
+        Page? page;
+        try
+        {
+            page = JsonSerializer.Deserialize<Page?>(CopyAreaValue);
+        }
+        catch (JsonException)
+        {
+            return;
+        }
+        Page_ = page ?? Page_;
         await SavePage();
     }
 
