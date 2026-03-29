@@ -2,7 +2,6 @@
 
 <div class="component-header">
     <h3>Signal Stack</h3>
-    <div class="vr">&nbsp;</div>
     <input type="checkbox" class="output-enabled" @bind=_outputEnabled />
     <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
 </div>
@@ -14,9 +13,9 @@
     </div>
     <p>@(speed* RPM_PER_SPEED) RPM</p>
     <input type="range" @bind=_scale min="0" max="4000" step="100" style="width: 100px; align-self: center" />
-    <button @onclick=@(() => _scale = 0)>0</button>
-    <button @onclick=@(() => _scale = 500)>500</button>
-    <button @onclick=@(() => _scale = 4000)>4000</button>
+    <button checked=@(_scale == 0) @onclick=@(() => _scale = 0)>0</button>
+    <button checked=@(_scale == 500) @onclick=@(() => _scale = 500)>500</button>
+    <button checked=@(_scale == 4000) @onclick=@(() => _scale = 4000)>4000</button>
     <input @bind=_scale style="width: 40px" />
 </div>
 

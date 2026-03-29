@@ -10,7 +10,7 @@
         {
             // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
             var _i = i;
-            <button class="secondary @(sourceIndex == _i ? "camera-selected" : "") @(GetClass(_i))" title=@GetTitle(_i) @onclick=@(() => SetSource(_i))>@_i</button>
+            <button checked=@(sourceIndex == _i) class="secondary @(GetClass(_i))" title=@GetTitle(_i) @onclick=@(() => SetSource(_i))>@_i</button>
         }
     </div>
     <p style="grid-area: utilization-1">@($"cpu0: {_RoveCommService.Boards.Camera1.Utilization_cpu0:000}% 1: {_RoveCommService.Boards.Camera1.Utilization_cpu1:000}% 2: {_RoveCommService.Boards.Camera1.Utilization_cpu2:000}% 3: {_RoveCommService.Boards.Camera1.Utilization_cpu3:000}% mem: {_RoveCommService.Boards.Camera1.Utilization_mem:000}% sd: {_RoveCommService.Boards.Camera1.Utilization_storage:000}%")</p>

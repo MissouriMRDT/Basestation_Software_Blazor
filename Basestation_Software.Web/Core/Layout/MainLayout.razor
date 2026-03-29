@@ -13,7 +13,6 @@
 @inject IDbContextFactory<DatabaseContext> _dbContextFactory
 @inject NavigationManager UriHelper
 @inject RoveCommService _RoveCommService
-@inject IJSRuntime _jSRuntime
 
 <PageTitle>MRDT Basestation</PageTitle>
 
@@ -52,6 +51,10 @@
     #copy-area button {
         font-size: 5vh;
     }
+
+    html.light #resubscribe>img {
+        filter: invert(100%);
+    }
 </style>
 @if (_luna)
 {
@@ -70,7 +73,7 @@
         }
     </select>
     <button class="success" @onclick=NewComponent title="New Component"><i class="bi-node-plus" /></button>
-    <button class="primary" title="RoveComm Resubscribe All" @onclick="_RoveCommService.SubscribeAll">
+    <button id="resubscribe" title="RoveComm Resubscribe All" @onclick="_RoveCommService.SubscribeAll">
         <img src="/images/rovecomm-sil.png" style="height: 13px">
     </button>
     <button class="success" @onclick=NewPage title="New Page"><i class="bi-file-earmark-plus" /></button>
@@ -78,6 +81,7 @@
     <button class="success" @onclick=OpenCopyArea title="Edit Page"><i class="bi-pencil" /></button>
     <button class="success" @onclick=SavePage title="Save Page"><i class="bi-floppy" /></button>
     <button @onclick=@(() => _luna = !_luna)><i class="bi-moon" /></button>
+    <button checked=@_light @onclick=ToggleLightMode><i class="bi-sun" /></button>
     <select id="pageSelect" value="@PageID" @onchange=@(async (ChangeEventArgs __e) => { if (Guid.TryParse(__e?.Value as string, out Guid guid)) await Navigate(guid); })>
         <option value="00000000-0000-0000-0000-000000000000">Default</option>
         @SelectOptions
@@ -117,6 +121,7 @@
     private List<string> ComponentNames = new();
     private string ComponentName = "";
     private bool _luna = false;
+    private bool _light = false;
 
     [CascadingParameter]
     RouteData RouteData_ { get; set; } = new(typeof(MainLayout), new ReadOnlyDictionary<string, object?>(new Dictionary<string, object?>()));
@@ -161,12 +166,18 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
-            await _jSRuntime.InvokeVoidAsync("components.setDotNetComponent", ObjectReference);
+            await _IJSRuntime.InvokeVoidAsync("components.setDotNetComponent", ObjectReference);
         if (firstRender || RegisterComponents)
         {
-            await _jSRuntime.InvokeVoidAsync("components.registerComponents");
+            await _IJSRuntime.InvokeVoidAsync("components.registerComponents");
             RegisterComponents = false;
         }
+    }
+
+    private async Task ToggleLightMode()
+    {
+        _light = !_light;
+        await _IJSRuntime.InvokeVoidAsync("eval", $"document.getElementsByTagName('html')[0].className = \"{(_light ? "light" : "")}\"");
     }
 
     [JSInvokable]

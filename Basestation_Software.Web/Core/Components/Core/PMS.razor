@@ -9,13 +9,13 @@
     <p style="grid-area: pcl; align-self: end">Pack Current</p>
     <p style="grid-area: pca; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_PackCurrent:00.0}") A</p>
     <div style="grid-area: 1 / 1 / 5 / 2; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_PackCurrent, 36, 75)" class=@(_packOvercurrent ? "critical" : "")></div>
-    <button style="grid-area: mb; align-self: end" @onclick=@(() => ToggleBus(0))>Motor</button>
+    <button checked=@(_busStatus[0] == BusState.Enabled) style="grid-area: mb; align-self: end" @onclick=@(() => ToggleBus(0))>Motor</button>
     <p style="grid-area: ma; align-self: start">@($"{_motorCurrent:00.00}") A</p>
     <div style="grid-area: 1 / 2 / 3 / 3; @Background(_motorCurrent, 30, 50)" class="@(_busStatus[0] == BusState.Enabled ? "" : "disabled")" />
-    <button style="grid-area: cb; align-self: end" @onclick=@(() => ToggleBus(1))>Core</button>
+    <button checked=@(_busStatus[1] == BusState.Enabled) style="grid-area: cb; align-self: end" @onclick=@(() => ToggleBus(1))>Core</button>
     <p style="grid-area: ca; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_LowCurrent:00.0}") A</p>
     <div style="grid-area: 1 / 3 / 3 / 4; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_LowCurrent, 2, 6)" class="@(_busStatus[1] == BusState.Enabled ? "" : "disabled")" />
-    <button style="grid-area: ab; align-self: end" @onclick=@(() => ToggleBus(2))>Aux</button>
+    <button checked=@(_busStatus[2] == BusState.Enabled) style="grid-area: ab; align-self: end" @onclick=@(() => ToggleBus(2))>Aux</button>
     <p style="grid-area: aa; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_AuxCurrent:00.0}") A</p>
     <div style="grid-area: 1 / 4 / 3 / 5; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_AuxCurrent, 5, 15)" class="@(_busStatus[2] == BusState.Enabled ? "" : "disabled") @(_auxOvercurrent ? "critical" : "")" />
     <p style="grid-area: rl; align-self: end">Radio M2</p>

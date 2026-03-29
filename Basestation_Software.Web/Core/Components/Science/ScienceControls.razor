@@ -3,7 +3,6 @@
 
 <div class="component-header" style="display: flex">
     <h3>Science Controls</h3>
-    <div class="vr">&nbsp;</div>
     <input type="checkbox" class="output-enabled" @bind=_outputEnabled />
     <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
 </div>
@@ -44,19 +43,19 @@
         <p>@($"{_afFilterPosition:000}")</p>
         <p></p>
         <button checked=@(_activeLED == 0) @onclick=@(() => LED(0))>White</button>
-        <button @onclick=@(() => AFFilter(0))>None</button>
+        <button checked=@(_afFilterPosition == AFFilterPositions[0]) @onclick=@(() => AFFilter(0))>None</button>
         <p>None</p>
         <input @bind=_brightness[1] type="range" min="0" max="255" step="1" />
         <button checked=@(_activeLED == 1) @onclick=@(() => LED(1))>365nm</button>
-        <button @onclick=@(() => AFFilter(1))>440nm</button>
+        <button checked=@(_afFilterPosition == AFFilterPositions[1]) @onclick=@(() => AFFilter(1))>440nm</button>
         <p>NAD</p>
         <input @bind=_brightness[2] type="range" min="0" max="255" step="1" />
         <button checked=@(_activeLED == 2) @onclick=@(() => LED(2))>405nm</button>
-        <button style="--btn-fill: #2af371" @onclick=@(() => AFFilter(2))>525nm</button>
+        <button checked=@(_afFilterPosition == AFFilterPositions[2]) style="--btn-fill: #2af371" @onclick=@(() => AFFilter(2))>525nm</button>
         <p>FAD</p>
         <input @bind=_brightness[3] type="range" min="0" max="255" step="1" />
         <button checked=@(_activeLED == 3) @onclick=@(() => LED(3))>500nm</button>
-        <button style="--btn-fill: #dc3545" @onclick=@(() => AFFilter(3))>600nm</button>
+        <button checked=@(_afFilterPosition == AFFilterPositions[3]) style="--btn-fill: #dc3545" @onclick=@(() => AFFilter(3))>600nm</button>
         <p>Carotenoids</p>
     </div>
 </div>

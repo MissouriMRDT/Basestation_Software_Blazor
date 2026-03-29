@@ -8,7 +8,6 @@
 
 <div class="component-header">
     <h3>Arm Controls</h3>
-    <div class="vr">&nbsp;</div>
     <input type="checkbox" class="output-enabled" @bind=_outputEnabled />
     <select @bind=_controlMode>
         @foreach (ControlMode mode in Enum.GetValues<ControlMode>())
