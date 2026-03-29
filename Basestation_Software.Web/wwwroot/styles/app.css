@@ -404,6 +404,34 @@ input[type=checkbox].danger:checked {
     stroke: none;
 }
 
+/* Blazor reconnect dialog is always white, change text color to black for readability */
 #components-reconnect-modal {
-    color: black;
+    color: #000;
+}
+
+/* Change Blazored Toast close button style to match other buttons */
+.blazored-toast:not(#\9) {
+    background-color: var(--primary);
+    --primary: var(--primary-inverted);
+    --secondary: var(--secondary-inverted);
+}
+
+.blazored-toast-close:not(#\9) {
+    display: inline-block;
+    padding: 4px 8px;
+    background-color: var(--primary);
+    border: 2px solid var(--btn-fill);
+    -webkit-appearance: unset;
+    color: var(--secondary);
+    font-size: unset;
+}
+
+.blazored-toast-close:not(#\9):hover {
+    background-color: color-mix(in oklab, var(--btn-fill) 70%, var(--primary));
+}
+
+.blazored-toast-close:not(#\9):active {
+    color: var(--btn-color);
+    background-color: var(--btn-fill);
+    border: 2px solid color-mix(in oklab, var(--btn-fill) 70%, var(--secondary));
 }

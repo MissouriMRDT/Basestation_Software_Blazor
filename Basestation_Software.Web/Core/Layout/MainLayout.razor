@@ -87,7 +87,11 @@
         @SelectOptions
     </select>
 </div>
-<BlazoredToasts ShowProgressBar="true" Position=Blazored.Toast.Configuration.ToastPosition.TopRight DisableTimeout />
+<BlazoredToasts ShowProgressBar="false" Timeout="10">
+    <CloseButtonContent>
+        <i class="bi-x-circle" />
+    </CloseButtonContent>
+</BlazoredToasts>
 <div id="layout-grid">
     @CustomRender
 </div>
