@@ -74,7 +74,7 @@
 
     private List<double> _roverPoints = new List<double>();
     private List<double> _plannedPathPoints = new List<double>();
-    
+
     private DateTime _lastPathPointTime = DateTime.MinValue;
 
     // Delay between adding new lat lon points to rover path (seconds)
@@ -123,16 +123,18 @@
         _RoveCommService.Boards.Nav.OnGPSLatLonAlt(async packet =>
         {
             await _jsMap!.InvokeVoidAsync("addRoverIcon", [_RoveCommService.Boards.Nav.GPSLatLonAlt_Lat, _RoveCommService.Boards.Nav.GPSLatLonAlt_Lon]);
-            
+
 
             // Update position on rover path
-            if ((DateTime.UtcNow - _lastPathPointTime).TotalSeconds > _roverPathUpdateInterval) {
+            if ((DateTime.UtcNow - _lastPathPointTime).TotalSeconds > _roverPathUpdateInterval)
+            {
                 _lastPathPointTime = DateTime.UtcNow;
                 double lat = packet.Data[0];
                 double lon = packet.Data[1];
 
                 // Skip point if it was too close to the last one
-                if (_roverPoints.Count > 1) {
+                if (_roverPoints.Count > 1)
+                {
                     double minDiff = 0.00004;
                     double lastLat = _roverPoints[_roverPoints.Count - 2];
                     double lastLon = _roverPoints[_roverPoints.Count - 1];
@@ -152,7 +154,8 @@
                 _roverPoints.Add(lon);
 
                 // Remove first 200 points if path exceeds max points
-                if ((_roverPoints.Count / 2) >= _roverPathMaxPoints) {
+                if ((_roverPoints.Count / 2) >= _roverPathMaxPoints)
+                {
                     _roverPoints.RemoveRange(0, 400);
                 }
 
@@ -182,7 +185,8 @@
         }
     }
 
-    private void ResetPathClearTimer() {
+    private void ResetPathClearTimer()
+    {
         _pathCts.Cancel();
         _pathCts.Dispose();
         _pathCts = new CancellationTokenSource();
@@ -190,7 +194,8 @@
         _ = ClearPathAfterDelayAsync(_pathCts.Token);
     }
 
-    private async Task ClearPathAfterDelayAsync(CancellationToken token) {
+    private async Task ClearPathAfterDelayAsync(CancellationToken token)
+    {
         try
         {
             await Task.Delay(_pathTrackingTimeout, _pathCts.Token);
@@ -203,7 +208,7 @@
         {
 
         }
-}
+    }
 
     public async Task SetETA(double ETA)
     {
