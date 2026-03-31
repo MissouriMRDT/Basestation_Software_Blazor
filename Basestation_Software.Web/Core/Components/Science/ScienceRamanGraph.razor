@@ -6,7 +6,6 @@
 @using System.Threading.Tasks
 @using System.Text
 
-
 <script>
     function DownloadFile(filename, contentType, content) {
         const file = new File([content], filename, { type: contentType });
@@ -32,9 +31,34 @@
     <input @bind=_integrationTime />
     <p>Dot Size</p>
     <input @bind=_dotSize @bind:after=UpdateChartAsync />
+    <div>
+        <button @onclick=ToggleRamanGraphListVisibility>Raman Graphs</button>
+        <div id="RamanGraphList" style="display:@(ramanGraphListVisibility)">
+            @for (int i = 0; i < ramanGraphs.Count(); ++i)
+            {
+                var index = i;
+                var graph = ramanGraphs[i];
+
+                <div>
+                    <input type="checkbox"
+                           id="@graph.Item1"
+                           name="@graph.Item1"
+                           checked="@(index < graphVisibility.Length && graphVisibility[index])"
+                           @onchange=@(e => UpdateGraphVisibility(index, e))>
+                    <label for="@graph.Item1">@graph.Item1</label>
+                </div>
+            }
+        </div>
+    </div>
+@*     <p>Show Lines</p>
+    <input type="checkbox" @bind=_showLines>
+ *@
 </div>
 
 @code {
+
+    // TODO: Add raman data for: Quartz, Calcite, Gypsum, Kaolinite, Hematite, Magnetite, iron oxide
+
     private float _dotSize = 2f;
     private uint _integrationTime;
     private bool _displayRaw = false;
@@ -42,16 +66,34 @@
     private ushort[] _rawData = new ushort[2048];
     private string _acquiredAt = "";
 
+    private static ushort[] test_data = new ushort[2048];
+    private static ushort[] test_data2 = new ushort[2048];
+
     private LineChartConfig? RamanChartConfig;
     private Chart? RamanChart;
+
+    private static List<Tuple<string, ushort[]>> ramanGraphs = new List<Tuple<string, ushort[]>> { new Tuple<string, ushort[]>("Raman Graph 1", test_data), new Tuple<string, ushort[]>("Raman Graph 2", test_data2) };
+    private bool[] graphVisibility = Array.Empty<bool>();
+
+    private void Export()
+    {
+        File.WriteAllLines("RamanExport_" + ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds() + ".csv", _data.Select(x => string.Join(",", x)));
+    }
 
     protected override async void OnInitialized()
     {
         // Initialize data with easter egg
         for (int i = 0; i < _data.Length; i++)
         {
-            _data[i] = (1000 * Math.Pow(Math.E, -0.005 * Math.Abs(i - 1024)) * Math.Cos(1024 * (i - 1024)) + 1000);
+            //_data[i] = (1000 * Math.Pow(Math.E, -0.005 * Math.Abs(i - 1024)) * Math.Cos(1024 * (i - 1024)) + 1000);
+            _data[i] = 0;
+            _rawData[i] = 0;
+            test_data[i] = (ushort)(i / 16);
+            test_data2[i] = (ushort)(i / 8);
         }
+
+        // Initialize graph visibility (all false by default)
+        graphVisibility = new bool[ramanGraphs.Count()];
 
         // RamanReading_Part4 always occurs last.
         _RoveCommService.Boards.Raman.OnRamanReading_Part4(async packet =>
@@ -78,14 +120,14 @@
         // TODO: Rescale x from pixel to raman shift. Set major axis lines to every 10 cm-1. Add reference spectra lines from spreadsheet.
         // Reinitialize the chart config
         RamanChartConfig = new LineChartConfig()
-        {
-            Options = new Options()
             {
-                Responsive = true,
-                RegisterDataLabels = true,
-                MaintainAspectRatio = false,
-                Animation = false,
-                Scales = new Dictionary<string, Axis>()
+                Options = new Options()
+                {
+                    Responsive = true,
+                    RegisterDataLabels = true,
+                    MaintainAspectRatio = false,
+                    Animation = false,
+                    Scales = new Dictionary<string, Axis>()
                 {
                     {
                         Scales.XAxisId, new Axis()
@@ -116,33 +158,83 @@
                         }
                     }
                 },
-                Plugins = new Plugins()
-                {
-                    Legend = new Legend()
+                    Plugins = new Plugins()
                     {
-                        Display = false
+                        Legend = new Legend()
+                        {
+                            Display = true
+                        }
                     }
                 }
-            }
-        };
+            };
 
         RamanChartConfig.Data.Labels = Enumerable.Range(0, 2048).Select(i => i.ToString()).ToList();
+        RamanChartConfig.Data.Datasets.Clear();
 
+        // Add live raman data
         RamanChartConfig.Data.Datasets.Add(
             new LineDataset()
-            {
-                Label = "Raman Spectrum",
-                Data = (_displayRaw ? _rawData.Select(x => (decimal?)x) : _data.Select(x => (decimal?)x)).ToList(),
-                BorderColor = "rgba(255, 0, 0, 1)",
-                BackgroundColor = "rgba(255, 0, 0, 0.5)",
-                PointRadius = (int)Math.Max(1, _dotSize),
-            }
+                {
+                    Label = "Raman Spectrum",
+                    Data = (_displayRaw ? _rawData.Select(x => (decimal?)x) : _data.Select(x => (decimal?)x)).ToList(),
+                    BorderColor = "rgba(255, 0, 0, 1)",
+                    BackgroundColor = "rgba(255, 0, 0, 0.5)",
+                    PointRadius = (int)Math.Max(1, _dotSize),
+                }
         );
+
+        // Add raman reference data
+        Random rand = new Random(Seed: 7);
+        for (int i = 0; i < ramanGraphs.Count(); i++)
+        {
+            int red = (int)(rand.NextSingle() * 255);
+            int green = (int)(rand.NextSingle() * 255);
+            int blue = (int)(rand.NextSingle() * 255);
+
+            if (i < graphVisibility.Length && graphVisibility[i])
+            {
+                RamanChartConfig.Data.Datasets.Add(
+                    new LineDataset()
+                        {
+                            Label = ramanGraphs[i].Item1,
+                            Data = ramanGraphs[i].Item2.Select(x => (decimal?)x).ToList(),
+                            BorderColor = $"rgba({red}, {green}, {blue}, 1)",
+                            BackgroundColor = $"rgba({red}, {green}, {blue}, 0.5)",
+                            PointRadius = (int)Math.Max(1, _dotSize),
+                        }
+                );
+            }
+        }
+
+        RamanChart?.ClearData();
     }
 
     private async Task DownloadCSV()
     {
         byte[] file = Encoding.ASCII.GetBytes(String.Join("\n", _rawData.Select((x, i) => $"{i},{x}")));
         await _IJSRuntime.InvokeVoidAsync("DownloadFile", $"Raman_{_acquiredAt}.csv", "application/octet-stream", file);
+    }
+
+    string ramanGraphListVisibility = "none";
+    private void ToggleRamanGraphListVisibility()
+    {
+        if (ramanGraphListVisibility == "none")
+        {
+            ramanGraphListVisibility = "block";
+        }
+        else
+        {
+            ramanGraphListVisibility = "none";
+        }
+    }
+
+    // Fixed visibility toggle
+    private async Task UpdateGraphVisibility(int index, ChangeEventArgs e)
+    {
+        if (index < graphVisibility.Length && e.Value is bool isChecked)
+        {
+            graphVisibility[index] = isChecked;
+            await UpdateChartAsync();
+        }
     }
 }
