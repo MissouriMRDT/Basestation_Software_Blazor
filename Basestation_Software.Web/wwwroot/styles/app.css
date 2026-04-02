@@ -1,3 +1,5 @@
+
+
 @font-face {
     font-family: 'B612 Mono';
     font-style: normal;
@@ -55,12 +57,22 @@
     box-sizing: border-box;
 }
 
+body{
+    --bg-color: #FFF;
+    --text-color: #000;
+    --border: #000;
+    --2bg-color: #FFF;
+}
+
+
 html,
 body,
 p {
-    --secondary-bg: #e9ecef;
+    background-color: var(--bg-color); /*here*/
+    --secondary-bg: var(--2bg-color); 
     margin: 0;
     font-size: 13px;
+    color: var(--text-color);/*here*/
 }
 
 body,
@@ -68,6 +80,7 @@ button,
 select {
     font-family: "B612", Helvetica, Arial, sans-serif;
     font-size: 13px;
+    color: var(--text-color);/*here*/
 }
 
 #blazor-error-ui {
@@ -273,17 +286,18 @@ input[type=checkbox].danger:checked {
 }
 
 .component {
-    border: 1px solid #000;
+    border: 1px solid var(--border); /*HERE*/
     overflow: hidden;
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    background: var(--bg-color);
 }
 
 .component-header {
     padding-left: 21px;
-    color: #fff;
-    background-color: #000;
+    color: var(--text-color); /*HERE*/
+    background-color: var(--bg-color); /*HERE*/
 }
 
 .component-header>h3 {
@@ -335,7 +349,7 @@ input[type=checkbox].danger:checked {
     margin-inline: 10px;
     display: inline-block;
     align-self: stretch;
-    background-color: #fff;
+    background-color: var(--bg-color); /*changed here*/
 }
 
 .form-label {
