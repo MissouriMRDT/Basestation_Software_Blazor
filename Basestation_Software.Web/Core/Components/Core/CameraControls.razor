@@ -23,6 +23,7 @@
     <button style="grid-area: save" @onclick=SaveImage>Save Image</button>
     <button style="grid-area: panorama" @onclick=TakePano>Take Pano</button>
     <button style="grid-area: arguments" @onclick=@(_ => CameraArgumentsVisible = true)>Arguments</button>
+    <button style="grid-area: histogram" @onclick=@(AddHistogram)>Add Histogram</button>
 </div>
 @if (CameraArgumentsVisible)
 {
@@ -180,5 +181,48 @@
             _RoveCommService.Boards.Camera1.SetPictureArguments(characters);
         else
             _RoveCommService.Boards.Camera2.SetPictureArguments(characters);
+    }
+
+    private void AddHistogram()
+    {
+        List<string> ffmpeg_arguments = new List<string>{
+        "-hide_banner",
+        "-f",
+        "video4linux2",
+        "-video_size",
+        "320x240",
+        "-i",
+        "$input",
+        "-filter:v",
+        "eq=brightness=$brightness:contrast=$contrast,drawtext=text=%{gmtime\\\\:%X}:fontsize=32:fontcolor=red,split=2[a][b];[b]format=rgb24,histogram,format=yuv420p,scale=-1:480[hh];[a][hh]hstack",
+        "-c:v",
+        "libvpx",
+        "-quality",
+        "good",
+        "-cpu-used",
+        "4",
+        "-g",
+        "5",
+        "-error-resilient",
+        "1",
+        "-auto-alt-ref",
+        "1",
+        "-f",
+        "rtp",
+        "-b:v",
+        "2M",
+        "-maxrate",
+        "2M",
+        "-v",
+        "0",
+        "rtp://$ip:$port?pkt_size=1200",
+        };
+
+        char[] characters = (String.Join("\x1f", ffmpeg_arguments) + '\x04').ToCharArray();
+
+        if (sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.SetFFMPEGArguments(characters);
+        else
+            _RoveCommService.Boards.Camera2.SetFFMPEGArguments(characters);
     }
 }
