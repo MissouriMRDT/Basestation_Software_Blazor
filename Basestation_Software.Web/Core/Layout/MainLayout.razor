@@ -78,6 +78,7 @@
     <button class="success" @onclick=OpenCopyArea title="Edit Page"><i class="bi-pencil" /></button>
     <button class="success" @onclick=SavePage title="Save Page"><i class="bi-floppy" /></button>
     <button @onclick=@(() => _luna = !_luna)><i class="bi-moon" /></button>
+    <button class="success" @onclick=@DarkMode><i class="bi-moon" /></button>
     <select id="pageSelect" value="@PageID" @onchange=@(async (ChangeEventArgs __e) => { if (Guid.TryParse(__e?.Value as string, out Guid guid)) await Navigate(guid); })>
         <option value="00000000-0000-0000-0000-000000000000">Default</option>
         @SelectOptions
@@ -102,6 +103,14 @@
     <a class="dismiss">🗙</a>
 </div>
 
+<style>
+    body {
+        --bg-color: @bgColor;
+        --text-color: @textColor;
+        --border: @border
+    }
+</style>
+
 @code {
     // State
     private RenderFragment? CustomRender { get; set; }
@@ -117,7 +126,9 @@
     private List<string> ComponentNames = new();
     private string ComponentName = "";
     private bool _luna = false;
-
+    private string bgColor = "#FFF";
+    private string textColor = "#000";
+    private string border = "#000";
     [CascadingParameter]
     RouteData RouteData_ { get; set; } = new(typeof(MainLayout), new ReadOnlyDictionary<string, object?>(new Dictionary<string, object?>()));
 
@@ -394,5 +405,10 @@
         _databaseService.UnsubscribeFromEntityDeleted(typeof(Page), PageID, PageChanged);
         _databaseService.UnsubscribeFromTableChanges(typeof(Page), TableChanged);
         ObjectReference?.Dispose();
+    }
+    protected async Task DarkMode(){
+        bgColor = (bgColor=="#FFF"? "#000": "#FFF");
+        textColor = (textColor=="#000"? "#FFF": "#000");
+        border = (border=="#000"? "blue": "#000"); 
     }
 }

@@ -22,14 +22,14 @@
     <p />
     <p>Hdg [&#176;]</p>
     <p>@($"{_RoveCommService.Boards.Nav.SatelliteCountData:00}")</p>
-    <p class="secondary-bg">Accuracy</p>
+    <p>Accuracy</p>
     <p>@($"{_RoveCommService.Boards.Nav.CompassData:00.00000}")</p>
-    <p class="secondary-bg">Horiz [m]</p>
-    <p class="secondary-bg">Vert [m]</p>
-    <p class="secondary-bg">Hdg [&#176;]</p>
-    <p class="secondary-bg">@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_HorizontalAccuracy:0000.000}")</p>
-    <p class="secondary-bg">@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_VerticalAccuracy:0000.000}")</p>
-    <p class="secondary-bg">@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_HeadingAccuracy:000.00000}")</p>
+    <p>Horiz [m]</p>
+    <p>Vert [m]</p>
+    <p>Hdg [&#176;]</p>
+    <p>@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_HorizontalAccuracy:0000.000}")</p>
+    <p>@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_VerticalAccuracy:0000.000}")</p>
+    <p>@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_HeadingAccuracy:000.00000}")</p>
     <p style="grid-area: 7 / 1 / 8 / 4">@FixType Fix @if (IsDifferential) {
         <span style="color: green">With Differential</span>
                 }

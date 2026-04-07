@@ -68,11 +68,11 @@ body{
 html,
 body,
 p {
-    background-color: var(--bg-color); /*here*/
-    --secondary-bg: var(--2bg-color); 
+    background-color: var(--bg-color); 
+    --secondary-bg: var(--bg-color);
     margin: 0;
     font-size: 13px;
-    color: var(--text-color);/*here*/
+    color: var(--text-color);
 }
 
 body,
@@ -80,7 +80,7 @@ button,
 select {
     font-family: "B612", Helvetica, Arial, sans-serif;
     font-size: 13px;
-    color: var(--text-color);/*here*/
+    color: #000;
 }
 
 #blazor-error-ui {
@@ -286,7 +286,7 @@ input[type=checkbox].danger:checked {
 }
 
 .component {
-    border: 1px solid var(--border); /*HERE*/
+    border: 1px solid var(--border); 
     overflow: hidden;
     display: flex;
     flex-direction: column;
@@ -296,8 +296,8 @@ input[type=checkbox].danger:checked {
 
 .component-header {
     padding-left: 21px;
-    color: var(--text-color); /*HERE*/
-    background-color: var(--bg-color); /*HERE*/
+    color: var(--text-color); 
+    background-color: var(--bg-color); 
 }
 
 .component-header>h3 {
@@ -311,7 +311,7 @@ input[type=checkbox].danger:checked {
 
 .component-move {
     position: absolute;
-    color: #fff;
+    color: var(--text-color);
     padding: 1px 1px 1px 3px;
     touch-action: none;
     user-select: none;
@@ -324,6 +324,7 @@ input[type=checkbox].danger:checked {
 }
 
 .component-resize {
+    color: var(--text-color);
     position: absolute;
     touch-action: none;
     user-select: none;
@@ -349,7 +350,7 @@ input[type=checkbox].danger:checked {
     margin-inline: 10px;
     display: inline-block;
     align-self: stretch;
-    background-color: var(--bg-color); /*changed here*/
+    background-color: var(--bg-color); 
 }
 
 .form-label {
@@ -357,7 +358,7 @@ input[type=checkbox].danger:checked {
 }
 
 .view-2d * {
-    stroke: #000;
+    stroke: var(--border);
     stroke-width: 0.2;
     fill: none;
 }
