@@ -74,7 +74,7 @@
     private static readonly string[] _axisNames = ["Auger Gantry", "Auger", "Instruments Gantry", "AF Filter"]; // TODO: Set axis names.
     bool[] _limitOverrides = new bool[4];
     byte[] _brightness = [255, 255, 255, 255];
-    public static readonly short[] AFFilterPositions = [0, 55, 120, 180]; // None, 440nm, 525nm, 600nm
+    public static readonly short[] AFFilterPositions = [155, 10, 120, 45]; // None, 440nm, 525nm, 600nm
     public static readonly short[] SoilTrapdorPositions = [15, 150]; // AF, Soil Cache
     private float _afFilterPosition = AFFilterPositions[0];
     private short _soilTrapdoorPosition = SoilTrapdorPositions[0];
