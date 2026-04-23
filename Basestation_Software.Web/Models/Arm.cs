@@ -51,4 +51,14 @@ public class ArmAxes
         GY = arm.Position_GY;
         GZ = arm.Position_GZ;
     }
+
+    public void TargetAngle(Arm arm)
+    {
+        arm.TargetAngle(X, J2, J3, J4, J5, J6);
+    }
+
+    public void TargetIK(Arm arm)
+    {
+        arm.IKPosition(GX, GY, GZ, J4, J5, J6);
+    }
 }

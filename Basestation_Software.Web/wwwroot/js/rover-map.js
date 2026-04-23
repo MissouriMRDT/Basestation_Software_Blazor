@@ -6,13 +6,20 @@
 
 import { generateArucoMarker } from "./aruco-tag-generator.js";
 
-const waypointIcons = [[-1, "/images/any.png"], [-2, "/images/mallet.png"], [-3, "/images/bottle.png"], [-4, "/images/pick.png"], [-99, "/images/continuousNavigate.png"]];
-const unknownWaypointIcon = "/images/unknown.png";
+const waypointIcons = [];
+waypointIcons[-1] = "/images/any.png";
+waypointIcons[-2] = "/images/mallet.png";
+waypointIcons[-3] = "/images/bottle.png";
+waypointIcons[-4] = "/images/pick.png";
+waypointIcons[-99] = "/images/continuousNavigate.png";
 
 export class RoverMap {
     container = null;
     lMap = null;
     waypointLayerGroup = null;
+    tagLayerGroup = null;
+    pathLayerGroup = null;
+    labelLayerGroup = null;
     dotNetComponent = null;
     positionDisplay = null;
     roverIcon = null;
@@ -129,6 +136,7 @@ export class RoverMap {
         this.tagLayerGroup = L.layerGroup([]).addTo(this.lMap);
         this.pathLayerGroup = L.layerGroup([]).addTo(this.lMap);
         this.roverPathLayerGroup = L.layerGroup([]).addTo(this.lMap);
+        this.labelLayerGroup = L.layerGroup([]).addTo(this.lMap);
         this.currentPlannedPoints = [];
         this.eta = 0;
 
@@ -167,7 +175,15 @@ export class RoverMap {
         this.dotNetComponent.invokeMethodAsync("AddWaypoint", event.latlng.lat, event.latlng.lng);
     }
     // Create a waypoint marker.
-    addWaypointMarker(lat, lng, radius, color, id = -1) {
+    addWaypointMarker(name, lat, lng, radius, color, id = -1) {
+        if (name !== "") {
+            let tooltip = L.tooltip([lat, lng], { permanent: true, content: name, direction: "right", opacity: 1 }).addTo(this.labelLayerGroup).getElement();
+            tooltip.style.borderColor = color;
+            tooltip.style.boxShadow = "none";
+            tooltip.style.color = "#000";
+            tooltip.style.backgroundColor = "#fff8";
+            tooltip.style.fontSize = "20px";
+        }
         if (radius === 0) {
             L.circleMarker([lat, lng], { radius: 20, color: color, dashArray: "15.4 16", fill: false })
                 .on("click", () => {
@@ -188,16 +204,19 @@ export class RoverMap {
             });
         } else {
             const r = 0.0001;
-            const imageUrl = (waypointIcons.find(e => e[0] === id) ?? [0, unknownWaypointIcon])[1];
-            L.marker([lat, lng], { icon: L.icon({ iconUrl: imageUrl, iconSize: 25 }) }).on("click", () => {
-                this.dotNetComponent.invokeMethodAsync("OnWaypointSelected", lat, lng);
-            }).addTo(this.tagLayerGroup);
+            const imageUrl = waypointIcons[id];
+            if (imageUrl !== undefined) {
+                L.marker([lat, lng], { icon: L.icon({ iconUrl: imageUrl, iconSize: 25 }) }).on("click", () => {
+                    this.dotNetComponent.invokeMethodAsync("OnWaypointSelected", lat, lng);
+                }).addTo(this.tagLayerGroup);
+            }
         }
     }
     // Clear waypoint markers.
     clearWaypointMarkers() {
         this.waypointLayerGroup.clearLayers();
         this.tagLayerGroup.clearLayers();
+        this.labelLayerGroup.clearLayers();
     }
     // Navigate to coordinate.
     panToCoordinates(lat, long) {

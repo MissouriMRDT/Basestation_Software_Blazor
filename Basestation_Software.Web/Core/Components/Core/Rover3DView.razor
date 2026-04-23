@@ -6,6 +6,7 @@
 
 <div class="component-header">
     <h3>3D Rover</h3>
+    <input type="checkbox" @bind=_accel />
 </div>
 <div class="component-body">
     @if (!_dataLoaded)
@@ -20,6 +21,7 @@
     private ElementReference CanvasContainer;
     private IJSObjectReference? jsRoverView;
     private bool _dataLoaded = false;
+    private bool _accel = true;
 
     protected override void OnInitialized()
     {
@@ -29,7 +31,10 @@
             // ThreeJS (WebGL): -z-forward, y-up, x-right
             if (jsRoverView != null)
             {
-                await jsRoverView.InvokeVoidAsync("updateAnglesFromUpVector", [_RoveCommService.Boards.Core.AccelerometerData_X, _RoveCommService.Boards.Core.AccelerometerData_Z, -_RoveCommService.Boards.Core.AccelerometerData_Y]);
+                if (_accel)
+                    await jsRoverView.InvokeVoidAsync("updateAnglesFromUpVector", [_RoveCommService.Boards.Core.AccelerometerData_X, _RoveCommService.Boards.Core.AccelerometerData_Z, -_RoveCommService.Boards.Core.AccelerometerData_Y]);
+                else
+                    await jsRoverView.InvokeVoidAsync("updateAnglesFromUpVector", [0, 1, 0]);
             }
         });
         _RoveCommService.Boards.Arm.OnPosition(async packet =>

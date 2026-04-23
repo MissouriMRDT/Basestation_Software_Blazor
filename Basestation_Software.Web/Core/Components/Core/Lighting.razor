@@ -4,22 +4,22 @@
 <div class="component-header">
     <h3>Lighting</h3>
 </div>
-<div class="component-body" style="display: flex; align-items: center">
+<div class="component-body" style="display: flex; align-items: center; gap: 5px; padding: 10px">
     <p>R</p>
-    <input style="width: 20px" @bind=r />
+    <input style="flex-grow: 1; min-width: 30pt" @bind=r />
     <p>G</p>
-    <input style="width: 20px" @bind=g />
+    <input style="flex-grow: 1; min-width: 30pt" @bind=g />
     <p>B</p>
-    <input style="width: 20px" @bind=b />
+    <input style="flex-grow: 1; min-width: 30pt" @bind=b />
     <p>A</p>
-    <input style="width: 20px" @bind=brightness />
+    <input style="flex-grow: 1; min-width: 30pt" @bind=brightness />
     <button style="justify-self:center;" @onclick=Send>Send</button>
     <div style="width: 24px; height: 24px; background-color: rgb(@r, @g, @b)"></div>
 </div>
 
 @code {
     private byte r, g, b;
-    private byte brightness = 0;
+    private byte brightness = 255;
 
     private void Send()
     {

@@ -10,7 +10,7 @@
     <h3>Waypoints</h3>
     <button @onclick=New><i class="bi-plus" /></button>
 </div>
-<div class="component-body" style="display: grid; overflow-y: scroll; flex-grow: 0; grid-template-columns: min-content 100px 80px 80px 20px 30px 100px repeat(4, min-content)">
+<div class="component-body" style="display: grid; overflow-y: scroll; flex-grow: 0; grid-template-columns: min-content 100px 80px 80px 20px 30px 100px 25px min-content">
     <p></p>
     <p>Name</p>
     <p>Latitude</p>
@@ -19,38 +19,33 @@
     <p>r</p>
     <p style="grid-column: 7 / 9">ID</p>
     <p></p>
-    <p></p>
-    <p></p>
     @for (int _i = 0; _i < _waypoints.Count(); _i++)
     {
         int i = _i;
         GPSWaypoint waypoint = _waypoints[i];
-        <button class=@(_GPSWaypointState.SelectedWaypoint?.ID == waypoint.ID ? "success" : "") onclick=@(() => Select(i)) title="Select Waypoint"><i class="bi-check" /></button>
-        <input style="padding: 0" @bind=waypoint.Name />
-        <input style="padding: 0" @bind:get=@(waypoint.Latitude.ToString("000.000000;-000.000000")) @bind:set=@(value => waypoint.Latitude = GPSWaypoint.ConvertDMSToDegrees(value)) />
-        <input style="padding: 0" @bind:get=@(waypoint.Longitude.ToString("000.000000;-000.000000")) @bind:set=@(value => waypoint.Longitude = GPSWaypoint.ConvertDMSToDegrees(value)) />
-        <input style="padding: 0" type="color" @bind:get=@($"#{waypoint.Color:X6}") @bind:set=@(value => waypoint.Color = int.Parse(value.Substring(1), System.Globalization.NumberStyles.HexNumber)) />
-        <input style="padding: 0" @bind=waypoint.SearchRadius />
-        <select @bind=waypoint.TagID style="padding: 0">
+        <button checked=@(_GPSWaypointState.SelectedWaypoint?.ID == waypoint.ID) onclick=@(() => Select(i)) title="Select Waypoint"><i class="bi-check" /></button>
+        <input style="padding: 0" @bind=waypoint.Name @bind:after=@(async () => await Save(i)) />
+        <input style="padding: 0" @bind:get=@(waypoint.Latitude.ToString("000.000000;-000.000000")) @bind:set=@(async value => { waypoint.Latitude = GPSWaypoint.ConvertDMSToDegrees(value); await Save(i); }) />
+        <input style="padding: 0" @bind:get=@(waypoint.Longitude.ToString("000.000000;-000.000000")) @bind:set=@(async value => { waypoint.Longitude = GPSWaypoint.ConvertDMSToDegrees(value); await Save(i); }) />
+        <input style="padding: 0" type="color" @bind:get=@($"#{waypoint.Color:X6}") @bind:set=@(async value => {waypoint.Color = int.Parse(value.Substring(1), System.Globalization.NumberStyles.HexNumber); await Save(i); }) />
+        <input style="padding: 0" @bind=waypoint.SearchRadius @bind:after=@(async () => await Save(i)) />
+        <select style="padding: 0" @bind=waypoint.TagID @bind:after=@(async () => await Save(i))>
+            <option value=-10>None</option>
             @foreach (AUTONOMYWAYPOINTTYPES waypointType in Enum.GetValues<AUTONOMYWAYPOINTTYPES>())
             {
                 <option value=@((int)waypointType)>@waypointType</option>
             }
         </select>
-        @if (waypoint.TagID >= (int)AUTONOMYWAYPOINTTYPES.Tag0)
-        {
-            <ArucoTagDisplay ID="@waypoint.TagID" Scale="4" />
-        }
-        else if (WaypointImages.ContainsKey(waypoint.TagID))
-        {
-            <img style="height: 24px" src=@(WaypointImages[waypoint.TagID]) />
-        }
-        else
-        {
-            <img style="height: 24px" src="/images/unknown.png" />
-        }
-        <button class="success" @onclick=@(async () => await Save(i)) title="Save Waypoint"><i class="bi-save2" /></button>
-        <button class="warning" @onclick=@(async () => await Revert(i)) title="Revert Changes"><i class="bi-arrow-counterclockwise" /></button>
+        <div style=@($"background-color: #{waypoint.Color:X6}")>
+            @if (waypoint.TagID >= (int)AUTONOMYWAYPOINTTYPES.Tag0)
+            {
+                <ArucoTagDisplay ID="@waypoint.TagID" Style="padding: 0; width: 100%" />
+            }
+            else if (WaypointImages.ContainsKey(waypoint.TagID))
+            {
+                <img style="width: 100%" src=@(WaypointImages[waypoint.TagID]) />
+            }
+        </div>
         <button class="danger" @onclick=@(async () => await Delete(i)) title="Delete Waypoint"><i class="bi-trash" /></button>
     }
 </div>
@@ -82,7 +77,7 @@
     private async Task New()
     {
         using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
-        databaseContext.Waypoints.Add(new() { ID = Guid.NewGuid(), Latitude = _roveCommService.Boards.Nav.GPSLatLonAlt_Lat, Longitude = _roveCommService.Boards.Nav.GPSLatLonAlt_Lon });
+        databaseContext.Waypoints.Add(new() { ID = Guid.NewGuid(), Latitude = _roveCommService.Boards.Nav.GPSLatLonAlt_Lat, Longitude = _roveCommService.Boards.Nav.GPSLatLonAlt_Lon, TagID = -10, Color = 0xffffff });
         await databaseContext.SaveChangesAsync(_databaseService);
     }
 
@@ -91,16 +86,6 @@
         using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
         databaseContext.Waypoints.Update(_waypoints[i]);
         await databaseContext.SaveChangesAsync(_databaseService);
-    }
-
-    private async Task Revert(int i)
-    {
-        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
-        GPSWaypoint? waypoint = await databaseContext.Waypoints.FindAsync(_waypoints[i].ID);
-        if (waypoint == null)
-            _waypoints.Remove(_waypoints[i]);
-        else
-            _waypoints[i] = waypoint;
     }
 
     private async Task Delete(int i)

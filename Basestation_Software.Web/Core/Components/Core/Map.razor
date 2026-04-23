@@ -59,11 +59,12 @@
     private IJSObjectReference? _jsMap;
     private DotNetObjectReference<Map>? _objectReference;
 
+    bool _rangeSet = false;
     int _totalDownloadingTiles = 0;
     int _currentlyDownloadingTile = 0;
     double[] _region = new double[4];
     bool _isLidar = false;
-    int _zoom = 0;
+    int _zoom = 18;
     bool _downloading = false;
     // private bool _pathTrackingActive = false;
 
@@ -213,7 +214,7 @@
     {
         using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
         List<GPSWaypoint> waypoints = await databaseContext.Waypoints.ToListAsync();
-        await Task.WhenAll(waypoints.ConvertAll<Task>(waypoint => _jsMap!.InvokeVoidAsync("addWaypointMarker", [waypoint.Latitude, waypoint.Longitude, waypoint.SearchRadius, ColorTranslator.ToHtml(Color.FromArgb(waypoint.Color)), waypoint.TagID]).AsTask()));
+        await Task.WhenAll(waypoints.ConvertAll<Task>(waypoint => _jsMap!.InvokeVoidAsync("addWaypointMarker", [waypoint.Name, waypoint.Latitude, waypoint.Longitude, waypoint.SearchRadius, ColorTranslator.ToHtml(Color.FromArgb(waypoint.Color)), waypoint.TagID]).AsTask()));
     }
 
     [JSInvokable]
@@ -225,6 +226,8 @@
             ID = Guid.NewGuid(),
             Latitude = lat,
             Longitude = lon,
+            TagID = -10,
+            Color = 0xffffff
         });
         await databaseContext.SaveChangesAsync(_databaseService);
     }
@@ -242,6 +245,7 @@
     [JSInvokable]
     public async Task SetRange(double lat1, double lon1, double lat2, double lon2, int zoom)
     {
+        _rangeSet = true;
         _zoom = zoom;
         _region[0] = lon1;
         _region[1] = lat1;
@@ -272,7 +276,7 @@
 
     public async Task Download()
     {
-        if (_downloading) return;
+        if (_downloading || !_rangeSet) return;
         _downloading = true;
 
         Timer updateUI = new(_ => InvokeAsync(StateHasChanged), null, 0, 1000);

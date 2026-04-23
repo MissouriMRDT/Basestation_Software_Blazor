@@ -1,4 +1,3 @@
-@implements IDisposable
 @inject RoveCommService _RoveCommService
 
 <div class="component-header" style="display: flex">
@@ -32,8 +31,8 @@
     <p>Auger @($"{_RoveCommService.Boards.Auger.AugerCurrent:00.00}A {_RoveCommService.Boards.Auger.AugerSpeed:000}rpm")</p>
     <div style="display: grid; grid-template-columns: repeat(4, max-content); place-items: center">
         <p>Soil Trapdoor</p>
-        <button @onclick=@(() => SoilTrapdoor(false))>AF</button>
-        <button @onclick=@(() => SoilTrapdoor(true))>Cache</button>
+        <button checked=@(_soilTrapdoorPosition == SoilTrapdorPositions[0]) @onclick=@(() => SoilTrapdoor(false))>AF</button>
+        <button checked=@(_soilTrapdoorPosition == SoilTrapdorPositions[1]) @onclick=@(() => SoilTrapdoor(true))>Cache</button>
         <p>@($"{_soilTrapdoorPosition:000}")</p>
         <p></p>
         <p style="grid-column: 1 / 5">Autofluorescence</p>
@@ -42,20 +41,24 @@
         <p>Filter</p>
         <p>@($"{_afFilterPosition:000}")</p>
         <p></p>
-        <button checked=@(_activeLED == 0) @onclick=@(() => LED(0))>White</button>
+        <button checked=@(_activeLED == -1) @onclick=@(() => LED(-1, false))>Off</button>
         <button checked=@(_afFilterPosition == AFFilterPositions[0]) @onclick=@(() => AFFilter(0))>None</button>
         <p>None</p>
-        <input @bind=_brightness[1] type="range" min="0" max="255" step="1" />
-        <button checked=@(_activeLED == 1) @onclick=@(() => LED(1))>365nm</button>
+        <input @bind=_brightness[1] @bind:after=@(() => LED(1, true)) type="range" min="0" max="255" step="1" />
+        <button checked=@(_activeLED == 1) @onclick=@(() => LED(1, false))>365nm</button>
         <button checked=@(_afFilterPosition == AFFilterPositions[1]) @onclick=@(() => AFFilter(1))>440nm</button>
         <p>NAD</p>
-        <input @bind=_brightness[2] type="range" min="0" max="255" step="1" />
-        <button checked=@(_activeLED == 2) @onclick=@(() => LED(2))>405nm</button>
+        <input @bind=_brightness[2] @bind:after=@(() => LED(2, true)) type="range" min="0" max="255" step="1" />
+        <button checked=@(_activeLED == 2) @onclick=@(() => LED(2, false))>405nm</button>
         <button checked=@(_afFilterPosition == AFFilterPositions[2]) style="--btn-fill: #2af371" @onclick=@(() => AFFilter(2))>525nm</button>
         <p>FAD</p>
-        <input @bind=_brightness[3] type="range" min="0" max="255" step="1" />
-        <button checked=@(_activeLED == 3) @onclick=@(() => LED(3))>500nm</button>
+        <input @bind=_brightness[3] @bind:after=@(() => LED(3, true)) type="range" min="0" max="255" step="1" />
+        <button checked=@(_activeLED == 3) @onclick=@(() => LED(3, false))>500nm</button>
         <button checked=@(_afFilterPosition == AFFilterPositions[3]) style="--btn-fill: #dc3545" @onclick=@(() => AFFilter(3))>600nm</button>
+        <p>Carotenoids</p>
+        <p></p>
+        <button checked=@(_activeLED == 0) @onclick=@(() => LED(0, false))>White</button>
+        <button checked=@(_afFilterPosition == AFFilterPositions[4]) style="--btn-fill: #dc3545" @onclick=@(() => AFFilter(4))>620nm</button>
         <p>Carotenoids</p>
     </div>
 </div>
@@ -70,15 +73,15 @@
     {
         Binds = [Bind.LSY, Bind.Triggers, Bind.RSY, Bind.Bumpers],
         Inversions = [false, false, false, false]
-    }; // TODO: Set a good default control scheme as done in Gimbals.razor.
-    private static readonly string[] _axisNames = ["Auger Gantry", "Auger", "Instruments Gantry", "AF Filter"]; // TODO: Set axis names.
+    };
+    private static readonly string[] _axisNames = ["Auger Gantry", "Auger", "Instruments Gantry", "AF Filter"];
     bool[] _limitOverrides = new bool[4];
     byte[] _brightness = [255, 255, 255, 255];
-    public static readonly short[] AFFilterPositions = [0, 55, 120, 180]; // None, 440nm, 525nm, 600nm
+    public static readonly short[] AFFilterPositions = [155, 10, 120, 45, 80]; // None, 440nm, 525nm, 600nm, 620nm
     public static readonly short[] SoilTrapdorPositions = [15, 150]; // AF, Soil Cache
-    private float _afFilterPosition = AFFilterPositions[0];
-    private short _soilTrapdoorPosition = SoilTrapdorPositions[0];
-    private int _activeLED = -1;
+    private float _afFilterPosition = 100;
+    private short _soilTrapdoorPosition = 100;
+    private int _activeLED = -2;
 
     private async Task Update(Gamepad gamepad, float deltaT)
     {
@@ -118,9 +121,9 @@
         return true;
     }
 
-    private void LED(int i)
+    private void LED(int i, bool updateBrightness)
     {
-        if (_activeLED == i) i = -1; // Clicking the button for the active LED will turn it off.
+        if (updateBrightness && _activeLED != i) return;
         _activeLED = i;
         switch (_activeLED)
         {
@@ -154,6 +157,4 @@
         _soilTrapdoorPosition = SoilTrapdorPositions[cache ? 1 : 0];
         if (_outputEnabled) _RoveCommService.Boards.Auger.AugerServo((short)_afFilterPosition, _soilTrapdoorPosition);
     }
-
-    void IDisposable.Dispose() { }
 }

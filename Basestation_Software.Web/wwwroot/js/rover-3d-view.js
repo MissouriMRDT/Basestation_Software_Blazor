@@ -17,7 +17,7 @@ export class Rover3DView {
     camera = null;
     roverMesh = null;
     arm = null;
-    armJoints = {x: null, j2: null, j3: null, j4: null, j5: null, j6: null};
+    armJoints = { x: null, j2: null, j3: null, j4: null, j5: null, j6: null };
     lightingPanel = null;
     resizeObserver = null;
     frameId = 0;
@@ -101,8 +101,8 @@ export class Rover3DView {
 
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.minDistance = 1;
-        controls.maxDistance = 7;
-        controls.enablePan = false;
+        controls.maxDistance = 10;
+        controls.enablePan = true;
 
         this.animationLoop();
     }
@@ -126,7 +126,7 @@ export class Rover3DView {
     }
 
     updateArm(x, j2, j3, j4, j5, j6) {
-        this.armJoints.x.position.z = x;
+        this.armJoints.x.position.z = 7.06 + x;
         this.armJoints.j2.setRotationFromEuler(new THREE.Euler(0, 0, j2 * Math.PI / 180, "XYZ"));
         this.armJoints.j3.setRotationFromEuler(new THREE.Euler(0, 0, j3 * Math.PI / 180, "XYZ"));
         this.armJoints.j4.setRotationFromEuler(new THREE.Euler(j4 * Math.PI / 180, 0, 0, "XYZ"));
