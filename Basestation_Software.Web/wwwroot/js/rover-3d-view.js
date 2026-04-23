@@ -1,6 +1,6 @@
 // Used by Rover3DView.razor
 
-import * as THREE from "./lib/three/three.js";
+import * as THREE from "./lib/three/three.module.js";
 import { STLLoader } from "./lib/three/STLLoader.js";
 import { GLTFLoader } from "./lib/three/GLTFLoader.js";
 import { OrbitControls } from "./lib/three/OrbitControls.js";
@@ -9,6 +9,11 @@ export const roverViews = {};
 
 const NEGATIVE_Y = new THREE.Vector3(0, -1, 0);
 const POSITIVE_Y = new THREE.Vector3(0, 1, 0);
+const MATERIALS = {
+    rover: new THREE.MeshLambertMaterial({ color: new THREE.Color().setRGB(1, 0, 0), transparent: true, opacity: 0.7 }),
+    arm: new THREE.MeshLambertMaterial({ color: new THREE.Color().setRGB(0, 1, 0), transparent: true, opacity: 0.7 }),
+    targetArm: new THREE.MeshLambertMaterial({ color: new THREE.Color().setRGB(0, 0, 1), transparent: true, opacity: 0.7 }),
+}
 
 export class Rover3DView {
     container = null;
@@ -18,6 +23,8 @@ export class Rover3DView {
     roverMesh = null;
     arm = null;
     armJoints = { x: null, j2: null, j3: null, j4: null, j5: null, j6: null };
+    targetArm = null;
+    targetArmJoints = { x: null, j2: null, j3: null, j4: null, j5: null, j6: null };
     lightingPanel = null;
     resizeObserver = null;
     frameId = 0;
@@ -30,8 +37,7 @@ export class Rover3DView {
         const stlLoader = new STLLoader();
 
         stlLoader.load("/models/Rover.stl", (roverGeometry) => {
-            const material = new THREE.MeshPhongMaterial({ color: 0x9a0000, specular: 0x111111, shininess: 200 });
-            this.roverMesh = new THREE.Mesh(roverGeometry, material);
+            this.roverMesh = new THREE.Mesh(roverGeometry, MATERIALS.rover);
             this.roverMesh.position.set(0, 0, 0);
             this.roverMesh.scale.set(1, 1, 1);
             this.roverMesh.castShadow = true;
@@ -53,13 +59,39 @@ export class Rover3DView {
                 this.arm.scale.multiplyScalar(0.112);
                 this.arm.setRotationFromEuler(new THREE.Euler(Math.PI / 2, Math.PI / 2, -Math.PI / 2, "XYZ"));
                 this.arm.position.set(-0.75, -0.67, -0.75);
+                this.arm.material = MATERIALS.arm;
+                this.arm.castShadow = true;
                 this.armJoints.x = this.arm.getObjectByName("Shoulder");
                 this.armJoints.j2 = this.arm.getObjectByName("Bicep");
                 this.armJoints.j3 = this.arm.getObjectByName("Forearm_Roll");
                 this.armJoints.j4 = this.arm.getObjectByName("Forearm");
                 this.armJoints.j5 = this.arm.getObjectByName("Wrist");
                 this.armJoints.j6 = this.arm.getObjectByName("Gripper");
+                for (let joint in this.targetArmJoints) {
+                    this.armJoints[joint].material = MATERIALS.arm;
+                    this.armJoints[joint].castShadow = true;
+                }
                 this.roverMesh.add(this.arm);
+            });
+
+            gltfLoader.load("/models/AthenaArm.glb", (loadedData) => {
+                this.targetArm = loadedData.scene.children[0];
+                this.targetArm.scale.multiplyScalar(0.112);
+                this.targetArm.setRotationFromEuler(new THREE.Euler(Math.PI / 2, Math.PI / 2, -Math.PI / 2, "XYZ"));
+                this.targetArm.position.set(-0.75, -0.67, -0.75);
+                this.targetArm.material = MATERIALS.targetArm;
+                this.targetArm.castShadow = true;
+                this.targetArmJoints.x = this.targetArm.getObjectByName("Shoulder");
+                this.targetArmJoints.j2 = this.targetArm.getObjectByName("Bicep");
+                this.targetArmJoints.j3 = this.targetArm.getObjectByName("Forearm_Roll");
+                this.targetArmJoints.j4 = this.targetArm.getObjectByName("Forearm");
+                this.targetArmJoints.j5 = this.targetArm.getObjectByName("Wrist");
+                this.targetArmJoints.j6 = this.targetArm.getObjectByName("Gripper");
+                for (let joint in this.targetArmJoints) {
+                    this.targetArmJoints[joint].material = MATERIALS.targetArm;
+                    this.targetArmJoints[joint].castShadow = true;
+                }
+                this.roverMesh.add(this.targetArm);
             });
         });
 
@@ -78,16 +110,13 @@ export class Rover3DView {
         directionalLight.castShadow = true;
         scene.add(directionalLight);
 
-        //const helper = new THREE.CameraHelper(directionalLight.shadow.camera);
-        //this.scene.add(helper);
-
         const camera = new THREE.PerspectiveCamera(75, this.container.clientWidth / this.container.clientHeight, 0.1, 1000);
         camera.position.z = 6;
 
         const renderer = new THREE.WebGLRenderer({ alpha: true });
         renderer.setSize(this.container.clientWidth, this.container.clientHeight, false);
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap
+        renderer.shadowMap.type = THREE.PCFShadowMap;
         renderer.domElement.style = "position: absolute; top: 0; left: 0;";
         this.container.style.position = "relative";
         this.container.appendChild(renderer.domElement);
@@ -132,6 +161,15 @@ export class Rover3DView {
         this.armJoints.j4.setRotationFromEuler(new THREE.Euler(j4 * Math.PI / 180, 0, 0, "XYZ"));
         this.armJoints.j5.setRotationFromEuler(new THREE.Euler(0, 0, j5 * Math.PI / 180, "XYZ"));
         this.armJoints.j6.setRotationFromEuler(new THREE.Euler(j6 * Math.PI / 180, 0, 0, "XYZ"));
+    }
+
+    updateTargetArm(x, j2, j3, j4, j5, j6) {
+        this.targetArmJoints.x.position.z = 7.06 + x;
+        this.targetArmJoints.j2.setRotationFromEuler(new THREE.Euler(0, 0, j2 * Math.PI / 180, "XYZ"));
+        this.targetArmJoints.j3.setRotationFromEuler(new THREE.Euler(0, 0, j3 * Math.PI / 180, "XYZ"));
+        this.targetArmJoints.j4.setRotationFromEuler(new THREE.Euler(j4 * Math.PI / 180, 0, 0, "XYZ"));
+        this.targetArmJoints.j5.setRotationFromEuler(new THREE.Euler(0, 0, j5 * Math.PI / 180, "XYZ"));
+        this.targetArmJoints.j6.setRotationFromEuler(new THREE.Euler(j6 * Math.PI / 180, 0, 0, "XYZ"));
     }
 
     updateAnglesFromUpVector(x, y, z) {
