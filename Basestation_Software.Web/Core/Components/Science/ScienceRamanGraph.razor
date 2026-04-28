@@ -4,22 +4,23 @@
 @using PSC.Blazor.Components.Chartjs.Models.Common
 @using System.Threading.Tasks
 
-<div class="component-header">
+<div class="component-header @_loadingState">
     <h3>Raman Spectroscopy Graph</h3>
 </div>
 <div class="component-body" style="display: grid; grid: minmax(0%, 100%) repeat(4, min-content) / min-content auto;">
     <Chart Config="RamanChartConfig" @ref="RamanChart" Style="grid-column: 1 / 3; height:100%"></Chart>
-    <button @onclick=@(() => _RoveCommService.Boards.Raman.RequestRamanReading(_integrationTime))>Request Data</button>
+    <button @onclick=@(() => RequestRaman())>Request Data</button>
     <button onclick="const link = document.createElement('a'); link.download = 'RamanGraph.png'; link.href = this.parentElement.getElementsByTagName('canvas')[0].toDataURL(); link.click();"><i class="bi-filetype-png" /></button>
     <p>Integration Time (ms)</p>
-    <input @bind=_integrationTime />
+    <div><input @bind=_integrationTime /><input @bind=_integrationCycles /></div>
     <p>Dot Size</p>
     <input @bind=_dotSize @bind:after=UpdateChartAsync />
 </div>
 
 @code {
+    private string _loadingState = "";
     private float _dotSize = 2f;
-    private uint _integrationTime;
+    private uint _integrationTime, _integrationCycles;
     private ushort[] _data = new ushort[2048];
 
     private LineChartConfig? RamanChartConfig;
@@ -38,6 +39,8 @@
             _RoveCommService.Boards.Raman.RamanReading_Part1.CopyTo(_data, 0);
             await UpdateChartAsync();
             await InvokeAsync(StateHasChanged);
+
+            _loadingState = "";
         });
 
         _RoveCommService.Boards.Raman.OnRamanReading_Part2(async packet =>
@@ -63,6 +66,12 @@
 
         await UpdateChartAsync();
 
+    }
+
+    private void RequestRaman()
+    {
+        _RoveCommService.Boards.Raman.RequestRamanReading(_integrationTime, _integrationCycles);
+        _loadingState = "topBarLoading";
     }
 
     private async Task UpdateChartAsync()
@@ -117,7 +126,7 @@
                 }
             }
         };
-
+    
         RamanChartConfig.Data.Labels = Enumerable.Range(0, 2048).Select(i => i.ToString()).ToList();
 
         RamanChartConfig.Data.Datasets.Add(
