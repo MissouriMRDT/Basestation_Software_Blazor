@@ -56,10 +56,6 @@
         <button checked=@(_activeLED == 3) @onclick=@(() => LED(3, false))>500nm</button>
         <button checked=@(_afFilterPosition == AFFilterPositions[3]) style="--btn-fill: #dc3545" @onclick=@(() => AFFilter(3))>600nm</button>
         <p>Carotenoids</p>
-        <p></p>
-        <button checked=@(_activeLED == 0) @onclick=@(() => LED(0, false))>White</button>
-        <button checked=@(_afFilterPosition == AFFilterPositions[4]) style="--btn-fill: #dc3545" @onclick=@(() => AFFilter(4))>620nm</button>
-        <p>Carotenoids</p>
     </div>
 </div>
 
@@ -77,7 +73,7 @@
     private static readonly string[] _axisNames = ["Auger Gantry", "Auger", "Instruments Gantry", "AF Filter"];
     bool[] _limitOverrides = new bool[4];
     byte[] _brightness = [255, 255, 255, 255];
-    public static readonly short[] AFFilterPositions = [155, 10, 120, 45, 80]; // None, 440nm, 525nm, 600nm, 620nm
+    public static readonly short[] AFFilterPositions = [155, 10, 120, 45]; // None, 440nm, 525nm, 600nm, 620nm
     public static readonly short[] SoilTrapdorPositions = [15, 150]; // AF, Soil Cache
     private float _afFilterPosition = 100;
     private short _soilTrapdoorPosition = 100;
