@@ -29,7 +29,7 @@
         <button onclick="const link = document.createElement('a'); link.download = 'RamanGraph.png'; link.href = this.parentElement.getElementsByTagName('canvas')[0].toDataURL(); link.click();"><i class="bi-filetype-png" /></button>
         <button @onclick=DownloadCSV><i class="bi-filetype-csv" /></button>
     </div>
-    <p>Integration Time (ms)</p>
+    <p>Integration Time (ms, cycles)</p>
     <div style="display: grid; grid-template-columns: 50% 50%; grid-auto-flow: column;">
         <input style="width: 100%;" @bind=_integrationTime/>
         <input style="width: 100%;" @bind=_integrationCycles/></div>
@@ -68,7 +68,7 @@
             await UpdateChartAsync();
             await InvokeAsync(StateHasChanged);
 
-            _loadingState = "";
+            _loadingState = "topBarFinished";
         });
 
         _RoveCommService.Boards.Raman.OnRamanReading_Part2(async packet =>

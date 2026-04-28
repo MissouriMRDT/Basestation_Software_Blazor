@@ -3,8 +3,18 @@
     animation: loadingTopBar 2s ease-in-out infinite;
 }
 
+.topBarFinished
+{
+    animation: finishTopBar 1s ease-in-out 1;
+}
+
 @keyframes loadingTopBar {
     0% {background-color: var(--primary);}
     50% {background-color: var(--secondary-bg);}
+    100% {background-color: var(--primary);}
+}
+
+@keyframes finishTopBar {
+    0% {background-color: #198754;}
     100% {background-color: var(--primary);}
 }
