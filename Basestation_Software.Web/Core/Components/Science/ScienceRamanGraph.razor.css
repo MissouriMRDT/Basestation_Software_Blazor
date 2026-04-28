@@ -1,0 +1,10 @@
+.topBarLoading
+{
+    animation: loadingTopBar 2s ease-in-out infinite;
+}
+
+@keyframes loadingTopBar {
+    0% {background-color: var(--primary);}
+    50% {background-color: var(--secondary-bg);}
+    100% {background-color: var(--primary);}
+}
