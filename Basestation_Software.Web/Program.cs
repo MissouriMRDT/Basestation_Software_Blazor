@@ -39,8 +39,6 @@ builder.Services.AddHostedService((sp) => sp.GetRequiredService<SwitchMonitorSer
 
 var app = builder.Build();
 
-app.UseHttpsRedirection();
-
 app.MapStaticAssets();
 app.UseAntiforgery();
 app.MapRazorComponents<App>()

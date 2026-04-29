@@ -1,4 +1,4 @@
-let address = `${window.location.protocol === "http:" ? "ws" : "wss"}://${window.location.hostname}:8085`;
+let address = window.location.protocol === "http:" ? `ws://${window.location.hostname}:8085` : `wss://${window.location.hostname}:8086`;
 let totalTracks = 8;
 let tracks = [];
 let onConnected = [];

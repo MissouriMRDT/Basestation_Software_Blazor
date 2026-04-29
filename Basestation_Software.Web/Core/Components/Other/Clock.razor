@@ -1,0 +1,187 @@
+<style>
+    .clock {
+        display: grid;
+        grid-template-columns: max-content 25px 25px 5px 25px 25px 5px 25px 25px 25px;
+    }
+
+    .clock input {
+        border: none;
+    }
+
+    .clock p {
+        place-self: center
+    }
+
+    .clock button {
+        padding: 0px 2px;
+    }
+</style>
+<div class="component-header">
+    <h3>Clock</h3>
+</div>
+<div class="component-body clock">
+    <button class="success" style="grid-area: 1 / 10"><i class="bi-play" /></button>
+    <button class="success" style="grid-area: 3 / 10 / 8 / 11"><i class="bi-play" /></button>
+    <button class="success" style="grid-area: 9 / 10"><i class="bi-play" /></button>
+    <p>End</p>
+    <input />
+    <input />
+    <p>:</p>
+    <input />
+    <input />
+    <p>:</p>
+    <input />
+    <input />
+    <p></p>
+    <button>+</button>
+    <button>+</button>
+    <p></p>
+    <button>+</button>
+    <button>+</button>
+    <p></p>
+    <button>+</button>
+    <button>+</button>
+    <p></p>
+    <p>Remaining</p>
+    <input />
+    <input />
+    <p>:</p>
+    <input />
+    <input />
+    <p>:</p>
+    <input />
+    <input />
+    <p></p>
+    <button>-</button>
+    <button>-</button>
+    <p></p>
+    <button>-</button>
+    <button>-</button>
+    <p></p>
+    <button>-</button>
+    <button>-</button>
+    <p>Now</p>
+    <input />
+    <input />
+    <p>:</p>
+    <input />
+    <input />
+    <p>:</p>
+    <input />
+    <input />
+    <p></p>
+    <button>+</button>
+    <button>+</button>
+    <p></p>
+    <button>+</button>
+    <button>+</button>
+    <p></p>
+    <button>+</button>
+    <button>+</button>
+    <p>Elapsed</p>
+    <input />
+    <input />
+    <p>:</p>
+    <input />
+    <input />
+    <p>:</p>
+    <input />
+    <input />
+    <p></p>
+    <button>-</button>
+    <button>-</button>
+    <p></p>
+    <button>-</button>
+    <button>-</button>
+    <p></p>
+    <button>-</button>
+    <button>-</button>
+    <p></p>
+    <p>Start</p>
+    <input />
+    <input />
+    <p>:</p>
+    <input />
+    <input />
+    <p>:</p>
+    <input />
+    <input />
+</div>
+<script>
+    (() => {
+        function getTime() {
+            let dt = new Date();
+            return dt.getSeconds() + (60 * dt.getMinutes()) + (60 * 60 * dt.getHours());
+        }
+
+        let scriptTag = document.getElementsByTagName('script');
+        scriptTag = scriptTag[scriptTag.length - 1];
+        let componentBody = scriptTag.parentNode.getElementsByClassName("component-body")[0];
+        let buttons = componentBody.getElementsByTagName("button");
+        let inputs = componentBody.getElementsByTagName("input");
+        let paused = true;
+        let pausedNow = getTime();
+        let end = getTime();
+        let start = getTime();
+        function displayTime(i0, t) {
+            if (t < 0) { t = 0; }
+            inputs[i0].value = Math.floor(t / 36000) % 6;
+            inputs[i0 + 1].value = Math.floor(t / 3600) % 10;
+            inputs[i0 + 2].value = Math.floor(t / 600) % 6;
+            inputs[i0 + 3].value = Math.floor(t / 60) % 10;
+            inputs[i0 + 4].value = Math.floor(t / 10) % 6;
+            inputs[i0 + 5].value = Math.floor(t) % 10;
+        }
+        function pause() {
+            if (paused) return;
+            paused = true;
+            pausedNow = getTime();
+            buttons[0].removeAttribute("checked");
+            buttons[1].removeAttribute("checked");
+            buttons[2].removeAttribute("checked");
+        }
+        function resume() {
+            if (!paused) return;
+            paused = false;
+            buttons[0].setAttribute("checked", "");
+            buttons[1].setAttribute("checked", "");
+            buttons[2].setAttribute("checked", "");
+        }
+        function resumeT() {
+            // Update end and start from time remaining and time elapsed.
+            if (!paused) { return; }
+            start = getTime() - (pausedNow - start);
+            end = getTime() + (end - pausedNow);
+            resume();
+        }
+        function update() {
+            let now = paused ? pausedNow : getTime();
+            if (now >= end) { end = now; pause(); }
+            if (now <= start) { start = now; }
+            displayTime(0, end); // Time Ends
+            displayTime(6, end - now); // Time Remaining
+            displayTime(12, now); // Current Time
+            displayTime(18, now - start); // Time Elapsed
+            displayTime(24, start); // Time Started
+        }
+        buttons[0].addEventListener("click", () => { if (paused) { resume(); } else { pause(); } });
+        buttons[1].addEventListener("click", () => { if (paused) { resumeT(); } else { pause(); } });
+        buttons[2].addEventListener("click", () => { if (paused) { resume(); } else { pause(); } });
+        function changeTime(i) {
+            const m = [10 * 60 * 60, 60 * 60, 10 * 60, 60, 10, 1];
+            if (i < 12) {
+                end += (i % 12 < 6 ? 1 : -1) * m[i % 6];
+                end = (end % 216000 + 216000) % 216000;
+            } else {
+                start += (i % 12 < 6 ? -1 : 1) * m[i % 6];
+                start = (start % 216000 + 216000) % 216000;
+            }
+            update();
+        }
+        for (let i = 0; i < 24; i++) {
+            let j = i;
+            buttons[i + 3].addEventListener("click", () => { changeTime(j); });
+        }
+        setInterval(update, 100);
+    })();
+</script>

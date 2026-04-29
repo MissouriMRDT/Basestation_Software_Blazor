@@ -44,6 +44,8 @@
 
     private bool connected1 = false;
     private bool connected2 = false;
+    private bool[] streaming = [false, false, false, false];
+    private bool[] connected = [false, false, false, false];
 
     private bool CameraArgumentsVisible = false;
     private String CameraArgumentsValue = "";
@@ -60,11 +62,25 @@
         TelemetryWatchdog1.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
         TelemetryWatchdog2.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
 
-        _RoveCommService.Boards.Camera1.OnAvailableCameras(ResetWatchdog);
-        _RoveCommService.Boards.Camera1.OnStreamingCameras(ResetWatchdog);
+        _RoveCommService.Boards.Camera1.OnAvailableCameras(async packet =>
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                streaming[i] = (_RoveCommService.Boards.Camera1.AvailableCameras_Streaming & (1 << i)) != 0;
+                connected[i] = (_RoveCommService.Boards.Camera1.AvailableCameras_Connected & (1 << i)) != 0;
+            }
+            await ResetWatchdog(packet);
+        });
         _RoveCommService.Boards.Camera1.OnUtilization(ResetWatchdog);
-        _RoveCommService.Boards.Camera2.OnAvailableCameras(ResetWatchdog);
-        _RoveCommService.Boards.Camera2.OnStreamingCameras(ResetWatchdog);
+        _RoveCommService.Boards.Camera2.OnAvailableCameras(async packet =>
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                streaming[i + 4] = (_RoveCommService.Boards.Camera2.AvailableCameras_Streaming & (1 << i)) != 0;
+                connected[i + 4] = (_RoveCommService.Boards.Camera2.AvailableCameras_Connected & (1 << i)) != 0;
+            }
+            await ResetWatchdog(packet);
+        });
         _RoveCommService.Boards.Camera2.OnUtilization(ResetWatchdog);
     }
 
@@ -89,21 +105,18 @@
         }
         await InvokeAsync(StateHasChanged);
     }
-
+    
     private String GetClass(int i)
     {
         if (i < 4)
-            return !connected1 ? "camera-disconnected" : i < _RoveCommService.Boards.Camera1.StreamingCameras ? "camera-streaming" : i < _RoveCommService.Boards.Camera1.AvailableCameras ? "camera-available" : "camera-none";
+            return !connected1 ? "camera-disconnected" : streaming[i] ? "camera-streaming" : connected[i] ? "camera-available" : "camera-none";
         else
-            return !connected2 ? "camera-disconnected" : i - 4 < _RoveCommService.Boards.Camera2.StreamingCameras ? "camera-streaming" : i - 4 < _RoveCommService.Boards.Camera2.AvailableCameras ? "camera-available" : "camera-none";
+            return !connected2 ? "camera-disconnected" : streaming[i] ? "camera-streaming" : connected[i] ? "camera-available" : "camera-none";
     }
 
     private String GetTitle(int i)
     {
-        if (i < 4)
-            return !connected1 ? "Camera server has not sent RoveComm telemetry to Basestation Server within the last 10s." : i < _RoveCommService.Boards.Camera1.StreamingCameras ? "Camera server detects camera, ffmpeg stream started." : i < _RoveCommService.Boards.Camera1.AvailableCameras ? "Camera server detects camera, ffmpeg stream not started." : "Camera server does not detect camera.";
-        else
-            return !connected2 ? "Camera server has not sent RoveComm telemetry to Basestation Server within the last 10s." : i - 4 < _RoveCommService.Boards.Camera2.StreamingCameras ? "Camera server detects camera, ffmpeg stream started." : i - 4 < _RoveCommService.Boards.Camera2.AvailableCameras ? "Camera server detects camera, ffmpeg stream not started." : "Camera server does not detect camera.";
+        return (i < 4 ? !connected1 : !connected2) ? "Camera server has not sent RoveComm telemetry to Basestation within the last 10s." : streaming[i] ? "Camera server detects camera, ffmpeg stream running." : connected[i] ? "Camera server detects camera, ffmpeg stream not running." : "Camera server does not detect camera.";
     }
 
     private async Task ConnectCameras()

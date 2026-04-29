@@ -85,20 +85,16 @@ function init() {
     });
 
     Cameras.onConnected.push(() => {
-        video = document.createElement(Cameras.tracks[0].kind);
+        let video = document.createElement(Cameras.tracks[0].kind);
         video.srcObject = new MediaStream([Cameras.tracks[0]]);
         video.autoplay = true;
+        video.muted = true;
         video.controls = false;
-        video.style.display = "none";
         document.body.appendChild(video);
         const texture = new THREE.VideoTexture(video);
         texture.colorSpace = THREE.SRGBColorSpace;
         const geometry = new THREE.SphereGeometry(30, 50, 50, 0, Math.PI * 0.25 * (1600 / 1200), Math.PI * 0.25, Math.PI * 0.25);
         geometry.scale(-1, 1, 1);
-        // const uvs = geometry.attributes.uv.array;
-        // for (let i = 0; i < uvs.length; i += 2) {
-        //     uvs[i] *= 0.5;
-        // }
         const material = new THREE.MeshBasicMaterial({ map: texture });
         const mesh = new THREE.Mesh(geometry, material);
         mesh.rotation.y = - Math.PI / 2;
