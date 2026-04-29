@@ -6,7 +6,6 @@
 @using System.Threading.Tasks
 @using System.Text
 
-
 <script>
     function DownloadFile(filename, contentType, content) {
         const file = new File([content], filename, { type: contentType });
@@ -51,6 +50,7 @@
     private ushort[] _backgroundData = new ushort[2048];
     private bool _backgroundChecked = false;
     private bool _autoRequest = false;
+    private DateTime _lastTime = DateTime.Now;
 
     private LineChartConfig? RamanChartConfig;
     private Chart? RamanChart;
@@ -58,6 +58,7 @@
 
     protected override async void OnInitialized()
     {
+        
         // Initialize data with easter egg
         for (int i = 0; i < _data.Length; i++)
         {
@@ -97,8 +98,12 @@
             await UpdateChartAsync();
             await InvokeAsync(StateHasChanged);
 
-            if (_autoRequest)
+            if (_autoRequest == true)
+            {
+                await Task.Delay((TimeSpan)(TimeSpan.FromMilliseconds(_integrationTime) - (DateTime.Now - _lastTime)));
                 RequestRaman();
+                _lastTime = DateTime.Now;
+            }
         });
 
         await UpdateChartAsync();
