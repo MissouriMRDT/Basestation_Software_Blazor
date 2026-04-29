@@ -26,7 +26,7 @@
     <Chart Config="RamanChartConfig" @ref="RamanChart" Style="grid-column: 1 / 3; height:100%%"></Chart>
     <button @onclick=@(() => RequestRaman())>Request Data</button>
     <div style="display: grid; grid-template-columns: 50% 50%; grid-auto-flow: column;">
-        <button onclick="const link = document.createElement('a'); link.download = 'RamanGraph.png'; link.href = this.parentElement.getElementsByTagName('canvas')[0].toDataURL(); link.click();"><i class="bi-filetype-png" /></button>
+        <button onclick="const link = document.createElement('a'); link.download = 'RamanGraph.png'; link.href = this.parentElement.parentElement.getElementsByTagName('canvas')[0].toDataURL(); link.click();"><i class="bi-filetype-png" /></button>
         <button @onclick=DownloadCSV><i class="bi-filetype-csv" /></button>
     </div>
     <p>Integration Time (ms, cycles)</p>
