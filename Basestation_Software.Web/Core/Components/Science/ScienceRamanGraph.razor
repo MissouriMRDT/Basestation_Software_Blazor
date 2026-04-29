@@ -30,9 +30,11 @@
         <button @onclick=DownloadCSV><i class="bi-filetype-csv" /></button>
     </div>
     <p>Integration Time (ms, cycles)</p>
-    <div style="display: grid; grid-template-columns: 50% 50%; grid-auto-flow: column;">
+    <div style="display: grid; grid-template-columns: auto auto min-content; grid-auto-flow: column;">
         <input style="width: 100%;" @bind=_integrationTime/>
-        <input style="width: 100%;" @bind=_integrationCycles/></div>
+        <input style="width: 100%;" @bind=_integrationCycles/>
+        <input type="checkbox" style="margin-top: 10px;" @bind=_autoRequest/>
+    </div>
     <p>Dot Size</p>
     <input @bind=_dotSize @bind:after=UpdateChartAsync />
      <div style="display: grid; grid-template-columns: 50% 50%; grid-column: 1 / 3; grid-auto-flow: column;">
@@ -48,6 +50,7 @@
     private ushort[] _data = new ushort[2048];
     private ushort[] _backgroundData = new ushort[2048];
     private bool _backgroundChecked = false;
+    private bool _autoRequest = false;
 
     private LineChartConfig? RamanChartConfig;
     private Chart? RamanChart;
@@ -93,6 +96,9 @@
             _RoveCommService.Boards.Raman.RamanReading_Part4.CopyTo(_data, 1536);
             await UpdateChartAsync();
             await InvokeAsync(StateHasChanged);
+
+            if (_autoRequest)
+                RequestRaman();
         });
 
         await UpdateChartAsync();
