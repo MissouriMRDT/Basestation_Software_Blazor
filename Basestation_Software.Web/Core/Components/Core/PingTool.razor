@@ -29,8 +29,8 @@
         {
             <p></p>
         }
-        <p style="color: #ff; background-color: @(device.Ok ? "#198754" : "#dc3545")">@device.Name</p>
-        <p style="color: #ff; background-color: @(device.Ok ? "#198754" : "#dc3545")">@device.IpAddress</p>
+        <p style="color: #ff; background-color: @GetDeviceBackground(device)">@device.Name</p>
+        <p style="color: #ff; background-color: @GetDeviceBackground(device)">@device.IpAddress</p>
     }
 </div>
 
@@ -47,6 +47,7 @@
     private int _pingTimeout = 1000;
 
     private List<Device> _devices = [];
+
 
 
     public PingTool()
@@ -94,8 +95,17 @@
             if (packet.Data.Count < 3) return;
             int i = (int)packet.Data[0];
             long sentAt = (long)packet.Data[1] << 32 | packet.Data[2];
-            if (i >= 0 && i < _devices.Count)
+            if (i >= 0 && i < _devices.Count) {
                 _devices[i].RoveCommPingStatus = ((DateTime.UtcNow.Ticks - sentAt) / TimeSpan.TicksPerMillisecond).ToString();
+
+                if (packet.Data.Count >= 4) {
+                    uint deviceVersion = packet.Data[3];
+                    _devices[i].OutdatedManifest = deviceVersion != (uint)RoveCommConsts.ManifestTime;
+                }
+
+                await InvokeAsync(StateHasChanged);
+            }
+                
         });
 
         _RoveCommService.On<sbyte>(0, RoveCommActivity);
@@ -107,9 +117,20 @@
         _RoveCommService.On<float>(0, RoveCommActivity);
         _RoveCommService.On<double>(0, RoveCommActivity);
         _RoveCommService.On<char>(0, RoveCommActivity);
+        
 
         _autoPingTimer.Change(_autoPingDelay, Timeout.Infinite);
         _roveCommActivityTimer.Change(0, 1000);
+    }
+
+    private string GetDeviceBackground(Device device) {
+        if (!device.Ok) {
+            return "#dc3545";
+        }
+        else if (device.OutdatedManifest) {
+            return "#ffc107";
+        }
+        return "#198754";
     }
 
     private async Task RoveCommActivity<T>(RoveCommPacket<T> packet)
@@ -177,5 +198,6 @@
         public bool AutoPing = false;
         public bool HasRoveComm = false;
         public long LastRoveCommPacket = 0;
+        public bool OutdatedManifest = false;
     }
 }
