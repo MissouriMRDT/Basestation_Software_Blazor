@@ -7,10 +7,10 @@
 </div>
 <div class="component-body" style="display: grid; gap: 1px; grid-template-columns: repeat(5, auto); background-color: #000">
     <p></p>
-    <p>VESC Current (A)</p>
-    <p>Motor Current (A)</p>
-    <p>Speed (%)</p>
-    <p>Fault</p>
+    <p style = "color: #fff">VESC Current (A)</p>
+    <p style = "color: #fff">Motor Current (A)</p>
+    <p style = "color: #fff">Speed (%)</p>
+    <p style = "color: #fff">Fault</p>
     @for (int i = 0; i < 6; i++)
     {
         <p style="background-color: @(_faultCodes[i] == FaultCode.NONE ? "#000" : "#dc3545"); color: #fff;">@_motorNames[i]</p>
@@ -26,7 +26,7 @@
             <p style="background-color: color-mix(in oklab, #ff0000 @(Math.Clamp(_RoveCommService.Boards.Core.MotorCurrents[i], 0, DANGER_MOTOR_CURRENT) / DANGER_MOTOR_CURRENT * 100)%, #00ff00); color: #000">@($"{_RoveCommService.Boards.Core.MotorCurrents[i]:0.00}")</p>
             <p style="background-color: #00ff00; color: #000">@($"{_RoveCommService.Boards.Core.MotorSpeeds[i] * 100:+000.00;-000.00}")</p>
         }
-        <p style="background-color: @(_faultCodes[i] == FaultCode.NONE ? "#198754" : "#dc3545")">@(Enum.GetName<RoveComm.Boards.Core.VESCFaultCode>(_faultCodes[i]))</p>
+        <p style="background-color: @(_faultCodes[i] == FaultCode.NONE ? "#198754" : "#dc3545"); color: #fff">@(Enum.GetName<RoveComm.Boards.Core.VESCFaultCode>(_faultCodes[i]))</p>
     }
 </div>
 

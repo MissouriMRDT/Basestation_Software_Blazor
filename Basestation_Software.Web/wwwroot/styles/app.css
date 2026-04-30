@@ -64,12 +64,15 @@ body{
     --2bg-color: #FFF;
 }
 
+html,
+body{
+    background-color: var(--bg-color); 
+    --secondary-bg: var(--bg-color);
+}
 
 html,
 body,
-p {
-    background-color: var(--bg-color); 
-    --secondary-bg: var(--bg-color);
+p { 
     margin: 0;
     font-size: 13px;
     color: var(--text-color);
@@ -80,7 +83,6 @@ button,
 select {
     font-family: "B612", Helvetica, Arial, sans-serif;
     font-size: 13px;
-    color: #000;
 }
 
 #blazor-error-ui {

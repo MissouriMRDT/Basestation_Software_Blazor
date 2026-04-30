@@ -9,8 +9,8 @@
     @for (int i = 0; i < _threadNames.Length; i++)
     {
         var _i = i;
-        <p style="background-color: color-mix(in oklab, green @(Math.Min(_fpsValues[_i], 60) / 60f * 100)%, red)">@_threadNames[_i]</p>
-        <p style="background-color: color-mix(in oklab, green @(Math.Min(_fpsValues[_i], 60) / 60f * 100)%, red); justify-self: right">@($"{_fpsValues[_i]:0000}")</p>
+        <p style="background-color: color-mix(in oklab, green @(Math.Min(_fpsValues[_i], 60) / 60f * 100)%, red); color: #fff">@_threadNames[_i]</p>
+        <p style="background-color: color-mix(in oklab, green @(Math.Min(_fpsValues[_i], 60) / 60f * 100)%, red); justify-self: right; color: #fff">@($"{_fpsValues[_i]:0000}")</p>
     }
 </div>
 

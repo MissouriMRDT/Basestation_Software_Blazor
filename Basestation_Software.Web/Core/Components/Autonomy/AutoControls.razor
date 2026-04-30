@@ -7,7 +7,7 @@
     <h3>Autonomy Controls</h3>
 </div>
 <div class="component-body" style="display: flex; flex-direction: column; align-items: center">
-    <div style="background-color: @(_selectedWaypoint?.Color.ToString() ?? "var(--secondary-bg)")">
+    <div style="background-color: @(_selectedWaypoint?.Color.ToString() ?? "var(--bg-color)")">
         <p><b>Selected:</b> @(_selectedWaypoint != null ? _selectedWaypoint.Name : "None")</p>
         @if (_selectedWaypoint != null)
         {

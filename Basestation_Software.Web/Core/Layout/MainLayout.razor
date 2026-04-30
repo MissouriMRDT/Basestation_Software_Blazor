@@ -28,7 +28,7 @@
         display: flex;
         justify-content: left;
         place-items: center;
-        border-bottom: 1px solid #000;
+        border-bottom: 1px solid var(--border);
     }
 
     #layout-grid {
@@ -406,6 +406,7 @@
         _databaseService.UnsubscribeFromTableChanges(typeof(Page), TableChanged);
         ObjectReference?.Dispose();
     }
+    
     protected async Task DarkMode(){
         bgColor = (bgColor=="#FFF"? "#000": "#FFF");
         textColor = (textColor=="#000"? "#FFF": "#000");
