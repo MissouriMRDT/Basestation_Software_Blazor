@@ -5,7 +5,7 @@
 
 .topBarFinished
 {
-    animation: finishTopBar 1s ease-in-out 1;
+    animation: finishTopBar .5s ease-in-out 1;
 }
 
 @keyframes loadingTopBar {

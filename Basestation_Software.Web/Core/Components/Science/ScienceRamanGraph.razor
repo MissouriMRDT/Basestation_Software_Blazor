@@ -5,6 +5,7 @@
 @using PSC.Blazor.Components.Chartjs.Models.Common
 @using System.Threading.Tasks
 @using System.Text
+@using System.Timers
 
 <script>
     function DownloadFile(filename, contentType, content) {
@@ -50,15 +51,14 @@
     private ushort[] _backgroundData = new ushort[2048];
     private bool _backgroundChecked = false;
     private bool _autoRequest = false;
-    private DateTime _lastTime = DateTime.Now;
+    private Timer? _timer;
 
     private LineChartConfig? RamanChartConfig;
     private Chart? RamanChart;
     private string _acquiredAt = "";
 
     protected override async void OnInitialized()
-    {
-        
+    {   
         // Initialize data with easter egg
         for (int i = 0; i < _data.Length; i++)
         {
@@ -97,21 +97,34 @@
             _RoveCommService.Boards.Raman.RamanReading_Part4.CopyTo(_data, 1536);
             await UpdateChartAsync();
             await InvokeAsync(StateHasChanged);
-
-            if (_autoRequest == true)
-            {
-                await Task.Delay((TimeSpan)(TimeSpan.FromMilliseconds(_integrationTime) - (DateTime.Now - _lastTime)));
-                RequestRaman();
-                _lastTime = DateTime.Now;
-            }
         });
 
         await UpdateChartAsync();
 
     }
 
+
+    private async void ReRequest(object? sender, ElapsedEventArgs e)
+    {
+        if (!_autoRequest && _timer != null)
+            _timer.Enabled = false;
+        else
+            RequestRaman();
+    }
+
     private void RequestRaman()
     {
+        //If timer is set to true, initialize it
+        if (_autoRequest && _timer == null)
+        {
+            _timer = new Timer(Math.Max(_integrationTime + 200, 1000));
+            _timer.Elapsed += ReRequest;
+            _timer.AutoReset = true;
+            _timer.Enabled = true;
+        }
+        else if (_autoRequest && _timer != null)
+            _timer.Enabled = true;
+
         _RoveCommService.Boards.Raman.RequestRamanReading(_integrationTime, _integrationCycles);
         _loadingState = "topBarLoading";
     }
