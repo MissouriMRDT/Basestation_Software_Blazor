@@ -1,0 +1,265 @@
+﻿@inject RoveCommService _RoveCommService
+@using PSC.Blazor.Components.Chartjs
+@using PSC.Blazor.Components.Chartjs.Models.Line
+@using PSC.Blazor.Components.Chartjs.Models.Common
+@using System.Threading.Tasks
+
+<div class="component-header">
+    <h3>Raman Spectroscopy Graph</h3>
+</div>
+<div class="component-body" style="display: grid; grid: minmax(0%, 100%) repeat(4, min-content) / min-content auto;">
+    <div id="chart-container" style="background-color: #fff; grid-column: 1 / 3; height:100%;">
+        <Chart Config="RamanChartConfig" @ref="RamanChart"></Chart>
+    </div>
+    <button @onclick=@(() => _RoveCommService.Boards.Raman.RequestRamanReading(_integrationTime))>Request Data</button>
+    <button @onclick=Export><i class="bi-filetype-csv"></i></button>
+    <p>Integration Time</p>
+    <input @bind=_integrationTime>
+    <p>Dot Size</p>
+    <input @bind="DotSize">
+    <div>
+        <button @onclick=ToggleRamanGraphListVisibility>Raman Graphs</button>
+        <div id="RamanGraphList" style="display:@(ramanGraphListVisibility)">
+            @for (int i = 0; i < ramanGraphs.Count(); ++i)
+            {
+                var index = i;
+                var graph = ramanGraphs[i];
+
+                <div>
+                    <input type="checkbox"
+                           id="@graph.Item1"
+                           name="@graph.Item1"
+                           checked="@(index < graphVisibility.Length && graphVisibility[index])"
+                           @onchange=@(e => UpdateGraphVisibility(index, e))>
+                    <label for="@graph.Item1">@graph.Item1</label>
+                </div>
+            }
+        </div>
+    </div>
+    @*     <p>Show Lines</p>
+    <input type="checkbox" @bind=_showLines>
+ *@</div>
+
+<style>
+    canvas {
+        max-width: 100%;
+        max-height: 100%;
+    }
+
+    .chart-container {
+        height: 100%;
+        max-height: 100%;
+    }
+</style>
+
+@code {
+
+    // TODO: Add raman data for: Quartz, Calcite, Gypsum, Kaolinite, Hematite, Magnetite, iron oxide
+
+    private float _dotSize = 2f;
+    private float DotSize
+    {
+        get => _dotSize;
+        set
+        {
+            if (_dotSize != value)
+            {
+                _dotSize = value;
+            }
+            UpdateChartAsync();
+        }
+    }
+
+    // private bool _showLines = false;
+    private uint _integrationTime;
+    private ushort[] _data = new ushort[2048];
+    private static ushort[] test_data = new ushort[2048];
+    private static ushort[] test_data2 = new ushort[2048];
+
+    private LineChartConfig? RamanChartConfig;
+    private Chart? RamanChart;
+
+    private static List<Tuple<string, ushort[]>> ramanGraphs = new List<Tuple<string, ushort[]>> { new Tuple<string, ushort[]>("Raman Graph 1", test_data), new Tuple<string, ushort[]>("Raman Graph 2", test_data2) };
+    private bool[] graphVisibility = Array.Empty<bool>();
+
+    private void Export()
+    {
+        File.WriteAllLines("RamanExport_" + ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds() + ".csv", _data.Select(x => string.Join(",", x)));
+    }
+
+    protected override async void OnInitialized()
+    {
+        // Initialize data with easter egg
+        Random rand = new Random();
+        for (int i = 0; i < _data.Length; i++)
+        {
+            //_data[i] = (ushort)(1000 * Math.Pow(Math.E, -0.005 * Math.Abs(i - 1024)) * Math.Cos(1024 * (i - 1024)) + 1000);
+            _data[i] = 0;
+            test_data[i] = (ushort)(i / 16);
+            test_data2[i] = (ushort)(i / 8);
+        }
+
+        // Initialize graph visibility (all false by default)
+        graphVisibility = new bool[ramanGraphs.Count()];
+
+        _RoveCommService.Boards.Raman.OnRamanReading_Part1(async packet =>
+        {
+            _RoveCommService.Boards.Raman.RamanReading_Part1.CopyTo(_data, 0);
+            await UpdateChartAsync();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.Boards.Raman.OnRamanReading_Part2(async packet =>
+        {
+            _RoveCommService.Boards.Raman.RamanReading_Part2.CopyTo(_data, 512);
+            await UpdateChartAsync();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.Boards.Raman.OnRamanReading_Part3(async packet =>
+        {
+            _RoveCommService.Boards.Raman.RamanReading_Part3.CopyTo(_data, 1024);
+            await UpdateChartAsync();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.Boards.Raman.OnRamanReading_Part4(async packet =>
+        {
+            _RoveCommService.Boards.Raman.RamanReading_Part4.CopyTo(_data, 1536);
+            await UpdateChartAsync();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        await UpdateChartAsync();
+
+    }
+
+    private async Task UpdateChartAsync()
+    {
+        // Reinitialize the chart config
+        RamanChartConfig = new LineChartConfig()
+        {
+            Options = new Options()
+            {
+                Responsive = true,
+                RegisterDataLabels = true,
+                MaintainAspectRatio = false,
+                Animation = false,
+                Scales = new Dictionary<string, Axis>()
+                {
+                     {
+                         Scales.XAxisId, new Axis()
+                         {
+                             Display = true,
+                             Text = "Raman Shift (cm⁻¹)",
+                             Color = "black",
+                             Title = new AxesTitle()
+                             {
+                                 Display = true,
+                                 Text = "Raman Shift (cm⁻¹)",
+                                 Color = "black"
+                             }
+                         }
+                     },
+                     {
+                         Scales.YAxisId, new Axis()
+                         {
+                             Display = true,
+                             Text = "Intensity (a.u.)",
+                             Color = "black",
+                             Title = new AxesTitle()
+                             {
+                                 Display = true,
+                                 Text = "Intensity (a.u.)",
+                                 Color = "black"
+                             }
+                         }
+                     }
+                },
+                Plugins = new Plugins()
+                {
+                    Legend = new Legend()
+                    {
+                        Display = true
+                    }
+                }
+            }
+        };
+
+        RamanChartConfig.Data.Labels = Enumerable.Range(0, 2048).Select(i => i.ToString()).ToList();
+        RamanChartConfig.Data.Datasets.Clear();
+
+        // Add live raman data
+        RamanChartConfig.Data.Datasets.Add(
+            new LineDataset()
+            {
+                Label = "Live Raman Spectrum",
+                Data = _data.Select(x => (decimal?)x).ToList(),
+                BorderColor = "rgba(255, 0, 0, 1)",
+                BackgroundColor = "rgba(255, 0, 0, 0.5)",
+                PointRadius = (int)Math.Max(1, _dotSize),
+            }
+        );
+
+        // Add raman reference data
+        Random rand = new Random(Seed: 7);
+        for (int i = 0; i < ramanGraphs.Count(); i++)
+        {
+            int red = (int)(rand.NextSingle() * 255);
+            int green = (int)(rand.NextSingle() * 255);
+            int blue = (int)(rand.NextSingle() * 255);
+
+            if (i < graphVisibility.Length && graphVisibility[i])
+            {
+                RamanChartConfig.Data.Datasets.Add(
+                    new LineDataset()
+                    {
+                        Label = ramanGraphs[i].Item1,
+                        Data = ramanGraphs[i].Item2.Select(x => (decimal?)x).ToList(),
+                        BorderColor = $"rgba({red}, {green}, {blue}, 1)",
+                        BackgroundColor = $"rgba({red}, {green}, {blue}, 0.5)",
+                        PointRadius = (int)Math.Max(1, _dotSize),
+                    }
+                );
+            }
+        }
+        ;
+
+        // RamanChartConfig.Data.Datasets.Add(
+        //     new LineDataset()
+        //     {
+        //         Label = "Raman Spectrum (Additional)",
+        //         Data = _data.Select(x => (decimal?)x/2).ToList(),
+        //         BorderColor = "rgba(255, 0, 0, 1)",
+        //         BackgroundColor = "rgba(255, 0, 0, 0.5)",
+        //         PointRadius = (int)Math.Max(1, _dotSize),
+        //     }
+        // );
+
+        RamanChart?.ClearData();
+    }
+
+    string ramanGraphListVisibility = "none";
+    private void ToggleRamanGraphListVisibility()
+    {
+        if (ramanGraphListVisibility == "none")
+        {
+            ramanGraphListVisibility = "block";
+        }
+        else
+        {
+            ramanGraphListVisibility = "none";
+        }
+    }
+
+    // Fixed visibility toggle
+    private async Task UpdateGraphVisibility(int index, ChangeEventArgs e)
+    {
+        if (index < graphVisibility.Length && e.Value is bool isChecked)
+        {
+            graphVisibility[index] = isChecked;
+            await UpdateChartAsync();
+        }
+    }
+
+}
