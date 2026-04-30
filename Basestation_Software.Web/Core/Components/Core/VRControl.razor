@@ -1,0 +1,82 @@
+@implements IDisposable
+@inject VRService _VRService
+
+<div class="component-header">
+    <h3>VR Control</h3>
+</div>
+<div class="component-body">
+    <div style="display: grid; grid-template-columns: max-content repeat(13, 1fr)">
+        @for (int i = 0; i < _displayNames.Count(); i++)
+        {
+            int display = i;
+            int source = _VRService.GetSource(display);
+            <p style="place-self: center">@(_displayNames[display])</p>
+            <button checked=@(source < 0) @onclick=@(async () => await _VRService.SetSource(display, -1))><i class="bi-stop-fill" /></button>
+            @for (int j = 0; j < 8; j++)
+            {
+                int camera = j;
+                <button checked=@(source == camera) @onclick=@(async () => await _VRService.SetSource(display, camera))>@camera</button>
+            }
+            double currentRotation = _VRService.GetRotation(display);
+            @for (double j = 0; j < 360; j += 90)
+            {
+                double rotation = j;
+                <button checked=@(currentRotation == rotation) @onclick=@(async () => await _VRService.SetRotation(display, rotation))>@rotation&deg;</button>
+            }
+        }
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(5, 40px)">
+        <p></p>
+        <p></p>
+        <input @bind=_grid[4] @bind:after=SetGrid />
+        <p></p>
+        <p></p>
+        <p></p>
+        <p></p>
+        <input @bind=_grid[5] @bind:after=SetGrid />
+        <p></p>
+        <p></p>
+        <input @bind=_grid[0] @bind:after=SetGrid />
+        <input @bind=_grid[1] @bind:after=SetGrid />
+        <p></p>
+        <input @bind=_grid[2] @bind:after=SetGrid />
+        <input @bind=_grid[3] @bind:after=SetGrid />
+        <p></p>
+        <p></p>
+        <input @bind=_grid[6] @bind:after=SetGrid />
+        <p></p>
+        <p></p>
+        <p></p>
+        <p></p>
+        <input @bind=_grid[7] @bind:after=SetGrid />
+        <p></p>
+        <p></p>
+    </div>
+</div>
+
+@code {
+    private static readonly string[] _displayNames = ["Left", "Center", "Right", "Up", "Down"];
+    private double[] _grid = new double[8];
+
+    protected override async Task OnInitializedAsync()
+    {
+        _VRService.SubscribeToGridSet(GridSet);
+        await GridSet(_VRService.GetGrid());
+    }
+
+    public async Task SetGrid()
+    {
+        await _VRService.SetGrid(_grid);
+    }
+
+    public async Task GridSet(double[] grid)
+    {
+        _grid = grid;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    void IDisposable.Dispose()
+    {
+        _VRService.UnsubscribeFromGridSet(GridSet);
+    }
+}

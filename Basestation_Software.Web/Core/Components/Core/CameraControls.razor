@@ -44,8 +44,8 @@
 
     private bool connected1 = false;
     private bool connected2 = false;
-    private bool[] streaming = [false, false, false, false];
-    private bool[] connected = [false, false, false, false];
+    private bool[] streaming = new bool[8];
+    private bool[] connected = new bool[8];
 
     private bool CameraArgumentsVisible = false;
     private String CameraArgumentsValue = "";

@@ -21,7 +21,8 @@
             var i = _i;
             <button checked=@(sourceIndex == i) class="secondary" @onclick=@(() => SetSource(i))>@i</button>
         }
-        <button class="camera-display-rotate" @onclick=Rotate><i class="bi-arrow-clockwise"></i></button>
+        <button class="camera-display-rotate" @onclick=Rotate><i class="bi-arrow-clockwise" /></button>
+        <button onclick="cameras.connect()" title="Connect this tab to WebRTC"><i class="bi-play" /></button>
     </div>
     <div class="video-container" @ref="videoContainer"></div>
 </div>

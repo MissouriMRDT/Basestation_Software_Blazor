@@ -5,11 +5,14 @@
 @using Microsoft.EntityFrameworkCore
 @using System.Collections.ObjectModel
 @using System.Collections.Immutable
+@implements IAsyncDisposable
 @inherits LayoutComponentBase
 @inject IJSRuntime _IJSRuntime
 @inject DatabaseService _databaseService
 @inject IDbContextFactory<DatabaseContext> _dbContextFactory
 @inject RoveCommService _RoveCommService
+@inject VRService _VRService
+@inject OpService _OpService
 
 <style>
     html,
@@ -21,35 +24,92 @@
 
 <PageTitle>MRDT Basestation</PageTitle>
 
-<p id="logs" style="z-index: 10000; color: #fff; position: absolute; top: 0px"></p>
-<script type="module" src="/js/vr.js"></script>
-
 @code
 {
-    // ffmpeg -hide_banner -re -f lavfi -i testsrc=size=1600x1200:rate=20 -filter:v eq=brightness=-0.2:contrast=0.6,drawtext=text=%{gmtime\\\\:%X}:fontsize=32:fontcolor=red -c:v libvpx -quality good -cpu-used 4 -g 5 -error-resilient 1 -auto-alt-ref 1 -f rtp -b:v 1M -maxrate 1M 'rtp://127.0.0.1:8100?pkt_size=1200'
-    
+    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<VR>? _objectReference;
+ 
     protected override void OnInitialized()
     {
-        _RoveCommService.Boards.Core.OnAccelerometerData(async packet =>
-        {
-            // CoreBoard: y-forward, z-up, x-right
-            // ThreeJS (WebGL): -z-forward, y-up, x-right
-            //if (jsRoverView != null)
-            //{
-            // if (_accel)
-            // await jsRoverView.InvokeVoidAsync("updateAnglesFromUpVector", [_RoveCommService.Boards.Core.AccelerometerData_X, _RoveCommService.Boards.Core.AccelerometerData_Z, -_RoveCommService.Boards.Core.AccelerometerData_Y]);
-            // else
-            // await jsRoverView.InvokeVoidAsync("updateAnglesFromUpVector", [0, 1, 0]);
-            //}
-        });
+        _VRService.SubscribeToSourceSet(SetSource);
+        _VRService.SubscribeToRotationSet(SetRotation);
+        _VRService.SubscribeToGridSet(SetGrid);
         _RoveCommService.Boards.Arm.OnPosition(async packet =>
         {
-            //if (jsRoverView != null)
-            //{
-            // await jsRoverView.InvokeVoidAsync("updateArm", [
-            // _RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J2, _RoveCommService.Boards.Arm.Position_J3,
-            // _RoveCommService.Boards.Arm.Position_J4, _RoveCommService.Boards.Arm.Position_J5, _RoveCommService.Boards.Arm.Position_J6]);
-            //}
+            if (_jsModule == null) return;
+            await _jsModule.InvokeVoidAsync("updateArm", [
+            _RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J2, _RoveCommService.Boards.Arm.Position_J3,
+            _RoveCommService.Boards.Arm.Position_J4, _RoveCommService.Boards.Arm.Position_J5, _RoveCommService.Boards.Arm.Position_J6]);
         });
+        _RoveCommService.Boards.Arm.OnTarget(async packet =>
+        {
+            if (_jsModule == null) return;
+            await _jsModule.InvokeVoidAsync("updateTargetArm", [
+            _RoveCommService.Boards.Arm.Target_X, _RoveCommService.Boards.Arm.Target_J2, _RoveCommService.Boards.Arm.Target_J3,
+            _RoveCommService.Boards.Arm.Target_J4, _RoveCommService.Boards.Arm.Target_J5, _RoveCommService.Boards.Arm.Target_J6]);
+        });
+        _OpService.SubscribeToStateChanged((Color? c) =>
+            {
+                if (c != null && _jsModule != null)
+                {
+                    _ = _jsModule.InvokeVoidAsync("updateLighting", [c?.R, c?.G, c?.B]);
+                }
+            });
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                _jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "/js/vr.js");
+                _objectReference = DotNetObjectReference.Create(this);
+                await _jsModule.InvokeVoidAsync("init", [_objectReference]);
+                await SetGrid(_VRService.GetGrid());
+            }
+            catch
+            {
+                _jsModule = null;
+            }
+        }
+    }
+
+    async Task SetSource(int display, int camera)
+    {
+        if (_jsModule == null) return;
+        await _jsModule.InvokeVoidAsync("setSource", [display, camera]);
+    }
+
+    async Task SetRotation(int display, double rotation)
+    {
+        if (_jsModule == null) return;
+        await _jsModule.InvokeVoidAsync("rotateDisplay", [display, rotation]);
+    }
+
+    async Task SetGrid(double[] angles)
+    {
+        if (_jsModule == null) return;
+        if (angles.Length != 8) return;
+        await _jsModule.InvokeVoidAsync("setGrid", angles);
+    }
+
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        _VRService.UnsubscribeFromSourceSet(SetSource);
+        _VRService.UnsubscribeFromRotationSet(SetRotation);
+        _VRService.UnsubscribeFromGridSet(SetGrid);
+        _objectReference?.Dispose();
+        try
+        {
+            if (_jsModule != null)
+            {
+                await _jsModule.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
     }
 }
