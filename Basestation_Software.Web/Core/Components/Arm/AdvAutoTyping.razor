@@ -11,12 +11,12 @@
         <p class="font-monospace fs-3">@_phrase</p>
         <p>@_statusMessage</p>
         <p>@delay ms</p>
-        <progress max="5000" value=@_charStatusMeter class="progress"></progress>
+        <progress max="1" value=@_charStatusMeter class="progress"></progress>
     </div>
 
     <div style="display: flex; gap: 2px; justify-content: center">
         <input @bind:get=_phrase @bind:set=@(value => { _phrase = value.ToUpper(); }) />
-        <button @onclick=PlayPhrase>Start</button>
+        <button @onclick=StartStop>@(_running ? "Stop" : "Start")</button>
         <button @onclick=ResetCache>Reset Cache</button>
     </div>
 
@@ -31,10 +31,12 @@
 </div>
 
 @code {
+    private readonly CancellationTokenSource _cts = new();
+    private bool _running = false;
     private string _phrase = "";
     private string _statusMessage = "Idle";
     private int _currentCharIndex = 0;
-    private int _charStatusMeter = 0;
+    private float _charStatusMeter = 0;
 
     private const int InchesPerSecond = 4;
     private int delay = 0;
@@ -80,45 +82,71 @@
         _RoveCommService.Boards.Arm.OnPosition(async packet => await InvokeAsync(StateHasChanged));
     }
 
+    private async Task StartStop() {
+        if (!_running) await Start();
+        else Stop();
+        await Task.CompletedTask;
+    }
+
+    private async Task Start() {
+        _running = true;
+        try {
+            await Task.Run(PlayPhrase, _cts.Token);
+        } catch (OperationCanceledException) {
+            _statusMessage = "Stopped";
+            _OpService.SetTeleop();
+            _running = false;
+            await InvokeAsync(StateHasChanged);
+        }
+        _running = false;
+    }
+
+    private void Stop() {
+        _cts.Cancel();
+        _running = false;
+    }
+
     private async Task PlayPhrase()
     {
         _OpService.SetAutonomy();
         CalculateKeyPositions();
-        ResetCache();
+        //ResetCache();
         for (int i = 0; i < _phrase.Length; i++)
         {
             _currentCharIndex = i;
             if (!_keyPositions.ContainsKey(_phrase[i])) continue;
             _charStatusMeter = 0;
             _statusMessage = "Moving to " + _phrase[i];
+            await InvokeAsync(StateHasChanged);
     
             Vector3 currentPos = new(_RoveCommService.Boards.Arm.Position_GX, _RoveCommService.Boards.Arm.Position_GY, _RoveCommService.Boards.Arm.Position_GZ);
             Vector3 nextPos = _keyPositions[_phrase[i]];
             Vector3 delta = nextPos - currentPos;
-            _RoveCommService.Boards.Arm.IKPoseIncrement(delta.X, delta.Y, delta.Z, 0, 0, 0);
+            _RoveCommService.Boards.Arm.IKWorldIncrement(delta.X, delta.Y, delta.Z, 0, 0, 0);
 
-            delay = (int)(Math.Abs(delta.X) * 1000 / InchesPerSecond);
+            delay = Math.Max((int)(Math.Abs(delta.X) * 1000 / InchesPerSecond), 1000);
 
             await InvokeAsync(StateHasChanged);
-            for (int j = 0; j < delay; j++)
+            for (int j = 0; j < delay; j+=10)
             {
-                _charStatusMeter += 1 / delay;
+                _charStatusMeter = (float)(j * 10) / delay;
                 _ = InvokeAsync(StateHasChanged);
-                await Task.Delay(10);
+                await Task.Delay(millisecondsDelay: 10);
             }
 
             _statusMessage = "Running solenoid";
-            _ = InvokeAsync(StateHasChanged);
-            _RoveCommService.Boards.Arm.LinearServo(1);
-            await Task.Delay(100);
+            await InvokeAsync(StateHasChanged);
+            _RoveCommService.Boards.Arm.LinearServo(180);
+            await Task.Delay(1000);
             _RoveCommService.Boards.Arm.LinearServo(0);
-            await Task.Delay(100);
+            await Task.Delay(1000);
         }
 
         _statusMessage = "Done";
-        _ = InvokeAsync(StateHasChanged);
-        await Task.Delay(2000);
+        await Task.Delay(1000);
         _OpService.SetTeleop();
+        _running = false;
+        await InvokeAsync(StateHasChanged);
     }
 
     private void CalculateKeyPositions()
@@ -143,7 +171,7 @@
         for (int i = 0; i < rowA.Length; i++) {
             _keyPositions[rowA[i]] = Q + basisX * i + basisY;
         }
-        for (int i = 0; i < rowQ.Length; i++) {
+        for (int i = 0; i < rowZ.Length; i++) {
             _keyPositions[rowZ[i]] = Q + basisX * i + 2*basisY;
         }
     }
