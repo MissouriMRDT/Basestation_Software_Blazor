@@ -55,12 +55,29 @@
     box-sizing: border-box;
 }
 
+html {
+    background-color: var(--primary);
+    --primary: #000;
+    --secondary: #fff;
+    --primary-inverted: #fff;
+    --secondary-inverted: #000;
+    --secondary-bg: #e9ecef42;
+}
+
+html.light {
+    --primary: #fff;
+    --secondary: #000;
+    --primary-inverted: #000;
+    --secondary-inverted: #fff;
+    --secondary-bg: #e9ecef;
+}
+
 html,
 body,
 p {
-    --secondary-bg: #e9ecef;
     margin: 0;
     font-size: 13px;
+    color: var(--secondary);
 }
 
 body,
@@ -95,82 +112,99 @@ select {
 
 button {
     cursor: pointer;
-    color: var(--btn-color);
-    background-color: var(--btn-fill);
     padding: 4px 8px;
-    border: none;
     border-radius: 3px;
+    color: var(--secondary);
+    background-color: var(--primary);
+    box-shadow: 0 4px var(--primary);
+    border: 2px solid var(--btn-fill);
+    transform: translateY(-4px);
+    z-index: 5;
     --btn-color: #fff;
     --btn-fill: #0d6efd;
+    transition: all 100ms;
 }
 
 button:hover {
-    background-color: color-mix(in oklab, var(--btn-fill) 90%, #000);
+    color: var(--btn-color);
+    background-color: color-mix(in oklab, var(--btn-fill) 70%, var(--primary));
+    box-shadow: 0 4px color-mix(in oklab, var(--btn-fill) 70%, var(--primary));
+    border: 2px solid var(--btn-fill);
 }
 
-button:active {
-    background-color: color-mix(in oklab, var(--btn-fill) 90%, #000);
-    box-shadow: 0 -4px color-mix(in oklab, var(--btn-fill) 70%, #000);
-    /* Cut off the bottom of the button to hide it underneath the page serface. shape() is required as the corners have a radius. Firefox 126-(at least 146): in about:config set layout.css.basic-shape-shape.enabled = true */
-    clip-path: shape(from 0 -4px,
-            hline to 100%,
-            vline by calc(100% - 3px),
-            arc by -3px 3px of 3px cw,
-            hline to 3px,
-            arc by -3px -3px of 3px cw,
-            close);
-    transform: translateY(4px);
+button:active,
+button[checked] {
+    color: var(--btn-color);
+    background-color: var(--btn-fill);
+    box-shadow: none;
+    border: 2px solid color-mix(in oklab, var(--btn-fill) 70%, var(--secondary));
+    transform: translateY(0px);
 }
 
 button:disabled {
     background-color: #888;
 }
 
+button::before {
+    content: "";
+    position: absolute;
+    bottom: -7px;
+    width: 100%;
+    height: 6px;
+    left: -2px;
+    border: 2px solid var(--btn-fill);
+    border-top: none;
+    border-radius: 0px 0px 3px 3px;
+    z-index: -1;
+    transition: all 100ms;
+}
+
+button:hover::before {
+    border: 2px solid var(--btn-fill);
+    border-top: none;
+}
+
+button:active::before,
+button[checked]::before {
+    border: 2px solid color-mix(in oklab, var(--btn-fill) 70%, var(--secondary));
+    border-top: none;
+    transform: translateY(3px);
+    bottom: 0px;
+}
+
 button.secondary {
     --btn-fill: #0d6efd;
-    --btn-hover-bg: #0b5ed7;
-    --btn-active-bg: #0a58ca;
-    --btn-disabled-bg: #0d6efd;
 }
 
 button.success {
     --btn-fill: #198754;
-    --btn-hover-bg: #157347;
-    --btn-active-bg: #146c43;
-    --btn-disabled-bg: #198754;
 }
 
 button.info {
     --btn-color: #000;
     --btn-fill: #0dcaf0;
-    --btn-hover-bg: #31d2f2;
-    --btn-active-bg: #3dd5f3;
-    --btn-disabled-bg: #0dcaf0;
 }
 
 button.warning {
     --btn-color: #000;
     --btn-fill: #ffc107;
-    --btn-hover-bg: #ffca2c;
-    --btn-active-bg: #ffcd39;
-    --btn-disabled-bg: #ffc107;
 }
 
 button.danger {
     --btn-fill: #dc3545;
-    --btn-hover-bg: #bb2d3b;
-    --btn-active-bg: #b02a37;
-    --btn-disabled-bg: #dc3545;
 }
 
 input {
-    border: 1px solid #000;
+    border: 1px solid var(--secondary);
     border-radius: 3px;
+    background-color: var(--primary);
+    color: var(--secondary);
 }
 
 input:focus {
     outline: none;
     background-color: #2af371;
+    color: #000;
 }
 
 input[type=checkbox] {
@@ -273,22 +307,34 @@ input[type=checkbox].danger:checked {
 }
 
 .component {
-    border: 1px solid #000;
-    overflow: hidden;
+    border: 1px solid var(--secondary);
+    /* overflow: hidden but allow the buttons to extend above the top border of the component */
+    clip-path: rect(-6px 100% 100% 0);
     display: flex;
     flex-direction: column;
     align-items: stretch;
 }
 
 .component-header {
-    padding-left: 21px;
-    color: #fff;
-    background-color: #000;
+    display: flex;
+    /* flex-direction: row-reverse; */
+    padding: 0 21px 0 21px;
+    min-height: 22px;
+    color: var(--secondary);
+    background-color: var(--primary);
+    --primary: var(--primary-inverted);
+    --secondary: var(--secondary-inverted);
 }
 
 .component-header>h3 {
     display: inline;
     margin: 0;
+    /* margin: 0 auto 0 0; */
+    /* order: 100; */
+}
+
+.component-header>button {
+    padding: 0px 2px;
 }
 
 .component-body {
@@ -297,7 +343,7 @@ input[type=checkbox].danger:checked {
 
 .component-move {
     position: absolute;
-    color: #fff;
+    color: var(--primary);
     padding: 1px 1px 1px 3px;
     touch-action: none;
     user-select: none;
@@ -323,19 +369,12 @@ input[type=checkbox].danger:checked {
 
 .component-delete {
     position: absolute;
-    color: #fff;
-    padding: 1.5px 4px;
+    padding: 0px 2px;
     z-index: 900;
     right: 0;
-    top: 0;
-}
-
-.vr {
-    width: 1px;
-    margin-inline: 10px;
-    display: inline-block;
-    align-self: stretch;
-    background-color: #fff;
+    top: 0px;
+    --primary: var(--primary-inverted);
+    --secondary: var(--secondary-inverted);
 }
 
 .form-label {
@@ -343,24 +382,56 @@ input[type=checkbox].danger:checked {
 }
 
 .view-2d * {
-    stroke: #000;
+    stroke: var(--secondary);
     stroke-width: 0.2;
     fill: none;
 }
 
 .view-2d line.arrow {
-    stroke: #000;
+    stroke: var(--secondary);
     stroke-width: 0.1;
     fill: none;
 }
 
 .view-2d path.arrow {
     stroke-width: 0;
-    fill: #000;
+    fill: var(--secondary);
 }
 
 .view-2d text {
     font-size: 0.8px;
     fill: #f0f;
     stroke: none;
+}
+
+/* Blazor reconnect dialog is always white, change text color to black for readability */
+#components-reconnect-modal {
+    color: #000;
+}
+
+/* Change Blazored Toast close button style to match other buttons */
+.blazored-toast:not(#\9) {
+    background-color: var(--primary);
+    --primary: var(--primary-inverted);
+    --secondary: var(--secondary-inverted);
+}
+
+.blazored-toast-close:not(#\9) {
+    display: inline-block;
+    padding: 4px 8px;
+    background-color: var(--primary);
+    border: 2px solid var(--btn-fill);
+    -webkit-appearance: unset;
+    color: var(--secondary);
+    font-size: unset;
+}
+
+.blazored-toast-close:not(#\9):hover {
+    background-color: color-mix(in oklab, var(--btn-fill) 70%, var(--primary));
+}
+
+.blazored-toast-close:not(#\9):active {
+    color: var(--btn-color);
+    background-color: var(--btn-fill);
+    border: 2px solid color-mix(in oklab, var(--btn-fill) 70%, var(--secondary));
 }

@@ -8,8 +8,7 @@
 
 <div class="component-header">
     <h3>Arm Controls</h3>
-    <div class="vr">&nbsp;</div>
-    <input type="checkbox" class="output-enabled" @bind=_outputEnabled>
+    <input type="checkbox" class="output-enabled" @bind=_outputEnabled />
     <select @bind=_controlMode>
         @foreach (ControlMode mode in Enum.GetValues<ControlMode>())
         {
@@ -27,7 +26,7 @@
                 <option value=@preset.ID>@preset.Name</option>
             }
         </select>
-        <input @bind=_preset.Name>
+        <input @bind=_preset.Name />
         <button class="success" @onclick=NewPreset><i class="bi-plus" /></button>
         <button class="success" @onclick=SavePreset><i class="bi-floppy" /></button>
         <button class="danger" @onclick=DeletePreset><i class="bi-trash" /></button>
@@ -67,20 +66,20 @@
                 int i = _i;
                 <p style="width:30px">@_limitNames[i]</p>
                 <div style="width: 16px; height: 16px; background-color: #@(_limitSwitchDepressed[i * 2] ? "fb0" : "520")"></div>
-                <input type="checkbox" class="danger" @bind=@(_hardLimitOverrides[i * 2])>
+                <input type="checkbox" class="danger" @bind=@(_hardLimitOverrides[i * 2]) />
                 <div style="width: 16px; height: 16px; background-color: #@(_limitSwitchDepressed[i * 2 + 1] ? "fb0" : "520")"></div>
-                <input type="checkbox" class="danger" @bind=@(_hardLimitOverrides[i * 2 + 1])>
+                <input type="checkbox" class="danger" @bind=@(_hardLimitOverrides[i * 2 + 1]) />
                 <div style="width: 16px; height: 16px; background-color: #@(_softLimitTriggered[i * 2] ? "fb0" : "520")"></div>
-                <input type="checkbox" class="danger" @bind=@(_softLimitOverrides[i * 2])>
+                <input type="checkbox" class="danger" @bind=@(_softLimitOverrides[i * 2]) />
                 <div style="width: 16px; height: 16px; background-color: #@(_softLimitTriggered[i * 2 + 1] ? "fb0" : "520")"></div>
-                <input type="checkbox" class="danger" @bind=@(_softLimitOverrides[i * 2 + 1])>
+                <input type="checkbox" class="danger" @bind=@(_softLimitOverrides[i * 2 + 1]) />
             }
             <button class="success" style="grid-column: 2 / 6" @onclick=@(() => { ushort mask = 0; for (int i = 0; i < _hardLimitOverrides.Length; i++) { mask |= (ushort)((_hardLimitOverrides[i] ? 1 : 0) << i); } _RoveCommService.Boards.Arm.LimitSwitchOverride(mask); })><i class="bi-send" /></button>
             <button class="success" style="grid-column: 6 / 10" @onclick=@(() => { ushort mask = 0; for (int i = 0; i < _softLimitOverrides.Length; i++) { mask |= (ushort)((_softLimitOverrides[i] ? 1 : 0) << i); } _RoveCommService.Boards.Arm.SoftLimitOverride(mask); })><i class="bi-send" /></button>
         </div>
         <div style="display: grid; grid-template-columns: repeat(3, max-content)">
             <p></p>
-            <p>|Delta</p>
+            <p>|Pos</p>
             <p>|Ping</p>
             <p>X</p>
             <p>|@($"{_RoveCommService.Boards.Arm.Position_X:+000.00;-000.00}")</p>
@@ -112,6 +111,15 @@
             <p>Gripper Z</p>
             <p>|@($"{_RoveCommService.Boards.Arm.Position_GZ:+000.00;-000.00}")</p>
             <p>|</p>
+            <p>Linear Servo</p>
+            <p>|@($"{_linearServo:+000.00;-000.00}")</p>
+            <p>|</p>
+            <p>Cache Servo</p>
+            <p>|@($"{_cache:+000.00;-000.00}")</p>
+            <p>|</p>
+            <p>Laser</p>
+            <p>|@(_laser ? "On" : "Off")</p>
+            <p>|</p>
         </div>
     </div>
 </div>
@@ -121,8 +129,9 @@
     {
         OpenLoop,
         TargetAngles,
-        InverseKinematics,
-        LockMode,
+        IKWrist,
+        IKWorld,
+        IKTool
     }
 
     // Member variables
@@ -149,6 +158,7 @@
     private ArmPreset _preset = new();
     public const float MaxDegreesPerSecond = 45.0f;
     public const float MaxInchesPerSecond = 8.0f;
+    public const float LinearServoMaxDegreesPerSecond = 15.0f;
 
     protected override async Task OnInitializedAsync()
     {
@@ -200,8 +210,9 @@
         if (!_outputEnabled) return false;
 
         _RoveCommService.Boards.Arm.GripperOpenLoop((short)Math.Clamp(inputs[8] * _preset.GripperSpeed * short.MaxValue, short.MinValue, short.MaxValue));
-        _linearServo += inputs[9] * _preset.LinearServoSpeed * deltaT;
-        if (Math.Abs(inputs[9]) > 0) _RoveCommService.Boards.Arm.LinearServo((byte)_linearServo);
+        _linearServo = Math.Clamp(_linearServo + inputs[9] * _preset.LinearServoSpeed * LinearServoMaxDegreesPerSecond * deltaT, 0, 180);
+        _RoveCommService.Boards.Arm.LinearServo((byte)_linearServo);
+        // if (Math.Abs(inputs[9]) > 0) _RoveCommService.Boards.Arm.LinearServo((byte)_linearServo);
         // Toggle the laser if the axis rises above 0.5.
         if (inputs[10] > 0.5 && _lastInputs[10] <= 0.5)
         {
@@ -210,6 +221,8 @@
         }
         _cache += inputs[11] * _preset.CacheSpeed * deltaT;
         if (Math.Abs(inputs[11]) > 0) _RoveCommService.Boards.Arm.Cache((byte)_cache);
+
+        inputs.CopyTo(_lastInputs);
 
         switch (_controlMode)
         {
@@ -237,9 +250,9 @@
                     );
                     break;
                 }
-            case ControlMode.InverseKinematics:
+            case ControlMode.IKWrist:
                 {
-                    _RoveCommService.Boards.Arm.IKPositionIncrement(
+                    _RoveCommService.Boards.Arm.IKWristIncrement(
                     inputs[0] * _preset.XSpeed * MaxInchesPerSecond * deltaT,
                     inputs[1] * _preset.YSpeed * MaxInchesPerSecond * deltaT,
                     inputs[2] * _preset.ZSpeed * MaxInchesPerSecond * deltaT,
@@ -249,9 +262,21 @@
                     );
                     break;
                 }
-            case ControlMode.LockMode:
+            case ControlMode.IKWorld:
                 {
-                    _RoveCommService.Boards.Arm.IKPoseIncrement(
+                    _RoveCommService.Boards.Arm.IKWorldIncrement(
+                    inputs[0] * _preset.XSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[1] * _preset.YSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[2] * _preset.ZSpeed * MaxInchesPerSecond * deltaT,
+                    inputs[5] * _preset.J4Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[6] * _preset.J5Speed * MaxDegreesPerSecond * deltaT,
+                    inputs[7] * _preset.J6Speed * MaxDegreesPerSecond * deltaT
+                    );
+                    break;
+                }
+            case ControlMode.IKTool:
+                {
+                    _RoveCommService.Boards.Arm.IKToolIncrement(
                     inputs[0] * _preset.XSpeed * MaxInchesPerSecond * deltaT,
                     inputs[1] * _preset.YSpeed * MaxInchesPerSecond * deltaT,
                     inputs[2] * _preset.ZSpeed * MaxInchesPerSecond * deltaT,

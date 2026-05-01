@@ -11,12 +11,15 @@
         "pvl c1v c2v c3v"
         "pvv c4l c5l c6l"
         "pvv c4v c5v c6v"
-        "r e e s";
+        "r e s th";
     place-items: center;
-    color: #000;
     font-weight: bold;
     gap: 1px;
     background-color: #000;
+}
+
+.pms>p {
+    color: #000;
 }
 
 .pms>p,
@@ -46,4 +49,33 @@
 
 .pms>div.warning {
     animation: blink 1.5s step-start infinite;
+}
+
+.pms>div.thermal {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+        "t1 fan"
+        "rpm fan";
+    place-items: center;
+}
+
+.pms>div.thermal>*.fan {
+    width: 40px;
+    height: 40px;
+    animation-name: spin;
+    animation-duration: 1s;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+    transition: all 0.1s ease-in-out;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
 }

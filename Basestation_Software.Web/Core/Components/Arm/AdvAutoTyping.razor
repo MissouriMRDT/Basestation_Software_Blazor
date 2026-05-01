@@ -1,4 +1,5 @@
-﻿@inject RoveCommService _RoveCommService
+﻿@using System.Diagnostics
+@inject RoveCommService _RoveCommService
 @inject OpService _OpService
 @using System.Numerics
 
@@ -75,8 +76,6 @@
         _keyCacheZ = null;
     }
 
-
-
     protected override void OnInitialized()
     {
         _RoveCommService.Boards.Arm.OnPosition(async packet => await InvokeAsync(StateHasChanged));
@@ -106,8 +105,8 @@
         _running = false;
     }
 
-    private async Task PlayPhrase()
-    {
+    private async Task PlayPhrase() {
+        _running = true;
         _OpService.SetAutonomy();
         CalculateKeyPositions();
         //ResetCache();
@@ -122,9 +121,12 @@
             Vector3 currentPos = new(_RoveCommService.Boards.Arm.Position_GX, _RoveCommService.Boards.Arm.Position_GY, _RoveCommService.Boards.Arm.Position_GZ);
             Vector3 nextPos = _keyPositions[_phrase[i]];
             Vector3 delta = nextPos - currentPos;
-            _RoveCommService.Boards.Arm.IKWorldIncrement(delta.X, delta.Y, delta.Z, 0, 0, 0);
+            for (int k = 0; k < 10; k++) {
+                _RoveCommService.Boards.Arm.IKWorldIncrement(delta.X/10, delta.Y/10, delta.Z/10, 0, 0, 0);
+                await Task.Delay(500);
+            }
 
-            delay = Math.Max((int)(Math.Abs(delta.X) * 1000 / InchesPerSecond), 1000);
+            @* delay = Math.Max((int)(Math.Abs(delta.X) * 1000 / InchesPerSecond), 1000);
 
             await InvokeAsync(StateHasChanged);
             for (int j = 0; j < delay; j+=10)
@@ -132,14 +134,14 @@
                 _charStatusMeter = (float)(j * 10) / delay;
                 _ = InvokeAsync(StateHasChanged);
                 await Task.Delay(millisecondsDelay: 10);
-            }
+            } *@
 
             _statusMessage = "Running solenoid";
             await InvokeAsync(StateHasChanged);
             _RoveCommService.Boards.Arm.LinearServo(180);
-            await Task.Delay(1000);
-            _RoveCommService.Boards.Arm.LinearServo(0);
-            await Task.Delay(1000);
+            await Task.Delay(2000);
+            _RoveCommService.Boards.Arm.LinearServo(30);
+            await Task.Delay(2000);
         }
 
         _statusMessage = "Done";

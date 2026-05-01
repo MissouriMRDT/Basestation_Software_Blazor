@@ -1,4 +1,4 @@
-// Used by RoverMap.razor
+// Used by Map.razor
 
 // imported globally in App.razor
 //import L from "./lib/leaflet/leaflet.js";
@@ -127,6 +127,10 @@ export class RoverMap {
 
         this.waypointLayerGroup = L.layerGroup([]).addTo(this.lMap);
         this.tagLayerGroup = L.layerGroup([]).addTo(this.lMap);
+        this.pathLayerGroup = L.layerGroup([]).addTo(this.lMap);
+        this.roverPathLayerGroup = L.layerGroup([]).addTo(this.lMap);
+        this.currentPlannedPoints = [];
+        this.eta = 0;
 
         const baseMaps = {
             "Satellite": satelliteLayer,
@@ -136,7 +140,9 @@ export class RoverMap {
         const overlays = {
             "Waypoints": this.waypointLayerGroup,
             "Tags": this.tagLayerGroup,
-            "Rover": this.roverIcon
+            "Rover": this.roverIcon,
+            "Planned Path": this.pathLayerGroup,
+            "Rover Path": this.roverPathLayerGroup
         };
 
         this.lMap.addControl(L.control.layers(baseMaps, overlays));
@@ -311,6 +317,74 @@ export class RoverMap {
             this.startingTile_lat = e.latlng.lat;
             this.startingTile_lng = e.latlng.lng;
         }
+    }
+
+    // Display path rover has taken
+    displayRoverPath(points) {
+        return; // Disabled for safety until performance issues are resolved.
+        if (points.length == 0) {
+            return;
+        }
+
+        // Convert points to 2D lat lon list
+        const pointPairs = [];
+        for (let i = 0; i < points.length; i += 2) {
+            pointPairs.push([points[i], points[i + 1]]);
+        }
+
+        // this.roverPathLayerGroup.clearLayers();
+        L.polyline(pointPairs, { color: "red", weight: 5 }).addTo(
+            this.roverPathLayerGroup
+        );
+    }
+
+    // Remove path rover has taken
+    removeRoverPath() {
+        this.roverPathLayerGroup.clearLayers();
+    }
+
+    // Display planned Path
+    displayPath(points) {
+        return; // Disabled for safety until performance issues are resolved.
+        if (points.length == 0) {
+            return;
+        }
+
+        // Convert points to 2D lat lon list
+        const pointPairs = [];
+        for (let i = 0; i < points.length - 1; i += 2) {
+            pointPairs.push([points[i], points[i + 1]]);
+        }
+
+        this.currentPlannedPoints = points;
+
+        this.pathLayerGroup.clearLayers();
+        var path = L.polyline(pointPairs, { color: "blue", weight: 5 }).addTo(this.pathLayerGroup);
+
+        var lastPoint = pointPairs[pointPairs.length - 1];
+
+
+        var timeDate = new Date(this.eta * 1000);
+        var ETAString = "ETA: " + timeDate.toString();
+
+        // Do not show ETA if rover is not moving
+        if (this.eta < 0) {
+            ETAString = "Waiting for movement update...";
+        }
+
+        L.marker([lastPoint[0], lastPoint[1]]).addTo(this.pathLayerGroup).bindTooltip(ETAString, { direction: "top" });
+    }
+
+    // Remove planned path
+    removePath() {
+        this.pathLayerGroup.clearLayers();
+        this.currentPlannedPoints = [];
+    }
+
+    // Set estimated time of arrival (seconds since epoch)
+    setETA(eta) {
+        this.eta = eta;
+        this.displayPath(this.currentPlannedPoints);
     }
 }
 

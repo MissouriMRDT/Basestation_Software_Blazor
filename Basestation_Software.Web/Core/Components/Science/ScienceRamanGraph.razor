@@ -25,15 +25,9 @@
     private LineChartConfig? RamanChartConfig;
     private Chart? RamanChart;
 
-    private void Export()
-    {
-        File.WriteAllLines("RamanExport_" + ((DateTimeOffset)DateTime.Now).ToUnixTimeMilliseconds() + ".csv", _data.Select(x => string.Join(",", x)));
-    }
-
     protected override async void OnInitialized()
     {
         // Initialize data with easter egg
-        Random rand = new Random();
         for (int i = 0; i < _data.Length; i++)
         {
             _data[i] = (ushort)(1000 * Math.Pow(Math.E, -0.005 * Math.Abs(i - 1024)) * Math.Cos(1024 * (i - 1024)) + 1000);
@@ -137,6 +131,6 @@
             }
         );
 
-        RamanChart?.ClearData();
+        // RamanChart?.ClearData();
     }
 }

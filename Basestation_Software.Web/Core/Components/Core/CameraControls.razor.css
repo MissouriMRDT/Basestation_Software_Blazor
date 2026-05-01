@@ -2,12 +2,13 @@
     display: grid;
     padding: 0;
     grid-template-columns: 1fr 1fr 1fr 1fr;
-    grid-template-rows: 30px min-content min-content min-content;
+    grid-template-rows: 30px min-content min-content min-content min-content;
     grid-template-areas:
         "source-buttons source-buttons source-buttons source-buttons"
         "utilization-1 utilization-1 utilization-2 utilization-2"
         "connect disconnect restart shutdown"
-        "screenshot save panorama arguments";
+        "screenshot save panorama arguments"
+        "histogram . . .";
     place-items: stretch stretch;
 }
 
@@ -22,13 +23,13 @@
     flex-direction: row;
     margin-inline: 0;
     margin-block: 0;
+    --btn-color: white;
 }
 
 .source-buttons-container button {
     margin: 1px;
     flex: 1;
     padding: 0;
-    color: white;
 }
 
 .source-buttons-container button:hover::after {
@@ -36,10 +37,6 @@
     position: relative;
     top: +100%;
     background-color: #f00;
-}
-
-.camera-selected {
-    color: black !important;
 }
 
 .camera-streaming {

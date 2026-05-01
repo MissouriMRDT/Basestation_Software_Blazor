@@ -59,12 +59,15 @@ function floorModulo(a, n) {
 export class CameraDisplay {
     videoContainer = null;
     videoDisplay = null;
+    resizeObserver = null;
     n = 0;
     deg = 0;
 
     constructor(videoContainer) {
         this.videoContainer = videoContainer;
         cameraDisplays.push(this);
+        this.resizeObserver = new ResizeObserver(() => this.rotate(0));
+        this.resizeObserver.observe(this.videoContainer);
     }
 
     setCamera(n) {
@@ -80,6 +83,9 @@ export class CameraDisplay {
         this.videoDisplay.controls = false;
         this.videoDisplay.className = "video-display";
         this.videoDisplay.style.transform = `rotate(${this.deg}deg`;
+        this.videoDisplay.addEventListener("loadeddata", () => {
+            this.rotate(0);
+        });
         for (let oldElement of this.videoContainer.getElementsByClassName("video-display")) {
             this.videoContainer.removeChild(oldElement);
         }
@@ -97,7 +103,38 @@ export class CameraDisplay {
             console.warn("No display to rotate.");
             return;
         }
+        let cw = this.videoContainer.clientWidth;
+        let ch = this.videoContainer.clientHeight;
+        let vw;
+        let vh;
+        let nvw;
+        let nvh;
+        if (this.deg === 0 || this.deg === 180) {
+            vw = this.videoDisplay.videoWidth;
+            vh = this.videoDisplay.videoHeight;
+        } else {
+            vh = this.videoDisplay.videoWidth;
+            vw = this.videoDisplay.videoHeight;
+        }
+        if (vw / vh < cw / ch) {
+            nvw = ch * vw / vh;
+            nvh = ch;
+        } else {
+            nvw = cw;
+            nvh = cw * vh / vw;
+        }
+        if (this.deg === 0 || this.deg === 180) {
+            this.videoDisplay.style.width = `${nvw}px`;
+            this.videoDisplay.style.height = `${nvh}px`;
+        } else {
+            this.videoDisplay.style.width = `${nvh}px`;
+            this.videoDisplay.style.height = `${nvw}px`;
+        }
         this.videoDisplay.style.transform = `rotate(${this.deg}deg`;
+    }
+
+    dispose() {
+        this.resizeObserver.disconnect();
     }
 }
 

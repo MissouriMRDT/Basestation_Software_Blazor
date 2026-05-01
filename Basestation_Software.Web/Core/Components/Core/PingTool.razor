@@ -10,16 +10,16 @@
 </div>
 <div class="component-body ping-tool">
     <p style="grid-column: 1 / 4">Auto Ping Delay (ms)</p>
-    <input style="grid-column: 4 / 6" @bind=_autoPingDelay>
+    <input style="grid-column: 4 / 6" @bind=_autoPingDelay />
     <p style="grid-column: 1 / 4">Ping Timeout (ms)</p>
-    <input style="grid-column: 4 / 6" @bind=_pingTimeout>
-    <input type="checkbox" @bind=_autoPingAll @bind:after=@(() => { foreach (Device device in _devices) device.AutoPing = _autoPingAll; })>
+    <input style="grid-column: 4 / 6" @bind=_pingTimeout />
+    <input type="checkbox" @bind=_autoPingAll @bind:after=@(() => { foreach (Device device in _devices) device.AutoPing = _autoPingAll; }) />
     <p style="text-align: center">ICMP</p>
     <p style="text-align: center">Rove</p>
     <div style="grid-column: 4 / 6; background-color: #000; height: 1px" />
     @foreach (Device device in _devices)
     {
-        <input type="checkbox" @bind=device.AutoPing>
+        <input type="checkbox" @bind=device.AutoPing />
         <button title=@device.PingStatus @onclick=@(async () => await PingIpAddressAsync(device, device.IpAddress))>@device.PingStatus</button>
         @if (device.HasRoveComm)
         {
@@ -97,7 +97,7 @@
             if (i >= 0 && i < _devices.Count)
                 _devices[i].RoveCommPingStatus = ((DateTime.UtcNow.Ticks - sentAt) / TimeSpan.TicksPerMillisecond).ToString();
         });
-        
+
         _RoveCommService.On<sbyte>(0, RoveCommActivity);
         _RoveCommService.On<byte>(0, RoveCommActivity);
         _RoveCommService.On<short>(0, RoveCommActivity);

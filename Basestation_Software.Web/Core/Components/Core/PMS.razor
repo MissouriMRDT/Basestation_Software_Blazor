@@ -9,13 +9,13 @@
     <p style="grid-area: pcl; align-self: end">Pack Current</p>
     <p style="grid-area: pca; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_PackCurrent:00.0}") A</p>
     <div style="grid-area: 1 / 1 / 5 / 2; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_PackCurrent, 36, 75)" class=@(_packOvercurrent ? "critical" : "")></div>
-    <button style="grid-area: mb; align-self: end" @onclick=@(() => ToggleBus(0))>Motor</button>
+    <button checked=@(_busStatus[0] == BusState.Enabled) style="grid-area: mb; align-self: end" @onclick=@(() => ToggleBus(0))>Motor</button>
     <p style="grid-area: ma; align-self: start">@($"{_motorCurrent:00.00}") A</p>
     <div style="grid-area: 1 / 2 / 3 / 3; @Background(_motorCurrent, 30, 50)" class="@(_busStatus[0] == BusState.Enabled ? "" : "disabled")" />
-    <button style="grid-area: cb; align-self: end" @onclick=@(() => ToggleBus(1))>Core</button>
+    <button checked=@(_busStatus[1] == BusState.Enabled) style="grid-area: cb; align-self: end" @onclick=@(() => ToggleBus(1))>Core</button>
     <p style="grid-area: ca; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_LowCurrent:00.0}") A</p>
     <div style="grid-area: 1 / 3 / 3 / 4; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_LowCurrent, 2, 6)" class="@(_busStatus[1] == BusState.Enabled ? "" : "disabled")" />
-    <button style="grid-area: ab; align-self: end" @onclick=@(() => ToggleBus(2))>Aux</button>
+    <button checked=@(_busStatus[2] == BusState.Enabled) style="grid-area: ab; align-self: end" @onclick=@(() => ToggleBus(2))>Aux</button>
     <p style="grid-area: aa; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_AuxCurrent:00.0}") A</p>
     <div style="grid-area: 1 / 4 / 3 / 5; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_AuxCurrent, 5, 15)" class="@(_busStatus[2] == BusState.Enabled ? "" : "disabled") @(_auxOvercurrent ? "critical" : "")" />
     <p style="grid-area: rl; align-self: end">Radio M2</p>
@@ -27,7 +27,7 @@
     <p style="grid-area: nl; align-self: end">Network Switch</p>
     <p style="grid-area: na; align-self: start">@($"{_RoveCommService.Boards.PMS.CurrentAndVoltage_NetworkCurrent:00.0}") A</p>
     <div style="grid-area: 3 / 4 / 5 / 5; @Background(_RoveCommService.Boards.PMS.CurrentAndVoltage_NetworkCurrent, 1, 6)" class="@(_busStatus[5] == BusState.Enabled ? "" : "disabled")" />
-    <p style="grid-area: pcj">@($"{_packCapacity*3.6:000.0}") kJ</p>
+    <p style="grid-area: pcj">@($"{_packCapacity * 3.6:000.0}") kJ</p>
     <div style="grid-area: 5 / 1 / 6 / 5; background-image: linear-gradient(to right in oklab, #ff0000, #00ff00)" />
     <div style="grid-area: 5 / 1 / 6 / 5; background-color: #fff; justify-self: end; width: @(100 - Math.Clamp(_packCapacity / 30.453 / 6 * 100, 0, 100))%" />
     <p style="grid-area: pvl; align-self: end">Pack Voltage</p>
@@ -54,6 +54,11 @@
     <button style="grid-area: r; place-self: stretch" class="danger" @onclick=Reboot>REBOOT</button>
     <button style="grid-area: e; place-self: stretch" class="warning" @onclick=EStop>E-STOP</button>
     <button style="grid-area: s; place-self: stretch" class="danger" @onclick=Suicide>SUICIDE</button>
+    <div style="grid-area: th; @Background(_RoveCommService.Boards.Core.Thermal_BoardTemperature, 20, 40, "dodgerblue", "orange")" class="thermal">
+        <p style="grid-area: rpm">@($"{_RoveCommService.Boards.Core.Thermal_FanSpeed:000.00}") RPM</p>
+        <img style="grid-area: fan; animation-duration: @(_RoveCommService.Boards.Core.Thermal_FanSpeed > 0 ? 600 / _RoveCommService.Boards.Core.Thermal_FanSpeed : 0)s;" class="fan" src="/images/fan-icon.png" />
+        <p style="grid-area: t1">@($"{_RoveCommService.Boards.Core.Thermal_BoardTemperature:0.00}")&deg;C</p>
+    </div>
 </div>
 
 @code
@@ -83,11 +88,11 @@
         TelemetryWatchdog = new System.Threading.Timer(WatchdogTimeout);
     }
 
-    private string Background(double x, double green, double red)
+    private string Background(double x, double good, double bad, string goodColor = "#00ff00", string badColor = "#ff0000")
     {
-        if (red > green)
-            return $"--bg: color-mix(in oklab, #ff0000 {Utils.ClampMap(x, green, red, 0.0, 100.0)}%, #00ff00)";
-        return $"--bg: color-mix(in oklab, #00ff00 {Utils.ClampMap(x, red, green, 0.0, 100.0)}%, #ff0000)";
+        if (bad > good)
+            return $"--bg: color-mix(in oklab, {badColor} {Utils.ClampMap(x, good, bad, 0.0, 100.0)}%, {goodColor})";
+        return $"--bg: color-mix(in oklab, {goodColor} {Utils.ClampMap(x, bad, good, 0.0, 100.0)}%, {badColor})";
     }
 
     protected override void OnInitialized()
@@ -149,6 +154,11 @@
         {
             _auxOvercurrent = true;
             ResetWatchdog();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.Boards.Core.OnThermal(async packet =>
+        {
             await InvokeAsync(StateHasChanged);
         });
     }

@@ -1,0 +1,449 @@
+@implements IDisposable
+@using System.Text
+@inject SwitchMonitorService _SwitchMonitorService
+@using Basestation_Software.Web.Models
+@using PSC.Blazor.Components.Chartjs
+@using PSC.Blazor.Components.Chartjs.Models.Pie
+@using PSC.Blazor.Components.Chartjs.Models.Common
+
+<div class="card full-height">
+    <div class="component-header">
+        <h3>Network Switch Monitor</h3>
+    </div>
+    <div class="component-body">
+        <select @bind="Model">
+            <option value="@(SwitchModel.Cisco_IE_2000_16TC)">Cisco IE-2000-16TC</option>
+            <option value="@(SwitchModel.Cisco_IE_3200_8T2S)">Cisco IE-3200-8T2S</option>
+        </select>
+        <div style="display: grid; grid-template-columns: max-content 100px 100px">
+            <p>Switch</p>
+            <p>Username</p>
+            <p>Password</p>
+            <p>Rover</p><input @bind=_SwitchMonitorService.RoverSwitchUser /><input type="password" @bind=_SwitchMonitorService.RoverSwitchPassword />
+            <p>Basestation</p><input @bind=_SwitchMonitorService.BasestationSwitchUser /><input type="password" @bind=_SwitchMonitorService.BasestationSwitchPassword />
+            <button style="grid-column: 1 / 4" @onclick=@(() => { if (_SwitchMonitorService.Running) _SwitchMonitorService.Stop(); else _SwitchMonitorService.Start(); })>@(_SwitchMonitorService.Running ? "Stop" : "Start") Service</button>
+        </div>
+        <label for="enable-toggle">Enable Logging</label>
+        <input name="enable-toggle" type="checkbox" class="danger" value="" @bind=_loggingEnabled />
+        <div style="display: grid; align-items: center; grid-template-columns: 2fr 1fr">
+            <div class="display:flex;align-items:center;justify-content:center;">
+                <svg viewBox="0 0 100 100">
+                    <style>
+                                            .port {
+                                                cursor: pointer;
+                                            }
+
+                                            .port:hover {
+                                                fill-opacity: 1.0;
+                                            }
+
+                                            .routed {
+                                                fill: rgba(255, 8, 0);
+                                            }
+
+                                            .vlan2 {
+                                                fill: rgba(32, 194, 0);
+                                            }
+
+                                            .vlan3 {
+                                                fill: rgba(0, 89, 255);
+                                            }
+
+                                            .vlan4 {
+                                                fill: rgba(255, 174, 0);
+                                            }
+
+                                            .vlan100 {
+                                                fill: rgba(153, 0, 255);
+                                            }
+
+                                            .connected {
+                                                stroke: none;
+                                            }
+
+                                            .notconnect {
+                                                stroke: yellow;
+                                            }
+                    </style>
+                    <image x="0" y="0" width="100" height="100" href="@(Model == SwitchModel.Cisco_IE_2000_16TC ? "images/Cisco_IE_2000_16TC_GE.png" : Model == SwitchModel.Cisco_IE_3200_8T2S ? "images/Cisco_IE_3200_8T2S.png" : "")" />
+                    @for (int i = 0; i < _ports.Length; i++)
+                    {
+                        var (x, y) = GetPortDisplayPosition(i);
+                        int index = i;
+                        <g transform="translate(@x, @y)">
+                            <rect id="fa1-@i" class="port @(_ports[i].Routed ? "routed" : $"vlan{_ports[i].VLan}")" x="0" y="0" width="9" height="11" @onmouseover=@(() => ShowPortStats(index)) @onclick=@(() => ShowPortStats(index)) style="fill-opacity: @(1 - 0.7 * Math.Exp(-(1 / 50.0) * (_portStats[index].Traffic.InputRatePackets + _portStats[index].Traffic.OutputRatePackets)))" />
+                            <rect class="@(_ports[i].Connected ? "connected" : "notconnect")" fill="none" x="0" y="0" width="9" height="11" />
+                            <line class="@(_ports[i].Connected ? "connected" : "notconnect")" x1="0" y1="0" x2="9" y2="11" />
+                            <line class="@(_ports[i].Connected ? "connected" : "notconnect")" x1="9" y1="0" x2="0" y2="11" />
+                        </g>
+                    }
+                </svg>
+            </div>
+            <Chart Config="BandChartConfig" @ref="BandChart" Style="max-width:100px;"></Chart>
+        </div>
+        @if (_displayStats != null)
+        {
+            <h4>Stats for interface:
+                <span style="font-family:'Consolas', monospace; font-size: 14pt">
+                    @_displayStats.Name;
+                </span>
+            </h4>
+            <table class="table" style="width:100%">
+                <thead>
+                    <tr>
+                        <th scope="col">Description</th>
+                        <th scope="col">IP/Vlan</th>
+                        <th scope="col">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>@(_displayStats.Description ?? "None")</td>
+                        <td>@(_displayStats.Ip ?? "Unspecified")</td>
+                        <td>@(_displayStats.Status.ToString())</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="white-space: pre-wrap;font-family:'Consolas', monospace">@FormatDisplayStats()</div>
+        }
+    </div>
+</div>
+
+
+@code
+{
+
+    private PieChartConfig? BandChartConfig;
+    private Chart? BandChart;
+
+    public enum SwitchModel
+    {
+        Cisco_IE_2000_16TC,
+        Cisco_IE_3200_8T2S
+    }
+
+    class SignalTraffic
+    {
+        public string Band { get; set; } = "";
+        public double Traffic { get; set; }
+    }
+    // TODO: Make this dynamic
+    private SignalTraffic[] _signalTraffic = new SignalTraffic[] {
+        new SignalTraffic{Band = "900MHz"},
+        new SignalTraffic{Band = "2.4GHz"},
+        new SignalTraffic{Band = "5.8GHz"}
+    };
+    private SignalTraffic[] _vlanTraffic = new SignalTraffic[] {
+        new SignalTraffic{Band = "VLAN 2"},
+        new SignalTraffic{Band = "VLAN 3"},
+        new SignalTraffic{Band = "VLAN 4"}
+    };
+
+    private PortStatus[] _ports = null!;
+    private InterfaceInfo[] _portStats = null!;
+    private InterfaceInfo[] _vlanStats = null!;
+
+    private InterfaceInfo? _displayStats;
+    private bool _loggingEnabled { get; set { _SwitchMonitorService.EnableLogging(value); field = value; } }
+
+    private SwitchModel _model = SwitchModel.Cisco_IE_3200_8T2S;
+    public SwitchModel Model
+    {
+        get { return _model; }
+        set
+        {
+            switch (value)
+            {
+                case SwitchModel.Cisco_IE_2000_16TC:
+                    _ports = new PortStatus[18];
+                    _portStats = new InterfaceInfo[18];
+                    break;
+                case SwitchModel.Cisco_IE_3200_8T2S:
+                    _ports = new PortStatus[10];
+                    _portStats = new InterfaceInfo[10];
+                    break;
+            }
+            for (int i = 0; i < _ports.Length; i++)
+            {
+                _ports[i] = new();
+            }
+            for (int i = 0; i < _portStats.Length; i++)
+            {
+                _portStats[i] = new();
+            }
+            _vlanStats = new InterfaceInfo[4];
+            for (int i = 0; i < _vlanStats.Length; i++)
+            {
+                _vlanStats[i] = new InterfaceInfo();
+            }
+            _model = value;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        Model = SwitchModel.Cisco_IE_2000_16TC;
+        _SwitchMonitorService.OnInterfaceUpdate += UpdateInterfaceStats;
+        _SwitchMonitorService.OnPortStatusUpdate += UpdatePortStatuses;
+
+        BandChartConfig = new PieChartConfig()
+        {
+            Options = new PieOptions()
+            {
+                Responsive = true,
+                RegisterDataLabels = true,
+                MaintainAspectRatio = false,
+                Animation = false,
+                Plugins = new()
+                {
+                    Title = new()
+                    {
+                        Text = "Signal Band Utilization",
+                        Display = true
+                    }
+                }
+            }
+        };
+        BandChartConfig.Data.Labels.AddRange(_signalTraffic.Take(2).Select(x => x.Band));
+        BandChartConfig.Data.Datasets.Add(
+            new PieDataset()
+            {
+                BackgroundColor = [
+                    "rgb(255, 99, 132)",
+                    "rgb(54, 162, 235)"
+                ],
+                Data = [1, 1]
+            }
+        );
+    }
+
+    private void UpdateSignalTraffic()
+    {
+        if (_portStats == null || _vlanStats == null) return;
+        var m9 = Array.Find(_portStats, p => p.Description?.Contains("900MHz") ?? false);
+        if (m9 != null)
+        {
+            _signalTraffic[0].Traffic = m9.Traffic.InputRatePackets + m9.Traffic.OutputRatePackets;
+        }
+        var m2 = Array.Find(_portStats, p => p.Description?.Contains("2.4GHz") ?? false);
+        if (m2 != null)
+        {
+            _signalTraffic[1].Traffic = m2.Traffic.InputRatePackets + m2.Traffic.OutputRatePackets;
+        }
+        var m5 = Array.Find(_portStats, p => p.Description?.Contains("5.8GHz") ?? false);
+        if (m5 != null)
+        {
+            _signalTraffic[2].Traffic = m5.Traffic.InputRatePackets + m5.Traffic.OutputRatePackets;
+        }
+
+        // VLANS cause why not
+        for (int i = 0; i < 3; i++)
+        {
+            _vlanTraffic[i].Traffic = _vlanStats[i + 1].Traffic.InputRatePackets + _vlanStats[i + 1].Traffic.OutputRatePackets;
+        }
+
+        BandChartConfig = new PieChartConfig()
+        {
+            Options = new PieOptions()
+            {
+                Responsive = true,
+                RegisterDataLabels = true,
+                MaintainAspectRatio = false,
+                Animation = false,
+                Plugins = new()
+                {
+                    Title = new()
+                    {
+                        Text = "Signal Band Utilization",
+                        Display = true
+                    }
+                }
+            }
+        };
+        BandChartConfig.Data.Labels.AddRange(_signalTraffic.Take(2).Select(x => x.Band));
+        BandChartConfig.Data.Datasets.Add(
+            new PieDataset()
+            {
+                BackgroundColor = [
+                    "rgb(255, 99, 132)",
+                    "rgb(54, 162, 235)",
+                ],
+                Data = _signalTraffic.Take(2).Select(x => (decimal?)x.Traffic).ToList()
+            }
+        );
+    }
+
+    private void UpdatePortStatuses(List<PortStatus> ports)
+    {
+        if (_ports == null) return;
+        switch (Model)
+        {
+            case SwitchModel.Cisco_IE_2000_16TC:
+                for (int i = 0; i < 16; i++)
+                {
+                    var port = ports.Find(p => p.Port == $"Fa1/{i + 1}");
+                    if (port != null)
+                    {
+                        _ports[i] = port;
+                    }
+                }
+                for (int i = 0; i < 2; i++)
+                {
+                    var port = ports.Find(p => p.Port == $"Gi1/{i + 1}");
+                    if (port != null)
+                    {
+                        _ports[16 + i] = port;
+                    }
+                }
+                break;
+            case SwitchModel.Cisco_IE_3200_8T2S:
+                for (int i = 0; i < 10; i++)
+                {
+                    var port = ports.Find(p => p.Port == $"Gi1/{i + 1}");
+                    if (port != null)
+                    {
+                        _ports[i] = port;
+                    }
+                }
+                break;
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void ShowPortStats(int index)
+    {
+        if (index < 0)
+        {
+            _displayStats = null;
+        }
+        else
+        {
+            _displayStats = _portStats[index];
+        }
+        StateHasChanged();
+    }
+
+    private string FormatDisplayStats()
+    {
+        if (_displayStats != null)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Input:");
+            sb.AppendLine($"    Rate: {_displayStats.Traffic.InputRatePackets} packets ({_displayStats.Traffic.InputRateBytes} bytes) per second");
+            sb.AppendLine($"    Total: {_displayStats.Traffic.TotalInputPackets} packets ({_displayStats.Traffic.TotalInputBytes} bytes)");
+            sb.AppendLine("Output:");
+            sb.AppendLine($"    Rate: {_displayStats.Traffic.OutputRatePackets} packets ({_displayStats.Traffic.OutputRateBytes} bytes) per second");
+            sb.AppendLine($"    Total: {_displayStats.Traffic.TotalOutputPackets} packets ({_displayStats.Traffic.TotalOutputBytes} bytes)");
+            return sb.ToString();
+        }
+        else
+        {
+            return "";
+        }
+    }
+
+    private async void UpdateInterfaceStats(List<InterfaceInfo> interfaces)
+    {
+        if (_portStats == null || _vlanStats == null) return;
+        switch (Model)
+        {
+            case SwitchModel.Cisco_IE_2000_16TC:
+                for (int i = 0; i < 16; i++)
+                {
+                    var inter = interfaces.Find(inf => inf.Name == $"FastEthernet1/{i + 1}");
+                    if (inter != null)
+                    {
+                        _portStats[i] = inter;
+                    }
+                }
+                for (int i = 0; i < 2; i++)
+                {
+                    var inter = interfaces.Find(inf => inf.Name == $"GigabitEthernet1/{i + 1}");
+                    if (inter != null)
+                    {
+                        _portStats[16 + i] = inter;
+                    }
+                }
+                break;
+            case SwitchModel.Cisco_IE_3200_8T2S:
+                for (int i = 0; i < 10; i++)
+                {
+                    var inter = interfaces.Find(inf => inf.Name == $"GigabitEthernet1/{i + 1}");
+                    if (inter != null)
+                    {
+                        _portStats[i] = inter;
+                    }
+                }
+                break;
+        }
+        for (int i = 0; i < 4; i++)
+        {
+            var inter = interfaces.Find(inf => inf.Name == $"Vlan{i + 1}");
+            if (inter != null)
+            {
+                _vlanStats[i] = inter;
+            }
+        }
+        UpdateSignalTraffic();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private (float, float) GetPortDisplayPosition(int index)
+    {
+        switch (Model)
+        {
+            case SwitchModel.Cisco_IE_2000_16TC:
+                if (index < 0 || index >= 18)
+                {
+                    return (0, 0);
+                }
+                if (index < 8)
+                {
+                    return ((index % 2 + 1) * 11, (index / 2 + 1) * 11);
+                }
+                if (index < 16)
+                {
+                    index -= 8;
+                    return (29 + (index % 2 + 1) * 11, (index / 2 + 1) * 11);
+                }
+                if (index == 16)
+                {
+                    return (51, 62.5f);
+                }
+                if (index == 17)
+                {
+                    return (51, 80.5f);
+                }
+                break;
+            case SwitchModel.Cisco_IE_3200_8T2S:
+                if (index < 0 || index >= 10)
+                {
+                    return (0, 0);
+                }
+                if (index < 2)
+                {
+                    return (46 - index * 10, 27);
+                }
+                if (index < 6)
+                {
+                    return (82 - (index - 2) * 10.2f, 42);
+                }
+                if (index < 10)
+                {
+                    return (39 - (index - 6) * 10.2f, 42);
+                }
+                break;
+        }
+        return (0, 0);
+    }
+
+    private void TestCommand()
+    {
+        Console.WriteLine("Testing Commands...");
+        _SwitchMonitorService.GetInterfaces();
+        _SwitchMonitorService.GetEigrpTopology();
+        _SwitchMonitorService.GetPorts();
+    }
+
+    void IDisposable.Dispose() { }
+}

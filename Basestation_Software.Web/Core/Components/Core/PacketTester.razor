@@ -3,13 +3,12 @@
 
 <div class="component-header">
     <h3>Packet Tester</h3>
-    <div class="vr">&nbsp;</div>
     <button class="info packet-tester-help"><i class="bi-question-circle"></i>
         <pre>PostDelay BoardName CommandName [Data ...]&#10;PostDelay BoardName CommandName [Data ...]&#10;...&#10;&#10;Any number of Data elements may be specified.&#10;Data may be a single value or a minimum (inclusive) and maximum (exclusive) value separated by &quot;/&quot;.&#10;PostDelay is the number of milliseconds until the next line is sent.</pre>
     </button>
 </div>
 <div class="component-body packet-tester">
-    <input style="grid-area: code; resize: none" @bind=TextAreaValue autocomplete="off" autocorrect="off" wrap="off" autocapitalize="off" />
+    <textarea style="grid-area: code; resize: none" @bind=TextAreaValue autocomplete="off" autocorrect="off" wrap="off" autocapitalize="off" />
     @if (Running)
     {
         <button style="grid-area: start" class="warning" @onclick=Pause><i class="bi-pause" /></button>
@@ -22,12 +21,12 @@
     <p style="grid-area: line">L@(Line)</p>
     <p style="grid-area: info">@Info</p>
     <p style="grid-area: ip-label">Override IP:</p>
-    <input style="grid-area: ip-checkbox" type="checkbox" @bind=OverrideIP>
-    <input style="grid-area: ip" @bind=IP disabled=@(!OverrideIP)>
+    <input style="grid-area: ip-checkbox" type="checkbox" @bind=OverrideIP />
+    <input style="grid-area: ip" @bind=IP disabled=@(!OverrideIP) />
     <p style="grid-area: port-label">Port:</p>
-    <input style="grid-area: port" @bind=Port>
+    <input style="grid-area: port" @bind=Port />
     <p style="grid-area: tcp-label">Use TCP:</p>
-    <input style="grid-area: tcp" type="checkbox" @bind=UseTCP>
+    <input style="grid-area: tcp" type="checkbox" @bind=UseTCP />
 </div>
 
 @code {

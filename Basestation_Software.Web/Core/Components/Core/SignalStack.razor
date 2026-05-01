@@ -1,0 +1,47 @@
+﻿@inject RoveCommService _RoveCommService
+
+<div class="component-header">
+    <h3>Signal Stack</h3>
+    <input type="checkbox" class="output-enabled" @bind=_outputEnabled />
+    <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
+</div>
+<div class="component-body">
+    <div style="display: flex; background-color: var(--secondary-bg) ">
+        <p>Dead Zone</p>
+        <input type="range" @bind=DeadZone min="0" max="0.5" step="0.001" style="width: 100px; align-self: center" />
+        <input @bind=DeadZone style="width: 40px" />
+    </div>
+    <p>@(speed* RPM_PER_SPEED) RPM</p>
+    <input type="range" @bind=_scale min="0" max="4000" step="100" style="width: 100px; align-self: center" />
+    <button checked=@(_scale == 0) @onclick=@(() => _scale = 0)>0</button>
+    <button checked=@(_scale == 500) @onclick=@(() => _scale = 500)>500</button>
+    <button checked=@(_scale == 4000) @onclick=@(() => _scale = 4000)>4000</button>
+    <input @bind=_scale style="width: 40px" />
+</div>
+
+@code {
+    bool LastProcessGamepadInputOK = false;
+    private bool _outputEnabled = true;
+    GamepadSelector _gamepadSelector = new();
+
+    public double DeadZone = 0.15;
+    public static readonly double RPM_PER_SPEED = 1;
+    private short speed { get => _speed; set { _speed = value; if (_outputEnabled) _RoveCommService.Boards.SignalStack.OpenLoop(_speed); } }
+    private double _scale = 4000;
+    short _speed = 0;
+
+    private async Task Update(Gamepad gamepad, float deltaT)
+    {
+        bool processGamepadInputOK = await ProcessGamepadInput(gamepad, deltaT);
+        if (!processGamepadInputOK && LastProcessGamepadInputOK) speed = 0;
+        LastProcessGamepadInputOK = processGamepadInputOK;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task<bool> ProcessGamepadInput(Gamepad gamepad, float deltaT)
+    {
+        if (gamepad.Axes.Length < 1) return false;
+        speed = Math.Abs(gamepad.Axes[0]) <= DeadZone ? (short)0 : (short)(gamepad.Axes[0] * _scale);
+        return _outputEnabled;
+    }
+}

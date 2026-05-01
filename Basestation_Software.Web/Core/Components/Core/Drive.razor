@@ -6,8 +6,7 @@
 
 <div class="component-header">
     <h3>Drive</h3>
-    <div class="vr">&nbsp;</div>
-    <input type="checkbox" class="output-enabled" @bind=_outputEnabled>
+    <input type="checkbox" class="output-enabled" @bind=_outputEnabled />
     <select @bind=SelectedScheme>
         @foreach (var value in Enum.GetValues<Scheme>())
         {
@@ -23,46 +22,23 @@
     <progress style="grid-area: right-forward; place-self: stretch" value=@(RightSpeed > 0 ? RightSpeed : 0) max=@DriveSpeed />
     <p style="color: #fff; grid-area: left-backward-start / left-backward-start / left-forward-end / left-forward-end; z-index: 10">@($"{LeftSpeed:+0.00000;-0.00000;+0.00000}")</p>
     <p style="color: #fff; grid-area: right-backward-start / right-backward-start / right-forward-end / right-forward-end; z-index: 10">@($"{RightSpeed:+0.00000;-0.00000;+0.00000}")</p>
-    <input style="grid-area: drivespeed-input; width: 100%" type="range" min="0" max="1" step="0.01" @bind=DriveSpeed>
+    <input style="grid-area: drivespeed-input; width: 100%" type="range" min="0" max="1" step="0.01" @bind=DriveSpeed />
     <div style="grid-area: drivespeed-buttons">
-        <button @onclick=@(() => DriveSpeed = 0.1)>10</button>
-        <button @onclick=@(() => DriveSpeed = 0.2)>20</button>
-        <button @onclick=@(() => DriveSpeed = 0.3)>30</button>
-        <button @onclick=@(() => DriveSpeed = 0.4)>40</button>
-        <button @onclick=@(() => DriveSpeed = 1.0)>100</button>
+        <button checked=@(DriveSpeed == 0.1) @onclick=@(() => DriveSpeed = 0.1)>10</button>
+        <button checked=@(DriveSpeed == 0.2) @onclick=@(() => DriveSpeed = 0.2)>20</button>
+        <button checked=@(DriveSpeed == 0.3) @onclick=@(() => DriveSpeed = 0.3)>30</button>
+        <button checked=@(DriveSpeed == 0.4) @onclick=@(() => DriveSpeed = 0.4)>40</button>
+        <button checked=@(DriveSpeed == 1.0) @onclick=@(() => DriveSpeed = 1.0)>100</button>
     </div>
-    <input style="grid-area: deadzone-input; width: 100%" type="range" @bind=DeadZone min="0" max="0.5" step="0.001">
+    <input style="grid-area: deadzone-input; width: 100%" type="range" @bind=DeadZone min="0" max="0.5" step="0.001" />
     <p style="grid-area: deadzone">Dead Zone: @($"{DeadZone:0.000}")</p>
 
     <svg class="gimbal-frame" viewBox="0 0 60 60">
-        <style>
-            .background {
-                stroke: none;
-                fill: #ffff;
-            }
-
-            .frame {
-                stroke-width: 0.5;
-                stroke: #000f;
-                fill: #ffff;
-            }
-
-            .center {
-                stroke-width: 0.5;
-                stroke: #000f;
-                fill: none;
-            }
-
-            .dot {
-                stroke: none;
-                fill: #00ff;
-            }
-        </style>
-        <rect class="background" x="0" y="0" width="60" height="60" />
-        <rect class="frame" x="5" y="5" width="50" height="50" />
-        <line class="center" x1="0" y1="30" x2="60" y2="30" />
-        <line class="center" x1="30" y1="0" x2="30" y2="60" />
-        <circle class="dot" cx="@Utils.Map(Pan, -5, 5, 5, 55)" cy="@Utils.Map(Tilt, -5, 5, 55, 5)" r="3" />
+        <rect class="background" x="0" y="0" width="60" height="60" stroke="none" fill="#ffff" />
+        <rect class="frame" x="5" y="5" width="50" height="50" stroke-width="0.5" stroke="000f" fill="#ffff" />
+        <line class="center" x1="0" y1="30" x2="60" y2="30" stroke-width="0.5" stroke="#000f" fill="none" />
+        <line class="center" x1="30" y1="0" x2="30" y2="60" stroke-width="0.5" stroke="#000f" fill="none" />
+        <circle class="dot" cx="@Utils.Map(Pan, -5, 5, 5, 55)" cy="@Utils.Map(Tilt, -5, 5, 55, 5)" r="3" stroke="none" fill="#00ff" />
     </svg>
     @for (int i = 0; i < GIMBAL_NAMES.Count(); i++)
     {
@@ -83,11 +59,7 @@
     private const double SQRT2 = 1.4142135623730951;
     public const int UPDATE_INTERVAL = 100;
     public const double BUMP_SPEED = 0.05, GAMMA_FLIGHTSTICK = 1.5, GAMMA_XBOX = 1.5;
-    public readonly List<string> GIMBAL_NAMES = new List<string>()
-{
-"Left", "Right", "Back",
-"Arm 1", "Arm 2", "Auger"
-};
+    public readonly List<string> GIMBAL_NAMES = new List<string>() { "Left", "Right", "Back", "Arm 1", "Arm 2", "Auger" };
 
     // State
     private GamepadSelector? _gamepadSelector;

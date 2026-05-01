@@ -30,4 +30,10 @@
     private float _raman { get => _RoveCommService.Boards.Raman.Position_InstrumentsAxis; }
     private float _tof { get => _RoveCommService.Boards.Raman.Position_TOF; }
     private static readonly float _augerLength = 7.5f;
+
+    protected override void OnInitialized()
+    {
+        _RoveCommService.Boards.Auger.OnPosition(async packet => await InvokeAsync(StateHasChanged));
+        _RoveCommService.Boards.Raman.OnPosition(async packet => await InvokeAsync(StateHasChanged));
+    }
 }

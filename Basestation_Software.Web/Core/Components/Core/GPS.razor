@@ -30,14 +30,7 @@
     <p class="secondary-bg">@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_HorizontalAccuracy:0000.000}")</p>
     <p class="secondary-bg">@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_VerticalAccuracy:0000.000}")</p>
     <p class="secondary-bg">@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_HeadingAccuracy:000.00000}")</p>
-    <p style="grid-area: 7 / 1 / 8 / 4">@FixType Fix @if (IsDifferential) {
-        <span style="color: green">With Differential</span>
-                }
-                else
-        {
-            <span style="color: red">Without Differential</span>
-        }
-    </p>
+    <p style="grid-area: 7 / 1 / 8 / 4">@FixType Fix <span style="color: @(IsDifferential ? "green" : "red")">With@(IsDifferential ? "" : "out") Differential</span></p>
     <p>Pitch [&#176;]</p>
     <p />
     <p>Roll [&#176;]</p>
@@ -280,7 +273,8 @@
         });
 
         _RoveCommService.Boards.Nav.OnCompassData(Update);
-        _RoveCommService.Boards.Core.OnAccelerometerData(async packet => {
+        _RoveCommService.Boards.Core.OnAccelerometerData(async packet =>
+        {
             float x = _RoveCommService.Boards.Core.AccelerometerData_X;
             float y = _RoveCommService.Boards.Core.AccelerometerData_Z;
             float z = -_RoveCommService.Boards.Core.AccelerometerData_Y;
@@ -292,7 +286,8 @@
             Roll = Math.Round((Math.Asin(normalizedUp.X) / Math.PI) * 180);
             Pitch = -Math.Round((Math.Asin(normalizedUp.Z) / Math.PI) * 180);
             // this still breaks for y < 0, but if the rover gets itself into that orientation, we have bigger problems
-            if (normalizedUp.Y < 0) {
+            if (normalizedUp.Y < 0)
+            {
                 Roll = 180 - Roll;
                 Pitch = 180 - Pitch;
             }
