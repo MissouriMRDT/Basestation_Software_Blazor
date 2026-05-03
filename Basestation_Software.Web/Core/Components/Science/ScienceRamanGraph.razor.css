@@ -8,6 +8,11 @@
     animation: finishTopBar .5s ease-in-out 1;
 }
 
+.topBarCanceled
+{
+    animation: cancelTopBar .5s ease-in-out 1;
+}
+
 @keyframes loadingTopBar {
     0% {background-color: var(--primary);}
     50% {background-color: var(--secondary-bg);}
@@ -16,5 +21,10 @@
 
 @keyframes finishTopBar {
     0% {background-color: #198754;}
+    100% {background-color: var(--primary);}
+}
+
+@keyframes cancelTopBar {
+    0% {background-color: #dc3545;}
     100% {background-color: var(--primary);}
 }
