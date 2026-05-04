@@ -44,11 +44,12 @@
     </div>
     <p>Dot Size</p>
     <input @bind=_dotSize @bind:after=UpdateChartAsync />
-     <div style="display: grid; grid-template-columns: 33% 33% 34%; grid-column: 1 / 3; grid-auto-flow: column;">
+    <div style="display: grid; grid-template-columns: 33% 33% 34%; grid-column: 1 / 3; grid-auto-flow: column;">
         <button style="width: 100%;" @onclick=@SetBackground>Set Background</button>
         <button checked=@(_backgroundChecked) style="width: 100%;" @onclick=@(async () => await SubtractData())>Apply Background</button>
         <button @onclick=@(() => _RoveCommService.Boards.Raman.RequestRamanReading(405, 405)) style="danger">Reset Hardware Background</button>
     </div>
+    <button style="grid-column: 1 / 3;" class=@(_laserActive ? "danger" : "") checked=@(_laserActive) @onclick=ToggleLaser>Laser</button>
 </div>
 
 @code {
@@ -61,7 +62,9 @@
     private bool _requestChecked = false;
     private uint _requestType = 0;
     private bool _autoRequest = false;
+    private bool _laserActive = false;
     private Timer? _timer;
+    private Timer _laserTimer = new Timer(50);
 
     private LineChartConfig? RamanChartConfig;
     private Chart? RamanChart;
@@ -69,6 +72,10 @@
 
     protected override async void OnInitialized()
     {   
+        _laserTimer.Elapsed += ((object? s, ElapsedEventArgs a) => _RoveCommService.Boards.Raman.Laser(Convert.ToByte(_laserActive)));
+        _laserTimer.AutoReset = true;
+        _laserTimer.Enabled = true;
+
         // Initialize data with easter egg
         for (int i = 0; i < _data.Length; i++)
         {
@@ -108,6 +115,11 @@
         });
 
         await UpdateChartAsync();
+    }
+
+    private void ToggleLaser()
+    {
+        _laserActive = !_laserActive;
     }
 
     private void RequestOver(bool c = false)
