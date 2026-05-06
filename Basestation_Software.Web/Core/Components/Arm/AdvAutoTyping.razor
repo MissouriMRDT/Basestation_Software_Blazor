@@ -11,63 +11,39 @@
     <div style="display: flex; flex-direction: column; justify-content: center; align-items: center">
         <p class="font-monospace fs-3">@_phrase</p>
         <p>@_statusMessage</p>
-        <p>@delay ms</p>
         <progress max="1" value=@_charStatusMeter class="progress"></progress>
     </div>
 
     <div style="display: flex; gap: 2px; justify-content: center">
         <input @bind:get=_phrase @bind:set=@(value => { _phrase = value.ToUpper(); }) />
-        <button @onclick=StartStop>@(_running ? "Stop" : "Start")</button>
+        <button @onclick=@(async ()=>{if (!_running) await Start(); else Stop();}) checked=@_running>@(_running ? "Stop" : "Start")</button>
         <button @onclick=ResetCache>Reset Cache</button>
     </div>
 
     <div style="display: grid; grid-template-columns: auto auto auto; text-align: center; padding: 0.5rem;">
-        <button @onclick=CacheQ>Cache Q</button>
-        <button @onclick=CacheP>Cache P</button>
-        <button @onclick=CacheZ>Cache Z</button>
-        <p>@(_keyCacheQ != null ? "Cached!" : "Not Cached")</p>
-        <p>@(_keyCacheP != null ? "Cached!" : "Not Cached")</p>
-        <p>@(_keyCacheZ != null ? "Cached!" : "Not Cached")</p>
+        <button @onclick=CacheQ checked=@(_keyCacheQ != null)>@(_keyCacheQ == null ? "Cache" : "Cached") Q</button>
+        <button @onclick=CacheP checked=@(_keyCacheP != null)>@(_keyCacheP == null ? "Cache" : "Cached") P</button>
+        <button @onclick=CacheZ checked=@(_keyCacheZ != null)>@(_keyCacheZ == null ? "Cache" : "Cached") Z</button>
     </div>
 </div>
 
 @code {
-    private readonly CancellationTokenSource _cts = new();
+    private CancellationTokenSource _cts = new();
     private bool _running = false;
     private string _phrase = "";
     private string _statusMessage = "Idle";
-    private int _currentCharIndex = 0;
     private float _charStatusMeter = 0;
 
-    private const int InchesPerSecond = 4;
-    private int delay = 0;
-
-    private Dictionary<char, Vector3> _keyPositions = new();
-    private Matrix4x4 _keyPositionsPose = Matrix4x4.Identity;
+    private Dictionary<char, Vector2> _keyPositions = new();
 
     // X, Pitch
-    private Vector3? _keyCacheQ = null;
-    private Vector3? _keyCacheP = null;
-    private Vector3? _keyCacheZ = null;
+    private Vector2? _keyCacheQ = null;
+    private Vector2? _keyCacheP = null;
+    private Vector2? _keyCacheZ = null;
 
-    // Q, P, A
-    private bool[] _isCached = new bool[3];
-
-    private void CacheQ()
-    {
-        _keyCacheQ = new Vector3(_RoveCommService.Boards.Arm.Position_GX, _RoveCommService.Boards.Arm.Position_GY, _RoveCommService.Boards.Arm.Position_GZ);
-    }
-
-    private void CacheP()
-    {
-        _keyCacheP = new Vector3(_RoveCommService.Boards.Arm.Position_GX, _RoveCommService.Boards.Arm.Position_GY, _RoveCommService.Boards.Arm.Position_GZ);
-
-    }
-
-    private void CacheZ()
-    {
-        _keyCacheZ = new Vector3(_RoveCommService.Boards.Arm.Position_GX, _RoveCommService.Boards.Arm.Position_GY, _RoveCommService.Boards.Arm.Position_GZ);
-    }
+    private void CacheQ() => _keyCacheQ = new Vector2(_RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J5);
+    private void CacheP() => _keyCacheP = new Vector2(_RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J5);
+    private void CacheZ() => _keyCacheZ = new Vector2(_RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J5);
 
     private void ResetCache()
     {
@@ -76,114 +52,140 @@
         _keyCacheZ = null;
     }
 
-    protected override void OnInitialized()
+    private async Task Start()
     {
-        _RoveCommService.Boards.Arm.OnPosition(async packet => await InvokeAsync(StateHasChanged));
-    }
-
-    private async Task StartStop() {
-        if (!_running) await Start();
-        else Stop();
-        await Task.CompletedTask;
-    }
-
-    private async Task Start() {
-        _running = true;
-        try {
+        if (_running) Stop();
+        try
+        {
+            _cts = new();
+            _running = true;
+            _charStatusMeter = 0;
+            await InvokeAsync(StateHasChanged);
+            _OpService.SetAutonomy();
+            // Make sure watchdog is disabled
+            _RoveCommService.Boards.Arm.WatchdogOverride(1);
             await Task.Run(PlayPhrase, _cts.Token);
-        } catch (OperationCanceledException) {
+        }
+        catch (OperationCanceledException)
+        {
             _statusMessage = "Stopped";
-            _OpService.SetTeleop();
-            _running = false;
             await InvokeAsync(StateHasChanged);
         }
-        _running = false;
-    }
-
-    private void Stop() {
-        _cts.Cancel();
-        _running = false;
-    }
-
-    private async Task PlayPhrase() {
-        _running = true;
-        _OpService.SetAutonomy();
-        CalculateKeyPositions();
-        //ResetCache();
-        for (int i = 0; i < _phrase.Length; i++)
+        finally
         {
-            _currentCharIndex = i;
-            if (!_keyPositions.ContainsKey(_phrase[i])) continue;
+            _OpService.SetTeleop();
+            _RoveCommService.Boards.Arm.WatchdogOverride(0);
+            _running = false;
             _charStatusMeter = 0;
-            _statusMessage = "Moving to " + _phrase[i];
             await InvokeAsync(StateHasChanged);
-    
-            Vector3 currentPos = new(_RoveCommService.Boards.Arm.Position_GX, _RoveCommService.Boards.Arm.Position_GY, _RoveCommService.Boards.Arm.Position_GZ);
-            Vector3 nextPos = _keyPositions[_phrase[i]];
-            Vector3 delta = nextPos - currentPos;
-            for (int k = 0; k < 10; k++) {
-                _RoveCommService.Boards.Arm.IKWorldIncrement(delta.X/10, delta.Y/10, delta.Z/10, 0, 0, 0);
-                await Task.Delay(500);
+        }
+    }
+
+    private void Stop() => _cts.Cancel();
+
+    private async Task PlayPhrase()
+    {
+        // Start with linear servo retracted
+        _RoveCommService.Boards.Arm.LinearServo(30);
+        // Check that reference keys are cached
+        if (_keyCacheQ == null || _keyCacheP == null || _keyCacheZ == null)
+        {
+            _statusMessage = "Not All Keys Cached";
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        CalculateKeyPositions();
+        // Store positions of all other joints besides X and J5
+        ArmAxes startPosition = new();
+        startPosition.SetFromArm(_RoveCommService.Boards.Arm);
+
+        foreach (char letter in _phrase)
+        {
+            if (!_keyPositions.ContainsKey(letter)) continue;
+            _charStatusMeter = 0;
+            _statusMessage = "Moving to " + letter;
+            await InvokeAsync(StateHasChanged);
+            
+            Vector2 currentPos = new(_RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J5);
+            Vector2 nextPos = _keyPositions[letter];
+            float delta = (nextPos - currentPos).Length();
+            float initialDelta = delta;
+
+            // Send command to move to next position
+            _RoveCommService.Boards.Arm.TargetAngle(nextPos.X, startPosition.J2, startPosition.J3, startPosition.J4, nextPos.Y, startPosition.J6);
+            
+            // Wait until the arm gets close and update the progress bar in the meantime
+            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token, new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token);
+            while (delta > 0.5 && !timeout.IsCancellationRequested)
+            {
+                if (initialDelta != 0) _charStatusMeter = 1 - (delta / initialDelta);
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(100, timeout.Token);
+                currentPos = new(_RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J5);
+                delta = (nextPos - currentPos).Length();
             }
 
-            @* delay = Math.Max((int)(Math.Abs(delta.X) * 1000 / InchesPerSecond), 1000);
+            await Task.Delay(200, _cts.Token); // A little more time to settle
 
-            await InvokeAsync(StateHasChanged);
-            for (int j = 0; j < delay; j+=10)
-            {
-                _charStatusMeter = (float)(j * 10) / delay;
-                _ = InvokeAsync(StateHasChanged);
-                await Task.Delay(millisecondsDelay: 10);
-            } *@
-
-            _statusMessage = "Running solenoid";
-            await InvokeAsync(StateHasChanged);
+            _statusMessage = "Extending Servo";
             _RoveCommService.Boards.Arm.LinearServo(180);
-            await Task.Delay(2000);
+            _charStatusMeter = 0;
+            for (int j = 0; j < 20; j++) {
+                _charStatusMeter += 1.0f/20;
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(100, _cts.Token);
+            }
+
+            _statusMessage = "Retracting Servo";
             _RoveCommService.Boards.Arm.LinearServo(30);
-            await Task.Delay(2000);
+            _charStatusMeter = 0;
+            for (int j = 0; j < 20; j++) {
+                _charStatusMeter += 1.0f/20;
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(100, _cts.Token);
+            }
         }
 
         _statusMessage = "Done";
-        await Task.Delay(1000);
-        _OpService.SetTeleop();
-        _running = false;
         await InvokeAsync(StateHasChanged);
     }
 
     private void CalculateKeyPositions()
     {
-        if (_keyCacheQ == null || _keyCacheP == null || _keyCacheZ == null) return;
-        Vector3 Q = _keyCacheQ ?? new();
-        Vector3 P = _keyCacheP ?? new();
-        Vector3 Z = _keyCacheZ ?? new();
+        if (_keyCacheQ == null || _keyCacheP == null || _keyCacheZ == null)
+        {
+            throw new InvalidOperationException("Not all keys cached.");
+        }
+
+        Vector2 Q = _keyCacheQ ?? new();
+        Vector2 P = _keyCacheP ?? new();
+        Vector2 Z = _keyCacheZ ?? new();
         // Calculate keyboard measurements based on cached keys
-        Vector3 QP = P - Q;
-        Vector3 QZ = Z - Q;
-        Vector3 basisX = QP / 9;
-        Vector3 basisY = QZ / 2;
+        Vector2 QP = P - Q;
+        Vector2 QZ = Z - Q;
+        Vector2 basisX = QP / 9;
+        Vector2 basisY = QZ / 2;
 
         string rowQ = "QWERTYUIOP";
         string rowA = "ASDFGHJKL";
-        string rowZ = "ZCVBNM";
+        string rowZ = "ZXCVBNM";
 
-        for (int i = 0; i < rowQ.Length; i++) {
+        for (int i = 0; i < rowQ.Length; i++)
+        {
             _keyPositions[rowQ[i]] = Q + basisX * i;
         }
-        for (int i = 0; i < rowA.Length; i++) {
+
+        for (int i = 0; i < rowA.Length; i++)
+        {
             _keyPositions[rowA[i]] = Q + basisX * i + basisY;
         }
-        for (int i = 0; i < rowZ.Length; i++) {
+
+        for (int i = 0; i < rowZ.Length; i++)
+        {
             _keyPositions[rowZ[i]] = Q + basisX * i + 2*basisY;
         }
+
     }
 
-    private void Flip()
-    {
-        float[] position = (float[])_RoveCommService.Boards.Arm.Position;
-        if (position[4] > 0)
-            _RoveCommService.Boards.Arm.TargetAngle(position[0], position[1], position[2], position[3], position[4] - 180f, position[5]);
-        else
-            _RoveCommService.Boards.Arm.TargetAngle(position[0], position[1], position[2], position[3], position[4] + 180f, position[5]);
-    }
 }
