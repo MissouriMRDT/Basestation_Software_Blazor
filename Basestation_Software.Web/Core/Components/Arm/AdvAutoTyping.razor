@@ -86,7 +86,8 @@
     private async Task PlayPhrase()
     {
         // Start with linear servo retracted
-        _RoveCommService.Boards.Arm.LinearServo(30);
+        _RoveCommService.Boards.Arm.LinearServo(100);
+        await Task.Delay(3000, _cts.Token);
         // Check that reference keys are cached
         if (_keyCacheQ == null || _keyCacheP == null || _keyCacheZ == null)
         {
@@ -97,8 +98,14 @@
 
         CalculateKeyPositions();
         // Store positions of all other joints besides X and J5
-        ArmAxes startPosition = new();
-        startPosition.SetFromArm(_RoveCommService.Boards.Arm);
+        ArmAxes startPosition = new() {
+            X = _RoveCommService.Boards.Arm.Target_X,
+            J2 = _RoveCommService.Boards.Arm.Target_J2,
+            J3 = _RoveCommService.Boards.Arm.Target_J3,
+            J4 = _RoveCommService.Boards.Arm.Target_J4,
+            J5 = _RoveCommService.Boards.Arm.Target_J5,
+            J6 = _RoveCommService.Boards.Arm.Target_J6,
+        };
 
         foreach (char letter in _phrase)
         {
@@ -109,39 +116,41 @@
             
             Vector2 currentPos = new(_RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J5);
             Vector2 nextPos = _keyPositions[letter];
-            float delta = (nextPos - currentPos).Length();
+            //float delta = (nextPos - currentPos).Length();
+            float delta = Math.Abs(nextPos.X - currentPos.X);
             float initialDelta = delta;
 
             // Send command to move to next position
             _RoveCommService.Boards.Arm.TargetAngle(nextPos.X, startPosition.J2, startPosition.J3, startPosition.J4, nextPos.Y, startPosition.J6);
             
             // Wait until the arm gets close and update the progress bar in the meantime
-            using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token, new CancellationTokenSource(TimeSpan.FromSeconds(10)).Token);
-            while (delta > 0.5 && !timeout.IsCancellationRequested)
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            // using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token, timeoutCts.Token);
+            while (delta > 0.1 && !timeout.Token.IsCancellationRequested)
             {
                 if (initialDelta != 0) _charStatusMeter = 1 - (delta / initialDelta);
                 await InvokeAsync(StateHasChanged);
-                await Task.Delay(100, timeout.Token);
+                await Task.Delay(100, _cts.Token);
                 currentPos = new(_RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J5);
-                delta = (nextPos - currentPos).Length();
+                delta = Math.Abs(nextPos.X - currentPos.X);
             }
 
-            await Task.Delay(200, _cts.Token); // A little more time to settle
+            await Task.Delay(1000, _cts.Token); // A little more time to settle
 
             _statusMessage = "Extending Servo";
             _RoveCommService.Boards.Arm.LinearServo(180);
             _charStatusMeter = 0;
-            for (int j = 0; j < 20; j++) {
-                _charStatusMeter += 1.0f/20;
+            for (int j = 0; j < 30; j++) {
+                _charStatusMeter += 1.0f/30;
                 await InvokeAsync(StateHasChanged);
                 await Task.Delay(100, _cts.Token);
             }
 
             _statusMessage = "Retracting Servo";
-            _RoveCommService.Boards.Arm.LinearServo(30);
+            _RoveCommService.Boards.Arm.LinearServo(100);
             _charStatusMeter = 0;
-            for (int j = 0; j < 20; j++) {
-                _charStatusMeter += 1.0f/20;
+            for (int j = 0; j < 30; j++) {
+                _charStatusMeter += 1.0f/30;
                 await InvokeAsync(StateHasChanged);
                 await Task.Delay(100, _cts.Token);
             }
