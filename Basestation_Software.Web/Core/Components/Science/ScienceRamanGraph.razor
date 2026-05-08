@@ -7,6 +7,7 @@
 @using System.Text
 @using System.Timers
 @using System.Runtime.CompilerServices
+@implements IDisposable
 
 <script>
     function DownloadFile(filename, contentType, content) {
@@ -49,7 +50,7 @@
         <button checked=@(_backgroundChecked) style="width: 100%;" @onclick=@(async () => await SubtractData())>Apply Background</button>
         <button @onclick=@(() => _RoveCommService.Boards.Raman.RequestRamanReading(405, 405)) style="danger">Reset Hardware Background</button>
     </div>
-    <button style="grid-column: 1 / 3;" class=@(_laserActive ? "danger" : "") checked=@(_laserActive) @onclick=ToggleLaser>Laser</button>
+    <button style="grid-column: 1 / 3;" class=@(_laserActive ? "danger" : "") checked=@(_laserActive) @onclick=@(() => ToggleLaser())>Laser</button>
 </div>
 
 @code {
@@ -64,17 +65,23 @@
     private bool _autoRequest = false;
     private bool _laserActive = false;
     private Timer? _timer;
-    private Timer _laserTimer = new Timer(50);
-
+    private Timer _laserTimer = new Timer(  200);
     private LineChartConfig? RamanChartConfig;
     private Chart? RamanChart;
     private string _acquiredAt = "";
 
+
+    protected override async Task OnAfterRenderAsync(bool f)
+    {
+        if (f)
+        {
+            _laserTimer.Elapsed += LaserElapsed;
+            _laserTimer.AutoReset = true;
+            _laserTimer.Enabled = true;
+        }
+    }
     protected override async void OnInitialized()
     {   
-        _laserTimer.Elapsed += ((object? s, ElapsedEventArgs a) => _RoveCommService.Boards.Raman.Laser(Convert.ToByte(_laserActive)));
-        _laserTimer.AutoReset = true;
-        _laserTimer.Enabled = true;
 
         // Initialize data with easter egg
         for (int i = 0; i < _data.Length; i++)
@@ -126,9 +133,9 @@
     {
         if (_requestType != 3)
             _requestChecked = false;
-        
+
         _loadingState = !c ? "topBarFinished" : "topBarCanceled";
-        
+
         _backgroundChecked = false;
     }
 
@@ -141,6 +148,13 @@
 
         RequestOver(true);
         _RoveCommService.Boards.Raman.RequestRamanReading(404, 404);
+    }
+
+
+    private async void LaserElapsed(object? sender, ElapsedEventArgs e)
+    {
+        _RoveCommService.Boards.Raman.Laser(_laserActive ? (byte)1 : (byte)0);
+        Console.WriteLine(_laserActive);
     }
 
     private async void ReRequest(object? sender, ElapsedEventArgs e)
@@ -223,6 +237,10 @@
                     {
                         Scales.XAxisId, new Axis()
                         {
+                            Ticks = new Ticks()
+                            {
+                                StepSize = 50
+                            },
                             Display = true,
                             Text = "Raman Shift (cm⁻¹)",
                             Color = "black",
@@ -258,7 +276,7 @@
                 }
             }
         };
-    
+
         RamanChartConfig.Data.Labels = Enumerable.Range(0, 2048).Select(i => i.ToString()).ToList();
 
         RamanChartConfig.Data.Datasets.Add(
@@ -280,5 +298,10 @@
     {
         byte[] file = Encoding.ASCII.GetBytes(String.Join("\n", _data.Select((x, i) => $"{i},{x}")));
         await _IJSRuntime.InvokeVoidAsync("DownloadFile", $"Raman_{_acquiredAt}.csv", "application/octet-stream", file);
+    }
+
+    void IDisposable.Dispose()
+    {
+        _laserTimer.Elapsed -= LaserElapsed;
     }
 }
