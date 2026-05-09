@@ -170,6 +170,7 @@
                 if (_continuousEnabled)
                 {
                     Console.WriteLine("Request");
+                    _loadingState = "topBarLoading";
                     _RoveCommService.Boards.Raman.RequestRamanReading(Math.Min(_integrationCycles, 1000), 1);
                 }
             }
@@ -183,13 +184,16 @@
         _integrationCycles = (_requestType % 4 == 0) ? 1 : _integrationCycles;
 
         if (_requestType != 3)
+        {
             processedIntegrationTime += _requestType;
+
+            _RoveCommService.Boards.Raman.RequestRamanReading(processedIntegrationTime, _integrationCycles);
+            _loadingState = "topBarLoading";
+        }
+
         //If timer is set to true, initialize it
         else if (_requestType == 3)
             _continuousEnabled = true;
-
-        _RoveCommService.Boards.Raman.RequestRamanReading(processedIntegrationTime, _integrationCycles);
-        _loadingState = "topBarLoading";
     }
 
     private void RequestPressed()
