@@ -62,9 +62,10 @@
     private bool _backgroundChecked = false;
     private bool _requestChecked = false;
     private uint _requestType = 0;
-    private bool _autoRequest = false;
     private bool _laserActive = false;
-    private Timer? _timer;
+    private PeriodicTimer _continuousTimer = new PeriodicTimer(TimeSpan.FromSeconds(1.2));
+    private bool _continuousEnabled = false;
+    private CancellationTokenSource _ctts = new();
     private Timer _laserTimer = new Timer(  200);
     private LineChartConfig? RamanChartConfig;
     private Chart? RamanChart;
@@ -78,6 +79,8 @@
             _laserTimer.Elapsed += LaserElapsed;
             _laserTimer.AutoReset = true;
             _laserTimer.Enabled = true;
+
+            _ = ContinuousTimer();
         }
     }
     protected override async void OnInitialized()
@@ -142,9 +145,7 @@
     private void CancelRequest()
     {
         _requestChecked = false;
-
-        if (_requestType == 3)
-            _timer.Enabled = false;
+        _continuousEnabled = false;
 
         RequestOver(true);
         _RoveCommService.Boards.Raman.RequestRamanReading(404, 404);
@@ -157,14 +158,24 @@
         Console.WriteLine(_laserActive);
     }
 
-    private async void ReRequest(object? sender, ElapsedEventArgs e)
+    private async Task ContinuousTimer()
     {
-        if (!(_requestType == 3) && _timer != null)
-            _timer.Enabled = false;
-        else
-            RequestRaman();
-    }
+        try
+        {
+            while (await _continuousTimer.WaitForNextTickAsync(_ctts.Token))
+            {
+                if (_requestType != 3)
+                    _continuousEnabled = false;
 
+                if (_continuousEnabled)
+                {
+                    Console.WriteLine("Request");
+                    _RoveCommService.Boards.Raman.RequestRamanReading(Math.Min(_integrationCycles, 1000), 1);
+                }
+            }
+        }
+        catch (OperationCanceledException) {Console.WriteLine("Timer Canceled");}
+    }
     private void RequestRaman()
     {   
 
@@ -174,15 +185,8 @@
         if (_requestType != 3)
             processedIntegrationTime += _requestType;
         //If timer is set to true, initialize it
-        else if (_requestType == 3 && _timer == null)
-        {
-            _timer = new Timer(Math.Max(_integrationTime + 200, 1000));
-            _timer.Elapsed += ReRequest;
-            _timer.AutoReset = true;
-            _timer.Enabled = true;
-        }
-        else if (_requestType == 3 && _timer != null)
-            _timer.Enabled = true;
+        else if (_requestType == 3)
+            _continuousEnabled = true;
 
         _RoveCommService.Boards.Raman.RequestRamanReading(processedIntegrationTime, _integrationCycles);
         _loadingState = "topBarLoading";
@@ -303,5 +307,10 @@
     void IDisposable.Dispose()
     {
         _laserTimer.Elapsed -= LaserElapsed;
+        _laserTimer.Dispose();
+
+        _ctts.Cancel();
+        _continuousTimer.Dispose();
+        _ctts.Dispose();
     }
 }
