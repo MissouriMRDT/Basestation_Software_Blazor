@@ -11,7 +11,7 @@
             int display = i;
             int source = _VRService.GetSource(display);
             <p style="place-self: center">@(_displayNames[display])</p>
-            <button checked=@(source < 0) @onclick=@(async () => await _VRService.SetSource(display, -1))><i class="bi-stop-fill" /></button>
+            <button checked=@(source < 0) @onclick=@(async () => await _VRService.SetSource(display, -1))><i class="bi-stop" /></button>
             @for (int j = 0; j < 8; j++)
             {
                 int camera = j;

@@ -3,12 +3,6 @@
     padding: 0;
     grid-template-columns: 1fr 1fr 1fr 1fr;
     grid-template-rows: 30px min-content min-content min-content min-content;
-    grid-template-areas:
-        "source-buttons source-buttons source-buttons source-buttons"
-        "utilization-1 utilization-1 utilization-2 utilization-2"
-        "connect disconnect restart shutdown"
-        "screenshot save panorama arguments"
-        "histogram . . .";
     place-items: stretch stretch;
 }
 
@@ -18,7 +12,7 @@
 }
 
 .source-buttons-container {
-    grid-area: source-buttons;
+    grid-area: 1 / 1 / 1 / 5;
     display: flex;
     flex-direction: row;
     margin-inline: 0;
@@ -53,17 +47,4 @@
 
 .camera-disconnected {
     --btn-fill: #ff0000;
-}
-
-.camera-arguments {
-    position: fixed;
-    inset: 10vh 10vw 10vh 10vw;
-    z-index: 2000;
-    display: grid;
-    grid-template-rows: 9fr 1fr;
-    grid-template-columns: 1fr 1fr 1fr;
-}
-
-.camera-arguments button {
-    font-size: 5vh;
 }

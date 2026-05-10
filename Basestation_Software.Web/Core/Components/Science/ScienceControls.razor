@@ -77,9 +77,9 @@
     private static readonly string[] _axisNames = ["Auger Gantry", "Auger", "Instruments Gantry", "AF Filter"];
     bool[] _limitOverrides = new bool[4];
     byte[] _brightness = [255, 255, 255, 255];
-    public static readonly short[] AFFilterPositions = [165, 15, 123, 93, 55]; // None, 440nm, 525nm, 600nm, 620nm
-    public static readonly short[] SoilTrapdorPositions = [15, 150]; // AF, Soil Cache
-    private float _afFilterPosition = 100;
+    public static readonly short[] AFFilterPositions = [165, 0, 123, 42, 0]; // None, 440nm, 525nm, 600nm, 620nm
+    public static readonly short[] SoilTrapdorPositions = [0, 122]; // AF, Soil Cache
+    private float _afFilterPosition = 0;
     private short _soilTrapdoorPosition = 100;
     private int _activeLED = -2;
 
@@ -113,7 +113,7 @@
         if (!_outputEnabled) return false;
 
         _RoveCommService.Boards.Auger.AugerAxis((short)Math.Clamp(inputs[0] * short.MaxValue, short.MinValue, short.MaxValue));
-        _RoveCommService.Boards.Auger.RunAuger((short)Math.Clamp(inputs[1] * 1000, -300, 300));
+        _RoveCommService.Boards.Auger.RunAuger((short)Math.Clamp(inputs[1] * 1000, -1000, 1000));
         _RoveCommService.Boards.Raman.InstrumentsAxis((short)Math.Clamp(inputs[2] * short.MaxValue, short.MinValue, short.MaxValue));
 
         if (inputs[3] != 0) _RoveCommService.Boards.Auger.AugerServo((short)_afFilterPosition, _soilTrapdoorPosition);

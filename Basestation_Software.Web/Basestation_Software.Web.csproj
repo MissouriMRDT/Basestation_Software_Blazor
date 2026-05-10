@@ -17,6 +17,7 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="NetMQ" Version="4.0.4.1" />
     <PackageReference Include="PSC.Blazor.Components.Chartjs" Version="8.0.8" />
     <PackageReference Include="SSH.NET" Version="2025.1.0" />
   </ItemGroup>

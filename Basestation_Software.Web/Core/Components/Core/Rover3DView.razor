@@ -21,7 +21,7 @@
     private ElementReference CanvasContainer;
     private IJSObjectReference? jsRoverView;
     private bool _dataLoaded = false;
-    private bool _accel = true;
+    private bool _accel = false;
 
     protected override void OnInitialized()
     {
@@ -44,6 +44,15 @@
                 await jsRoverView.InvokeVoidAsync("updateArm", [
                 _RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J2, _RoveCommService.Boards.Arm.Position_J3,
                 _RoveCommService.Boards.Arm.Position_J4, _RoveCommService.Boards.Arm.Position_J5, _RoveCommService.Boards.Arm.Position_J6]);
+            }
+        });
+        _RoveCommService.Boards.Arm.OnTarget(async packet =>
+        {
+            if (jsRoverView != null)
+            {
+                await jsRoverView.InvokeVoidAsync("updateTargetArm", [
+                _RoveCommService.Boards.Arm.Target_X, _RoveCommService.Boards.Arm.Target_J2, _RoveCommService.Boards.Arm.Target_J3,
+                _RoveCommService.Boards.Arm.Target_J4, _RoveCommService.Boards.Arm.Target_J5, _RoveCommService.Boards.Arm.Target_J6]);
             }
         });
     }

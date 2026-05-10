@@ -24,7 +24,7 @@
     private bool _outputEnabled = true;
     GamepadSelector _gamepadSelector = new();
 
-    public double DeadZone = 0.15;
+    public double DeadZone = 0.3;
     public static readonly double RPM_PER_SPEED = 1;
     private short speed { get => _speed; set { _speed = value; if (_outputEnabled) _RoveCommService.Boards.SignalStack.OpenLoop(_speed); } }
     private double _scale = 4000;

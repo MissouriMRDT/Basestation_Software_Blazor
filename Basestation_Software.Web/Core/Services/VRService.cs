@@ -50,7 +50,7 @@ public class VRService
 
     public double GetRotation(int display) => _rotations[display];
 
-    private double[] _grid = [150, 170, 210, 230, 70, 90, 110, 130];
+    private double[] _grid = [140, 170, 210, 230, 60, 80, 110, 130];
     public delegate Task GridSetCallback(double[] grid);
 
     private ConcurrentHashSet<GridSetCallback> _gridSetNotifier = [];

@@ -1,0 +1,58 @@
+@inject RoveCommService _RoveCommService
+
+<div class="component-header" style="background-color: #f00">
+    <h3>Camera Arguments</h3>
+</div>
+<div class="component-body" style="display: flex; flex-direction: column">
+    <p style="background-color: #f00"><i class="bi-exclamation-triangle" />WARNING<i class="bi-exclamation-triangle" /> Setting arbitrary FFmpeg or fswebcam arguments correctly is difficult.</p>
+    <div class="source-buttons-container">
+        @for (int _i = 0; _i < 8; _i++)
+        {
+            var i = _i;
+            <button checked=@(_sourceIndex == i) @onclick=@(() => _sourceIndex = i)>@i</button>
+        }
+    </div>
+    <textarea @bind=@(_ffmpegArguments[_sourceIndex])></textarea>
+    <button @onclick=@(() => _ffmpegArguments[_sourceIndex] = _defaultFfmpegArguments)>Reset</button>
+    <button @onclick=SetFFMPEGArguments>Set FFmpeg Arguments</button>
+    <textarea @bind=@(_pictureArguments[_sourceIndex])></textarea>
+    <button @onclick=@(() => _pictureArguments[_sourceIndex] = _defaultPictureArguments)>Reset</button>
+    <button @onclick=SetPictureArguments>Set fswebcam Arguments</button>
+</div>
+
+@code {
+    private int _sourceIndex = 0;
+    private const string _defaultFfmpegArguments = "-hide_banner\n-f\nvideo4linux2\n-framerate\n30\n-video_size\n800x600\n-i\n$input\n-filter:v\neq,drawtext=text=%{gmtime\\\\:%X}:fontsize=32:fontcolor=red\n-c:v\nlibvpx\n-quality\ngood\n-cpu-used\n4\n-g\n5\n-error-resilient\n1\n-auto-alt-ref\n1\n-f\nrtp\n-b:v\n1M\n-maxrate\n1M\n-v\n0\nrtp://$ip:$port?pkt_size=1200";
+    private const string _defaultPictureArguments = "--verbose\n--device\n$input\n--palette\nYUYV\n--resolution\n2560x1440\n--frames\n4\n--set\nBrightness=50%\n--set\nContrast=50%\n--skip\n40\n--png\n9\n--no-timestamp\n--font\nsans:20\n--title\n$position\n$output.png";
+
+    private string[] _ffmpegArguments = new string[8];
+    private string[] _pictureArguments = new string[8];
+
+    public CameraArguments()
+    {
+        for (int i = 0; i < 8; i++)
+        {
+
+            _ffmpegArguments[i] = _defaultFfmpegArguments;
+            _pictureArguments[i] = _defaultPictureArguments;
+        }
+    }
+
+    private void SetFFMPEGArguments()
+    {
+        char[] characters = (string.Join("\x1f", _ffmpegArguments[_sourceIndex].Split("\n")) + '\x04' + (char)(_sourceIndex % 4)).ToCharArray();
+        if (_sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.SetFFMPEGArguments(characters);
+        else
+            _RoveCommService.Boards.Camera2.SetFFMPEGArguments(characters);
+    }
+
+    private void SetPictureArguments()
+    {
+        char[] characters = (string.Join("\x1f", _pictureArguments[_sourceIndex].Split("\n")) + '\x04' + (char)(_sourceIndex % 4)).ToCharArray();
+        if (_sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.SetPictureArguments(characters);
+        else
+            _RoveCommService.Boards.Camera2.SetPictureArguments(characters);
+    }
+}

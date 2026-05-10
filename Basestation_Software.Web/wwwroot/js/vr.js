@@ -190,6 +190,7 @@ export function setSource(displayIndex, cameraIndex) {
     videoElements[displayIndex].autoplay = true;
     videoElements[displayIndex].muted = true;
     videoElements[displayIndex].controls = false;
+    videoElements[displayIndex].style.width = "50px";
     document.body.appendChild(videoElements[displayIndex]);
     const texture = new THREE.VideoTexture(videoElements[displayIndex]);
     texture.center.x = 0.5;
