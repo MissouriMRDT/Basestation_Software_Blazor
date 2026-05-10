@@ -73,10 +73,10 @@
     private static readonly string[] _axisNames = ["Auger Gantry", "Auger", "Instruments Gantry", "AF Filter"];
     bool[] _limitOverrides = new bool[4];
     byte[] _brightness = [255, 255, 255, 255];
-    public static readonly short[] AFFilterPositions = [155, 10, 120, 45]; // None, 440nm, 525nm, 600nm, 620nm
-    public static readonly short[] SoilTrapdorPositions = [15, 150]; // AF, Soil Cache
-    private float _afFilterPosition = 100;
-    private short _soilTrapdoorPosition = 100;
+    public static readonly short[] AFFilterPositions = [90, 15, 125, 50]; // None, 440nm, 525nm, 600nm
+    public static readonly short[] SoilTrapdorPositions = [80, 180]; // AF, Soil Cache
+    private float _afFilterPosition = 15;
+    private short _soilTrapdoorPosition = 80;
     private int _activeLED = -2;
 
     private async Task Update(Gamepad gamepad, float deltaT)
