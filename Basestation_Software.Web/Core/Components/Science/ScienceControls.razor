@@ -40,7 +40,7 @@
         <p>LED</p>
         <p>Filter</p>
         <p>@($"{_afFilterPosition:000}")</p>
-        <p></p>
+        <p>LED Timeout @(_RoveCommService.Boards.Auger.LEDStatus)ms</p>
         <button checked=@(_activeLED == -1) @onclick=@(() => LED(-1, false))>Off</button>
         <button checked=@(_afFilterPosition == AFFilterPositions[0]) @onclick=@(() => AFFilter(0))>None</button>
         <p>None</p>
@@ -58,8 +58,8 @@
         <p>Carotenoids</p>
         <p></p>
         <button checked=@(_activeLED == 0) @onclick=@(() => LED(0, false))>White</button>
-        <button checked=@(_afFilterPosition == AFFilterPositions[4]) style="--btn-fill: #dc3545" @onclick=@(() => AFFilter(4))>620nm</button>
-        <p>Carotenoids</p>
+        <p></p>
+        <p></p>
     </div>
 </div>
 
@@ -77,9 +77,9 @@
     private static readonly string[] _axisNames = ["Auger Gantry", "Auger", "Instruments Gantry", "AF Filter"];
     bool[] _limitOverrides = new bool[4];
     byte[] _brightness = [255, 255, 255, 255];
-    public static readonly short[] AFFilterPositions = [165, 0, 123, 42, 0]; // None, 440nm, 525nm, 600nm, 620nm
-    public static readonly short[] SoilTrapdorPositions = [0, 122]; // AF, Soil Cache
-    private float _afFilterPosition = 0;
+    public static readonly short[] AFFilterPositions = [90, 15, 125, 50]; // None, 440nm, 525nm, 600nm
+    public static readonly short[] SoilTrapdorPositions = [80, 180]; // AF, Soil Cache
+    private float _afFilterPosition = 100;
     private short _soilTrapdoorPosition = 100;
     private int _activeLED = -2;
 
