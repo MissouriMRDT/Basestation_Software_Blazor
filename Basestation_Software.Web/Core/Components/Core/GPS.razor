@@ -19,7 +19,7 @@
     <p>@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_Lon:000.0000000}")</p>
     <p>@($"{_RoveCommService.Boards.Nav.GPSLatLonAlt_Alt:000.00}")</p>
     <p>Satellites</p>
-    <p />
+    <p>@(DIRECTIONS[(int)((_RoveCommService.Boards.Nav.CompassData + 22.5) % 360 / 45)])</p>
     <p>Hdg [&#176;]</p>
     <p>@($"{_RoveCommService.Boards.Nav.SatelliteCountData:00}")</p>
     <p class="secondary-bg">Accuracy</p>
@@ -43,51 +43,51 @@
     <p>@($"{_RoveCommService.Boards.Core.AccelerometerData_Z:00.0}")</p>
     <svg style="grid-area: 12 / 1 / 13 / 4; place-self: stretch stretch;" viewBox="0 0 60 60">
         <style>
-            .elev {
-                stroke-width: 0.3;
-                stroke: #ffff;
-                fill: none;
-            }
+                    .elev {
+                        stroke-width: 0.3;
+                        stroke: #ffff;
+                        fill: none;
+                    }
 
-            .sky {
-                stroke: none;
-                fill: #0000ff;
-            }
+                    .sky {
+                        stroke: none;
+                        fill: #0000ff;
+                    }
 
-            .ground {
-                stroke: none;
-                fill: #6b3e00;
-            }
+                    .ground {
+                        stroke: none;
+                        fill: #6b3e00;
+                    }
 
-            .elev-label {
-                font-size: 3px;
-                fill: #ffff;
-            }
+                    .elev-label {
+                        font-size: 3px;
+                        fill: #ffff;
+                    }
 
-            .wing {
-                fill: #ff0f;
-            }
+                    .wing {
+                        fill: #ff0f;
+                    }
 
-            .roll-pointer {
-                stroke-width: 0.5;
-                stroke: #ff0f;
-            }
+                    .roll-pointer {
+                        stroke-width: 0.5;
+                        stroke: #ff0f;
+                    }
 
-            .roll-arc {
-                stroke-width: 0.5;
-                stroke: #ffff;
-                fill: none
-            }
+                    .roll-arc {
+                        stroke-width: 0.5;
+                        stroke: #ffff;
+                        fill: none
+                    }
 
-            .roll-0 {
-                fill: #ffff;
-                stroke: none;
-            }
+                    .roll-0 {
+                        fill: #ffff;
+                        stroke: none;
+                    }
 
-            .roll-45 {
-                fill: #ffff;
-                stroke: none;
-            }
+                    .roll-45 {
+                        fill: #ffff;
+                        stroke: none;
+                    }
         </style>
         <g transform="translate(-60, @(Pitch - 60)) rotate(@Roll, 90, @(90 - Pitch))">
             <rect class="sky" x="0" y="-60" width="180" height="150" />
@@ -234,11 +234,11 @@
 
 @code
 {
-    // State
     private string FixType = "";
     private bool IsDifferential;
     private double Pitch;
     private double Roll;
+    private static readonly List<string> DIRECTIONS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
 
     protected override void OnInitialized()
     {

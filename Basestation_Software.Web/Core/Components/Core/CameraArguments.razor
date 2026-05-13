@@ -22,8 +22,62 @@
 
 @code {
     private int _sourceIndex = 0;
-    private const string _defaultFfmpegArguments = "-hide_banner\n-f\nvideo4linux2\n-framerate\n30\n-video_size\n800x600\n-i\n$input\n-filter:v\neq,drawtext=text=%{gmtime\\\\:%X}:fontsize=32:fontcolor=red\n-c:v\nlibvpx\n-quality\ngood\n-cpu-used\n4\n-g\n5\n-error-resilient\n1\n-auto-alt-ref\n1\n-f\nrtp\n-b:v\n1M\n-maxrate\n1M\n-v\n0\nrtp://$ip:$port?pkt_size=1200";
-    private const string _defaultPictureArguments = "--verbose\n--device\n$input\n--palette\nYUYV\n--resolution\n2560x1440\n--frames\n4\n--set\nBrightness=50%\n--set\nContrast=50%\n--skip\n40\n--png\n9\n--no-timestamp\n--font\nsans:20\n--title\n$position\n$output.png";
+    private const string _defaultFfmpegArguments = @"-hide_banner
+-f
+video4linux2
+-framerate
+20
+-video_size
+800x600
+-i
+$input
+-filter:v
+zmq=bind_address='tcp\://127.0.0.1\:555$index',drawtext=text=|||||||||:fontsize=16:x='abs(mod(t*(w-text_w)*0.5,(w-text_w)*2)-(w-text_w))':box=1:boxcolor=#0d6efd:fontcolor=#0d6efd
+-codec:v
+libvpx
+-quality
+good
+-cpu-used
+4
+-g
+5
+-error-resilient
+1
+-auto-alt-ref
+1
+-f
+rtp
+-b:v
+1M
+-maxrate
+1M
+-loglevel
+16
+rtp://$ip:$port?pkt_size=512";
+    private const string _defaultPictureArguments = @"--verbose
+--device
+$input
+--palette
+YUYV
+--resolution
+2560x1440
+--frames
+4
+--set
+Brightness=50%
+--set
+Contrast=50%
+--skip
+40
+--png
+9
+--no-timestamp
+--font
+sans:20
+--title
+$position
+$output.png
+";
 
     private string[] _ffmpegArguments = new string[8];
     private string[] _pictureArguments = new string[8];
@@ -40,7 +94,7 @@
 
     private void SetFFMPEGArguments()
     {
-        char[] characters = (string.Join("\x1f", _ffmpegArguments[_sourceIndex].Split("\n")) + '\x04' + (char)(_sourceIndex % 4)).ToCharArray();
+        char[] characters = ((char)(_sourceIndex % 4) + string.Join("\x1f", _ffmpegArguments[_sourceIndex].Split("\n")) + '\x00').ToCharArray();
         if (_sourceIndex < 4)
             _RoveCommService.Boards.Camera1.SetFFMPEGArguments(characters);
         else
@@ -49,7 +103,7 @@
 
     private void SetPictureArguments()
     {
-        char[] characters = (string.Join("\x1f", _pictureArguments[_sourceIndex].Split("\n")) + '\x04' + (char)(_sourceIndex % 4)).ToCharArray();
+        char[] characters = ((char)(_sourceIndex % 4) + string.Join("\x1f", _pictureArguments[_sourceIndex].Split("\n")) + '\x00').ToCharArray();
         if (_sourceIndex < 4)
             _RoveCommService.Boards.Camera1.SetPictureArguments(characters);
         else

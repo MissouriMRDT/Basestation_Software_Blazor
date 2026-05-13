@@ -2,7 +2,7 @@
     display: grid;
     padding: 0;
     grid-template-columns: 1fr 1fr 1fr 1fr;
-    grid-template-rows: 30px min-content min-content min-content min-content;
+    grid-template-rows: 30px repeat(7, min-content);
     place-items: stretch stretch;
 }
 
