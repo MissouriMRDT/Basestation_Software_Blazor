@@ -1,4 +1,6 @@
+@inject CameraService _CameraService
 @inject RoveCommService _RoveCommService
+@implements IDisposable
 
 <div class="component-header" style="background-color: #f00">
     <h3>Camera Arguments</h3>
@@ -9,7 +11,7 @@
         @for (int _i = 0; _i < 8; _i++)
         {
             var i = _i;
-            <button checked=@(_sourceIndex == i) @onclick=@(() => _sourceIndex = i)>@i</button>
+            <button checked=@(_sourceIndex == i) @onclick=@(() => _sourceIndex = i)>@(_CameraService.Names[i])</button>
         }
     </div>
     <textarea @bind=@(_ffmpegArguments[_sourceIndex])></textarea>
@@ -53,7 +55,7 @@ rtp
 1M
 -loglevel
 16
-rtp://$ip:$port?pkt_size=512";
+rtp://$ip:$port?pkt_size=1200";
     private const string _defaultPictureArguments = @"--verbose
 --device
 $input
@@ -92,6 +94,11 @@ $output.png
         }
     }
 
+    protected override void OnInitialized()
+    {
+        _CameraService.Names.CollectionChanged += CameraNamesChanged;
+    }
+
     private void SetFFMPEGArguments()
     {
         char[] characters = ((char)(_sourceIndex % 4) + string.Join("\x1f", _ffmpegArguments[_sourceIndex].Split("\n")) + '\x00').ToCharArray();
@@ -108,5 +115,12 @@ $output.png
             _RoveCommService.Boards.Camera1.SetPictureArguments(characters);
         else
             _RoveCommService.Boards.Camera2.SetPictureArguments(characters);
+    }
+ 
+    private async void CameraNamesChanged(object? _, object? __) => await InvokeAsync(StateHasChanged);
+
+    void IDisposable.Dispose()
+    {
+        _CameraService.Names.CollectionChanged -= CameraNamesChanged;
     }
 }

@@ -1,3 +1,4 @@
+@inject CameraService _CameraService
 @inject RoveCommService _RoveCommService
 @inject IJSRuntime _IJSRuntime
 @implements IAsyncDisposable
@@ -19,7 +20,7 @@
         @for (int _i = 0; _i < 8; _i++)
         {
             var i = _i;
-            <button checked=@(sourceIndex == i) class="secondary" @onclick=@(() => SetSource(i))>@i</button>
+            <button checked=@(sourceIndex == i) class="secondary" @onclick=@(() => SetSource(i))>@(_CameraService.Names[i])</button>
         }
         <button class="camera-display-rotate" @onclick=Rotate><i class="bi-arrow-clockwise" /></button>
         <button onclick="cameras.connect()" title="Connect this tab to WebRTC"><i class="bi-play" /></button>
@@ -31,6 +32,11 @@
     private int sourceIndex = 0;
     private ElementReference videoContainer;
     private IJSObjectReference? jsCameraDisplay;
+
+    protected override void OnInitialized()
+    {
+        _CameraService.Names.CollectionChanged += CameraNamesChanged;
+    }
 
     private async void Rotate()
     {
@@ -58,8 +64,11 @@
         }
     }
 
+    private async void CameraNamesChanged(object? _, object? __) => await InvokeAsync(StateHasChanged);
+
     async ValueTask IAsyncDisposable.DisposeAsync()
     {
+        _CameraService.Names.CollectionChanged -= CameraNamesChanged;
         try
         {
             if (jsCameraDisplay != null)

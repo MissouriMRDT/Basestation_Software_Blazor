@@ -1,5 +1,6 @@
-@implements IDisposable
+@inject CameraService _CameraService
 @inject VRService _VRService
+@implements IDisposable
 
 <div class="component-header">
     <h3>VR Control</h3>
@@ -15,7 +16,7 @@
             @for (int j = 0; j < 8; j++)
             {
                 int camera = j;
-                <button checked=@(source == camera) @onclick=@(async () => await _VRService.SetSource(display, camera))>@camera</button>
+                <button checked=@(source == camera) @onclick=@(async () => await _VRService.SetSource(display, camera))>@(_CameraService.Names[camera])</button>
             }
             double currentRotation = _VRService.GetRotation(display);
             @for (double j = 0; j < 360; j += 90)
@@ -60,6 +61,7 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _CameraService.Names.CollectionChanged += CameraNamesChanged;
         _VRService.SubscribeToGridSet(GridSet);
         await GridSet(_VRService.GetGrid());
     }
@@ -75,8 +77,11 @@
         await InvokeAsync(StateHasChanged);
     }
 
+    private async void CameraNamesChanged(object? _, object? __) => await InvokeAsync(StateHasChanged);
+
     void IDisposable.Dispose()
     {
+        _CameraService.Names.CollectionChanged -= CameraNamesChanged;
         _VRService.UnsubscribeFromGridSet(GridSet);
     }
 }

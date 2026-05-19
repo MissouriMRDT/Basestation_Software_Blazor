@@ -1,12 +1,17 @@
 .camera-controls {
     display: grid;
     padding: 0;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-    grid-template-rows: 30px repeat(7, min-content);
+    grid-template-columns: repeat(4, 25%);
+    grid-template-rows: 30px repeat(8, min-content);
     place-items: stretch stretch;
 }
 
 .camera-controls p {
+    place-self: center;
+    font-family: Courier New, monospace;
+}
+
+.camera-controls input {
     place-self: center;
     font-family: Courier New, monospace;
 }
