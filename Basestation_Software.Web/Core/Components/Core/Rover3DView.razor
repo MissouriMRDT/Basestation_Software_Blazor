@@ -44,6 +44,7 @@
                 await jsRoverView.InvokeVoidAsync("updateArm", [
                 _RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J2, _RoveCommService.Boards.Arm.Position_J3,
                 _RoveCommService.Boards.Arm.Position_J4, _RoveCommService.Boards.Arm.Position_J5, _RoveCommService.Boards.Arm.Position_J6]);
+                await jsRoverView.InvokeVoidAsync("updateTarget", [true, _RoveCommService.Boards.Arm.Position_GX,  _RoveCommService.Boards.Arm.Position_GY,  _RoveCommService.Boards.Arm.Position_GZ]);
             }
         });
         _RoveCommService.Boards.Arm.OnTarget(async packet =>

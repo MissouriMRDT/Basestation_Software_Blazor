@@ -25,6 +25,7 @@ export class Rover3DView {
     armJoints = { x: null, j2: null, j3: null, j4: null, j5: null, j6: null };
     targetArm = null;
     targetArmJoints = { x: null, j2: null, j3: null, j4: null, j5: null, j6: null };
+    endEffectorSphere = null;
     lightingPanel = null;
     resizeObserver = null;
     frameId = 0;
@@ -72,6 +73,10 @@ export class Rover3DView {
                     this.armJoints[joint].castShadow = true;
                 }
                 this.roverMesh.add(this.arm);
+
+                this.endEffectorSphere = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshBasicMaterial({ color: 0xFFFF00 }));
+                this.endEffectorSphere.visible = false;
+                this.arm.add(this.endEffectorSphere);
             });
 
             gltfLoader.load("/models/AthenaArm.glb", (loadedData) => {
@@ -170,6 +175,11 @@ export class Rover3DView {
         this.targetArmJoints.j4.setRotationFromEuler(new THREE.Euler(j4 * Math.PI / 180, 0, 0, "XYZ"));
         this.targetArmJoints.j5.setRotationFromEuler(new THREE.Euler(0, 0, j5 * Math.PI / 180, "XYZ"));
         this.targetArmJoints.j6.setRotationFromEuler(new THREE.Euler(j6 * Math.PI / 180, 0, 0, "XYZ"));
+    }
+
+    updateTarget(visible, x, y, z) {
+        this.endEffectorSphere.position.set(x, y, z);
+        this.endEffectorSphere.visible = visible;
     }
 
     updateAnglesFromUpVector(x, y, z) {
