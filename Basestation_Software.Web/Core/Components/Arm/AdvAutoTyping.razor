@@ -1,4 +1,4 @@
-﻿@using System.Diagnostics
+﻿﻿@using System.Diagnostics
 @inject RoveCommService _RoveCommService
 @inject OpService _OpService
 @using System.Numerics
@@ -16,7 +16,7 @@
 
     <div style="display: flex; gap: 2px; justify-content: center">
         <input @bind:get=_phrase @bind:set=@(value => { _phrase = value.ToUpper(); }) />
-        <button @onclick=@(async ()=>{if (!_running) await Start(); else Stop();}) checked=@_running>@(_running ? "Stop" : "Start")</button>
+        <button @onclick=@(async () => { if (!_running) await Start(); else Stop(); }) checked=@_running>@(_running ? "Stop" : "Start")</button>
         <button @onclick=ResetCache>Reset Cache</button>
     </div>
 
@@ -98,7 +98,8 @@
 
         CalculateKeyPositions();
         // Store positions of all other joints besides X and J5
-        ArmAxes startPosition = new() {
+        ArmAxes startPosition = new()
+        {
             X = _RoveCommService.Boards.Arm.Target_X,
             J2 = _RoveCommService.Boards.Arm.Target_J2,
             J3 = _RoveCommService.Boards.Arm.Target_J3,
@@ -113,7 +114,7 @@
             _charStatusMeter = 0;
             _statusMessage = "Moving to " + letter;
             await InvokeAsync(StateHasChanged);
-            
+
             Vector2 currentPos = new(_RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J5);
             Vector2 nextPos = _keyPositions[letter];
             //float delta = (nextPos - currentPos).Length();
@@ -122,7 +123,7 @@
 
             // Send command to move to next position
             _RoveCommService.Boards.Arm.TargetAngle(nextPos.X, startPosition.J2, startPosition.J3, startPosition.J4, nextPos.Y, startPosition.J6);
-            
+
             // Wait until the arm gets close and update the progress bar in the meantime
             using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
             // using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token, timeoutCts.Token);
@@ -140,8 +141,9 @@
             _statusMessage = "Extending Servo";
             _RoveCommService.Boards.Arm.LinearServo(180);
             _charStatusMeter = 0;
-            for (int j = 0; j < 30; j++) {
-                _charStatusMeter += 1.0f/30;
+            for (int j = 0; j < 30; j++)
+            {
+                _charStatusMeter += 1.0f / 30;
                 await InvokeAsync(StateHasChanged);
                 await Task.Delay(100, _cts.Token);
             }
@@ -149,8 +151,9 @@
             _statusMessage = "Retracting Servo";
             _RoveCommService.Boards.Arm.LinearServo(100);
             _charStatusMeter = 0;
-            for (int j = 0; j < 30; j++) {
-                _charStatusMeter += 1.0f/30;
+            for (int j = 0; j < 30; j++)
+            {
+                _charStatusMeter += 1.0f / 30;
                 await InvokeAsync(StateHasChanged);
                 await Task.Delay(100, _cts.Token);
             }
@@ -192,7 +195,7 @@
 
         for (int i = 0; i < rowZ.Length; i++)
         {
-            _keyPositions[rowZ[i]] = Q + basisX * i + 2*basisY;
+            _keyPositions[rowZ[i]] = Q + basisX * i + 2 * basisY;
         }
 
     }

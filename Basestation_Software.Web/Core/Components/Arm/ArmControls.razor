@@ -91,48 +91,62 @@
             <button @onclick=@(() => _poses[3].SetFromArm(_RoveCommService.Boards.Arm))>Save</button>
             <button @onclick=@(() => { if (_outputEnabled) _poses[3].TargetAngle(_RoveCommService.Boards.Arm); })>Move</button>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(3, max-content)">
+        <div style="display: grid; grid-template-columns: repeat(4, max-content)">
             <p></p>
             <p>|Pos</p>
+            <p>|Targ</p>
             <p>|Ping</p>
             <p>X</p>
             <p>|@($"{_RoveCommService.Boards.Arm.Position_X:+000.00;-000.00}")</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Target_X:+000.00;-000.00}")</p>
             <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_X < 500 ? "OK" : "ERR")</p>
             <p>J2</p>
             <p>|@($"{_RoveCommService.Boards.Arm.Position_J2:+000.00;-000.00}")</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Target_J2:+000.00;-000.00}")</p>
             <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J2 < 500 ? "OK" : "ERR")</p>
             <p>J3</p>
             <p>|@($"{_RoveCommService.Boards.Arm.Position_J3:+000.00;-000.00}")</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Target_J3:+000.00;-000.00}")</p>
             <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J3 < 500 ? "OK" : "ERR")</p>
             <p>J4</p>
             <p>|@($"{_RoveCommService.Boards.Arm.Position_J4:+000.00;-000.00}")</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Target_J4:+000.00;-000.00}")</p>
             <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J4 < 500 ? "OK" : "ERR")</p>
             <p>J5</p>
             <p>|@($"{_RoveCommService.Boards.Arm.Position_J5:+000.00;-000.00}")</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Target_J5:+000.00;-000.00}")</p>
             <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J5 < 500 ? "OK" : "ERR")</p>
             <p>J6</p>
             <p>|@($"{_RoveCommService.Boards.Arm.Position_J6:+000.00;-000.00}")</p>
+            <p>|@($"{_RoveCommService.Boards.Arm.Target_J6:+000.00;-000.00}")</p>
             <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_J6 < 500 ? "OK" : "ERR")</p>
             <p>Gripper</p>
+            <p>|</p>
             <p>|</p>
             <p>|@(_RoveCommService.Boards.Arm.SMOCOPing_G < 500 ? "OK" : "ERR")</p>
             <p>Gripper X</p>
             <p>|@($"{_RoveCommService.Boards.Arm.Position_GX:+000.00;-000.00}")</p>
             <p>|</p>
+            <p>|</p>
             <p>Gripper Y</p>
             <p>|@($"{_RoveCommService.Boards.Arm.Position_GY:+000.00;-000.00}")</p>
+            <p>|</p>
             <p>|</p>
             <p>Gripper Z</p>
             <p>|@($"{_RoveCommService.Boards.Arm.Position_GZ:+000.00;-000.00}")</p>
             <p>|</p>
+            <p>|</p>
             <p>Linear Servo</p>
             <p>|@($"{_linearServo:+000.00;-000.00}")</p>
+            <p>|</p>
             <p>|</p>
             <p>Cache Servo</p>
             <p>|@($"{_cache:+000.00;-000.00}")</p>
             <p>|</p>
+            <p>|</p>
             <p>Laser</p>
             <p>|@(_laser ? "On" : "Off")</p>
+            <p>|</p>
             <p>|</p>
         </div>
     </div>

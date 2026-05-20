@@ -6,6 +6,10 @@
     <h3>Gimbals</h3>
     <input type="checkbox" class="output-enabled" @bind=_outputEnabled title="Disable Output" />
     <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
+    <label style="display:flex">
+        Speed
+        <input @bind=_gimbalSpeed type="range" min="0" max="100" step="1" style="max-width:200px" />
+    </label>
 </div>
 <div class="component-body">
     <GamepadScheme @ref=_gamepadScheme AxisNames=_axisNames ControlScheme=_controlScheme />
@@ -27,7 +31,7 @@
         Binds = [Bind.LSX, Bind.LSY, Bind.RSX, Bind.RSY, Bind.DPadX, Bind.DPadY, Bind.LBumpTrig, Bind.RBumpTrig, Bind.XB, Bind.AY, Bind.None, Bind.None],
         Inversions = [true, true, true, true, false, true, false, true, false, true, false, false]
     };
-    public double GIMBAL_SPEED = 80; // deg/s
+    private double _gimbalSpeed = 75; // deg/s
 
     private static readonly string[] _axisNames = ["Left Pan", "Left Tilt", "Right Pan", "Right Tilt", "Back Pan", "Back Tilt", "Arm 1 Pan", "Arm 1 Tilt", "Arm 2 Pan", "Arm 2 Tilt", "Auger Pan", "Auger Tilt"];
     private static double[] _angles = [270, 205, 65, 123, 72, 170, 0, 0, 0, 0, 60, 80]; // Auger tilt max 62
@@ -50,7 +54,7 @@
         if (!_outputEnabled) return false;
 
         for (int i = 0; i < _angles.Length; i++)
-            _angles[i] = Math.Clamp(_angles[i] + inputs[i] * GIMBAL_SPEED * deltaT, 0, 270);
+            _angles[i] = Math.Clamp(_angles[i] + inputs[i] * _gimbalSpeed * deltaT, 0, 270);
         if (Math.Abs(inputs[0]) > 0 || Math.Abs(inputs[1]) > 0) _RoveCommService.Boards.Core.LeftGimbal((short)_angles[0], (short)_angles[1]);
         if (Math.Abs(inputs[2]) > 0 || Math.Abs(inputs[3]) > 0) _RoveCommService.Boards.Core.RightGimbal((short)_angles[2], (short)_angles[3]);
         if (Math.Abs(inputs[4]) > 0 || Math.Abs(inputs[5]) > 0) _RoveCommService.Boards.Core.BackGimbal((short)_angles[4], (short)_angles[5]);
