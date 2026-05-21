@@ -10,7 +10,7 @@
     <h3>Waypoints</h3>
     <button @onclick=New><i class="bi-plus" /></button>
 </div>
-<div class="component-body" style="display: grid; overflow-y: scroll; flex-grow: 0; grid-template-columns: min-content 100px 80px 80px 20px 30px 100px 25px min-content">
+<div class="component-body" style="display: grid; overflow-y: scroll; flex-grow: 0; grid-template-columns: min-content 60px 55px 55px 15px 15px 70px 15px min-content">
     <p></p>
     <p>Name</p>
     <p>Latitude</p>
@@ -27,7 +27,7 @@
         <input style="padding: 0" @bind=waypoint.Name @bind:after=@(async () => await Save(i)) />
         <input style="padding: 0" @bind:get=@(waypoint.Latitude.ToString("000.000000;-000.000000")) @bind:set=@(async value => { waypoint.Latitude = GPSWaypoint.ConvertDMSToDegrees(value); await Save(i); }) />
         <input style="padding: 0" @bind:get=@(waypoint.Longitude.ToString("000.000000;-000.000000")) @bind:set=@(async value => { waypoint.Longitude = GPSWaypoint.ConvertDMSToDegrees(value); await Save(i); }) />
-        <input style="padding: 0" type="color" @bind:get=@($"#{waypoint.Color:X6}") @bind:set=@(async value => {waypoint.Color = int.Parse(value.Substring(1), System.Globalization.NumberStyles.HexNumber); await Save(i); }) />
+        <input style="padding: 0; width: 100%; height: 100%" type="color" @bind:get=@($"#{waypoint.Color:X6}") @bind:set=@(async value => { waypoint.Color = int.Parse(value.Substring(1), System.Globalization.NumberStyles.HexNumber); await Save(i); }) />
         <input style="padding: 0" @bind=waypoint.SearchRadius @bind:after=@(async () => await Save(i)) />
         <select style="padding: 0" @bind=waypoint.TagID @bind:after=@(async () => await Save(i))>
             <option value=-10>None</option>

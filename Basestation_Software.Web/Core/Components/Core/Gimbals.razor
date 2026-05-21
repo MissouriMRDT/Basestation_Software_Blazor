@@ -8,12 +8,12 @@
     <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
 </div>
 <div class="component-body">
-    <GamepadScheme @ref=_gamepadScheme AxisNames=_axisNames ControlScheme=_controlScheme />
     <input @bind=_gimbalSpeed type="range" min="0" max="100" step="1" style="max-width:200px" />
+    <GamepadScheme @ref=_gamepadScheme AxisNames=_axisNames ControlScheme=_controlScheme />
     <div style="display: flex">
         @for (int i = 0; i < 12; i++)
         {
-            <p>@($"{_axisNames[i]}: {_angles[i]:000}")</p>
+            <p>@($"{_axisNames[i]}: {_angles[i].Angle:000}")</p>
         }
     </div>
 </div>
@@ -39,8 +39,8 @@
     private GamepadScheme? _gamepadScheme;
     private ControlScheme _controlScheme = new()
     {
-        Binds = [Bind.LSX, Bind.LSY, Bind.RSX, Bind.RSY, Bind.DPadX, Bind.DPadY, Bind.LBumpTrig, Bind.RBumpTrig, Bind.XB, Bind.AY, Bind.XB, Bind.AY],
-        Inversions = [true, true, true, true, false, true, false, true, false, true, false, true]
+        Binds = [Bind.LSX, Bind.LSY, Bind.RSX, Bind.RSY, Bind.DPadX, Bind.DPadY, Bind.None, Bind.RBumpTrig, Bind.None, Bind.LBumpTrig, Bind.XB, Bind.AY],
+        Inversions = [true, true, true, true, false, true, false, true, false, false, false, true]
     };
     private double _gimbalSpeed = 75; // deg/s
 

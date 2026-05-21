@@ -2,7 +2,7 @@
     display: grid;
     overflow: auto;
     flex-grow: 0;
-    grid-template-columns: min-content 85px 60px auto max-content;
+    grid-template-columns: min-content 55px 40px auto max-content;
 }
 
 .ping-tool>p {

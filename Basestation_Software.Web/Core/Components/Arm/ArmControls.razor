@@ -65,31 +65,17 @@
             {
                 int i = _i;
                 <p style="width:30px">@_limitNames[i]</p>
-                <div style="width: 16px; height: 16px; background-color: #@(_limitSwitchDepressed[i * 2] ? "fb0" : "520")"></div>
+                <div style="width: 10px; height: 10px; background-color: #@(_limitSwitchDepressed[i * 2] ? "fb0" : "520")"></div>
                 <input type="checkbox" class="danger" @bind=@(_hardLimitOverrides[i * 2]) />
-                <div style="width: 16px; height: 16px; background-color: #@(_limitSwitchDepressed[i * 2 + 1] ? "fb0" : "520")"></div>
+                <div style="width: 10px; height: 10px; background-color: #@(_limitSwitchDepressed[i * 2 + 1] ? "fb0" : "520")"></div>
                 <input type="checkbox" class="danger" @bind=@(_hardLimitOverrides[i * 2 + 1]) />
-                <div style="width: 16px; height: 16px; background-color: #@(_softLimitTriggered[i * 2] ? "fb0" : "520")"></div>
+                <div style="width: 10px; height: 10px; background-color: #@(_softLimitTriggered[i * 2] ? "fb0" : "520")"></div>
                 <input type="checkbox" class="danger" @bind=@(_softLimitOverrides[i * 2]) />
-                <div style="width: 16px; height: 16px; background-color: #@(_softLimitTriggered[i * 2 + 1] ? "fb0" : "520")"></div>
+                <div style="width: 10px; height: 10px; background-color: #@(_softLimitTriggered[i * 2 + 1] ? "fb0" : "520")"></div>
                 <input type="checkbox" class="danger" @bind=@(_softLimitOverrides[i * 2 + 1]) />
             }
             <button class="success" style="grid-column: 2 / 6" @onclick=@(() => { ushort mask = 0; for (int i = 0; i < _hardLimitOverrides.Length; i++) { mask |= (ushort)((_hardLimitOverrides[i] ? 1 : 0) << i); } _RoveCommService.Boards.Arm.LimitSwitchOverride(mask); })><i class="bi-send" /></button>
             <button class="success" style="grid-column: 6 / 10" @onclick=@(() => { ushort mask = 0; for (int i = 0; i < _softLimitOverrides.Length; i++) { mask |= (ushort)((_softLimitOverrides[i] ? 1 : 0) << i); } _RoveCommService.Boards.Arm.SoftLimitOverride(mask); })><i class="bi-send" /></button>
-        </div>
-        <div style="display: grid; grid-template-columns: 100px max-content max-content">
-            <input />
-            <button @onclick=@(() => _poses[0].SetFromArm(_RoveCommService.Boards.Arm))>Save</button>
-            <button @onclick=@(() => { if (_outputEnabled) _poses[0].TargetAngle(_RoveCommService.Boards.Arm); })>Move</button>
-            <input />
-            <button @onclick=@(() => _poses[1].SetFromArm(_RoveCommService.Boards.Arm))>Save</button>
-            <button @onclick=@(() => { if (_outputEnabled) _poses[1].TargetAngle(_RoveCommService.Boards.Arm); })>Move</button>
-            <input />
-            <button @onclick=@(() => _poses[2].SetFromArm(_RoveCommService.Boards.Arm))>Save</button>
-            <button @onclick=@(() => { if (_outputEnabled) _poses[2].TargetAngle(_RoveCommService.Boards.Arm); })>Move</button>
-            <input />
-            <button @onclick=@(() => _poses[3].SetFromArm(_RoveCommService.Boards.Arm))>Save</button>
-            <button @onclick=@(() => { if (_outputEnabled) _poses[3].TargetAngle(_RoveCommService.Boards.Arm); })>Move</button>
         </div>
         <div style="display: grid; grid-template-columns: repeat(4, max-content)">
             <p></p>
@@ -188,19 +174,11 @@
     public const float MaxInchesPerSecond = 8.0f;
     public const float LinearServoMaxDegreesPerSecond = 15.0f;
 
-    private List<ArmPose> _poses = [new(), new(), new(), new()];
-    private bool _firstTelemetry = true;
-
     protected override async Task OnInitializedAsync()
     {
         _databaseService.SubscribeToTableChanges(typeof(ArmPreset), UpdatePresets);
         _RoveCommService.Boards.Arm.OnPosition(packet =>
         {
-            if (_firstTelemetry)
-            {
-                _firstTelemetry = false;
-                foreach (ArmPose pose in _poses) pose.SetFromArm(_RoveCommService.Boards.Arm);
-            }
             _position.SetFromArm(_RoveCommService.Boards.Arm);
             return Task.CompletedTask;
         });

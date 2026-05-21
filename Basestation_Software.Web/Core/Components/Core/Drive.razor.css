@@ -4,10 +4,8 @@
     grid-template-areas:
         "left-backward left-backward left-forward left-forward"
         "right-backward right-backward right-forward right-forward"
-        "drivespeed-input drivespeed-buttons drivespeed-buttons gimbal"
-        "deadzone-input deadzone-input deadzone gimbal"
-        "none none none gimbal"
-        "none none none gimbal";
+        "deadzone-input deadzone-input deadzone deadzone"
+        "drivespeed-input drivespeed-input drivespeed-buttons drivespeed-buttons";
     place-items: center;
     height: unset;
 }
