@@ -7,9 +7,9 @@ public class TimerData
 {
     [Key]
     public Guid ID { get; set; }
-    public bool Paused;
-    public long A; // Paused ? Elapsed : Start
-    public long B; // Paused ? Remaining : End
+    public bool Paused { get; set; }
+    public long A { get; set; } // Paused ? Elapsed : Start
+    public long B { get; set; } // Paused ? Remaining : End
 
     [NotMapped]
     public TimeSpan Elapsed
