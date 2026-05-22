@@ -28,8 +28,8 @@
     <div style="grid-area: drivespeed-buttons">
         <button checked=@(DriveSpeed == 0.1) @onclick=@(() => DriveSpeed = 0.1)>10</button>
         <button checked=@(DriveSpeed == 0.2) @onclick=@(() => DriveSpeed = 0.2)>20</button>
-        <button checked=@(DriveSpeed == 0.3) @onclick=@(() => DriveSpeed = 0.3)>30</button>
         <button checked=@(DriveSpeed == 0.4) @onclick=@(() => DriveSpeed = 0.4)>40</button>
+        <button checked=@(DriveSpeed == 0.8) @onclick=@(() => DriveSpeed = 0.8)>80</button>
         <button checked=@(DriveSpeed == 1.0) @onclick=@(() => DriveSpeed = 1.0)>100</button>
     </div>
 </div>
@@ -52,7 +52,7 @@
     private GamepadSelector? _gamepadSelector;
     private Scheme SelectedScheme;
     private bool _outputEnabled = true;
-    private double DriveSpeed = 0.1;
+    private double DriveSpeed = 0.8;
 
     private double DeadZone = 0.3;
     private int SelectedGimbal = 0;

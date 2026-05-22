@@ -24,15 +24,17 @@
     <button @onclick=TakePicture title="Take Picture"><i class="bi-image" /></button>
     <button @onclick=TakePano title="Take Panorama"><i class="bi-arrows" /></button>
     <input @bind=@(_CameraService.Names[_sourceIndex]) />
-    <select @bind=@(_p.Device) @bind:after=@(() => _p = FFMPEGParameters.DEVICE_DEFAULT[_p.Device])>
+    <select @bind=@(_p.Device) @bind:after=@(() => _p = FFMPEGParameters.GetDefault(_p.Device))>
         @foreach (string device in FFMPEGParameters.LIST_DEVICE_FPS.Keys)
         {
             <option value=@device>@device</option>
         }
     </select>
     <select @bind=@(_p.InputFormat) @bind:after=MarkUnsent>
-        <option value="mjpeg">MJPEG</option>
-        <option value="yuyv422">YUYV</option>
+        @foreach (string format in FFMPEGParameters.LIST_DEVICE_FPS[_p.Device].Keys)
+        {
+            <option value=@format>@format</option>
+        }
     </select>
     <select @bind=@(_p.VideoSize) @bind:after=MarkUnsent>
         @if (FFMPEGParameters.LIST_DEVICE_FPS[_p.Device].ContainsKey(_p.InputFormat))
@@ -133,7 +135,7 @@
                     ["1280x960"] = [30],
                     ["1280x720"] = [30],
                     ["640x480"] = [30],
-                    ["320x240"] = [30],
+                    ["320x240"] = [30]
                 },
                 ["yuyv422"] = new()
                 {
@@ -143,26 +145,17 @@
                     ["1280x960"] = [30],
                     ["1280x720"] = [30],
                     ["640x480"] = [30],
-                    ["320x240"] = [30],
+                    ["320x240"] = [30]
                 }
             },
-            ["Microscope (USB HD Cam)"] = new()
+            ["Microscope (USB 2.0 Camera)"] = new()
             {
-                ["mjpeg"] = new()
-                {
-                    ["1920x1080"] = [30],
-                    ["1280x720"] = [30],
-                    ["800x600"] = [30],
-                    ["640x480"] = [30],
-                    ["320x240"] = [30]
-                },
                 ["yuyv422"] = new()
                 {
-                    ["1920x1080"] = [5],
-                    ["1280x720"] = [10],
-                    ["800x600"] = [5, 10],
-                    ["640x480"] = [10, 15, 20, 25, 30],
-                    ["320x240"] = [10, 15, 20, 25, 30]
+                    ["1600x1200"] = [5],
+                    ["1280x960"] = [9, 5],
+                    ["800x600"] = [20, 15, 10, 5],
+                    ["640x480"] = [30, 25, 20, 15, 10, 5]
                 }
             }
         };
@@ -205,6 +198,31 @@
             ["40x30"] = "4:3",
         };
         public static readonly List<string> LIST_BITRATE = ["1M", "512k", "256k", "128k", "64k", "32k", "16k", "8k", "4k", "2k", "1k"];
+        public static FFMPEGParameters GetDefault(string device) => device switch
+        {
+            "Normal (4K AF Camera)" => new()
+            {
+                Device = "Normal (4K AF Camera)",
+                InputFormat = "mjpeg",
+                VideoSize = "800x600",
+                DeviceFPS = 20
+            },
+            "Arm Base (USB HD Cam)" => new()
+            {
+                Device = "Arm Base (USB HD Cam)",
+                InputFormat = "mjpeg",
+                VideoSize = "640x480",
+                DeviceFPS = 30
+            },
+            "Microscope (USB 2.0 Camera)" => new()
+            {
+                Device = "Microscope (USB 2.0 Camera)",
+                InputFormat = "yuyv422",
+                VideoSize = "800x600",
+                DeviceFPS = 20
+            },
+            _ => new()
+        };
         public static readonly Dictionary<string, FFMPEGParameters> DEVICE_DEFAULT = new()
         {
             ["Normal (4K AF Camera)"] = new()
@@ -221,18 +239,18 @@
                 VideoSize = "640x480",
                 DeviceFPS = 30
             },
-            ["Microscope (USB HD Cam)"] = new()
+            ["Microscope (USB 2.0 Camera)"] = new()
             {
-                Device = "Microscope (USB HD Cam)",
-                InputFormat = "mjpeg",
+                Device = "Microscope (USB 2.0 Camera)",
+                InputFormat = "yuyv422",
                 VideoSize = "800x600",
-                DeviceFPS = 30
+                DeviceFPS = 20
             }
         };
     }
 
 
-    public const uint TELEMETRY_TIMEOUT = 10_000; // ms
+    public const uint TELEMETRY_TIMEOUT = 2_000; // ms
     private System.Threading.Timer TelemetryWatchdog1;
     private System.Threading.Timer TelemetryWatchdog2;
 
@@ -450,7 +468,7 @@ rtp://$ip:$port?pkt_size=1200";
         if (!_p.Crop) return;
         (int, int) input_size;
         if (!FFMPEGParameters.LIST_SIZE_WH.TryGetValue(_p.VideoSize, out input_size)) return;
-        
+
         (int x, int y, int w, int h) = GetCropParameters(_p, input_size.Item1, input_size.Item2);
 
         char[] characters = ((char)(_sourceIndex % 4) + $"crop x {x}\x00").ToCharArray();
@@ -466,7 +484,7 @@ rtp://$ip:$port?pkt_size=1200";
         if (!_p.Crop) return;
         (int, int) input_size;
         if (!FFMPEGParameters.LIST_SIZE_WH.TryGetValue(_p.VideoSize, out input_size)) return;
-        
+
         (int x, int y, int w, int h) = GetCropParameters(_p, input_size.Item1, input_size.Item2);
 
         char[] characters = ((char)(_sourceIndex % 4) + $"crop y {y}\x00").ToCharArray();
@@ -482,10 +500,10 @@ rtp://$ip:$port?pkt_size=1200";
         if (!_p.Crop) return;
         (int, int) input_size;
         if (!FFMPEGParameters.LIST_SIZE_WH.TryGetValue(_p.VideoSize, out input_size)) return;
-        
+
         (int x, int y, int w, int h) = GetCropParameters(_p, input_size.Item1, input_size.Item2);
         int fontsize = w / 20;
-        
+
         char[] characters = ((char)(_sourceIndex % 4) + $"crop x {x}\x001fcrop y {y}\x001fcrop w {w}\x001fcrop h {h}\x001fdrawtext reinit text=|||||||||:fontsize={fontsize}:x='abs(mod(t*(w-text_w)*0.5,(w-text_w)*2)-(w-text_w))':box=1:boxcolor=#0d6efd:fontcolor=#0d6efd\x00").ToCharArray();
         if (_sourceIndex < 4)
             _RoveCommService.Boards.Camera1.ZMQCommands(characters);

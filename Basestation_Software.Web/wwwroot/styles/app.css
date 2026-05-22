@@ -361,8 +361,8 @@ input[type=checkbox].danger:checked {
     z-index: 900;
     right: 0;
     bottom: 0;
-    width: 20px;
-    height: 20px;
+    width: 15px;
+    height: 15px;
     cursor: se-resize;
 }
 

@@ -16,7 +16,7 @@
 
     <div style="display: flex; gap: 2px; justify-content: center">
         <input @bind:get=_phrase @bind:set=@(value => { _phrase = value.ToUpper(); }) />
-        <button @onclick=@(async () => { if (!_running) await Start(); else Stop(); }) checked=@_running>@(_running ? "Stop" : "Start")</button>
+        <button @onclick=@(async () => { if (!_running) await Start(); else await Stop(); }) checked=@_running>@(_running ? "Stop" : "Start")</button>
         <button @onclick=ResetCache>Reset Cache</button>
     </div>
 
@@ -81,7 +81,16 @@
         }
     }
 
-    private void Stop() => _cts.Cancel();
+    private async Task Stop()
+    {
+        _cts.Cancel();
+        _statusMessage = "Stopped";
+        _OpService.SetTeleop();
+        _RoveCommService.Boards.Arm.WatchdogOverride(0);
+        _running = false;
+        _charStatusMeter = 0;
+        await InvokeAsync(StateHasChanged);
+    }
 
     private async Task PlayPhrase()
     {

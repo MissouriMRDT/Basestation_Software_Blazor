@@ -63,23 +63,14 @@ $input
 YUYV
 --resolution
 2560x1440
---frames
-4
---set
-Brightness=50%
---set
-Contrast=50%
---skip
-40
 --png
-9
+0
 --no-timestamp
 --font
 sans:20
 --title
 $position
-$output.png
-";
+$output.png";
 
     private string[] _ffmpegArguments = new string[8];
     private string[] _pictureArguments = new string[8];
@@ -101,6 +92,7 @@ $output.png
 
     private void SetFFMPEGArguments()
     {
+        Console.WriteLine(_ffmpegArguments[_sourceIndex]);
         char[] characters = ((char)(_sourceIndex % 4) + string.Join("\x1f", _ffmpegArguments[_sourceIndex].Split("\n")) + '\x00').ToCharArray();
         if (_sourceIndex < 4)
             _RoveCommService.Boards.Camera1.SetFFMPEGArguments(characters);
@@ -116,7 +108,7 @@ $output.png
         else
             _RoveCommService.Boards.Camera2.SetPictureArguments(characters);
     }
- 
+
     private async void CameraNamesChanged(object? _, object? __) => await InvokeAsync(StateHasChanged);
 
     void IDisposable.Dispose()

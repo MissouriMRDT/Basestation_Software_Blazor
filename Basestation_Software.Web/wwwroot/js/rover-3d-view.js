@@ -11,8 +11,8 @@ const NEGATIVE_Y = new THREE.Vector3(0, -1, 0);
 const POSITIVE_Y = new THREE.Vector3(0, 1, 0);
 const MATERIALS = {
     rover: new THREE.MeshLambertMaterial({ color: new THREE.Color().setRGB(1, 0, 0), transparent: true, opacity: 0.7 }),
-    arm: new THREE.MeshLambertMaterial({ color: new THREE.Color().setRGB(0, 1, 0), transparent: true, opacity: 0.7 }),
-    targetArm: new THREE.MeshLambertMaterial({ color: new THREE.Color().setRGB(0, 0, 1), transparent: true, opacity: 0.7 }),
+    arm: new THREE.MeshLambertMaterial({ color: new THREE.Color().setRGB(0, 1, 0), transparent: true, opacity: 0.4 }),
+    targetArm: new THREE.MeshLambertMaterial({ color: new THREE.Color().setRGB(0, 0, 1), transparent: true, opacity: 0.4 }),
 }
 
 export class Rover3DView {
