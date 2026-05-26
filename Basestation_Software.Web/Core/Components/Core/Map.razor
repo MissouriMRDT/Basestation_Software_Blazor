@@ -57,6 +57,12 @@
             <p style="display: inline">@($"Download {_totalDownloadingTiles} {(_isLidar ? "lidar" : "map")} tiles {Math.Clamp(_zoom, 13, 18)}z - 18z")</p>
         }
     </div>
+<button style="position: absolute; left: 10px; top: 100px;" @onclick=@(async () => {await _jsMap!.InvokeVoidAsync("panToMarker", 0);})>
+    <img src="/images/marker.png" style="width: 25px;"/>
+</button>
+<button style="position: absolute; left: 10px; top: 140px; display: @(_dronePresent ? "auto" : "none");" @onclick=@(async () => {await _jsMap!.InvokeVoidAsync("panToMarker", 0);})>
+    <img src="/images/droneMarker.png" style="width: 25px;"/>
+</button>
 <div @ref=_mapContainer class="component-body"></div>
 
 @code
@@ -72,6 +78,7 @@
     private IJSObjectReference? _jsMap;
     private DotNetObjectReference<Map>? _objectReference;
 
+    bool _dronePresent = false;
     bool _rangeSet = false;
     int _totalDownloadingTiles = 0;
     int _currentlyDownloadingTile = 0;
@@ -142,6 +149,7 @@
         });
 
         _RoveCommService.Boards.DroneGPS.OnDronePose(async packet =>{
+            _dronePresent = true;
             await _jsMap!.InvokeVoidAsync("addDroneIcon", [_RoveCommService.Boards.DroneGPS.DronePose_Lat, _RoveCommService.Boards.DroneGPS.DronePose_Lon]);
         });
 

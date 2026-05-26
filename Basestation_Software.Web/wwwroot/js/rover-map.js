@@ -228,6 +228,20 @@ export class RoverMap {
     panToCoordinates(lat, long) {
         this.lMap.panTo(new L.LatLng(lat, long));
     }
+    // Navigate to specific elements, (0: rover, 1: drone).
+    panToMarker(marker)
+    {
+        if (marker == 0)
+        {
+            let pos = this.roverIcon.getLatLng();
+            this.panToCoordinates(pos.lat, pos.lng);
+        }
+        else if (marker == 1)
+        {
+            let pos = this.droneIcon.getLatLng();
+            this.panToCoordinates(pos.lat, pos.lng);
+        }
+    }
     // Add a pin where the rover is.
     addRoverIcon(lat, lng) {
         this.roverIcon.setLatLng([lat, lng]);
