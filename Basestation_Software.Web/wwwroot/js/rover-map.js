@@ -23,6 +23,7 @@ export class RoverMap {
     dotNetComponent = null;
     positionDisplay = null;
     roverIcon = null;
+    droneIcon = null;
 
     currentTileHighlight = null;
     satelliteLayer = null;
@@ -149,6 +150,7 @@ export class RoverMap {
             "Waypoints": this.waypointLayerGroup,
             "Tags": this.tagLayerGroup,
             "Rover": this.roverIcon,
+            "Drone": this.droneIcon,
             "Planned Path": this.pathLayerGroup,
             "Rover Path": this.roverPathLayerGroup
         };
@@ -225,6 +227,15 @@ export class RoverMap {
     // Add a pin where the rover is.
     addRoverIcon(lat, lng) {
         this.roverIcon.setLatLng([lat, lng]);
+    }
+
+    // Add a pin where the drone is.
+    addDroneIcon(lat, lng)
+    {
+        //Put it here so it only initializes if basestation recieves drone packets.
+        this.droneIcon = L.marker([37.951964, -91.778441], {icon: new L.divIcon({className: "drone-map-icon", iconSize: [50, 50]})}).addTo(this.lMap);
+
+        this.droneIcon.setLatLng([lat, lng]);
     }
 
     highlightTile(e) {

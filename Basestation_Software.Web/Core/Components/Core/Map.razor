@@ -22,6 +22,19 @@
             @($"rotateZ({_RoveCommService.Boards.Nav.CompassData}deg);")
     }
 
+    .drone-map-icon:after {
+        background-image: url(images/droneMarker.png);
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 50px;
+        width: 50px;
+        content: "";
+        display: inline-block;
+        transform:
+            @($"rotateZ({_RoveCommService.Boards.DroneGPS.DronePose_Heading}deg);")
+    }
+
     .tile-hover-border {
         pointer-events: none;
         stroke: #ff7800;
@@ -128,10 +141,14 @@
             await InvokeAsync(StateHasChanged);
         });
 
+        _RoveCommService.Boards.DroneGPS.OnDronePose(async packet =>{
+            await _jsMap!.InvokeVoidAsync("addDroneIcon", [_RoveCommService.Boards.DroneGPS.DronePose_Lat, _RoveCommService.Boards.DroneGPS.DronePose_Lon]);
+        });
 
         _RoveCommService.Boards.Nav.OnGPSLatLonAlt(async packet =>
         {
             await _jsMap!.InvokeVoidAsync("addRoverIcon", [_RoveCommService.Boards.Nav.GPSLatLonAlt_Lat, _RoveCommService.Boards.Nav.GPSLatLonAlt_Lon]);
+
 
             // Disabled for safety until performance issues are resolved.
             /*double lat = packet.Data[0];
