@@ -4,6 +4,7 @@
 
 @inject PingService _PingService
 @inject RoveCommService _RoveCommService
+@inject Rover3DService _Rover3DService
 
 <div class="component-header">
     <h3>Ping Tool</h3>
@@ -106,6 +107,7 @@
             PingReply reply = await _PingService.PingAsync(ipAddress, _pingTimeout);
             device.PingStatus = reply.Status == IPStatus.Success ? reply.RoundtripTime.ToString() : reply.Status.ToString();
             device.Ok = reply.Status == IPStatus.Success;
+            _Rover3DService.DeviceOk[device.Name] = device.Ok;
 
             await InvokeAsync(StateHasChanged);
         }

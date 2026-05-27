@@ -1,4 +1,4 @@
-@using System.Diagnostics
+@inject Rover3DService _Rover3DService
 @inject RoveCommService _RoveCommService
 @inject OpService _opService
 
@@ -77,7 +77,10 @@
         if (!_outputEnabled) return false;
 
         for (int i = 0; i < _angles.Length; i++)
+        {
             _angles[i].Increment(inputs[i] * _gimbalSpeed * deltaT);
+            _Rover3DService.GimbalAngles[i] = _angles[i].Angle;
+        }
         if (Math.Abs(inputs[0]) > 0 || Math.Abs(inputs[1]) > 0) _RoveCommService.Boards.Core.LeftGimbal((short)_angles[0].Angle, (short)_angles[1].Angle);
         if (Math.Abs(inputs[2]) > 0 || Math.Abs(inputs[3]) > 0) _RoveCommService.Boards.Core.RightGimbal((short)_angles[2].Angle, (short)_angles[3].Angle);
         if (Math.Abs(inputs[4]) > 0 || Math.Abs(inputs[5]) > 0) _RoveCommService.Boards.Core.BackGimbal((short)_angles[4].Angle, (short)_angles[5].Angle);

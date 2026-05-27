@@ -143,7 +143,7 @@ button[checked] {
 }
 
 button:disabled {
-    background-color: #888;
+    --btn-fill: #888;
 }
 
 button::before {

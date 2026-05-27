@@ -29,6 +29,7 @@ builder.Services.AddServerSideBlazor()
 builder.Services.AddScoped<CookieService>();
 builder.Services.AddSingleton<VRService>();
 builder.Services.AddSingleton<CameraService>();
+builder.Services.AddSingleton<Rover3DService>();
 builder.Services.AddSingleton<GPSWaypointState>();
 builder.Services.AddSingleton<PingService>();
 builder.Services.AddSingleton<OpService>();

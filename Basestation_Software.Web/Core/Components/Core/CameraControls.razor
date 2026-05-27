@@ -23,7 +23,18 @@
     <button @onclick=@(() => ToggleSource(_sourceIndex, false)) title="Stop Camera"><i class="bi-stop" /></button>
     <button @onclick=TakePicture title="Take Picture"><i class="bi-image" /></button>
     <button @onclick=TakePano title="Take Panorama"><i class="bi-arrows" /></button>
-    <input @bind=@(_CameraService.Names[_sourceIndex]) />
+    <select @bind=@(_CameraService.Names[_sourceIndex])>
+        <option value="@_sourceIndex">@_sourceIndex</option>
+        <option value="LEFT">LEFT</option>
+        <option value="RIGHT">RIGHT</option>
+        <option value="BACK">BACK</option>
+        <option value="BASE">BASE</option>
+        <option value="J4">J4</option>
+        <option value="WRIST">WRIST</option>
+        <option value="AF">AF</option>
+        <option value="MICRO">MICRO</option>
+        <option value="GIMBAL">GIMBAL</option>
+    </select>
     <select @bind=@(_p.Device) @bind:after=@(() => _p = FFMPEGParameters.GetDefault(_p.Device))>
         @foreach (string device in FFMPEGParameters.LIST_DEVICE_FPS.Keys)
         {
