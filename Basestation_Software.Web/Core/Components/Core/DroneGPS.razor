@@ -30,6 +30,7 @@
     <p class="secondary-bg">@($"{_RoveCommService.Boards.DroneGPS.DronePose_HorizontalAccuracy:0000.000}")</p>
     <p class="secondary-bg">@($"{_RoveCommService.Boards.DroneGPS.DronePose_VerticalAccuracy:0000.000}")</p>
     <p class="secondary-bg">@($"{_RoveCommService.Boards.DroneGPS.DronePose_HeadingAccuracy:000.00000}")</p>
+    <p style="grid-area: 7 / 1 / 8 / 4">@FixType Fix <span style="color: @((_RoveCommService.Boards.DroneGPS.DronePose_FixType > 2.0f) ? "green" : "red")"></span></p>
 </div>
 
 @code
@@ -58,7 +59,7 @@
                     FixType = "3D GNSS";
                     break;
                 case 4f:
-                    FixType = "DGPS/SBAS";
+                    FixType = "DGPS";
                     break;
                 case 5f:
                     FixType = "RTK Float";
