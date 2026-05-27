@@ -63,9 +63,7 @@
 
     private async Task Update(Gamepad gamepad, float deltaT)
     {
-        if (await ProcessGamepadInput(gamepad, deltaT))
-            // Set teleop if controller being used.
-            _opService.SetTeleop();
+        await ProcessGamepadInput(gamepad, deltaT);
         // It is safe for this component to take no action when the controller is disconnected.
         await InvokeAsync(StateHasChanged);
     }

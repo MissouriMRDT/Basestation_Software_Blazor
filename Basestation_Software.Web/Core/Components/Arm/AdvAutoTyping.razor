@@ -73,7 +73,7 @@
         }
         finally
         {
-            _OpService.SetTeleop();
+            _OpService.SetNone();
             _RoveCommService.Boards.Arm.WatchdogOverride(0);
             _running = false;
             _charStatusMeter = 0;
@@ -85,7 +85,7 @@
     {
         _cts.Cancel();
         _statusMessage = "Stopped";
-        _OpService.SetTeleop();
+        _OpService.SetNone();
         _RoveCommService.Boards.Arm.WatchdogOverride(0);
         _running = false;
         _charStatusMeter = 0;

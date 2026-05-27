@@ -1,4 +1,5 @@
 @inject RoveCommService _RoveCommService
+@inject OpService _OpService
 
 <div class="component-header" style="display: flex">
     <h3>Science Controls</h3>
@@ -72,7 +73,7 @@
     private ControlScheme _scheme = new()
     {
         Binds = [Bind.LSY, Bind.Triggers, Bind.RSY, Bind.Bumpers],
-        Inversions = [false, false, false, false]
+        Inversions = [true, false, true, false]
     };
     private static readonly string[] _axisNames = ["Auger Gantry", "Auger", "Instruments Gantry", "AF Filter"];
     bool[] _limitOverrides = new bool[4];
@@ -89,7 +90,7 @@
         if (ProcessGamepadInputOK)
         {
             // Set teleop if controller being used.
-            _RoveCommService.Boards.Core.StateDisplay(0);
+            _OpService.SetTeleop();
         }
         else if (LastProcessGamepadInputOK)
         {

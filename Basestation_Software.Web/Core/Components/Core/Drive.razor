@@ -55,12 +55,9 @@
     private double DriveSpeed = 0.8;
 
     private double DeadZone = 0.3;
-    private int SelectedGimbal = 0;
     private double LeftSpeed;
     private double RightSpeed;
     private static double[] _angles = new double[12];
-    private int Pan;
-    private int Tilt;
     private bool LastProcessGamepadInputOK = false;
 
     private async Task Update(Gamepad gamepad, float deltaT)

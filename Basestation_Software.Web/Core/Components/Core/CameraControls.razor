@@ -17,8 +17,8 @@
             <button checked=@(_sourceIndex == i) class="secondary @(GetClass(i))" title=@GetTitle(i) @onclick=@(() => SetSource(i))>@(_CameraService.Names[i])</button>
         }
     </div>
-    <p style="grid-area: 2 / 1 / 3 / 3">@($"cpu0: {_RoveCommService.Boards.Camera1.Utilization_cpu0:000}% 1: {_RoveCommService.Boards.Camera1.Utilization_cpu1:000}% 2: {_RoveCommService.Boards.Camera1.Utilization_cpu2:000}% 3: {_RoveCommService.Boards.Camera1.Utilization_cpu3:000}% mem: {_RoveCommService.Boards.Camera1.Utilization_mem:000}% sd: {_RoveCommService.Boards.Camera1.Utilization_storage:000}%")</p>
-    <p style="grid-area: 2 / 3 / 3 / 5">@($"cpu0: {_RoveCommService.Boards.Camera2.Utilization_cpu0:000}% 1: {_RoveCommService.Boards.Camera2.Utilization_cpu1:000}% 2: {_RoveCommService.Boards.Camera2.Utilization_cpu2:000}% 3: {_RoveCommService.Boards.Camera2.Utilization_cpu3:000}% mem: {_RoveCommService.Boards.Camera2.Utilization_mem:000}% sd: {_RoveCommService.Boards.Camera2.Utilization_storage:000}%")</p>
+    <p style="grid-area: 2 / 1 / 3 / 3; margin-bottom: 4px">@($"cpu0: {_RoveCommService.Boards.Camera1.Utilization_cpu0:000}% 1: {_RoveCommService.Boards.Camera1.Utilization_cpu1:000}% 2: {_RoveCommService.Boards.Camera1.Utilization_cpu2:000}% 3: {_RoveCommService.Boards.Camera1.Utilization_cpu3:000}% mem: {_RoveCommService.Boards.Camera1.Utilization_mem:000}% sd: {_RoveCommService.Boards.Camera1.Utilization_storage:000}% temp: {_RoveCommService.Boards.Camera1.Utilization_temp:000}C")</p>
+    <p style="grid-area: 2 / 3 / 3 / 5; margin-bottom: 4px">@($"cpu0: {_RoveCommService.Boards.Camera2.Utilization_cpu0:000}% 1: {_RoveCommService.Boards.Camera2.Utilization_cpu1:000}% 2: {_RoveCommService.Boards.Camera2.Utilization_cpu2:000}% 3: {_RoveCommService.Boards.Camera2.Utilization_cpu3:000}% mem: {_RoveCommService.Boards.Camera2.Utilization_mem:000}% sd: {_RoveCommService.Boards.Camera2.Utilization_storage:000}% temp: {_RoveCommService.Boards.Camera2.Utilization_temp:000}C")</p>
     <button @onclick=@(() => ToggleSource(_sourceIndex, true)) title="Restart Camera"><i class="bi-arrow-clockwise" /></button>
     <button @onclick=@(() => ToggleSource(_sourceIndex, false)) title="Stop Camera"><i class="bi-stop" /></button>
     <button @onclick=TakePicture title="Take Picture"><i class="bi-image" /></button>
@@ -419,7 +419,7 @@
             filters.Add(@$"crop=x={x}:y={y}:w={w}:h={h}");
             fontsize = w / 20;
         }
-        filters.Add(@$"drawtext=text=|||||||||:fontsize={fontsize}:x='abs(mod(t*(w-text_w)*0.5,(w-text_w)*2)-(w-text_w))':box=1:boxcolor=#0d6efd:fontcolor=#0d6efd");
+        filters.Add(@$"drawtext=text=|||||||||:fontsize={fontsize}:x='abs(mod(t*(w-text_w)*0.5,(w-text_w)*2)-(w-text_w))':box=1:boxcolor=#8c00ff:fontcolor=#8c00ff");
         string ffmpeg_arguments = $@"-hide_banner
 -f
 video4linux2
