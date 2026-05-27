@@ -60,7 +60,7 @@
 <button style="position: absolute; left: 10px; top: 100px;" @onclick=@(async () => {await _jsMap!.InvokeVoidAsync("panToMarker", 0);})>
     <img src="/images/marker.png" style="width: 25px;"/>
 </button>
-<button style="position: absolute; left: 10px; top: 140px; display: @(_dronePresent ? "auto" : "none");" @onclick=@(async () => {await _jsMap!.InvokeVoidAsync("panToMarker", 0);})>
+<button style="position: absolute; left: 10px; top: 140px;" @onclick=@(async () => {await _jsMap!.InvokeVoidAsync("panToMarker", 1);})>
     <img src="/images/droneMarker.png" style="width: 25px;"/>
 </button>
 <div @ref=_mapContainer class="component-body"></div>
@@ -149,8 +149,8 @@
         });
 
         _RoveCommService.Boards.DroneGPS.OnDronePose(async packet =>{
-            _dronePresent = true;
             await _jsMap!.InvokeVoidAsync("addDroneIcon", [_RoveCommService.Boards.DroneGPS.DronePose_Lat, _RoveCommService.Boards.DroneGPS.DronePose_Lon]);
+            await InvokeAsync(StateHasChanged);
         });
 
         _RoveCommService.Boards.Nav.OnGPSLatLonAlt(async packet =>

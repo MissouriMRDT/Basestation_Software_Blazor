@@ -132,10 +132,7 @@ export class RoverMap {
             this.positionDisplay.updateHTML(event.latlng.lat, event.latlng.lng, this.lMap.getZoom());
         });
         this.roverIcon = L.marker([37.951764, -91.778441], { icon: new L.divIcon({ className: "rover-map-icon", iconSize: [50, 50] }) }).addTo(this.lMap);
-        
-        //Initialize but imediately remove drone marker so it can be re displayed on connection
         this.droneIcon = L.marker([37.951964, -91.778441], {icon: new L.divIcon({className: "drone-map-icon", iconSize: [50, 50]})}).addTo(this.lMap);
-        this.lMap.removeLayer(this.droneIcon);
 
         this.waypointLayerGroup = L.layerGroup([]).addTo(this.lMap);
         this.tagLayerGroup = L.layerGroup([]).addTo(this.lMap);
@@ -250,7 +247,6 @@ export class RoverMap {
     // Add a pin where the drone is.
     addDroneIcon(lat, lng)
     {
-        this.lMap.addLayer(this.droneIcon);
         this.droneIcon.setLatLng([lat, lng]);
     }
 
