@@ -250,7 +250,8 @@ export class RoverMap {
     // Add a pin where the drone is.
     addDroneIcon(lat, lng)
     {
-        this.lMap.addLayer(this.droneIcon);
+        if (!this.lMap.hasLayer(this.droneIcon))
+            this.lMap.addLayer(this.droneIcon);
         this.droneIcon.setLatLng([lat, lng]);
     }
 
