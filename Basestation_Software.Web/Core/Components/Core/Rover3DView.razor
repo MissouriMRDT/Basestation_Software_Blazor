@@ -51,64 +51,68 @@
     {
         if (jsRoverView == null) return;
 
-        // CoreBoard: y-forward, z-up, x-right
-        // ThreeJS (WebGL): -z-forward, y-up, x-right
-        if (_accel)
-            await jsRoverView.InvokeVoidAsync("updateAnglesFromUpVector", [_RoveCommService.Boards.Core.AccelerometerData_X, _RoveCommService.Boards.Core.AccelerometerData_Z, -_RoveCommService.Boards.Core.AccelerometerData_Y]);
-        else
-            await jsRoverView.InvokeVoidAsync("updateAnglesFromUpVector", [0, 1, 0]);
-
-        Dictionary<string, int> states = [];
-        bool camera1Ping = DeviceOk("Camera1");
-        for (int i = 0; i < 4; i++)
+        try
         {
-            bool connected = (_RoveCommService.Boards.Camera1.AvailableCameras_Connected & (1 << i)) != 0;
-            bool streaming = (_RoveCommService.Boards.Camera1.AvailableCameras_Streaming & (1 << i)) != 0;
-            states[_CameraService.Names[i]] = !camera1Ping ? 0 : streaming ? 1 : connected ? 2 : 0;
-        }
-        bool camera2Ping = DeviceOk("Camera2");
-        for (int i = 0; i < 4; i++)
-        {
-            bool connected = (_RoveCommService.Boards.Camera2.AvailableCameras_Connected & (1 << i)) != 0;
-            bool streaming = (_RoveCommService.Boards.Camera2.AvailableCameras_Streaming & (1 << i)) != 0;
-            states[_CameraService.Names[i + 4]] = !camera2Ping ? 0 : streaming ? 1 : connected ? 2 : 0;
-        }
+            // CoreBoard: y-forward, z-up, x-right
+            // ThreeJS (WebGL): -z-forward, y-up, x-right
+            if (_accel)
+                await jsRoverView.InvokeVoidAsync("updateAnglesFromUpVector", [_RoveCommService.Boards.Core.AccelerometerData_X, _RoveCommService.Boards.Core.AccelerometerData_Z, -_RoveCommService.Boards.Core.AccelerometerData_Y]);
+            else
+                await jsRoverView.InvokeVoidAsync("updateAnglesFromUpVector", [0, 1, 0]);
 
-        Color c = _OpService.OpColor ?? Color.Black;
-        await jsRoverView.InvokeVoidAsync("updateMaster", [DeviceOk("Core"), DeviceOk("PMS"), DeviceOk("Camera1"), DeviceOk("Camera2"), c.R, c.G, c.B]);
-        await jsRoverView.InvokeVoidAsync("updateCameras", [
-            _Rover3DService.GimbalAngles[0], _Rover3DService.GimbalAngles[1], states.GetValueOrDefault("LEFT"),
+            Dictionary<string, int> states = [];
+            bool camera1Ping = DeviceOk("Camera1");
+            for (int i = 0; i < 4; i++)
+            {
+                bool connected = (_RoveCommService.Boards.Camera1.AvailableCameras_Connected & (1 << i)) != 0;
+                bool streaming = (_RoveCommService.Boards.Camera1.AvailableCameras_Streaming & (1 << i)) != 0;
+                states[_CameraService.Names[i]] = !camera1Ping ? 0 : streaming ? 1 : connected ? 2 : 0;
+            }
+            bool camera2Ping = DeviceOk("Camera2");
+            for (int i = 0; i < 4; i++)
+            {
+                bool connected = (_RoveCommService.Boards.Camera2.AvailableCameras_Connected & (1 << i)) != 0;
+                bool streaming = (_RoveCommService.Boards.Camera2.AvailableCameras_Streaming & (1 << i)) != 0;
+                states[_CameraService.Names[i + 4]] = !camera2Ping ? 0 : streaming ? 1 : connected ? 2 : 0;
+            }
+
+            Color c = _OpService.OpColor ?? Color.Black;
+            await jsRoverView.InvokeVoidAsync("updateMaster", [DeviceOk("Core"), DeviceOk("PMS"), DeviceOk("Camera1"), DeviceOk("Camera2"), c.R, c.G, c.B]);
+            await jsRoverView.InvokeVoidAsync("updateCameras", [
+                _Rover3DService.GimbalAngles[0], _Rover3DService.GimbalAngles[1], states.GetValueOrDefault("LEFT"),
             _Rover3DService.GimbalAngles[2], _Rover3DService.GimbalAngles[3], states.GetValueOrDefault("RIGHT"),
             _Rover3DService.GimbalAngles[4], _Rover3DService.GimbalAngles[5], states.GetValueOrDefault("BACK"),
             _Rover3DService.GimbalAngles[10], _Rover3DService.GimbalAngles[11], states.GetValueOrDefault("GIMBAL"),
             states.GetValueOrDefault("AF"), states.GetValueOrDefault("MICRO"),
-            _Rover3DService.GimbalAngles[7], states.GetValueOrDefault("BASE"),
-            _Rover3DService.GimbalAngles[9], states.GetValueOrDefault("J4"),
+            _Rover3DService.GimbalAngles[9], states.GetValueOrDefault("BASE"),
+            _Rover3DService.GimbalAngles[7], states.GetValueOrDefault("J4"),
             states.GetValueOrDefault("WRIST")
-        ]);
+            ]);
 
-        switch (_system)
-        {
-            case System.ARM:
-                await jsRoverView.InvokeVoidAsync("updateArm", [DeviceOk("Arm")]);
-                await jsRoverView.InvokeVoidAsync("updateArmJoints", [
-                    _RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J2, _RoveCommService.Boards.Arm.Position_J3,
+            switch (_system)
+            {
+                case System.ARM:
+                    await jsRoverView.InvokeVoidAsync("updateArm", [DeviceOk("Arm")]);
+                    await jsRoverView.InvokeVoidAsync("updateArmJoints", [
+                        _RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J2, _RoveCommService.Boards.Arm.Position_J3,
                         _RoveCommService.Boards.Arm.Position_J4, _RoveCommService.Boards.Arm.Position_J5, _RoveCommService.Boards.Arm.Position_J6]);
-                await jsRoverView.InvokeVoidAsync("updateTarget", [true, _RoveCommService.Boards.Arm.Position_GX, _RoveCommService.Boards.Arm.Position_GY, _RoveCommService.Boards.Arm.Position_GZ]);
-                await jsRoverView.InvokeVoidAsync("updateTargetArm", [
-                    _RoveCommService.Boards.Arm.Target_X, _RoveCommService.Boards.Arm.Target_J2, _RoveCommService.Boards.Arm.Target_J3,
+                    await jsRoverView.InvokeVoidAsync("updateTarget", [true, _RoveCommService.Boards.Arm.Position_GX, _RoveCommService.Boards.Arm.Position_GY, _RoveCommService.Boards.Arm.Position_GZ]);
+                    await jsRoverView.InvokeVoidAsync("updateTargetArm", [
+                        _RoveCommService.Boards.Arm.Target_X, _RoveCommService.Boards.Arm.Target_J2, _RoveCommService.Boards.Arm.Target_J3,
                         _RoveCommService.Boards.Arm.Target_J4, _RoveCommService.Boards.Arm.Target_J5, _RoveCommService.Boards.Arm.Target_J6]);
-                break;
-            case System.AUTONOMY:
-                await jsRoverView.InvokeVoidAsync("updateAutonomy", [DeviceOk("Autonomy")]);
-                break;
-            case System.SCIENCE:
-                await jsRoverView.InvokeVoidAsync("updateScience", [
-                    _RoveCommService.Boards.Auger.Position, _RoveCommService.Boards.Auger.AugerSpeed, _RoveCommService.Boards.Auger.LimitSwitch, DeviceOk("Auger"),
+                    break;
+                case System.AUTONOMY:
+                    await jsRoverView.InvokeVoidAsync("updateAutonomy", [DeviceOk("Autonomy")]);
+                    break;
+                case System.SCIENCE:
+                    await jsRoverView.InvokeVoidAsync("updateScience", [
+                        _RoveCommService.Boards.Auger.Position, _RoveCommService.Boards.Auger.AugerSpeed, _RoveCommService.Boards.Auger.LimitSwitch, DeviceOk("Auger"),
                         _RoveCommService.Boards.Raman.Position_InstrumentsAxis, _RoveCommService.Boards.Raman.LimitSwitch, DeviceOk("Raman")
-                ]);
-                break;
+                    ]);
+                    break;
+            }
         }
+        catch { }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

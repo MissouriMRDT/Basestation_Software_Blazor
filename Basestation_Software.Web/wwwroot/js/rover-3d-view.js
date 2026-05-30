@@ -234,12 +234,12 @@ export class Rover3DView {
             this.cameras.back.update(map(back_pan, 80, 260, 90, -90), map(back_tilt, 199, 12, 90, -90), back_state);
         }
         if (this.system == "SCIENCE") {
-            this.cameras.science_gimbal.update(science_gimbal_pan, science_gimbal_tilt, science_gimbal_state);
+            this.cameras.science_gimbal.update(map(science_gimbal_pan, 0, 172, 150, -40), map(science_gimbal_tilt, 107, 24, -90, 0), science_gimbal_state);
             this.cameras.af.update(0, 0, af_status);
             this.cameras.microscope.update(0, 0, microscope_state);
         } else if (this.system == "ARM") {
-            this.cameras.base.update(0, base_tilt, base_state);
-            this.cameras.j4.update(0, j4_tilt, j4_state);
+            this.cameras.base.update(0, map(base_tilt, 93, 0, 0, -90), base_state);
+            this.cameras.j4.update(0, map(j4_tilt, 228, 104, -90, 0), j4_state);
             this.cameras.wrist.update(0, 0, wrist_state);
         }
     }
