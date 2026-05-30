@@ -23,6 +23,7 @@ export class RoverMap {
     dotNetComponent = null;
     positionDisplay = null;
     roverIcon = null;
+    droneIcon = null;
 
     currentTileHighlight = null;
     satelliteLayer = null;
@@ -131,6 +132,7 @@ export class RoverMap {
             this.positionDisplay.updateHTML(event.latlng.lat, event.latlng.lng, this.lMap.getZoom());
         });
         this.roverIcon = L.marker([37.951764, -91.778441], { icon: new L.divIcon({ className: "rover-map-icon", iconSize: [50, 50] }) }).addTo(this.lMap);
+        this.droneIcon = L.marker([37.951964, -91.778441], {icon: new L.divIcon({className: "drone-map-icon", iconSize: [50, 50]})}).addTo(this.lMap);
 
         this.waypointLayerGroup = L.layerGroup([]).addTo(this.lMap);
         this.tagLayerGroup = L.layerGroup([]).addTo(this.lMap);
@@ -149,6 +151,7 @@ export class RoverMap {
             "Waypoints": this.waypointLayerGroup,
             "Tags": this.tagLayerGroup,
             "Rover": this.roverIcon,
+            "Drone": this.droneIcon,
             "Planned Path": this.pathLayerGroup,
             "Rover Path": this.roverPathLayerGroup
         };
@@ -222,9 +225,29 @@ export class RoverMap {
     panToCoordinates(lat, long) {
         this.lMap.panTo(new L.LatLng(lat, long));
     }
+    // Navigate to specific elements, (0: rover, 1: drone).
+    panToMarker(marker)
+    {
+        if (marker == 0)
+        {
+            let pos = this.roverIcon.getLatLng();
+            this.panToCoordinates(pos.lat, pos.lng);
+        }
+        else if (marker == 1)
+        {
+            let pos = this.droneIcon.getLatLng();
+            this.panToCoordinates(pos.lat, pos.lng);
+        }
+    }
     // Add a pin where the rover is.
     addRoverIcon(lat, lng) {
         this.roverIcon.setLatLng([lat, lng]);
+    }
+
+    // Add a pin where the drone is.
+    addDroneIcon(lat, lng)
+    {
+        this.droneIcon.setLatLng([lat, lng]);
     }
 
     highlightTile(e) {

@@ -15,9 +15,9 @@
             <button class="danger" @onclick=@(async () => { await Delete(timer.ID); })><i class="bi-trash" /></button>
             @if (timer.Paused)
             {
-                <input @bind:get=@(timer.Elapsed.ToString((timer.Elapsed < TimeSpan.Zero ? "\\-" : "") + "hh\\:mm\\:ss\\.f")) @bind:set=@(async value => await SetElapsed(timer.ID, value)) />
+                <input style="width: 50px" @bind:get=@(timer.Elapsed.ToString((timer.Elapsed < TimeSpan.Zero ? "\\-" : "") + "hh\\:mm\\:ss\\.f")) @bind:set=@(async value => await SetElapsed(timer.ID, value)) />
                 <div style="float: right">
-                    <input @bind:get=@(timer.Remaining.ToString((timer.Remaining < TimeSpan.Zero ? "\\-" : "") + "hh\\:mm\\:ss\\.f")) @bind:set=@(async value => await SetRemaining(timer.ID, value)) />
+                    <input style="width: 50px" @bind:get=@(timer.Remaining.ToString((timer.Remaining < TimeSpan.Zero ? "\\-" : "") + "hh\\:mm\\:ss\\.f")) @bind:set=@(async value => await SetRemaining(timer.ID, value)) />
                     <button class="success" @onclick=@(async () => { await Resume(timer.ID); })><i class="bi-play" /></button>
                 </div>
             }
