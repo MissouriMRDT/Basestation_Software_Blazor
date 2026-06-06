@@ -1,0 +1,115 @@
+@page "/vr"
+@using Basestation_Software.Web.Models
+@using System.Text.Json;
+@using Microsoft.AspNetCore.Mvc.ModelBinding
+@using Microsoft.EntityFrameworkCore
+@using System.Collections.ObjectModel
+@using System.Collections.Immutable
+@implements IAsyncDisposable
+@inherits LayoutComponentBase
+@inject IJSRuntime _IJSRuntime
+@inject DatabaseService _databaseService
+@inject IDbContextFactory<DatabaseContext> _dbContextFactory
+@inject RoveCommService _RoveCommService
+@inject VRService _VRService
+@inject OpService _OpService
+
+<style>
+    html,
+    body {
+        margin: 0;
+        height: 100%;
+    }
+</style>
+
+<PageTitle>MRDT Basestation</PageTitle>
+
+@code
+{
+    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<VR>? _objectReference;
+
+    protected override void OnInitialized()
+    {
+        _VRService.SubscribeToSourceSet(SetSource);
+        _VRService.SubscribeToRotationSet(SetRotation);
+        _VRService.SubscribeToGridSet(SetGrid);
+        _RoveCommService.Boards.Arm.OnPosition(async packet =>
+        {
+            if (_jsModule == null) return;
+            await _jsModule.InvokeVoidAsync("updateArm", [
+            _RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J2, _RoveCommService.Boards.Arm.Position_J3,
+            _RoveCommService.Boards.Arm.Position_J4, _RoveCommService.Boards.Arm.Position_J5, _RoveCommService.Boards.Arm.Position_J6]);
+        });
+        _RoveCommService.Boards.Arm.OnTarget(async packet =>
+        {
+            if (_jsModule == null) return;
+            await _jsModule.InvokeVoidAsync("updateTargetArm", [
+            _RoveCommService.Boards.Arm.Target_X, _RoveCommService.Boards.Arm.Target_J2, _RoveCommService.Boards.Arm.Target_J3,
+            _RoveCommService.Boards.Arm.Target_J4, _RoveCommService.Boards.Arm.Target_J5, _RoveCommService.Boards.Arm.Target_J6]);
+        });
+        _OpService.SubscribeToStateChanged((Color? c) =>
+            {
+                if (c != null && _jsModule != null)
+                {
+                    _ = _jsModule.InvokeVoidAsync("updateLighting", [c?.R, c?.G, c?.B]);
+                }
+            });
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                _jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "/js/vr.js");
+                _objectReference = DotNetObjectReference.Create(this);
+                await _jsModule.InvokeVoidAsync("init", [_objectReference]);
+                await SetGrid(_VRService.GetGrid());
+            }
+            catch
+            {
+                _jsModule = null;
+            }
+        }
+    }
+
+    async Task SetSource(int display, int camera)
+    {
+        if (_jsModule == null) return;
+        await _jsModule.InvokeVoidAsync("setSource", [display, camera]);
+    }
+
+    async Task SetRotation(int display, double rotation)
+    {
+        if (_jsModule == null) return;
+        await _jsModule.InvokeVoidAsync("rotateDisplay", [display, rotation]);
+    }
+
+    async Task SetGrid(double[] angles)
+    {
+        if (_jsModule == null) return;
+        if (angles.Length != 8) return;
+        await _jsModule.InvokeVoidAsync("setGrid", angles);
+    }
+
+
+    async ValueTask IAsyncDisposable.DisposeAsync()
+    {
+        _VRService.UnsubscribeFromSourceSet(SetSource);
+        _VRService.UnsubscribeFromRotationSet(SetRotation);
+        _VRService.UnsubscribeFromGridSet(SetGrid);
+        _objectReference?.Dispose();
+        try
+        {
+            if (_jsModule != null)
+            {
+                await _jsModule.DisposeAsync();
+            }
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+}

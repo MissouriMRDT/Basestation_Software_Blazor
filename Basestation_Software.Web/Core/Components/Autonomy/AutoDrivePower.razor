@@ -3,7 +3,7 @@
 <div class="component-header">
     <h3>Autonomy Drive Power</h3>
 </div>
-<div class="component-body" style="display: grid; grid-template-columns: auto min-content 200px min-content; align-items: center">
+<div class="component-body" style="display: grid; grid-template-columns: auto min-content 200px min-content; align-items: center; flex-grow: 0">
     <p>Max Speed</p>
     <p>@(_maxSpeed * 100)%</p>
     <input @bind=_maxSpeed type="range" min="0" max="1" step="0.01" />
@@ -24,7 +24,7 @@
 </div>
 
 @code {
-    private float _maxSpeed = 0.5f;
+    private float _maxSpeed = 0.7f;
     private float _minTravScore = 0.2f;
     private float _betaBias = 5.0f;
 }

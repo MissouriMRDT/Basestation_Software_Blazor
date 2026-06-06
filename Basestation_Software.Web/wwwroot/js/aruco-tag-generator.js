@@ -18,8 +18,7 @@ export async function generateMarkerSvg(scale, width, height, bits, fixPdfArtifa
     const svg = document.createElementNS(xmlns, "svg");
     svg.setAttribute("xmlns", xmlns);
     svg.setAttribute("viewBox", "0 0 " + (width + 2) + " " + (height + 2));
-    svg.setAttribute("width", (width + 2) * scale);
-    svg.setAttribute("height", (height + 2) * scale);
+    svg.setAttribute("style", `width: ${(width + 2) * scale}px; height: ${(height + 2) * scale}px`);
     svg.setAttribute("shape-rendering", "crispEdges");
 
     // Background rect

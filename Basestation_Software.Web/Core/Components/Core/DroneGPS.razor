@@ -1,0 +1,98 @@
+@using Microsoft.EntityFrameworkCore
+@using System.Numerics
+@inject IJSRuntime _IJSRuntime
+@inject RoveCommService _RoveCommService
+@inject DatabaseService _databaseService
+@inject IDbContextFactory<DatabaseContext> _dbContextFactory
+
+<div class="component-header">
+    <h3>Drone GPS</h3>
+    <button @onclick=AddWaypoint>
+        <i class="bi-plus-circle" />
+    </button>
+</div>
+<div class="component-body gps">
+    <p>Lat [&#176;]</p>
+    <p>Lon [&#176;]</p>
+    <p>Alt [m]</p>
+    <p>@($"{_RoveCommService.Boards.DroneGPS.DronePose_Lat:00.0000000}")</p>
+    <p>@($"{_RoveCommService.Boards.DroneGPS.DronePose_Lon:000.0000000}")</p>
+    <p>@($"{_RoveCommService.Boards.DroneGPS.DronePose_Alt:000.00}")</p>
+    <p>Satellites</p>
+    <p>@(DIRECTIONS[(int)((_RoveCommService.Boards.DroneGPS.DronePose_Heading + 22.5) % 360 / 45)])</p>
+    <p>Hdg [&#176;]</p>
+    <p>@($"{_RoveCommService.Boards.DroneGPS.DronePose_Satellites:00}")</p>
+    <p class="secondary-bg">Accuracy</p>
+    <p>@($"{_RoveCommService.Boards.DroneGPS.DronePose_Heading:00.00000}")</p>
+    <p class="secondary-bg">Horiz [m]</p>
+    <p class="secondary-bg">Vert [m]</p>
+    <p class="secondary-bg">Hdg [&#176;]</p>
+    <p class="secondary-bg">@($"{_RoveCommService.Boards.DroneGPS.DronePose_HorizontalAccuracy:0000.000}")</p>
+    <p class="secondary-bg">@($"{_RoveCommService.Boards.DroneGPS.DronePose_VerticalAccuracy:0000.000}")</p>
+    <p class="secondary-bg">@($"{_RoveCommService.Boards.DroneGPS.DronePose_HeadingAccuracy:000.00000}")</p>
+    <p style="grid-area: 7 / 1 / 8 / 4">@FixType Fix <span style="color: @((_RoveCommService.Boards.DroneGPS.DronePose_FixType > 2.0f) ? "green" : "red")"></span></p>
+</div>
+
+@code
+{
+    private string FixType = "";
+    private double Pitch;
+    private double Roll;
+    private static readonly List<string> DIRECTIONS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+
+    protected override void OnInitialized()
+    {
+        _RoveCommService.Boards.DroneGPS.OnDronePose(async (packet) =>
+        {
+            switch (_RoveCommService.Boards.DroneGPS.DronePose_FixType)
+            {
+                case 0f:
+                    FixType = "No GPS";
+                    break;
+                case 1f:
+                    FixType = "No Fix";
+                    break;
+                case 2f:
+                    FixType = "2D GNSS";
+                    break;
+                case 3f:
+                    FixType = "3D GNSS";
+                    break;
+                case 4f:
+                    FixType = "DGPS";
+                    break;
+                case 5f:
+                    FixType = "RTK Float";
+                    break;
+                case 6f:
+                    FixType = "RTK Fixed";
+                    break;
+                case 7f:
+                    FixType = "Static Fixed";
+                    break;
+                case 8f:
+                    FixType = "PPP Fixed";
+                    break;
+                default:
+                    FixType = "Undefined";
+                    break;
+            }
+            
+            await InvokeAsync(StateHasChanged);
+        });
+
+        _RoveCommService.Boards.DroneGPS.OnDronePose(Update);
+    }
+
+    async Task Update<T>(RoveCommPacket<T> _)
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    async Task AddWaypoint()
+    {
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        databaseContext.Waypoints.Add(new() { ID = Guid.NewGuid(), Name = DateTime.Now.ToString(), Latitude = _RoveCommService.Boards.Nav.GPSLatLonAlt_Lat, Longitude = _RoveCommService.Boards.Nav.GPSLatLonAlt_Lon, TagID = 0 });
+        await databaseContext.SaveChangesAsync(_databaseService);
+    }
+}

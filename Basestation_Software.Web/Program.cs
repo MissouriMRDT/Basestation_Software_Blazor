@@ -27,7 +27,10 @@ builder.Services.AddServerSideBlazor()
         })
         .AddHubOptions(option => option.MaximumReceiveMessageSize = 10_000_000); // Configures the message size for SignalR connections.
 builder.Services.AddScoped<CookieService>();
-builder.Services.AddScoped<GPSWaypointState>();
+builder.Services.AddSingleton<VRService>();
+builder.Services.AddSingleton<CameraService>();
+builder.Services.AddSingleton<Rover3DService>();
+builder.Services.AddSingleton<GPSWaypointState>();
 builder.Services.AddSingleton<PingService>();
 builder.Services.AddSingleton<OpService>();
 builder.Services.AddSingleton<DatabaseService>();
@@ -38,8 +41,6 @@ builder.Services.AddSingleton<SwitchMonitorService>();
 builder.Services.AddHostedService((sp) => sp.GetRequiredService<SwitchMonitorService>());
 
 var app = builder.Build();
-
-app.UseHttpsRedirection();
 
 app.MapStaticAssets();
 app.UseAntiforgery();

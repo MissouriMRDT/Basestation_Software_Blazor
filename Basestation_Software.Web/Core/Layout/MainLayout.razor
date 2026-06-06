@@ -11,7 +11,6 @@
 @inject NavigationManager _NavigationManager
 @inject DatabaseService _databaseService
 @inject IDbContextFactory<DatabaseContext> _dbContextFactory
-@inject NavigationManager UriHelper
 @inject RoveCommService _RoveCommService
 
 <PageTitle>MRDT Basestation</PageTitle>
@@ -64,6 +63,7 @@
         }
     </style>
 }
+<p id="logs" style="z-index: 10000; color: #fff; position: absolute; top: 0px"></p>
 <div id="navbar">
     <img src="images/swoosh.svg" style="height: 100%">
     <select @bind=ComponentName>
@@ -74,7 +74,7 @@
     </select>
     <button class="success" @onclick=NewComponent title="New Component"><i class="bi-node-plus" /></button>
     <button id="resubscribe" title="RoveComm Resubscribe All" @onclick="_RoveCommService.SubscribeAll">
-        <img src="/images/rovecomm-sil.png" style="height: 13px">
+        <img src="/images/rovecomm-sil.png" style="height: 8px">
     </button>
     <button class="success" @onclick=NewPage title="New Page"><i class="bi-file-earmark-plus" /></button>
     <button class="danger" @onclick=DeletePage title="Delete Page"><i class="bi-trash" /></button>
@@ -114,7 +114,8 @@
     // State
     private RenderFragment? CustomRender { get; set; }
     private RenderFragment? SelectOptions { get; set; }
-    private Guid PageID = Guid.Empty;
+    [Parameter]
+    public Guid PageID { get; set; } = Guid.Empty;
     private Page Page_ = new Page();
     private InputTextArea? CopyArea;
     private string CopyAreaValue = "";
@@ -126,9 +127,6 @@
     private string ComponentName = "";
     private bool _luna = false;
     private bool _light = false;
-
-    [CascadingParameter]
-    RouteData RouteData_ { get; set; } = new(typeof(MainLayout), new ReadOnlyDictionary<string, object?>(new Dictionary<string, object?>()));
 
     public MainLayout()
     {
@@ -149,11 +147,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Get PageID from url as specified at @page "/{PageID:guid?}".
-        // This workaround depends on <CascadingValue Value="@routeData"> in Routes.razor.
-        // All because `[Parameter] PageID` wasn't updating PageID with the value from the url.
-        PageID = ((Guid?)RouteData_.RouteValues.GetValueOrDefault("PageID", null) ?? PageID);
-
         ObjectReference = DotNetObjectReference.Create(this);
 
         _databaseService.SubscribeToTableChanges(typeof(Page), TableChanged);
@@ -225,7 +218,10 @@
         _databaseService.UnsubscribeFromEntityDeleted(typeof(Page), PageID, PageChanged);
 
         PageID = guid;
-        _NavigationManager.NavigateTo($"/{PageID}");
+        if (PageID == Guid.Empty)
+            _NavigationManager.NavigateTo("/");
+        else
+            _NavigationManager.NavigateTo($"/{PageID}");
         await PageChanged();
 
         if (PageID != Guid.Empty)
