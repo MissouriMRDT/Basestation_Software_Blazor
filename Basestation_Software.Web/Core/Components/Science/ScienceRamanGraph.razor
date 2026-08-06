@@ -424,7 +424,7 @@
         }
         else
         {
-            return (ushort)(_backgroundSubtractionEnabled ? data[index] - _rawBackground[index] : data[index]);
+            return (ushort)(_backgroundSubtractionEnabled ? Math.Max(data[index] - _rawBackground[index], 0.0f) : data[index]);
         }
     }
 }
