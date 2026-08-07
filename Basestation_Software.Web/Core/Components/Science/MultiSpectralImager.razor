@@ -1,0 +1,56 @@
+@using System.ComponentModel
+@inject RoveCommService _RoveCommService
+@inject IJSRuntime JS
+
+<div class="component-header">
+    <h3>Multi Spectral Imager</h3>
+</div>
+<div class="component-body" style="height: 90%; display:grid; grid-template-rows: 80% 15% 5%;">
+    <canvas id="imCanvas" height="480" width="640" style="max-height: 100%; height:100%; aspect-ratio: 640 / 480; margin: auto;"></canvas>
+    <button  @onclick=@(() => _RoveCommService.Boards.MultiSpectralImager.TakePhoto(1))>Request Image</button>
+    <div style="background-color: #198754; height: 100%; width:@(progress.ToString())%;"></div>
+</div>
+
+<script>
+    var imCanvas = document.getElementById("imCanvas");
+    var ctx = imCanvas.getContext("2d");
+    var imageData = ctx.getImageData(0, 0, 640, 480);
+
+    window.writeImage = (pixelData) =>
+    {
+        for (let i = 0; i < pixelData.length; i+=3)
+        {
+            imageData.data[((i / 3) * 4) + 0] = pixelData[i + 0];
+            imageData.data[((i / 3) * 4) + 1] = pixelData[i + 1];
+            imageData.data[((i / 3) * 4) + 2] = pixelData[i + 2];
+            imageData.data[((i / 3) * 4) + 3] = 255;
+        }
+        ctx.putImageData(imageData, 0, 0);
+    }
+</script>
+
+@code
+{
+    private double progress = 0;
+    private int din = 0; 
+    private ushort[] data = new ushort[921600];
+    protected override void OnInitialized()
+    {
+        _RoveCommService.Boards.MultiSpectralImager.OnImageData(async packet =>
+        {
+            _RoveCommService.Boards.MultiSpectralImager.ImageData.CopyTo(data, din);
+            din = (din + 960)%921600;
+
+            _ = updateProgress();
+
+            if (din == 0)
+                _ = JS.InvokeVoidAsync("writeImage", data);
+        });
+    }
+
+    async Task updateProgress()
+    {
+        progress = ((din/921600.0)*100.0);
+        await InvokeAsync(StateHasChanged);
+    }
+}

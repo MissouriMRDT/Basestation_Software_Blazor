@@ -307,7 +307,7 @@ input[type=checkbox].danger:checked {
 }
 
 .component {
-    border: 1px solid var(--secondary);
+    border: 1.5px solid var(--secondary);
     /* overflow: hidden but allow the buttons to extend above the top border of the component */
     clip-path: rect(-6px 100% 100% 0);
     display: flex;
