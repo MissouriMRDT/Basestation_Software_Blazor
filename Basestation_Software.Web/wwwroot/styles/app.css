@@ -76,7 +76,7 @@ html,
 body,
 p {
     margin: 0;
-    font-size: 13px;
+    font-size: 8px;
     color: var(--secondary);
 }
 
@@ -84,7 +84,8 @@ body,
 button,
 select {
     font-family: "B612", Helvetica, Arial, sans-serif;
-    font-size: 13px;
+    font-size: 8px;
+    padding: 0 2px;
 }
 
 #blazor-error-ui {
@@ -112,7 +113,7 @@ select {
 
 button {
     cursor: pointer;
-    padding: 4px 8px;
+    padding: 2px 4px;
     border-radius: 3px;
     color: var(--secondary);
     background-color: var(--primary);
@@ -142,7 +143,7 @@ button[checked] {
 }
 
 button:disabled {
-    background-color: #888;
+    --btn-fill: #888;
 }
 
 button::before {
@@ -199,6 +200,7 @@ input {
     border-radius: 3px;
     background-color: var(--primary);
     color: var(--secondary);
+    font-size: 8px;
 }
 
 input:focus {
@@ -216,19 +218,16 @@ input[type=range] {
     margin: 0;
     --range-bg: #2af371;
     --range-color: #0d6efd;
-}
-
-input[type=range] {
     width: 100%;
     /* Specific width is required for Firefox. */
     background: transparent;
-    height: 16px;
+    height: 10px;
 }
 
 input[type=range]::-moz-range-thumb {
     border: none;
-    height: 16px;
-    width: 16px;
+    height: 10px;
+    width: 10px;
     border-radius: 3px;
     background: var(--range-color);
     cursor: pointer;
@@ -248,7 +247,7 @@ input[type=range]::-moz-range-thumb:hover:active {
 
 input[type=range]::-moz-range-track {
     width: 100%;
-    height: 16px;
+    height: 10px;
     cursor: pointer;
     box-shadow: none;
     background: none;
@@ -259,7 +258,7 @@ input[type=range]::-moz-range-track {
 
 input[type=range]::-moz-range-progress {
     background-color: var(--range-bg);
-    height: 14px;
+    height: 10px;
     border-radius: 3px;
 }
 
@@ -268,11 +267,11 @@ input[type=checkbox] {
     border: none;
     border-radius: 3px;
     appearance: none;
-    width: 16px;
-    height: 16px;
+    width: 9px;
+    height: 8px;
     cursor: pointer;
     position: relative;
-    top: 5px;
+    top: 3px;
     transform: translateY(-4px);
     box-shadow: 0 4px color-mix(in oklab, var(--checkbox-color) 70%, #000);
     --checkbox-color: #0d6efd;
@@ -318,8 +317,8 @@ input[type=checkbox].danger:checked {
 .component-header {
     display: flex;
     /* flex-direction: row-reverse; */
-    padding: 0 21px 0 21px;
-    min-height: 22px;
+    padding: 0 21px 0 15px;
+    min-height: 14px;
     color: var(--secondary);
     background-color: var(--primary);
     --primary: var(--primary-inverted);
@@ -362,8 +361,8 @@ input[type=checkbox].danger:checked {
     z-index: 900;
     right: 0;
     bottom: 0;
-    width: 20px;
-    height: 20px;
+    width: 15px;
+    height: 15px;
     cursor: se-resize;
 }
 

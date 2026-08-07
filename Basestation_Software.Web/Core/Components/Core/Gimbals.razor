@@ -1,4 +1,4 @@
-@using System.Diagnostics
+@inject Rover3DService _Rover3DService
 @inject RoveCommService _RoveCommService
 @inject OpService _opService
 
@@ -8,35 +8,62 @@
     <GamepadSelector @ref=_gamepadSelector OnUpdate=Update />
 </div>
 <div class="component-body">
+    <input @bind=_gimbalSpeed type="range" min="0" max="100" step="1" style="max-width:200px" />
     <GamepadScheme @ref=_gamepadScheme AxisNames=_axisNames ControlScheme=_controlScheme />
     <div style="display: flex">
         @for (int i = 0; i < 12; i++)
         {
-            <p>@($"{_axisNames[i]}: {_angles[i]:000}")</p>
+            <p>@($"{_axisNames[i]}: {_angles[i].Angle:000}")</p>
         }
     </div>
 </div>
 
 @code {
-    // Declare member variables
+    private struct GimbalAngles
+    {
+        public double Angle = 0;
+        public double Min = 0;
+        public double Max = 270;
+
+        public GimbalAngles(double angle, double min, double max) { Angle = angle; Min = min; Max = max; }
+
+        public void Increment(double angle)
+        {
+            Angle = Math.Clamp(Angle + angle, Min, Max);
+        }
+    }
+
+
     private bool _outputEnabled = true;
     private GamepadSelector? _gamepadSelector;
     private GamepadScheme? _gamepadScheme;
     private ControlScheme _controlScheme = new()
     {
-        Binds = [Bind.LSX, Bind.LSY, Bind.RSX, Bind.RSY, Bind.DPadX, Bind.DPadY, Bind.LBumpTrig, Bind.RBumpTrig, Bind.XB, Bind.AY, Bind.None, Bind.None],
-        Inversions = [true, true, true, true, false, true, false, false, false, true, false, false]
+        Binds = [Bind.LSX, Bind.LSY, Bind.RSX, Bind.RSY, Bind.DPadX, Bind.DPadY, Bind.None, Bind.RBumpTrig, Bind.None, Bind.LBumpTrig, Bind.XB, Bind.AY],
+        Inversions = [true, true, true, true, false, true, false, true, false, false, false, true]
     };
-    public double GIMBAL_SPEED = 80; // deg/s
+    private double _gimbalSpeed = 75; // deg/s
 
     private static readonly string[] _axisNames = ["Left Pan", "Left Tilt", "Right Pan", "Right Tilt", "Back Pan", "Back Tilt", "Arm 1 Pan", "Arm 1 Tilt", "Arm 2 Pan", "Arm 2 Tilt", "Auger Pan", "Auger Tilt"];
-    private static double[] _angles = [270, 205, 65, 123, 72, 170, 0, 0, 0, 0, 0, 0];
+
+    private static GimbalAngles[] _angles = [
+        new(90, 0, 270), // Left Pan
+        new(120, 30, 210), // Left Tilt
+        new(220, 0, 270), // Right Pan
+        new(90, 0,180), // Right Tilt
+        new(120, 50,270), // Back Pan
+        new(80, 10, 200), // Back Tilt
+        new(0, 0, 270), // Arm 1 Pan
+        new(0, 0, 130), // Arm 1 Tilt
+        new(0, 0, 270), // Arm 2 Pan
+        new(65, 0, 110), // Arm 2 Tilt
+        new(60, 0, 180), // Auger Pan
+        new(80, 0, 180) // Auger Tilt
+    ];
 
     private async Task Update(Gamepad gamepad, float deltaT)
     {
-        if (await ProcessGamepadInput(gamepad, deltaT))
-            // Set teleop if controller being used.
-            _opService.SetTeleop();
+        await ProcessGamepadInput(gamepad, deltaT);
         // It is safe for this component to take no action when the controller is disconnected.
         await InvokeAsync(StateHasChanged);
     }
@@ -50,13 +77,16 @@
         if (!_outputEnabled) return false;
 
         for (int i = 0; i < _angles.Length; i++)
-            _angles[i] = Math.Clamp(_angles[i] + inputs[i] * GIMBAL_SPEED * deltaT, 0, 270);
-        if (Math.Abs(inputs[0]) > 0 || Math.Abs(inputs[1]) > 0) _RoveCommService.Boards.Core.LeftGimbal((short)_angles[0], (short)_angles[1]);
-        if (Math.Abs(inputs[2]) > 0 || Math.Abs(inputs[3]) > 0) _RoveCommService.Boards.Core.RightGimbal((short)_angles[2], (short)_angles[3]);
-        if (Math.Abs(inputs[4]) > 0 || Math.Abs(inputs[5]) > 0) _RoveCommService.Boards.Core.BackGimbal((short)_angles[4], (short)_angles[5]);
-        if (Math.Abs(inputs[6]) > 0 || Math.Abs(inputs[7]) > 0) _RoveCommService.Boards.Arm.ArmGimbal1((short)_angles[6], (short)_angles[7]);
-        if (Math.Abs(inputs[8]) > 0 || Math.Abs(inputs[9]) > 0) _RoveCommService.Boards.Arm.ArmGimbal2((short)_angles[8], (short)_angles[9]);
-        if (Math.Abs(inputs[10]) > 0 || Math.Abs(inputs[11]) > 0) _RoveCommService.Boards.Auger.AugerGimbal((short)_angles[10], (short)_angles[11]);
+        {
+            _angles[i].Increment(inputs[i] * _gimbalSpeed * deltaT);
+            _Rover3DService.GimbalAngles[i] = _angles[i].Angle;
+        }
+        if (Math.Abs(inputs[0]) > 0 || Math.Abs(inputs[1]) > 0) _RoveCommService.Boards.Core.LeftGimbal((short)_angles[0].Angle, (short)_angles[1].Angle);
+        if (Math.Abs(inputs[2]) > 0 || Math.Abs(inputs[3]) > 0) _RoveCommService.Boards.Core.RightGimbal((short)_angles[2].Angle, (short)_angles[3].Angle);
+        if (Math.Abs(inputs[4]) > 0 || Math.Abs(inputs[5]) > 0) _RoveCommService.Boards.Core.BackGimbal((short)_angles[4].Angle, (short)_angles[5].Angle);
+        if (Math.Abs(inputs[6]) > 0 || Math.Abs(inputs[7]) > 0) _RoveCommService.Boards.Arm.ArmGimbal1((short)_angles[6].Angle, (short)_angles[7].Angle);
+        if (Math.Abs(inputs[8]) > 0 || Math.Abs(inputs[9]) > 0) _RoveCommService.Boards.Arm.ArmGimbal2((short)_angles[8].Angle, (short)_angles[9].Angle);
+        if (Math.Abs(inputs[10]) > 0 || Math.Abs(inputs[11]) > 0) _RoveCommService.Boards.Auger.AugerGimbal((short)_angles[10].Angle, (short)_angles[11].Angle);
         return true;
     }
 }

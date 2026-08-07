@@ -3,8 +3,7 @@
     flex-direction: column;
     border-radius: 3px;
     background-color: var(--secondary-bg);
-    padding: 5px;
-    width: 100px;
+    width: 60px;
 }
 
 .control-box>p {

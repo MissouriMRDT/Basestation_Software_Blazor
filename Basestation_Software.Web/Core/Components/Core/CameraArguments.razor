@@ -1,0 +1,118 @@
+@inject CameraService _CameraService
+@inject RoveCommService _RoveCommService
+@implements IDisposable
+
+<div class="component-header" style="background-color: #f00">
+    <h3>Camera Arguments</h3>
+</div>
+<div class="component-body" style="display: flex; flex-direction: column">
+    <p style="background-color: #f00"><i class="bi-exclamation-triangle" />WARNING<i class="bi-exclamation-triangle" /> Setting arbitrary FFmpeg or fswebcam arguments correctly is difficult.</p>
+    <div class="source-buttons-container">
+        @for (int _i = 0; _i < 8; _i++)
+        {
+            var i = _i;
+            <button checked=@(_sourceIndex == i) @onclick=@(() => _sourceIndex = i)>@(_CameraService.Names[i])</button>
+        }
+    </div>
+    <textarea @bind=@(_ffmpegArguments[_sourceIndex])></textarea>
+    <button @onclick=@(() => _ffmpegArguments[_sourceIndex] = _defaultFfmpegArguments)>Reset</button>
+    <button @onclick=SetFFMPEGArguments>Set FFmpeg Arguments</button>
+    <textarea @bind=@(_pictureArguments[_sourceIndex])></textarea>
+    <button @onclick=@(() => _pictureArguments[_sourceIndex] = _defaultPictureArguments)>Reset</button>
+    <button @onclick=SetPictureArguments>Set fswebcam Arguments</button>
+</div>
+
+@code {
+    private int _sourceIndex = 0;
+    private const string _defaultFfmpegArguments = @"-hide_banner
+-f
+video4linux2
+-framerate
+20
+-video_size
+800x600
+-i
+$input
+-filter:v
+zmq=bind_address='tcp\://127.0.0.1\:555$index',drawtext=text=|||||||||:fontsize=16:x='abs(mod(t*(w-text_w)*0.5,(w-text_w)*2)-(w-text_w))':box=1:boxcolor=#8c00ff:fontcolor=#8c00ff
+-codec:v
+libvpx
+-quality
+good
+-cpu-used
+4
+-g
+5
+-error-resilient
+1
+-auto-alt-ref
+1
+-f
+rtp
+-b:v
+1M
+-maxrate
+1M
+-loglevel
+16
+rtp://$ip:$port?pkt_size=1200";
+    private const string _defaultPictureArguments = @"--verbose
+--device
+$input
+--palette
+YUYV
+--resolution
+2560x1440
+--png
+0
+--no-timestamp
+--font
+sans:20
+--title
+$position
+$output.png";
+
+    private string[] _ffmpegArguments = new string[8];
+    private string[] _pictureArguments = new string[8];
+
+    public CameraArguments()
+    {
+        for (int i = 0; i < 8; i++)
+        {
+
+            _ffmpegArguments[i] = _defaultFfmpegArguments;
+            _pictureArguments[i] = _defaultPictureArguments;
+        }
+    }
+
+    protected override void OnInitialized()
+    {
+        _CameraService.Names.CollectionChanged += CameraNamesChanged;
+    }
+
+    private void SetFFMPEGArguments()
+    {
+        Console.WriteLine(_ffmpegArguments[_sourceIndex]);
+        char[] characters = ((char)(_sourceIndex % 4) + string.Join("\x1f", _ffmpegArguments[_sourceIndex].Split("\n")) + '\x00').ToCharArray();
+        if (_sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.SetFFMPEGArguments(characters);
+        else
+            _RoveCommService.Boards.Camera2.SetFFMPEGArguments(characters);
+    }
+
+    private void SetPictureArguments()
+    {
+        char[] characters = ((char)(_sourceIndex % 4) + string.Join("\x1f", _pictureArguments[_sourceIndex].Split("\n")) + '\x00').ToCharArray();
+        if (_sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.SetPictureArguments(characters);
+        else
+            _RoveCommService.Boards.Camera2.SetPictureArguments(characters);
+    }
+
+    private async void CameraNamesChanged(object? _, object? __) => await InvokeAsync(StateHasChanged);
+
+    void IDisposable.Dispose()
+    {
+        _CameraService.Names.CollectionChanged -= CameraNamesChanged;
+    }
+}

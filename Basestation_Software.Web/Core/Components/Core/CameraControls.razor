@@ -1,58 +1,287 @@
+@using System.Diagnostics
+@using System.Collections.Specialized
 @inject RoveCommService _RoveCommService
+@inject CameraService _CameraService
 @inject IJSRuntime _IJSRuntime
+@implements IDisposable
 
 <div class="component-header">
     <h3>Camera Controls</h3>
 </div>
-<div @ref="videoContainer" class="component-body camera-controls">
+<div class="component-body camera-controls">
     <div class="source-buttons-container">
-        @for (int i = 0; i < 8; i++)
+        @for (int i_ = 0; i_ < 8; i_++)
         {
             // https://stackoverflow.com/questions/54812427/for-loop-not-returning-expected-value-c-sharp-blazor
-            var _i = i;
-            <button checked=@(sourceIndex == _i) class="secondary @(GetClass(_i))" title=@GetTitle(_i) @onclick=@(() => SetSource(_i))>@_i</button>
+            var i = i_;
+            <button checked=@(_sourceIndex == i) class="secondary @(GetClass(i))" title=@GetTitle(i) @onclick=@(() => SetSource(i))>@(_CameraService.Names[i])</button>
         }
     </div>
-    <p style="grid-area: utilization-1">@($"cpu0: {_RoveCommService.Boards.Camera1.Utilization_cpu0:000}% 1: {_RoveCommService.Boards.Camera1.Utilization_cpu1:000}% 2: {_RoveCommService.Boards.Camera1.Utilization_cpu2:000}% 3: {_RoveCommService.Boards.Camera1.Utilization_cpu3:000}% mem: {_RoveCommService.Boards.Camera1.Utilization_mem:000}% sd: {_RoveCommService.Boards.Camera1.Utilization_storage:000}%")</p>
-    <p style="grid-area: utilization-2">@($"cpu0: {_RoveCommService.Boards.Camera2.Utilization_cpu0:000}% 1: {_RoveCommService.Boards.Camera2.Utilization_cpu1:000}% 2: {_RoveCommService.Boards.Camera2.Utilization_cpu2:000}% 3: {_RoveCommService.Boards.Camera2.Utilization_cpu3:000}% mem: {_RoveCommService.Boards.Camera2.Utilization_mem:000}% sd: {_RoveCommService.Boards.Camera2.Utilization_storage:000}%")</p>
-    <button style="grid-area: connect" @onclick=ConnectCameras>Connect</button>
-    <button style="grid-area: disconnect" @onclick=DisconnectCameras>Disconnect</button>
-    <button style="grid-area: restart" @onclick=@(() => ToggleSource(sourceIndex, true))>Restart Camera</button>
-    <button style="grid-area: shutdown" @onclick=@(() => ToggleSource(sourceIndex, false))>Shutdown Camera</button>
-    <button style="grid-area: screenshot" @onclick=TakePicture>Take Picture</button>
-    <button style="grid-area: save" @onclick=SaveImage>Save Image</button>
-    <button style="grid-area: panorama" @onclick=TakePano>Take Pano</button>
-    <button style="grid-area: arguments" @onclick=@(_ => CameraArgumentsVisible = true)>Arguments</button>
-    <button style="grid-area: histogram" @onclick=@(AddHistogram)>Add Histogram</button>
+    <p style="grid-area: 2 / 1 / 3 / 3; margin-bottom: 4px">@($"cpu0: {_RoveCommService.Boards.Camera1.Utilization_cpu0:000}% 1: {_RoveCommService.Boards.Camera1.Utilization_cpu1:000}% 2: {_RoveCommService.Boards.Camera1.Utilization_cpu2:000}% 3: {_RoveCommService.Boards.Camera1.Utilization_cpu3:000}% mem: {_RoveCommService.Boards.Camera1.Utilization_mem:000}% sd: {_RoveCommService.Boards.Camera1.Utilization_storage:000}% temp: {_RoveCommService.Boards.Camera1.Utilization_temp:000}C")</p>
+    <p style="grid-area: 2 / 3 / 3 / 5; margin-bottom: 4px">@($"cpu0: {_RoveCommService.Boards.Camera2.Utilization_cpu0:000}% 1: {_RoveCommService.Boards.Camera2.Utilization_cpu1:000}% 2: {_RoveCommService.Boards.Camera2.Utilization_cpu2:000}% 3: {_RoveCommService.Boards.Camera2.Utilization_cpu3:000}% mem: {_RoveCommService.Boards.Camera2.Utilization_mem:000}% sd: {_RoveCommService.Boards.Camera2.Utilization_storage:000}% temp: {_RoveCommService.Boards.Camera2.Utilization_temp:000}C")</p>
+    <button @onclick=@(() => ToggleSource(_sourceIndex, true)) title="Restart Camera"><i class="bi-arrow-clockwise" /></button>
+    <button @onclick=@(() => ToggleSource(_sourceIndex, false)) title="Stop Camera"><i class="bi-stop" /></button>
+    <button @onclick=TakePicture title="Take Picture"><i class="bi-image" /></button>
+    <button @onclick=TakePano title="Take Panorama"><i class="bi-arrows" /></button>
+    <select @bind=@(_CameraService.Names[_sourceIndex])>
+        <option value="@_sourceIndex">@_sourceIndex</option>
+        <option value="LEFT">LEFT</option>
+        <option value="RIGHT">RIGHT</option>
+        <option value="BACK">BACK</option>
+        <option value="BASE">BASE</option>
+        <option value="J4">J4</option>
+        <option value="WRIST">WRIST</option>
+        <option value="AF">AF</option>
+        <option value="MICRO">MICRO</option>
+        <option value="GIMBAL">GIMBAL</option>
+    </select>
+    <select @bind=@(_p.Device) @bind:after=@(() => _p = FFMPEGParameters.GetDefault(_p.Device))>
+        @foreach (string device in FFMPEGParameters.LIST_DEVICE_FPS.Keys)
+        {
+            <option value=@device>@device</option>
+        }
+    </select>
+    <select @bind=@(_p.InputFormat) @bind:after=MarkUnsent>
+        @foreach (string format in FFMPEGParameters.LIST_DEVICE_FPS[_p.Device].Keys)
+        {
+            <option value=@format>@format</option>
+        }
+    </select>
+    <select @bind=@(_p.VideoSize) @bind:after=MarkUnsent>
+        @if (FFMPEGParameters.LIST_DEVICE_FPS[_p.Device].ContainsKey(_p.InputFormat))
+        {
+            @foreach (string size in FFMPEGParameters.LIST_DEVICE_FPS[_p.Device][_p.InputFormat].Keys)
+            {
+                <option value=@size>@size @(FFMPEGParameters.LIST_ASPECT_RATIO.GetValueOrDefault(size))</option>
+            }
+        }
+    </select>
+    <select @bind=@(_p.DeviceFPS) @bind:after=MarkUnsent>
+        @if (FFMPEGParameters.LIST_DEVICE_FPS[_p.Device].ContainsKey(_p.InputFormat) && FFMPEGParameters.LIST_DEVICE_FPS[_p.Device][_p.InputFormat].ContainsKey(_p.VideoSize))
+            @foreach (int fps in FFMPEGParameters.LIST_DEVICE_FPS[_p.Device][_p.InputFormat][_p.VideoSize])
+            {
+                <option value=@fps>@(fps)fps</option>
+            }
+        }
+    </select>
+    <select @bind=@(_p.FilterFPS) @bind:after=MarkUnsent>
+        <option value="">None</option>
+        @foreach (int fps in FFMPEGParameters.LIST_FILTER_FPS)
+        {
+            <option value=@fps>@(fps)fps</option>
+        }
+    </select>
+    <select @bind=@(_p.Bitrate) @bind:after=MarkUnsent>
+        @foreach (string bitrate in FFMPEGParameters.LIST_BITRATE)
+        {
+            <option value=@bitrate>@bitrate</option>
+        }
+    </select>
+    <button @onclick=@(() => { _p.Histogram ^= true; MarkUnsent(); }) checked=@(_p.Histogram)><i class="bi-bar-chart-line" /></button>
+    <button @onclick=@(() => { _p.Crop ^= true; MarkUnsent(); }) checked=@(_p.Crop)><i class="bi-crop" /></button>
+    <input @bind=@(_p.X) @bind:after=CropX type="range" min="0.0" max="1.0" step="0.01" style="margin-block: 5px; grid-column: 1 / 5" />
+    <input @bind=@(_p.Y) @bind:after=CropY type="range" min="0.0" max="1.0" step="0.01" style="margin-block: 5px; grid-column: 1 / 5" />
+    <input @bind=@(_p.Zoom) @bind:after=CropZ type="range" min="0.01" max="1.0" step="0.01" style="margin-block: 5px; grid-column: 1 / 5" />
 </div>
-@if (CameraArgumentsVisible)
-{
-    <div class="camera-arguments">
-        <InputTextArea @bind-Value="@CameraArgumentsValue" style="grid-area: 1 / 1 / 2 / 4" />
-        <button @onclick=@(_ => CameraArgumentsVisible = false) class="warning" title="Close"><i class="bi-x-circle" /></button>
-        <button @onclick=SetFFMPEGArguments class="success" title="Set FFMPEG Arguments"><i class="bi-camera-video" /></button>
-        <button @onclick=SetPictureArguments class="success" title="Set Picture Arguments"><i class="bi-image" /></button>
-    </div>
-}
 
 @code {
-    public const uint TELEMETRY_TIMEOUT = 10_000; // ms
+    private class FFMPEGParameters
+    {
+        public FFMPEGParameters() { }
+        public string Device = "Normal (4K AF Camera)";
+        public string InputFormat = "mjpeg";
+        public string VideoSize = "800x600";
+        public int DeviceFPS = 20;
+        public int? FilterFPS = null;
+        public bool Crop = false;
+        public double X = 0.5;
+        public double Y = 0.5;
+        public double Zoom = 1;
+        public string Bitrate = "1M";
+        public bool Histogram = false;
+        public bool Sent = false;
+
+        // device.format.size = [fps]
+        // Generated by RPi-Camera/parse_video_formats.py
+        public static readonly Dictionary<string, Dictionary<string, Dictionary<string, List<int>>>> LIST_DEVICE_FPS = new()
+        {
+            ["Normal (4K AF Camera)"] = new()
+            {
+                ["mjpeg"] = new()
+                {
+                    ["3840x2160"] = [30, 25, 20, 15, 10, 5],
+                    ["3840x2880"] = [15, 10, 5],
+                    ["3264x2448"] = [15, 10, 5],
+                    ["2592x1944"] = [30, 25, 20, 15, 10, 5],
+                    ["2048x1536"] = [30, 25, 20, 15, 10, 5],
+                    ["1600x1200"] = [30, 25, 20, 15, 10, 5],
+                    ["1920x1080"] = [30, 25, 20, 15, 10, 5],
+                    ["1280x960"] = [30, 25, 20, 15, 10, 5],
+                    ["1280x720"] = [30, 25, 20, 15, 10, 5],
+                    ["800x600"] = [30, 25, 20, 15, 10, 5],
+                    ["640x480"] = [30, 25, 20, 15, 10, 5]
+                },
+                ["yuyv422"] = new()
+                {
+                    ["3840x2160"] = [1],
+                    ["3840x2880"] = [1],
+                    ["3264x2448"] = [1],
+                    ["2592x1944"] = [1],
+                    ["2048x1536"] = [3],
+                    ["1600x1200"] = [5],
+                    ["1920x1080"] = [5],
+                    ["1280x960"] = [5],
+                    ["1280x720"] = [10],
+                    ["800x600"] = [20],
+                    ["640x480"] = [30, 25, 20, 15, 10, 5]
+                }
+            },
+            ["Arm Base (USB HD Cam)"] = new()
+            {
+                ["mjpeg"] = new()
+                {
+                    ["2592x1944"] = [15],
+                    ["2048x1536"] = [15],
+                    ["1920x1080"] = [30],
+                    ["1280x960"] = [30],
+                    ["1280x720"] = [30],
+                    ["640x480"] = [30],
+                    ["320x240"] = [30]
+                },
+                ["yuyv422"] = new()
+                {
+                    ["2592x1944"] = [2],
+                    ["2048x1536"] = [2],
+                    ["1920x1080"] = [6],
+                    ["1280x960"] = [30],
+                    ["1280x720"] = [30],
+                    ["640x480"] = [30],
+                    ["320x240"] = [30]
+                }
+            },
+            ["Microscope (USB 2.0 Camera)"] = new()
+            {
+                ["yuyv422"] = new()
+                {
+                    ["1600x1200"] = [5],
+                    ["1280x960"] = [9, 5],
+                    ["800x600"] = [20, 15, 10, 5],
+                    ["640x480"] = [30, 25, 20, 15, 10, 5]
+                }
+            }
+        };
+
+        public static readonly List<int> LIST_FILTER_FPS = [30, 25, 20, 15, 10, 5, 4, 3, 2, 1];
+        public static readonly Dictionary<string, (int, int)> LIST_SIZE_WH = new()
+        {
+            ["3840x2160"] = (3840, 2160),
+            ["3840x2880"] = (3840, 2880),
+            ["3264x2448"] = (3264, 2448),
+            ["2592x1944"] = (2592, 1944),
+            ["2048x1536"] = (2048, 1536),
+            ["1600x1200"] = (1600, 1200),
+            ["1920x1080"] = (1920, 1080),
+            ["1280x960"] = (1280, 960),
+            ["1280x720"] = (1280, 720),
+            ["800x600"] = (800, 600),
+            ["640x480"] = (640, 480),
+            ["320x240"] = (320, 240),
+            ["160x120"] = (160, 120),
+            ["80x60"] = (80, 60),
+            ["40x30"] = (40, 30),
+        };
+        public static readonly Dictionary<string, string> LIST_ASPECT_RATIO = new()
+        {
+            ["3840x2160"] = "16:9",
+            ["3840x2880"] = "4:3",
+            ["3264x2448"] = "4:3",
+            ["2592x1944"] = "4:3",
+            ["2048x1536"] = "4:3",
+            ["1600x1200"] = "4:3",
+            ["1920x1080"] = "16:9",
+            ["1280x960"] = "4:3",
+            ["1280x720"] = "16:9",
+            ["800x600"] = "4:3",
+            ["640x480"] = "4:3",
+            ["320x240"] = "4:3",
+            ["160x120"] = "4:3",
+            ["80x60"] = "4:3",
+            ["40x30"] = "4:3",
+        };
+        public static readonly List<string> LIST_BITRATE = ["1M", "512k", "256k", "128k", "64k", "32k", "16k", "8k", "4k", "2k", "1k"];
+        public static FFMPEGParameters GetDefault(string device) => device switch
+        {
+            "Normal (4K AF Camera)" => new()
+            {
+                Device = "Normal (4K AF Camera)",
+                InputFormat = "mjpeg",
+                VideoSize = "800x600",
+                DeviceFPS = 20
+            },
+            "Arm Base (USB HD Cam)" => new()
+            {
+                Device = "Arm Base (USB HD Cam)",
+                InputFormat = "mjpeg",
+                VideoSize = "640x480",
+                DeviceFPS = 30
+            },
+            "Microscope (USB 2.0 Camera)" => new()
+            {
+                Device = "Microscope (USB 2.0 Camera)",
+                InputFormat = "yuyv422",
+                VideoSize = "800x600",
+                DeviceFPS = 20
+            },
+            _ => new()
+        };
+        public static readonly Dictionary<string, FFMPEGParameters> DEVICE_DEFAULT = new()
+        {
+            ["Normal (4K AF Camera)"] = new()
+            {
+                Device = "Normal (4K AF Camera)",
+                InputFormat = "mjpeg",
+                VideoSize = "800x600",
+                DeviceFPS = 20
+            },
+            ["Arm Base (USB HD Cam)"] = new()
+            {
+                Device = "Arm Base (USB HD Cam)",
+                InputFormat = "mjpeg",
+                VideoSize = "640x480",
+                DeviceFPS = 30
+            },
+            ["Microscope (USB 2.0 Camera)"] = new()
+            {
+                Device = "Microscope (USB 2.0 Camera)",
+                InputFormat = "yuyv422",
+                VideoSize = "800x600",
+                DeviceFPS = 20
+            }
+        };
+    }
+
+
+    public const uint TELEMETRY_TIMEOUT = 2_000; // ms
     private System.Threading.Timer TelemetryWatchdog1;
     private System.Threading.Timer TelemetryWatchdog2;
 
-    private int sourceIndex = 0;
+    private int _sourceIndex = 0;
 
-    private bool connected1 = false;
-    private bool connected2 = false;
-
-    private bool CameraArgumentsVisible = false;
-    private String CameraArgumentsValue = "";
-    private ElementReference videoContainer;
+    private bool _connected1 = false;
+    private bool _connected2 = false;
+    private bool[] _streaming = new bool[8];
+    private bool[] _connected = new bool[8];
+    private FFMPEGParameters[] _ffmpegArguments = new FFMPEGParameters[8];
+    private FFMPEGParameters _p { get => _ffmpegArguments[_sourceIndex]; set => _ffmpegArguments[_sourceIndex] = value; }
 
     public CameraControls()
     {
         TelemetryWatchdog1 = new System.Threading.Timer(WatchdogTimeout, 1, Timeout.Infinite, Timeout.Infinite);
         TelemetryWatchdog2 = new System.Threading.Timer(WatchdogTimeout, 2, Timeout.Infinite, Timeout.Infinite);
+        for (int i = 0; i < 8; i++)
+        {
+            _ffmpegArguments[i] = new();
+        }
     }
 
     protected override void OnInitialized()
@@ -60,18 +289,33 @@
         TelemetryWatchdog1.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
         TelemetryWatchdog2.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
 
-        _RoveCommService.Boards.Camera1.OnAvailableCameras(ResetWatchdog);
-        _RoveCommService.Boards.Camera1.OnStreamingCameras(ResetWatchdog);
+        _RoveCommService.Boards.Camera1.OnAvailableCameras(async packet =>
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                _streaming[i] = (_RoveCommService.Boards.Camera1.AvailableCameras_Streaming & (1 << i)) != 0;
+                _connected[i] = (_RoveCommService.Boards.Camera1.AvailableCameras_Connected & (1 << i)) != 0;
+            }
+            await ResetWatchdog(packet);
+        });
         _RoveCommService.Boards.Camera1.OnUtilization(ResetWatchdog);
-        _RoveCommService.Boards.Camera2.OnAvailableCameras(ResetWatchdog);
-        _RoveCommService.Boards.Camera2.OnStreamingCameras(ResetWatchdog);
+        _RoveCommService.Boards.Camera2.OnAvailableCameras(async packet =>
+        {
+            for (int i = 0; i < 4; i++)
+            {
+                _streaming[i + 4] = (_RoveCommService.Boards.Camera2.AvailableCameras_Streaming & (1 << i)) != 0;
+                _connected[i + 4] = (_RoveCommService.Boards.Camera2.AvailableCameras_Connected & (1 << i)) != 0;
+            }
+            await ResetWatchdog(packet);
+        });
         _RoveCommService.Boards.Camera2.OnUtilization(ResetWatchdog);
+        _CameraService.Names.CollectionChanged += CameraNamesChanged;
     }
 
     async void WatchdogTimeout(object? pi)
     {
-        if ((int?)pi == 1) connected1 = false;
-        if ((int?)pi == 2) connected2 = false;
+        if ((int?)pi == 1) _connected1 = false;
+        if ((int?)pi == 2) _connected2 = false;
         await InvokeAsync(StateHasChanged);
     }
 
@@ -79,55 +323,39 @@
     {
         if (packet.DataID / 1000 == 12)
         {
-            connected1 = true;
+            _connected1 = true;
             TelemetryWatchdog1.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
         }
         else if (packet.DataID / 1000 == 13)
         {
-            connected2 = true;
+            _connected2 = true;
             TelemetryWatchdog2.Change(TELEMETRY_TIMEOUT, Timeout.Infinite);
         }
         await InvokeAsync(StateHasChanged);
     }
 
-    private String GetClass(int i)
+    private string GetClass(int i)
     {
         if (i < 4)
-            return !connected1 ? "camera-disconnected" : i < _RoveCommService.Boards.Camera1.StreamingCameras ? "camera-streaming" : i < _RoveCommService.Boards.Camera1.AvailableCameras ? "camera-available" : "camera-none";
+            return !_connected1 ? "camera-disconnected" : _streaming[i] ? "camera-streaming" : _connected[i] ? "camera-available" : "camera-none";
         else
-            return !connected2 ? "camera-disconnected" : i - 4 < _RoveCommService.Boards.Camera2.StreamingCameras ? "camera-streaming" : i - 4 < _RoveCommService.Boards.Camera2.AvailableCameras ? "camera-available" : "camera-none";
+            return !_connected2 ? "camera-disconnected" : _streaming[i] ? "camera-streaming" : _connected[i] ? "camera-available" : "camera-none";
     }
 
-    private String GetTitle(int i)
-    {
-        if (i < 4)
-            return !connected1 ? "Camera server has not sent RoveComm telemetry to Basestation Server within the last 10s." : i < _RoveCommService.Boards.Camera1.StreamingCameras ? "Camera server detects camera, ffmpeg stream started." : i < _RoveCommService.Boards.Camera1.AvailableCameras ? "Camera server detects camera, ffmpeg stream not started." : "Camera server does not detect camera.";
-        else
-            return !connected2 ? "Camera server has not sent RoveComm telemetry to Basestation Server within the last 10s." : i - 4 < _RoveCommService.Boards.Camera2.StreamingCameras ? "Camera server detects camera, ffmpeg stream started." : i - 4 < _RoveCommService.Boards.Camera2.AvailableCameras ? "Camera server detects camera, ffmpeg stream not started." : "Camera server does not detect camera.";
-    }
-
-    private async Task ConnectCameras()
-    {
-        await _IJSRuntime.InvokeVoidAsync("cameras.connect");
-    }
-
-    private async Task DisconnectCameras()
-    {
-        await _IJSRuntime.InvokeVoidAsync("cameras.disconnect");
-    }
+    private string GetTitle(int i) => (i < 4 ? !_connected1 : !_connected2) ? "Camera server has not sent RoveComm telemetry to Basestation within the last 10s." : _streaming[i] ? "Camera server detects camera, ffmpeg stream running." : _connected[i] ? "Camera server detects camera, ffmpeg stream not running." : "Camera server does not detect camera.";
 
     private async Task SetSource(int newSourceIndex)
     {
-        sourceIndex = newSourceIndex;
+        _sourceIndex = newSourceIndex;
         await InvokeAsync(StateHasChanged);
     }
 
     private void TakePicture()
     {
-        if (sourceIndex < 4)
-            _RoveCommService.Boards.Camera1.TakePicture((byte)(sourceIndex % 4), 1);
+        if (_sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.TakePicture((byte)(_sourceIndex % 4), 1);
         else
-            _RoveCommService.Boards.Camera2.TakePicture((byte)(sourceIndex % 4), 1);
+            _RoveCommService.Boards.Camera2.TakePicture((byte)(_sourceIndex % 4), 1);
     }
 
     private void SaveImage()
@@ -159,70 +387,152 @@
 
     private void ToggleSource(int source, bool restartStream)
     {
-        if (sourceIndex < 4)
-            _RoveCommService.Boards.Camera1.ToggleStream((byte)(sourceIndex % 4), (byte)(restartStream ? 1 : 0));
+        if (!_ffmpegArguments[source].Sent)
+        {
+            SetFFMPEGArguments();
+            _ffmpegArguments[source].Sent = true;
+        }
+        if (_sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.ToggleStream((byte)(_sourceIndex % 4), (byte)(restartStream ? 1 : 0));
         else
-            _RoveCommService.Boards.Camera2.ToggleStream((byte)(sourceIndex % 4), (byte)(restartStream ? 1 : 0));
+            _RoveCommService.Boards.Camera2.ToggleStream((byte)(_sourceIndex % 4), (byte)(restartStream ? 1 : 0));
+    }
+
+    private void MarkUnsent() => _p.Sent = false;
+
+    private async void CameraNamesChanged(object? _, object? __) => await InvokeAsync(StateHasChanged);
+
+    private (int, int, int, int) GetCropParameters(FFMPEGParameters p, int iw, int ih)
+    {
+        double zoom = double.Clamp(_p.Zoom, 0.001, 1);
+        double x = double.Clamp(_p.X, 0, 1);
+        double y = double.Clamp(_p.Y, 0, 1);
+        return ((int)(x * iw * (1 - zoom)), (int)(y * ih * (1 - zoom)), (int)(iw * zoom), (int)(ih * zoom));
     }
 
     private void SetFFMPEGArguments()
     {
-        char[] characters = (String.Join("\x1f", CameraArgumentsValue.Split("\n")) + '\x04').ToCharArray();
-        if (sourceIndex < 4)
+        List<string> filters = [];
+        (int, int) input_size;
+        if (!FFMPEGParameters.LIST_SIZE_WH.TryGetValue(_p.VideoSize, out input_size)) return;
+
+        int fontsize = input_size.Item1 / 20;
+
+        filters.Add(@$"zmq=bind_address='tcp\://127.0.0.1\:555$index'");
+        if (_p.FilterFPS != null) filters.Add($"fps={_p.FilterFPS}");
+        if (_p.Histogram)
+        {
+            filters.Add($"split=2[a][b];[b]format=rgb24,histogram,format=yuv420p,scale=-1:{input_size.Item2}[hh];[a][hh]hstack");
+        }
+        if (_p.Crop)
+        {
+            (int x, int y, int w, int h) = GetCropParameters(_p, input_size.Item1, input_size.Item2);
+            filters.Add(@$"crop=x={x}:y={y}:w={w}:h={h}");
+            fontsize = w / 20;
+        }
+        filters.Add(@$"drawtext=text=|||||||||:fontsize={fontsize}:x='abs(mod(t*(w-text_w)*0.5,(w-text_w)*2)-(w-text_w))':box=1:boxcolor=#8c00ff:fontcolor=#8c00ff");
+        string ffmpeg_arguments = $@"-hide_banner
+-f
+video4linux2
+-input_format
+{_p.InputFormat}
+-framerate
+{_p.DeviceFPS}
+-video_size
+{_p.VideoSize}
+-i
+$input
+-filter:v
+{string.Join(",", filters)}
+-codec:v
+libvpx
+-quality
+good
+-cpu-used
+4
+-g
+5
+-error-resilient
+1
+-auto-alt-ref
+1
+-f
+rtp
+-b:v
+{_p.Bitrate}
+-maxrate
+{_p.Bitrate}
+-loglevel
+16
+rtp://$ip:$port?pkt_size=1200";
+
+        char[] characters = ((char)(_sourceIndex % 4) + ffmpeg_arguments.Replace("\n", "\x1f") + '\x00').ToCharArray();
+        if (_sourceIndex < 4)
             _RoveCommService.Boards.Camera1.SetFFMPEGArguments(characters);
         else
             _RoveCommService.Boards.Camera2.SetFFMPEGArguments(characters);
+    }
+
+    private void CropX()
+    {
+        MarkUnsent();
+        if (!_p.Crop) return;
+        (int, int) input_size;
+        if (!FFMPEGParameters.LIST_SIZE_WH.TryGetValue(_p.VideoSize, out input_size)) return;
+
+        (int x, int y, int w, int h) = GetCropParameters(_p, input_size.Item1, input_size.Item2);
+
+        char[] characters = ((char)(_sourceIndex % 4) + $"crop x {x}\x00").ToCharArray();
+        if (_sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.ZMQCommands(characters);
+        else
+            _RoveCommService.Boards.Camera2.ZMQCommands(characters);
+    }
+
+    private void CropY()
+    {
+        MarkUnsent();
+        if (!_p.Crop) return;
+        (int, int) input_size;
+        if (!FFMPEGParameters.LIST_SIZE_WH.TryGetValue(_p.VideoSize, out input_size)) return;
+
+        (int x, int y, int w, int h) = GetCropParameters(_p, input_size.Item1, input_size.Item2);
+
+        char[] characters = ((char)(_sourceIndex % 4) + $"crop y {y}\x00").ToCharArray();
+        if (_sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.ZMQCommands(characters);
+        else
+            _RoveCommService.Boards.Camera2.ZMQCommands(characters);
+    }
+
+    private void CropZ()
+    {
+        MarkUnsent();
+        if (!_p.Crop) return;
+        (int, int) input_size;
+        if (!FFMPEGParameters.LIST_SIZE_WH.TryGetValue(_p.VideoSize, out input_size)) return;
+
+        (int x, int y, int w, int h) = GetCropParameters(_p, input_size.Item1, input_size.Item2);
+        int fontsize = w / 20;
+
+        char[] characters = ((char)(_sourceIndex % 4) + $"crop x {x}\x001fcrop y {y}\x001fcrop w {w}\x001fcrop h {h}\x001fdrawtext reinit text=|||||||||:fontsize={fontsize}:x='abs(mod(t*(w-text_w)*0.5,(w-text_w)*2)-(w-text_w))':box=1:boxcolor=#0d6efd:fontcolor=#0d6efd\x00").ToCharArray();
+        if (_sourceIndex < 4)
+            _RoveCommService.Boards.Camera1.ZMQCommands(characters);
+        else
+            _RoveCommService.Boards.Camera2.ZMQCommands(characters);
     }
 
     private void SetPictureArguments()
     {
-        char[] characters = (String.Join("\x1f", CameraArgumentsValue.Split("\n")) + '\x04').ToCharArray();
-        if (sourceIndex < 4)
-            _RoveCommService.Boards.Camera1.SetPictureArguments(characters);
-        else
-            _RoveCommService.Boards.Camera2.SetPictureArguments(characters);
+        // char[] characters = (string.Join("\x1f", ["todo"])) + '\x04' + (char)(_sourceIndex % 4)).ToCharArray();
+        // if (_sourceIndex < 4)
+        // _RoveCommService.Boards.Camera1.SetPictureArguments(characters);
+        // else
+        // _RoveCommService.Boards.Camera2.SetPictureArguments(characters);
     }
 
-    private void AddHistogram()
+    void IDisposable.Dispose()
     {
-        List<string> ffmpeg_arguments = new List<string>{
-        "-hide_banner",
-        "-f",
-        "video4linux2",
-        "-video_size",
-        "320x240",
-        "-i",
-        "$input",
-        "-filter:v",
-        "eq=brightness=$brightness:contrast=$contrast,drawtext=text=%{gmtime\\\\:%X}:fontsize=32:fontcolor=red,split=2[a][b];[b]format=rgb24,histogram,format=yuv420p,scale=-1:480[hh];[a][hh]hstack",
-        "-c:v",
-        "libvpx",
-        "-quality",
-        "good",
-        "-cpu-used",
-        "4",
-        "-g",
-        "5",
-        "-error-resilient",
-        "1",
-        "-auto-alt-ref",
-        "1",
-        "-f",
-        "rtp",
-        "-b:v",
-        "2M",
-        "-maxrate",
-        "2M",
-        "-v",
-        "0",
-        "rtp://$ip:$port?pkt_size=1200",
-        };
-
-        char[] characters = (String.Join("\x1f", ffmpeg_arguments) + '\x04').ToCharArray();
-
-        if (sourceIndex < 4)
-            _RoveCommService.Boards.Camera1.SetFFMPEGArguments(characters);
-        else
-            _RoveCommService.Boards.Camera2.SetFFMPEGArguments(characters);
+        _CameraService.Names.CollectionChanged -= CameraNamesChanged;
     }
 }

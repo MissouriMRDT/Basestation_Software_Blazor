@@ -2,7 +2,14 @@
 @inject IJSRuntime _IJSRuntime
 @attribute [ComponentAttributes.Ignore]
 
-<div @ref=_SVGContainer style="padding: 0"></div>
+<style>
+    .aruco-tag>svg {
+        width: 100% !important;
+        height: 100% !important;
+    }
+</style>
+
+<div class="aruco-tag" @ref=_SVGContainer style="@Style"></div>
 
 @code
 {
@@ -11,6 +18,9 @@
 
     [Parameter]
     public int Scale { get; set; } = 4;
+
+    [Parameter]
+    public string Style { get; set; } = "padding: 0";
 
     private ElementReference? _SVGContainer;
 

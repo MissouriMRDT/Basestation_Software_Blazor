@@ -22,6 +22,19 @@
             @($"rotateZ({_RoveCommService.Boards.Nav.CompassData}deg);")
     }
 
+    .drone-map-icon:after {
+        background-image: url(images/droneMarker.png);
+        background-size: contain;
+        background-position: center;
+        background-repeat: no-repeat;
+        height: 50px;
+        width: 50px;
+        content: "";
+        display: inline-block;
+        transform:
+            @($"rotateZ({_RoveCommService.Boards.DroneGPS.DronePose_Heading}deg);")
+    }
+
     .tile-hover-border {
         pointer-events: none;
         stroke: #ff7800;
@@ -32,18 +45,24 @@
 
 <div class="component-header">
     <h3>Map</h3>
+    <button @onclick=@(async () => { await _jsMap!.InvokeVoidAsync("panToMarker", 0); })>
+        <img src="/images/marker.png" style="height: 10px" />
+    </button>
+    <button @onclick=@(async () => { await _jsMap!.InvokeVoidAsync("panToMarker", 1); })>
+        <img src="/images/droneMarker.png" style="height: 10px" />
+    </button>
     <input type="checkbox" @bind=_isLidar>
-        @if (_downloading)
-        {
-            <button class="danger" @onclick=@(() => _downloading = false)><i class="bi-stop" /></button>
-            <p style="display: inline">@($"Downloading {_currentlyDownloadingTile} / {_totalDownloadingTiles} ({(float)_currentlyDownloadingTile / _totalDownloadingTiles * 100:000.00}%) {(_isLidar ? "lidar" : "map")} tiles {Math.Clamp(_zoom, 13, 18)}z - 18z")</p>
-        }
-        else
-        {
-            <button class="success" @onclick=Download><i class="bi-play" /></button>
-            <p style="display: inline">@($"Download {_totalDownloadingTiles} {(_isLidar ? "lidar" : "map")} tiles {Math.Clamp(_zoom, 13, 18)}z - 18z")</p>
-        }
-    </div>
+    @if (_downloading)
+    {
+        <button class="danger" @onclick=@(() => _downloading = false)><i class="bi-stop" /></button>
+        <p style="display: inline">@($"Downloading {_currentlyDownloadingTile} / {_totalDownloadingTiles} ({(float)_currentlyDownloadingTile / _totalDownloadingTiles * 100:000.00}%) {(_isLidar ? "lidar" : "map")} tiles {Math.Clamp(_zoom, 13, 18)}z - 18z")</p>
+    }
+    else
+    {
+        <button class="success" @onclick=Download><i class="bi-play" /></button>
+        <p style="display: inline">@($"Download {_totalDownloadingTiles} {(_isLidar ? "lidar" : "map")} tiles {Math.Clamp(_zoom, 13, 18)}z - 18z")</p>
+    }
+</div>
 <div @ref=_mapContainer class="component-body"></div>
 
 @code
@@ -59,11 +78,13 @@
     private IJSObjectReference? _jsMap;
     private DotNetObjectReference<Map>? _objectReference;
 
+    bool _dronePresent = false;
+    bool _rangeSet = false;
     int _totalDownloadingTiles = 0;
     int _currentlyDownloadingTile = 0;
     double[] _region = new double[4];
     bool _isLidar = false;
-    int _zoom = 0;
+    int _zoom = 18;
     bool _downloading = false;
     // private bool _pathTrackingActive = false;
 
@@ -127,10 +148,16 @@
             await InvokeAsync(StateHasChanged);
         });
 
+        _RoveCommService.Boards.DroneGPS.OnDronePose(async packet =>
+        {
+            await _jsMap!.InvokeVoidAsync("addDroneIcon", [_RoveCommService.Boards.DroneGPS.DronePose_Lat, _RoveCommService.Boards.DroneGPS.DronePose_Lon]);
+            await InvokeAsync(StateHasChanged);
+        });
 
         _RoveCommService.Boards.Nav.OnGPSLatLonAlt(async packet =>
         {
             await _jsMap!.InvokeVoidAsync("addRoverIcon", [_RoveCommService.Boards.Nav.GPSLatLonAlt_Lat, _RoveCommService.Boards.Nav.GPSLatLonAlt_Lon]);
+
 
             // Disabled for safety until performance issues are resolved.
             /*double lat = packet.Data[0];
@@ -213,7 +240,7 @@
     {
         using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
         List<GPSWaypoint> waypoints = await databaseContext.Waypoints.ToListAsync();
-        await Task.WhenAll(waypoints.ConvertAll<Task>(waypoint => _jsMap!.InvokeVoidAsync("addWaypointMarker", [waypoint.Latitude, waypoint.Longitude, waypoint.SearchRadius, ColorTranslator.ToHtml(Color.FromArgb(waypoint.Color)), waypoint.TagID]).AsTask()));
+        await Task.WhenAll(waypoints.ConvertAll<Task>(waypoint => _jsMap!.InvokeVoidAsync("addWaypointMarker", [waypoint.Name, waypoint.Latitude, waypoint.Longitude, waypoint.SearchRadius, ColorTranslator.ToHtml(Color.FromArgb(waypoint.Color)), waypoint.TagID]).AsTask()));
     }
 
     [JSInvokable]
@@ -225,6 +252,8 @@
             ID = Guid.NewGuid(),
             Latitude = lat,
             Longitude = lon,
+            TagID = -10,
+            Color = 0xffffff
         });
         await databaseContext.SaveChangesAsync(_databaseService);
     }
@@ -242,6 +271,7 @@
     [JSInvokable]
     public async Task SetRange(double lat1, double lon1, double lat2, double lon2, int zoom)
     {
+        _rangeSet = true;
         _zoom = zoom;
         _region[0] = lon1;
         _region[1] = lat1;
@@ -272,7 +302,7 @@
 
     public async Task Download()
     {
-        if (_downloading) return;
+        if (_downloading || !_rangeSet) return;
         _downloading = true;
 
         Timer updateUI = new(_ => InvokeAsync(StateHasChanged), null, 0, 1000);

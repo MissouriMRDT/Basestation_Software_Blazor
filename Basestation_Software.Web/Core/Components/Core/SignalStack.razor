@@ -1,4 +1,5 @@
 ﻿@inject RoveCommService _RoveCommService
+@inject GPSWaypointState _GPSWaypointState
 
 <div class="component-header">
     <h3>Signal Stack</h3>
@@ -12,11 +13,21 @@
         <input @bind=DeadZone style="width: 40px" />
     </div>
     <p>@(speed* RPM_PER_SPEED) RPM</p>
-    <input type="range" @bind=_scale min="0" max="4000" step="100" style="width: 100px; align-self: center" />
+    <input type="range" @bind=_scale min="0" max="350" step="1" style="width: 100px; align-self: center" />
     <button checked=@(_scale == 0) @onclick=@(() => _scale = 0)>0</button>
-    <button checked=@(_scale == 500) @onclick=@(() => _scale = 500)>500</button>
-    <button checked=@(_scale == 4000) @onclick=@(() => _scale = 4000)>4000</button>
+    <button checked=@(_scale == 180) @onclick=@(() => _scale = 180)>180</button>
+    <button checked=@(_scale == 350) @onclick=@(() => _scale = 350)>350</button>
     <input @bind=_scale style="width: 40px" />
+    <br />
+    <label>BS Latitude</label>
+    <input @bind=_bsLat style="width: 40px" />
+    <label>BS Longitude</label>
+    <input @bind=_bsLon style="width: 40px" />
+    <button @onclick=@(() => { if (_GPSWaypointState.SelectedWaypoint != null) { _bsLat = _GPSWaypointState.SelectedWaypoint.Latitude; _bsLon = _GPSWaypointState.SelectedWaypoint.Longitude; } })>Set BS Coords</button>
+    <button checked=@_trackRover @onclick=@(() => _trackRover ^= true)>Track Rover</button>
+    <div style="transform:rotate(@(_RoveCommService.Boards.SignalStack.CompassAngle)deg)">
+        <i class="bi bi-arrow-up"></i>
+    </div>
 </div>
 
 @code {
@@ -24,14 +35,34 @@
     private bool _outputEnabled = true;
     GamepadSelector _gamepadSelector = new();
 
-    public double DeadZone = 0.15;
+    public double DeadZone = 0.3;
     public static readonly double RPM_PER_SPEED = 1;
     private short speed { get => _speed; set { _speed = value; if (_outputEnabled) _RoveCommService.Boards.SignalStack.OpenLoop(_speed); } }
-    private double _scale = 4000;
+    private double _scale = 350;
     short _speed = 0;
+    private double _bsLat = 0, _bsLon = 0;
+    private bool _trackRover = false;
+
+    protected override void OnInitialized()
+    {
+        _RoveCommService.Boards.SignalStack.OnCompassAngle(async packet =>
+        {
+            await InvokeAsync(StateHasChanged);
+        });
+    }
 
     private async Task Update(Gamepad gamepad, float deltaT)
     {
+        if (_trackRover)
+        {
+            
+            _RoveCommService.Boards.SignalStack.SetGPSTarget(
+                _RoveCommService.Boards.Nav.GPSLatLonAlt_Lat,
+                _RoveCommService.Boards.Nav.GPSLatLonAlt_Lon,
+                _bsLat,
+                _bsLon
+            );
+        }
         bool processGamepadInputOK = await ProcessGamepadInput(gamepad, deltaT);
         if (!processGamepadInputOK && LastProcessGamepadInputOK) speed = 0;
         LastProcessGamepadInputOK = processGamepadInputOK;
@@ -40,8 +71,11 @@
 
     private async Task<bool> ProcessGamepadInput(Gamepad gamepad, float deltaT)
     {
-        if (gamepad.Axes.Length < 1) return false;
-        speed = Math.Abs(gamepad.Axes[0]) <= DeadZone ? (short)0 : (short)(gamepad.Axes[0] * _scale);
+        if (!_trackRover)
+        {
+            if (gamepad.Axes.Length < 1) return false;
+            speed = Math.Abs(gamepad.Axes[0]) <= DeadZone ? (short)0 : (short)(gamepad.Axes[0] * _scale);
+        }
         return _outputEnabled;
     }
 }

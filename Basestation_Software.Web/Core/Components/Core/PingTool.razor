@@ -4,6 +4,7 @@
 
 @inject PingService _PingService
 @inject RoveCommService _RoveCommService
+@inject Rover3DService _Rover3DService
 
 <div class="component-header">
     <h3>Ping Tool</h3>
@@ -29,8 +30,8 @@
         {
             <p></p>
         }
-        <p style="color: #ff; background-color: @(device.Ok ? "#198754" : "#dc3545")">@device.Name</p>
-        <p style="color: #ff; background-color: @(device.Ok ? "#198754" : "#dc3545")">@device.IpAddress</p>
+        <p style="color: #000; background-color: @(device.Ok ? "#0f0" : "#f00")">@device.Name</p>
+        <p style="color: #000; background-color: @(device.Ok ? "#0f0" : "#f00")">@device.IpAddress</p>
     }
 </div>
 
@@ -39,11 +40,10 @@
     public static long ROVECOMM_ACTIVITY_TIMEOUT = 1500 * TimeSpan.TicksPerSecond;
 
     private Timer _autoPingTimer;
-    private Timer _roveCommActivityTimer;
     private Dictionary<int, int> _iLookup = [];
 
-    private bool _autoPingAll = false;
-    private int _autoPingDelay = 5000;
+    private bool _autoPingAll = true;
+    private int _autoPingDelay = 1000;
     private int _pingTimeout = 1000;
 
     private List<Device> _devices = [];
@@ -52,7 +52,6 @@
     public PingTool()
     {
         _autoPingTimer = new(AutoPing);
-        _roveCommActivityTimer = new(CheckRoveCommActivity);
     }
 
     protected override void OnInitialized()
@@ -98,35 +97,7 @@
                 _devices[i].RoveCommPingStatus = ((DateTime.UtcNow.Ticks - sentAt) / TimeSpan.TicksPerMillisecond).ToString();
         });
 
-        _RoveCommService.On<sbyte>(0, RoveCommActivity);
-        _RoveCommService.On<byte>(0, RoveCommActivity);
-        _RoveCommService.On<short>(0, RoveCommActivity);
-        _RoveCommService.On<ushort>(0, RoveCommActivity);
-        _RoveCommService.On<int>(0, RoveCommActivity);
-        _RoveCommService.On<uint>(0, RoveCommActivity);
-        _RoveCommService.On<float>(0, RoveCommActivity);
-        _RoveCommService.On<double>(0, RoveCommActivity);
-        _RoveCommService.On<char>(0, RoveCommActivity);
-
         _autoPingTimer.Change(_autoPingDelay, Timeout.Infinite);
-        _roveCommActivityTimer.Change(0, 1000);
-    }
-
-    private async Task RoveCommActivity<T>(RoveCommPacket<T> packet)
-    {
-        if (_iLookup.TryGetValue(packet.DataID, out int i))
-            _devices[i].LastRoveCommPacket = DateTime.UtcNow.Ticks;
-    }
-
-    private void CheckRoveCommActivity(object? _)
-    {
-        long timeout = DateTime.UtcNow.Ticks - ROVECOMM_ACTIVITY_TIMEOUT;
-        foreach (Device device in _devices)
-        {
-            if (device.HasRoveComm)
-                device.Ok = device.LastRoveCommPacket > timeout;
-        }
-        InvokeAsync(StateHasChanged);
     }
 
     private async Task PingIpAddressAsync(Device device, string ipAddress)
@@ -135,8 +106,8 @@
         {
             PingReply reply = await _PingService.PingAsync(ipAddress, _pingTimeout);
             device.PingStatus = reply.Status == IPStatus.Success ? reply.RoundtripTime.ToString() : reply.Status.ToString();
-            if (!device.HasRoveComm)
-                device.Ok = reply.Status == IPStatus.Success;
+            device.Ok = reply.Status == IPStatus.Success;
+            _Rover3DService.DeviceOk[device.Name] = device.Ok;
 
             await InvokeAsync(StateHasChanged);
         }
@@ -174,8 +145,7 @@
         public string PingStatus = "None";
         public string RoveCommPingStatus = "None";
         public bool Ok = false;
-        public bool AutoPing = false;
+        public bool AutoPing = true;
         public bool HasRoveComm = false;
-        public long LastRoveCommPacket = 0;
     }
 }

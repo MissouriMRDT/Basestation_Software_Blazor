@@ -3,7 +3,7 @@
 @inject IJSRuntime _IJSRuntime
 @attribute [ComponentAttributes.Ignore]
 
-<select @bind=_selectedIndex>
+<select @bind=_selectedIndex style="width: 100px">
     <option value="-1">None</option>
     @for (int i = 0; i < _ids.Count; i++)
     {

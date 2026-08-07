@@ -1,0 +1,18 @@
+.source-buttons-container {
+    grid-area: 1 / 1 / 1 / 5;
+    display: flex;
+    flex-direction: row;
+    margin-inline: 0;
+    margin-block: 0;
+    --btn-color: white;
+}
+
+.source-buttons-container button {
+    margin: 1px;
+    flex: 1;
+    padding: 0;
+}
+
+textarea {
+    flex-grow: 1;
+}

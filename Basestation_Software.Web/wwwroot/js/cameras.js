@@ -1,8 +1,10 @@
-let address = `ws://${window.location.hostname}:8085`;
+let address = window.location.protocol === "http:" ? `ws://${window.location.hostname}:8085` : `wss://${window.location.hostname}:8086`;
 let totalTracks = 8;
 let tracks = [];
+let onConnected = [];
 let pc = null;
 let cameraDisplays = [];
+export { tracks, onConnected };
 
 export function connect() {
     if (tracks.length > 0) { disconnect(); }
@@ -33,7 +35,10 @@ export function connect() {
                 pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(atob(event.data)))).catch(error => console.log(`[WebRTC] Failed to set remote session description: ${error}.`));
                 console.log("[WebRTC] Closing camera signal socket.");
                 cameraSignalSocket.close();
-                setTimeout(() => cameraDisplays.forEach(d => d.resetCamera()), 1000);
+                setTimeout(() => {
+                    cameraDisplays.forEach(d => d.resetCamera());
+                    onConnected.forEach(c => c());
+                }, 1000);
             }
         }
     };

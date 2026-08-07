@@ -67,4 +67,5 @@ public class DatabaseContext : DbContext
     public DbSet<LidarTile> LidarTiles { get; set; }
     public DbSet<ArmPose> ArmPoses { get; set; }
     public DbSet<ArmPreset> ControlPresets { get; set; }
+    public DbSet<TimerData> Timers { get; set; }
 }

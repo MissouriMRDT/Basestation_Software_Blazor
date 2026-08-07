@@ -1,11 +1,18 @@
+@using System.Diagnostics
 @implements IAsyncDisposable
 
 @inject RoveCommService _RoveCommService
-@inject OpService _OpState
+@inject OpService _OpService
+@inject Rover3DService _Rover3DService
+@inject CameraService _CameraService
 @inject IJSRuntime _IJSRuntime
 
 <div class="component-header">
     <h3>3D Rover</h3>
+    <input type="checkbox" @bind=_accel />
+    <button checked=@(_system == System.ARM) @onclick=@(() => SetSystem(System.ARM))>Arm</button>
+    <button checked=@(_system == System.AUTONOMY) @onclick=@(() => SetSystem(System.AUTONOMY))>Autonomy</button>
+    <button checked=@(_system == System.SCIENCE) @onclick=@(() => SetSystem(System.SCIENCE))>Science</button>
 </div>
 <div class="component-body">
     @if (!_dataLoaded)
@@ -17,30 +24,95 @@
 
 @code
 {
+    private enum System { NONE, ARM, AUTONOMY, SCIENCE }
+
     private ElementReference CanvasContainer;
     private IJSObjectReference? jsRoverView;
     private bool _dataLoaded = false;
+    private bool _accel = false;
+    private System _system = System.NONE;
+    private Timer _timer;
+    private Stopwatch _stopwatch = new();
+    private long _lastFrame = 500;
 
-    protected override void OnInitialized()
+    public Rover3DView() => _timer = new(async _ => await InvokeAsync(StateHasChanged));
+
+    private async void SetSystem(System system)
     {
-        _RoveCommService.Boards.Core.OnAccelerometerData(async packet =>
+        if (jsRoverView == null || _system != System.NONE) return;
+        _system = system;
+        await jsRoverView.InvokeVoidAsync("setSystem", [Enum.GetName(system)]);
+        _stopwatch.Start();
+    }
+
+    private bool DeviceOk(string name) => _Rover3DService.DeviceOk.GetValueOrDefault(name);
+
+    private async Task Update()
+    {
+        if (jsRoverView == null) return;
+
+        try
         {
             // CoreBoard: y-forward, z-up, x-right
             // ThreeJS (WebGL): -z-forward, y-up, x-right
-            if (jsRoverView != null)
-            {
+            if (_accel)
                 await jsRoverView.InvokeVoidAsync("updateAnglesFromUpVector", [_RoveCommService.Boards.Core.AccelerometerData_X, _RoveCommService.Boards.Core.AccelerometerData_Z, -_RoveCommService.Boards.Core.AccelerometerData_Y]);
-            }
-        });
-        _RoveCommService.Boards.Arm.OnPosition(async packet =>
-        {
-            if (jsRoverView != null)
+            else
+                await jsRoverView.InvokeVoidAsync("updateAnglesFromUpVector", [0, 1, 0]);
+
+            Dictionary<string, int> states = [];
+            bool camera1Ping = DeviceOk("Camera1");
+            for (int i = 0; i < 4; i++)
             {
-                await jsRoverView.InvokeVoidAsync("updateArm", [
-                _RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J2, _RoveCommService.Boards.Arm.Position_J3,
-                _RoveCommService.Boards.Arm.Position_J4, _RoveCommService.Boards.Arm.Position_J5, _RoveCommService.Boards.Arm.Position_J6]);
+                bool connected = (_RoveCommService.Boards.Camera1.AvailableCameras_Connected & (1 << i)) != 0;
+                bool streaming = (_RoveCommService.Boards.Camera1.AvailableCameras_Streaming & (1 << i)) != 0;
+                states[_CameraService.Names[i]] = !camera1Ping ? 0 : streaming ? 1 : connected ? 2 : 0;
             }
-        });
+            bool camera2Ping = DeviceOk("Camera2");
+            for (int i = 0; i < 4; i++)
+            {
+                bool connected = (_RoveCommService.Boards.Camera2.AvailableCameras_Connected & (1 << i)) != 0;
+                bool streaming = (_RoveCommService.Boards.Camera2.AvailableCameras_Streaming & (1 << i)) != 0;
+                states[_CameraService.Names[i + 4]] = !camera2Ping ? 0 : streaming ? 1 : connected ? 2 : 0;
+            }
+
+            Color c = _OpService.OpColor ?? Color.Black;
+            await jsRoverView.InvokeVoidAsync("updateMaster", [DeviceOk("Core"), DeviceOk("PMS"), DeviceOk("Camera1"), DeviceOk("Camera2"), c.R, c.G, c.B]);
+            await jsRoverView.InvokeVoidAsync("updateCameras", [
+                _Rover3DService.GimbalAngles[0], _Rover3DService.GimbalAngles[1], states.GetValueOrDefault("LEFT"),
+            _Rover3DService.GimbalAngles[2], _Rover3DService.GimbalAngles[3], states.GetValueOrDefault("RIGHT"),
+            _Rover3DService.GimbalAngles[4], _Rover3DService.GimbalAngles[5], states.GetValueOrDefault("BACK"),
+            _Rover3DService.GimbalAngles[10], _Rover3DService.GimbalAngles[11], states.GetValueOrDefault("GIMBAL"),
+            states.GetValueOrDefault("AF"), states.GetValueOrDefault("MICRO"),
+            _Rover3DService.GimbalAngles[9], states.GetValueOrDefault("BASE"),
+            _Rover3DService.GimbalAngles[7], states.GetValueOrDefault("J4"),
+            states.GetValueOrDefault("WRIST")
+            ]);
+
+            switch (_system)
+            {
+                case System.ARM:
+                    await jsRoverView.InvokeVoidAsync("updateArm", [DeviceOk("Arm")]);
+                    await jsRoverView.InvokeVoidAsync("updateArmJoints", [
+                        _RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J2, _RoveCommService.Boards.Arm.Position_J3,
+                        _RoveCommService.Boards.Arm.Position_J4, _RoveCommService.Boards.Arm.Position_J5, _RoveCommService.Boards.Arm.Position_J6]);
+                    await jsRoverView.InvokeVoidAsync("updateTarget", [true, _RoveCommService.Boards.Arm.Position_GX, _RoveCommService.Boards.Arm.Position_GY, _RoveCommService.Boards.Arm.Position_GZ]);
+                    await jsRoverView.InvokeVoidAsync("updateTargetArm", [
+                        _RoveCommService.Boards.Arm.Target_X, _RoveCommService.Boards.Arm.Target_J2, _RoveCommService.Boards.Arm.Target_J3,
+                        _RoveCommService.Boards.Arm.Target_J4, _RoveCommService.Boards.Arm.Target_J5, _RoveCommService.Boards.Arm.Target_J6]);
+                    break;
+                case System.AUTONOMY:
+                    await jsRoverView.InvokeVoidAsync("updateAutonomy", [DeviceOk("Autonomy")]);
+                    break;
+                case System.SCIENCE:
+                    await jsRoverView.InvokeVoidAsync("updateScience", [
+                        _RoveCommService.Boards.Auger.Position, _RoveCommService.Boards.Auger.AugerSpeed, _RoveCommService.Boards.Auger.LimitSwitch, DeviceOk("Auger"),
+                        _RoveCommService.Boards.Raman.Position_InstrumentsAxis, _RoveCommService.Boards.Raman.LimitSwitch, DeviceOk("Raman")
+                    ]);
+                    break;
+            }
+        }
+        catch { }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -52,25 +124,18 @@
                 await using var jsModule = await _IJSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/rover-3d-view.js");
                 jsRoverView = await jsModule.InvokeAsync<IJSObjectReference>("createRoverView", [CanvasContainer]);
             }
-            catch
-            {
-                jsRoverView = null;
-            }
-
-            _OpState.SubscribeToStateChanged((Color? c) =>
-            {
-                if (c != null && jsRoverView != null)
-                {
-                    _ = jsRoverView.InvokeVoidAsync("updateLighting", [c?.R, c?.G, c?.B]);
-                }
-            });
+            catch { jsRoverView = null; }
 
             _dataLoaded = true;
             await InvokeAsync(StateHasChanged);
-            // component will resize once unhidden
+            _timer.Change(100, 100);
+            // Component will resize once unhidden
         }
-
-        await InvokeAsync(StateHasChanged);
+        if (_stopwatch.ElapsedMilliseconds >= _lastFrame + 80)
+        {
+            await Update();
+            _lastFrame = _stopwatch.ElapsedMilliseconds;
+        }
     }
 
     async ValueTask IAsyncDisposable.DisposeAsync()
@@ -81,11 +146,10 @@
             {
                 await jsRoverView.InvokeVoidAsync("dispose");
                 await jsRoverView.DisposeAsync();
+                _stopwatch.Reset();
             }
         }
-        catch (JSDisconnectedException)
-        {
-        }
+        catch (JSDisconnectedException) { }
     }
 
 }

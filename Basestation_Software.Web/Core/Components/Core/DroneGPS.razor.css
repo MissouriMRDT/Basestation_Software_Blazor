@@ -1,0 +1,10 @@
+.gps {
+    display: grid;
+    grid: repeat(11, 1fr) 210px / repeat(3, 1fr);
+    justify-items: center;
+}
+
+.gps p {
+    width: 100%;
+    text-align: center;
+}

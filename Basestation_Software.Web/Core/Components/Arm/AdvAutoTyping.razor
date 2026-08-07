@@ -1,6 +1,7 @@
-﻿@using System.Diagnostics
+﻿﻿@using System.Diagnostics
 @inject RoveCommService _RoveCommService
 @inject OpService _OpService
+@using System.Numerics
 
 <div class="component-header">
     <h3>Advanced Autonomous Typing</h3>
@@ -10,142 +11,202 @@
     <div style="display: flex; flex-direction: column; justify-content: center; align-items: center">
         <p class="font-monospace fs-3">@_phrase</p>
         <p>@_statusMessage</p>
-        <p>@_elapsed / @_delay ms</p>
-        <progress max="1" value=@((float)_elapsed / _delay) class="progress"></progress>
+        <progress max="1" value=@_charStatusMeter class="progress"></progress>
     </div>
 
     <div style="display: flex; gap: 2px; justify-content: center">
         <input @bind:get=_phrase @bind:set=@(value => { _phrase = value.ToUpper(); }) />
-        <button @onclick=Start>Start</button>
-        <button @onclick=@(() => _running = false)>Stop</button>
+        <button @onclick=@(async () => { if (!_running) await Start(); else await Stop(); }) checked=@_running>@(_running ? "Stop" : "Start")</button>
+        <button @onclick=ResetCache>Reset Cache</button>
     </div>
-    <div style="display: grid; grid-template-columns: max-content 100px 100px 100px 100px">
-        <p>X</p>
-        <input @bind=_start.X />
-        <input @bind=_start.J2 />
-        <input @bind=_start.J3 />
-        <p></p>
-        <p>J4</p>
-        <input @bind=_start.J4 />
-        <input @bind=_start.J5 />
-        <input @bind=_start.J6 />
-        <p></p>
-        <p></p>
-        <p>X</p>
-        <p>J5</p>
-        <p>Servo</p>
-        <p>Delay</p>
-        <p>M</p>
-        <input @bind=_mrdt[0] />
-        <input @bind=_mrdt[1] />
-        <input @bind=_mrdt[2] />
-        <input @bind=_mrdt[3] />
-        <p>R</p>
-        <input @bind=_mrdt[4] />
-        <input @bind=_mrdt[5] />
-        <input @bind=_mrdt[6] />
-        <input @bind=_mrdt[7] />
-        <p>D</p>
-        <input @bind=_mrdt[8] />
-        <input @bind=_mrdt[9] />
-        <input @bind=_mrdt[10] />
-        <input @bind=_mrdt[11] />
-        <p>T</p>
-        <input @bind=_mrdt[12] />
-        <input @bind=_mrdt[13] />
-        <input @bind=_mrdt[14] />
-        <input @bind=_mrdt[15] />
+
+    <div style="display: grid; grid-template-columns: auto auto auto; text-align: center; padding: 0.5rem;">
+        <button @onclick=CacheQ checked=@(_keyCacheQ != null)>@(_keyCacheQ == null ? "Cache" : "Cached") Q</button>
+        <button @onclick=CacheP checked=@(_keyCacheP != null)>@(_keyCacheP == null ? "Cache" : "Cached") P</button>
+        <button @onclick=CacheZ checked=@(_keyCacheZ != null)>@(_keyCacheZ == null ? "Cache" : "Cached") Z</button>
     </div>
 </div>
 
 @code {
-    private string _phrase = "MRDT";
+    private CancellationTokenSource _cts = new();
+    private bool _running = false;
+    private string _phrase = "";
     private string _statusMessage = "Idle";
-    private long _elapsed = 0;
-    private int _delay = 0;
+    private float _charStatusMeter = 0;
 
-    bool _running = false;
+    private Dictionary<char, Vector2> _keyPositions = new();
 
-    private ArmAxes _start = new()
+    // X, Pitch
+    private Vector2? _keyCacheQ = null;
+    private Vector2? _keyCacheP = null;
+    private Vector2? _keyCacheZ = null;
+
+    private void CacheQ() => _keyCacheQ = new Vector2(_RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J5);
+    private void CacheP() => _keyCacheP = new Vector2(_RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J5);
+    private void CacheZ() => _keyCacheZ = new Vector2(_RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J5);
+
+    private void ResetCache()
     {
-        X = 0f,
-        J2 = 11.97f,
-        J3 = -78.00f,
-        J4 = -173.49f,
-        J5 = 49.95f,
-        J6 = 0f
-    };
-
-    // (x, j5, servo pressed)
-    /*private List<float> _mrdt = [
-       5.04f, 63.99f, 82f, 5000,
-       2.16f, 49.5f, 65.54f, 5000,
-       1.9f, 57.06f, 71.51f, 5000,
-       3.18f, 49.23f, 66.5f, 5000,
-    ];*/
-
-    private List<float> _mrdt = [
-       4.97f, 63.99f, 83f, 3500f,
-       2.09f, 49.5f, 66f, 2000f,
-       1.78f, 57.06f, 71.51f, 500f,
-       3.11f, 49.23f, 67f, 1200f,
-    ];
-
-
-    protected override void OnInitialized()
-    {
-        _RoveCommService.Boards.Arm.OnPosition(async packet => await InvokeAsync(StateHasChanged));
-    }
-
-    private async Task<bool> Delay(int ms)
-    {
-        _delay = ms;
-        Stopwatch stopwatch = new();
-        stopwatch.Start();
-        while (stopwatch.ElapsedMilliseconds < ms && _running)
-        {
-            _elapsed = stopwatch.ElapsedMilliseconds;
-            await InvokeAsync(StateHasChanged);
-            await Task.Delay(10);
-        }
-        return _running;
+        _keyCacheQ = null;
+        _keyCacheP = null;
+        _keyCacheZ = null;
     }
 
     private async Task Start()
     {
-        _running = true;
-        _OpService.SetAutonomy();
-        await Run();
-        await InvokeAsync(StateHasChanged);
-        _statusMessage = "Idle";
-        _delay = 0;
-        _elapsed = 0;
-        _OpService.SetTeleop();
-        _RoveCommService.Boards.Arm.OpenLoop(0, 0, 0, 0, 0, 0);
-        _running = false;
-    }
-
-    private async Task Run()
-    {
-        _statusMessage = "Moving to start";
-        _RoveCommService.Boards.Arm.TargetAngle(_start.X, _start.J2, _start.J3, _start.J4, _start.J5, _start.J6);
-        if (!await Delay(5000)) return;
-        // servo range: 40 - 115
-        for (int i = 0; i + 3 < _mrdt.Count; i += 4)
+        if (_running) Stop();
+        try
         {
-            float x = _mrdt[i];
-            float j5 = _mrdt[i + 1];
-            byte servo = (byte)_mrdt[i + 2];
-            int delay = (int)_mrdt[i + 3];
-            _statusMessage = "Moving to " + "MRDT"[i / 4];
-            _RoveCommService.Boards.Arm.TargetAngle(x, _start.J2, _start.J3, _start.J4, j5, _start.J6);
-            if (!await Delay(delay)) return;
-            _statusMessage = "Pressing";
-            _RoveCommService.Boards.Arm.LinearServo(servo);
-            if (!await Delay(1800)) return;
-            _statusMessage = "Releasing";
-            _RoveCommService.Boards.Arm.LinearServo(40); //82
-            if (!await Delay(2000)) return;
+            _cts = new();
+            _running = true;
+            _charStatusMeter = 0;
+            await InvokeAsync(StateHasChanged);
+            _OpService.SetAutonomy();
+            // Make sure watchdog is disabled
+            _RoveCommService.Boards.Arm.WatchdogOverride(1);
+            await Task.Run(PlayPhrase, _cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            _statusMessage = "Stopped";
+            await InvokeAsync(StateHasChanged);
+        }
+        finally
+        {
+            _OpService.SetNone();
+            _RoveCommService.Boards.Arm.WatchdogOverride(0);
+            _running = false;
+            _charStatusMeter = 0;
+            await InvokeAsync(StateHasChanged);
         }
     }
+
+    private async Task Stop()
+    {
+        _cts.Cancel();
+        _statusMessage = "Stopped";
+        _OpService.SetNone();
+        _RoveCommService.Boards.Arm.WatchdogOverride(0);
+        _running = false;
+        _charStatusMeter = 0;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task PlayPhrase()
+    {
+        // Start with linear servo retracted
+        _RoveCommService.Boards.Arm.LinearServo(100);
+        await Task.Delay(3000, _cts.Token);
+        // Check that reference keys are cached
+        if (_keyCacheQ == null || _keyCacheP == null || _keyCacheZ == null)
+        {
+            _statusMessage = "Not All Keys Cached";
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        CalculateKeyPositions();
+        // Store positions of all other joints besides X and J5
+        ArmAxes startPosition = new()
+        {
+            X = _RoveCommService.Boards.Arm.Target_X,
+            J2 = _RoveCommService.Boards.Arm.Target_J2,
+            J3 = _RoveCommService.Boards.Arm.Target_J3,
+            J4 = _RoveCommService.Boards.Arm.Target_J4,
+            J5 = _RoveCommService.Boards.Arm.Target_J5,
+            J6 = _RoveCommService.Boards.Arm.Target_J6,
+        };
+
+        foreach (char letter in _phrase)
+        {
+            if (!_keyPositions.ContainsKey(letter)) continue;
+            _charStatusMeter = 0;
+            _statusMessage = "Moving to " + letter;
+            await InvokeAsync(StateHasChanged);
+
+            Vector2 currentPos = new(_RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J5);
+            Vector2 nextPos = _keyPositions[letter];
+            //float delta = (nextPos - currentPos).Length();
+            float delta = Math.Abs(nextPos.X - currentPos.X);
+            float initialDelta = delta;
+
+            // Send command to move to next position
+            _RoveCommService.Boards.Arm.TargetAngle(nextPos.X, startPosition.J2, startPosition.J3, startPosition.J4, nextPos.Y, startPosition.J6);
+
+            // Wait until the arm gets close and update the progress bar in the meantime
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
+            // using var timeout = CancellationTokenSource.CreateLinkedTokenSource(_cts.Token, timeoutCts.Token);
+            while (delta > 0.1 && !timeout.Token.IsCancellationRequested)
+            {
+                if (initialDelta != 0) _charStatusMeter = 1 - (delta / initialDelta);
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(100, _cts.Token);
+                currentPos = new(_RoveCommService.Boards.Arm.Position_X, _RoveCommService.Boards.Arm.Position_J5);
+                delta = Math.Abs(nextPos.X - currentPos.X);
+            }
+
+            await Task.Delay(1000, _cts.Token); // A little more time to settle
+
+            _statusMessage = "Extending Servo";
+            _RoveCommService.Boards.Arm.LinearServo(180);
+            _charStatusMeter = 0;
+            for (int j = 0; j < 30; j++)
+            {
+                _charStatusMeter += 1.0f / 30;
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(100, _cts.Token);
+            }
+
+            _statusMessage = "Retracting Servo";
+            _RoveCommService.Boards.Arm.LinearServo(100);
+            _charStatusMeter = 0;
+            for (int j = 0; j < 30; j++)
+            {
+                _charStatusMeter += 1.0f / 30;
+                await InvokeAsync(StateHasChanged);
+                await Task.Delay(100, _cts.Token);
+            }
+        }
+
+        _statusMessage = "Done";
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void CalculateKeyPositions()
+    {
+        if (_keyCacheQ == null || _keyCacheP == null || _keyCacheZ == null)
+        {
+            throw new InvalidOperationException("Not all keys cached.");
+        }
+
+        Vector2 Q = _keyCacheQ ?? new();
+        Vector2 P = _keyCacheP ?? new();
+        Vector2 Z = _keyCacheZ ?? new();
+        // Calculate keyboard measurements based on cached keys
+        Vector2 QP = P - Q;
+        Vector2 QZ = Z - Q;
+        Vector2 basisX = QP / 9;
+        Vector2 basisY = QZ / 2;
+
+        string rowQ = "QWERTYUIOP";
+        string rowA = "ASDFGHJKL";
+        string rowZ = "ZXCVBNM";
+
+        for (int i = 0; i < rowQ.Length; i++)
+        {
+            _keyPositions[rowQ[i]] = Q + basisX * i;
+        }
+
+        for (int i = 0; i < rowA.Length; i++)
+        {
+            _keyPositions[rowA[i]] = Q + basisX * i + basisY;
+        }
+
+        for (int i = 0; i < rowZ.Length; i++)
+        {
+            _keyPositions[rowZ[i]] = Q + basisX * i + 2 * basisY;
+        }
+
+    }
+
 }

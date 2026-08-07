@@ -1,0 +1,129 @@
+@using Microsoft.EntityFrameworkCore
+@using Microsoft.EntityFrameworkCore.Metadata.Internal
+@inject DatabaseService _databaseService
+@inject IDbContextFactory<DatabaseContext> _dbContextFactory
+
+<div class="component-header">
+    <h3>Task Timer</h3>
+    <button @onclick=New><i class="bi-plus" /></button>
+</div>
+<div class="component-body" style="display: flex; flex-direction: column; flex-wrap: nowrap; justify-content: flex-start; align-items: stretch">
+    @for (int i = 0; i < _timers.Count; i++)
+    {
+        TimerData timer = _timers[i];
+        <div style="background-image: linear-gradient(to right, #00d @(timer.Elapsed / (timer.Elapsed + timer.Remaining) * 100)%, #000 0%)">
+            <button class="danger" @onclick=@(async () => { await Delete(timer.ID); })><i class="bi-trash" /></button>
+            @if (timer.Paused)
+            {
+                <input style="width: 50px" @bind:get=@(timer.Elapsed.ToString((timer.Elapsed < TimeSpan.Zero ? "\\-" : "") + "hh\\:mm\\:ss\\.f")) @bind:set=@(async value => await SetElapsed(timer.ID, value)) />
+                <div style="float: right">
+                    <input style="width: 50px" @bind:get=@(timer.Remaining.ToString((timer.Remaining < TimeSpan.Zero ? "\\-" : "") + "hh\\:mm\\:ss\\.f")) @bind:set=@(async value => await SetRemaining(timer.ID, value)) />
+                    <button class="success" @onclick=@(async () => { await Resume(timer.ID); })><i class="bi-play" /></button>
+                </div>
+            }
+            else
+            {
+                <p style="display: inline">@(timer.Elapsed.ToString((timer.Elapsed < TimeSpan.Zero ? "\\-" : "") + "hh\\:mm\\:ss\\.f"))</p>
+                <div style="float: right">
+                    <p style="display: inline">@(timer.Remaining.ToString((timer.Remaining < TimeSpan.Zero ? "\\-" : "") + "hh\\:mm\\:ss\\.f"))</p>
+                    <button class="warning" @onclick=@(async () => { await Pause(timer.ID); })><i class="bi-pause" /></button>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code
+{
+    private List<TimerData> _timers = [];
+    private Timer _updateTimer;
+
+    public TaskTimer()
+    {
+        _updateTimer = new Timer(async _ => { await InvokeAsync(StateHasChanged); });
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        _databaseService.SubscribeToTableChanges(typeof(TimerData), async () =>
+        {
+            using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+            _timers = await databaseContext.Timers.ToListAsync();
+            await InvokeAsync(StateHasChanged);
+        });
+
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        _timers = await databaseContext.Timers.ToListAsync();
+        _updateTimer.Change(0, 100);
+    }
+
+    private async Task New()
+    {
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        TimerData timer = new() { Paused = true, A = 0, B = TimeSpan.FromMinutes(10).Ticks };
+        await databaseContext.Timers.AddAsync(timer);
+        await databaseContext.SaveChangesAsync(_databaseService);
+    }
+
+    private async Task Delete(Guid id)
+    {
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        TimerData? timer = await databaseContext.Timers.FindAsync(id);
+        if (timer != null)
+        {
+            databaseContext.Timers.Remove(timer);
+            await databaseContext.SaveChangesAsync(_databaseService);
+        }
+
+    }
+
+    private async Task Pause(Guid id)
+    {
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        TimerData? timer = await databaseContext.Timers.FindAsync(id);
+        if (timer != null && !timer.Paused)
+        {
+            timer.Pause();
+            databaseContext.Timers.Update(timer);
+            await databaseContext.SaveChangesAsync(_databaseService);
+        }
+    }
+
+    private async Task Resume(Guid id)
+    {
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        TimerData? timer = await databaseContext.Timers.FindAsync(id);
+        if (timer != null && timer.Paused)
+        {
+            timer.Resume();
+            databaseContext.Timers.Update(timer);
+            await databaseContext.SaveChangesAsync(_databaseService);
+        }
+    }
+
+    private async Task SetElapsed(Guid id, string value)
+    {
+        if (!TimeSpan.TryParse(value, out TimeSpan parsed)) return;
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        TimerData? timer = await databaseContext.Timers.FindAsync(id);
+        if (timer != null)
+        {
+            timer.Elapsed = TimeSpan.FromMilliseconds(Math.Floor(parsed.TotalMilliseconds * 100) / 100);
+            databaseContext.Timers.Update(timer);
+            await databaseContext.SaveChangesAsync(_databaseService);
+        }
+    }
+
+    private async Task SetRemaining(Guid id, string value)
+    {
+        if (!TimeSpan.TryParse(value, out TimeSpan parsed)) return;
+        using DatabaseContext databaseContext = await _dbContextFactory.CreateDbContextAsync();
+        TimerData? timer = await databaseContext.Timers.FindAsync(id);
+        if (timer != null)
+        {
+            timer.Remaining = TimeSpan.FromMilliseconds(Math.Floor(parsed.TotalMilliseconds * 100) / 100);
+            databaseContext.Timers.Update(timer);
+            await databaseContext.SaveChangesAsync(_databaseService);
+        }
+    }
+}
