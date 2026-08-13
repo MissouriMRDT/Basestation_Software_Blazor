@@ -7,6 +7,7 @@
 @using System.Threading.Tasks
 @using System.Text
 @using System.IO
+@using System.Timers
 
 <script>
     function DownloadFile(filename, contentType, content) {
@@ -29,6 +30,7 @@
     <button onclick="const link = document.createElement('a'); link.download = 'RamanGraph_@(_acquiredAt).png'; link.href = this.parentElement.getElementsByTagName('canvas')[0].toDataURL(); link.click();"><i class="bi-filetype-png" /></button>
     <button @onclick=@(async () => { _displayRaw ^= true; await UpdateChartAsync(); }) checked=@_displayRaw>Display Raw</button>
     <button @onclick=DownloadCSV><i class="bi-filetype-csv" /></button>
+    <button style="grid-column: 1 / 3;" @onclick=@(() => { _laserEnabled = !_laserEnabled;}) checked=@_laserEnabled>Laser</button>
     <p>Integration Time (ms)</p>
     <input @bind=_integrationTime />
     <p>Sample Count</p>
@@ -85,6 +87,10 @@
     private int _rawBackgroundSampleCount = 0;
     private bool _backgroundSubtractionEnabled = false;
 
+    // Laser Control
+    private bool _laserEnabled = false;
+    private Timer? _laserTimer;
+
     // State
     private bool _reading = false;
     private double[] _data = new double[2048];
@@ -122,6 +128,15 @@
 
     protected override async void OnInitialized()
     {
+        if (_laserTimer == null)
+        {
+            _laserTimer = new Timer(100);
+
+            _laserTimer.Elapsed += onLaser;
+            _laserTimer.Enabled = true;
+        }
+
+
         // Initialize data with easter egg
         for (int i = 0; i < _data.Length; i++)
         {
@@ -158,6 +173,11 @@
 
         await UpdateChartAsync();
 
+    }
+
+    private void onLaser(Object source, ElapsedEventArgs e)
+    {
+        _RoveCommService.Boards.Raman.Laser((byte)(_laserEnabled ? 1 : 0));
     }
 
     private async Task UpdateChartAsync()
