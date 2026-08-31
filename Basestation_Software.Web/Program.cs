@@ -34,6 +34,7 @@ builder.Services.AddSingleton<GPSWaypointState>();
 builder.Services.AddSingleton<PingService>();
 builder.Services.AddSingleton<OpService>();
 builder.Services.AddSingleton<DatabaseService>();
+builder.Services.AddSingleton<CounterService>();
 builder.Services.AddDbContextFactory<DatabaseContext>();
 builder.Services.AddRoveComm();
 builder.Services.AddBlazoredToast();
