@@ -32,6 +32,7 @@
     #layout-grid {
         position: fixed;
         inset: 54px 0 0 0;
+        outline: none;
     }
 
     #layout-grid>div {
@@ -110,6 +111,10 @@
     <a class="dismiss">🗙</a>
 </div>
 
+<div id="layout-grid" tabindex="0" @onkeydown="HandleKeyDown" @ref="_layoutGridRef">
+    @CustomRender
+</div>
+
 @code {
     // State
     private RenderFragment? CustomRender { get; set; }
@@ -127,6 +132,7 @@
     private string ComponentName = "";
     private bool _luna = false;
     private bool _light = false;
+    private ElementReference _layoutGridRef;
 
     public MainLayout()
     {
@@ -164,6 +170,7 @@
     {
         if (firstRender)
             await _IJSRuntime.InvokeVoidAsync("components.setDotNetComponent", ObjectReference);
+            await _layoutGridRef.FocusAsync();
         if (firstRender || RegisterComponents)
         {
             await _IJSRuntime.InvokeVoidAsync("components.registerComponents");
@@ -229,6 +236,7 @@
             _databaseService.SubscribeToEntityChanges(typeof(Page), PageID, PageChanged);
             _databaseService.SubscribeToEntityDeleted(typeof(Page), PageID, PageChanged);
         }
+        await _layoutGridRef.FocusAsync();
     }
 
     private async Task TableChanged()
@@ -260,6 +268,33 @@
 
         RegisterComponents = true;
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        await using DatabaseContext databaseContext =
+            await _dbContextFactory.CreateDbContextAsync();
+
+        List<Guid> pageIds = await databaseContext.Pages
+            .OrderBy(page => page.Name)
+            .Select(page => page.ID)
+            .ToListAsync();
+
+        int index = pageIds.IndexOf(PageID);
+
+        switch (e.Key)
+        {
+            case "ArrowRight":
+                index = index < pageIds.Count - 1 ? index + 1 : -1;
+                break;
+            case "ArrowLeft":
+                index = index > -1 ? index - 1 : pageIds.Count - 1;
+                break;
+            default:
+                return;
+        }
+
+        await Navigate(index == -1 ? Guid.Empty : pageIds[index]);
     }
 
     private RenderFragment CreateSelectOptions() => async builder =>
