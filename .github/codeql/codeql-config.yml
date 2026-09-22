@@ -1,5 +1,1 @@
-name: "CodeQL config"
-
-paths-ignore:
-  - '**/wwwroot/js/'
-  
+name: "CodeQL config"  
