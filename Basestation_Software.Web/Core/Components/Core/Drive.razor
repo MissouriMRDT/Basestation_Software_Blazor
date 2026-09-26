@@ -262,14 +262,6 @@
                     leftSpeedT = (leftSpeedT + (interp * (leftSpeedT > LeftSpeed ? -1 : 1)));
                     leftSpeedT = (Math.Abs(leftSpeedT - LeftSpeed) <= interp ? LeftSpeed : leftSpeedT);
 
-                    /*rightSpeedT += (RightSpeed - rightSpeedT) * DriveInterp;
-                    rightSpeedT = (rightSpeedT < .01 ? 0 : rightSpeedT);
-                    leftSpeedT += (LeftSpeed - leftSpeedT) * DriveInterp;
-                    leftSpeedT = (leftSpeedT < .01 ? 0 : leftSpeedT);*/
-                    Console.WriteLine(rightSpeedT);
-                    Console.WriteLine(leftSpeedT);
-                    Console.WriteLine(interp);
-
                     if (_outputEnabled) _RoveCommService.Boards.Core.DriveLeftRight((float)leftSpeedT, (float)rightSpeedT);
                     break;
                 }
