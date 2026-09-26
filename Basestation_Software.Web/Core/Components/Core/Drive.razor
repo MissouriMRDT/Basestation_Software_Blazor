@@ -32,6 +32,7 @@
         <button checked=@(DriveSpeed == 0.8) @onclick=@(() => DriveSpeed = 0.8)>80</button>
         <button checked=@(DriveSpeed == 1.0) @onclick=@(() => DriveSpeed = 1.0)>100</button>
     </div>
+    <input style="width: 100%" min="0" max="1" step="0.001" @bind=DriveInterp />
 </div>
 
 @code
@@ -45,20 +46,23 @@
 
     // Constants
     private const double SQRT2 = 1.4142135623730951;
-    public const int UPDATE_INTERVAL = 100;
+    public const int UPDATE_INTERVAL = 100; 
     public const double BUMP_SPEED = 0.05, GAMMA_FLIGHTSTICK = 1.5, GAMMA_XBOX = 1.5;
 
     // State
     private GamepadSelector? _gamepadSelector;
     private Scheme SelectedScheme;
     private bool _outputEnabled = true;
-    private double DriveSpeed = 0.8;
+    private double DriveSpeed = 0.8, DriveInterp = .03;
 
     private double DeadZone = 0.3;
     private double LeftSpeed;
     private double RightSpeed;
     private static double[] _angles = new double[12];
     private bool LastProcessGamepadInputOK = false;
+
+    //Drive Interp
+    private double leftSpeedT = 0, rightSpeedT = 0;
 
     private async Task Update(Gamepad gamepad, float deltaT)
     {
@@ -249,7 +253,24 @@
                     LeftSpeed = Utils.ClampMap(left, -1.0, 1.0, -DriveSpeed, DriveSpeed);
                     RightSpeed = Utils.ClampMap(right, -1.0, 1.0, -DriveSpeed, DriveSpeed);
 
-                    if (_outputEnabled) _RoveCommService.Boards.Core.DriveLeftRight((float)LeftSpeed, (float)RightSpeed);
+                    double interp = DriveInterp;
+                    if (gamepad.Pressed[6])
+                        interp *= 3;
+                    
+                    rightSpeedT = (rightSpeedT + (interp * (rightSpeedT > RightSpeed ? -1 : 1)));
+                    rightSpeedT = (Math.Abs(rightSpeedT - RightSpeed) <= interp ? RightSpeed : rightSpeedT);
+                    leftSpeedT = (leftSpeedT + (interp * (leftSpeedT > LeftSpeed ? -1 : 1)));
+                    leftSpeedT = (Math.Abs(leftSpeedT - LeftSpeed) <= interp ? LeftSpeed : leftSpeedT);
+
+                    /*rightSpeedT += (RightSpeed - rightSpeedT) * DriveInterp;
+                    rightSpeedT = (rightSpeedT < .01 ? 0 : rightSpeedT);
+                    leftSpeedT += (LeftSpeed - leftSpeedT) * DriveInterp;
+                    leftSpeedT = (leftSpeedT < .01 ? 0 : leftSpeedT);*/
+                    Console.WriteLine(rightSpeedT);
+                    Console.WriteLine(leftSpeedT);
+                    Console.WriteLine(interp);
+
+                    if (_outputEnabled) _RoveCommService.Boards.Core.DriveLeftRight((float)leftSpeedT, (float)rightSpeedT);
                     break;
                 }
         }
