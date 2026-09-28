@@ -205,9 +205,28 @@
         }
     }
     [JSInvokable]
+    public async void ComponentModified(int i, uint x, uint y, uint width, uint height)
+    {
+
+        if (i >= Page_.Components.Count) return;
+        if (width != Page_.Components[i].Width || height != Page_.Components[i].Height || x != Page_.Components[i].X || y != Page_.Components[i].Y)
+        {
+
+            Page_.Components[i].X = x;
+            Page_.Components[i].Y = y;
+            Page_.Components[i].Width = width;
+            Page_.Components[i].Height = height;
+            PageSaveTimer.Change(1000, Timeout.Infinite);
+            await SavePage();
+        }
+        await _IJSRuntime.InvokeVoidAsync("components.updateComponentsStyle");
+    }
+    [JSInvokable]
     public async void DeleteComponent(int i)
     {
-        if (i >= Page_.Components.Count) return;
+
+        if (i >= Page_.Components.Count) { Console.WriteLine("failed to delete: " + i); return; }
+        // await _IJSRuntime.InvokeVoidAsync("components.updateComponentCs");
         Page_.Components.RemoveAt(i);
         await SavePage();
     }
@@ -289,7 +308,7 @@
         // Sequence number i will increase with little change between renders
         builder.OpenRegion(0); // so we can start i at 0
         int i = 0;
-        foreach ((int componentIndex, Component component) in Page_.Components.Index().OrderBy(x => 100 * x.Item.Y + x.Item.X))
+        foreach ((int componentIndex, Component component) in Page_.Components.Index().OrderBy(x => 1000 * x.Item.Y + x.Item.X))
         {
             Type? componentType = Type.GetType("Basestation_Software.Web.Core.Components." + component.Type);
             if (componentType == null)
@@ -309,7 +328,7 @@
             builder.AddAttribute(i + 2, "class", "component");
             builder.AddAttribute(i + 3, "idx", componentIndex);
 
-            builder.AddMarkupContent(i + 4, $"<i class=\"component-move bi-arrows-move\"></i><i class=\"component-resize bi-arrow-down-right\"></i><button class=\"danger component-delete\" title=\"Delete Component\" onclick=\"components.delete_({componentIndex})\"><i class=\"bi-trash\"></i></button>");
+            builder.AddMarkupContent(i + 4, $"</i><button class=\"danger component-delete\" title=\"Delete Component\" onclick=\"components.delete_({componentIndex})\"><i class=\"bi-trash\"></i></button>");
 
             builder.OpenComponent(i + 5, componentType); // <componentType>
             if (componentType.GetMember("ID").Length > 0)
