@@ -12,6 +12,7 @@
 @inject DatabaseService _databaseService
 @inject IDbContextFactory<DatabaseContext> _dbContextFactory
 @inject RoveCommService _RoveCommService
+@inject OpService _opService;
 
 <PageTitle>MRDT Basestation</PageTitle>
 
@@ -170,7 +171,7 @@
     {
         if (firstRender)
             await _IJSRuntime.InvokeVoidAsync("components.setDotNetComponent", ObjectReference);
-            await _layoutGridRef.FocusAsync();
+        await _layoutGridRef.FocusAsync();
         if (firstRender || RegisterComponents)
         {
             await _IJSRuntime.InvokeVoidAsync("components.registerComponents");
@@ -289,6 +290,9 @@
                 break;
             case "ArrowLeft":
                 index = index > -1 ? index - 1 : pageIds.Count - 1;
+                break;
+            case "f":
+                OpService.ToggleAllStates();
                 break;
             default:
                 return;

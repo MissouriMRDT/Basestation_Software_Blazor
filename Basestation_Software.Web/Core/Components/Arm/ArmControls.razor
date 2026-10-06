@@ -4,11 +4,11 @@
 @inject RoveCommService _RoveCommService
 @inject DatabaseService _databaseService
 @inject IDbContextFactory<DatabaseContext> _dbContextFactory
-@inject OpService _opService
+@inject OpService _OpService
 
 <div class="component-header">
     <h3>Arm Controls</h3>
-    <input type="checkbox" class="output-enabled" @bind=_outputEnabled />
+    <input type="checkbox" class="output-enabled" @bind="OpService.AControlsEnabled" />
     <select @bind=_controlMode>
         @foreach (ControlMode mode in Enum.GetValues<ControlMode>())
         {
@@ -203,7 +203,7 @@
         if (ProcessGamepadInputOK)
         {
             // Set teleop if controller being used
-            _opService.SetTeleop();
+            _OpService.SetTeleop();
         }
         else if (_lastProcessGamepadInputOK)
         {

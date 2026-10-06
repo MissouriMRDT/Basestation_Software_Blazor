@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Drawing;
+using Microsoft.AspNetCore.Mvc;
 using RoveComm;
 
 namespace Basestation_Software.Web.Core.Services;
@@ -25,6 +26,31 @@ public class OpService
     public delegate void OpStateChangedCallback(Color? col);
     private event OpStateChangedCallback? OpStateChangedNotifier;
 
+    public static bool AControllerEnabled { get; set; }
+    public static bool AControlsEnabled { get; set; }
+    public static bool DriveEnabled { get; set; }
+    public static bool IsGimbalsEnabled { get; set; }
+    public static bool SignalEnabled { get; set; }
+    public static bool SControlsEnabled { get; set; }
+
+    public static bool[] AllStatesArray => new[]
+        {
+        AControllerEnabled,
+        AControlsEnabled,
+        DriveEnabled,
+        IsGimbalsEnabled,
+        SignalEnabled,
+        SControlsEnabled
+    };
+    public static void ToggleAllStates()
+    {
+        AControllerEnabled = !AControllerEnabled;
+        AControlsEnabled = !AControlsEnabled;
+        DriveEnabled = !DriveEnabled;
+        IsGimbalsEnabled = !IsGimbalsEnabled;
+        SignalEnabled = !SignalEnabled;
+        SControlsEnabled = !SControlsEnabled;
+    }
     public void SubscribeToStateChanged(OpStateChangedCallback callback)
     {
         OpStateChangedNotifier += callback;
