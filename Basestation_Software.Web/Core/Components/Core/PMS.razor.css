@@ -16,21 +16,54 @@
     font-weight: bold;
     gap: 1px;
     background-color: #000;
+    container: whole-window / inline-size;
 }
 
-.pms>p {
+@container whole-window {
+    button {
+        font-size: 3cqw;
+    }
+    p {
+        font-size: 3cqw;
+    }
+}
+
+.pms>div {
+    container: stretchy-divs / inline-size; /* inline-size means that text size will be based on the width of the container, i think */
+}
+
+.pms>p,
+.pms>div>p {
     color: #000;
 }
 
+.pms>div>p,
 .pms>p,
 .pms>button {
     z-index: 1;
     text-align: center;
 }
 
+.pms>div>button {
+    text-align: center;
+    margin: auto;
+}
+
 .pms>div {
     place-self: stretch;
     background-color: var(--bg);
+    align-content: center;
+    justify-content: center;    
+    text-align: center;
+}
+
+@container stretchy-divs (min-width: 10px) {
+    p {
+        font-size: 10cqw;
+    }
+    button {
+        font-size: 10cqw;
+    }
 }
 
 .pms>div.disabled {
@@ -61,8 +94,8 @@
 }
 
 .pms>div.thermal>*.fan {
-    width: 40px;
-    height: 40px;
+    width: 75%;
+    aspect-ratio: 1/1;
     animation-name: spin;
     animation-duration: 1s;
     animation-iteration-count: infinite;
