@@ -1,0 +1,22 @@
+.advAutoTyping {
+    
+    container: advAutoTypeWindow / size;
+    display: grid;
+    grid-template-rows: auto auto auto;
+}
+
+@container advAutoTypeWindow (min-height: 10px) {
+    p,
+    div>p {
+        font-size: 4cqw;
+    }
+    button,
+    div>button {
+        font-size: 4cqw;
+    }
+    progress,
+    div>progress {
+        width: 30cqw;
+        height: 10cqh;
+    }
+}

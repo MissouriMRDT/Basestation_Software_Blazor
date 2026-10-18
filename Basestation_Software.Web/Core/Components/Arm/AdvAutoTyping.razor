@@ -7,14 +7,14 @@
     <h3>Advanced Autonomous Typing</h3>
 </div>
 
-<div class="component-body">
-    <div style="display: flex; flex-direction: column; justify-content: center; align-items: center">
+<div class="component-body advAutoTyping">
+    <div style="display: grid; grid-template-columns: auto auto auto; text-align: center; padding: 0.5rem;">
         <p class="font-monospace fs-3">@_phrase</p>
         <p>@_statusMessage</p>
         <progress max="1" value=@_charStatusMeter class="progress"></progress>
     </div>
 
-    <div style="display: flex; gap: 2px; justify-content: center">
+    <div style="display: grid; grid-template-columns: auto auto auto; text-align: center; padding: 0.5rem;">
         <input @bind:get=_phrase @bind:set=@(value => { _phrase = value.ToUpper(); }) />
         <button @onclick=@(async () => { if (!_running) await Start(); else await Stop(); }) checked=@_running>@(_running ? "Stop" : "Start")</button>
         <button @onclick=ResetCache>Reset Cache</button>

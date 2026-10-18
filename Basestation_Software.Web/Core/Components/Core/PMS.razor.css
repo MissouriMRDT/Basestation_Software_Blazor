@@ -16,10 +16,10 @@
     font-weight: bold;
     gap: 1px;
     background-color: #000;
-    container: whole-window / inline-size;
+    container: pmsWholeWindow / inline-size;
 }
 
-@container whole-window {
+@container pmsWholeWindow {
     button {
         font-size: 3cqw;
     }
@@ -29,7 +29,7 @@
 }
 
 .pms>div {
-    container: stretchy-divs / inline-size; /* inline-size means that text size will be based on the width of the container, i think */
+    container: pmsStretchyDivs / inline-size; /* inline-size means that text size will be based on the width of the container, i think */
 }
 
 .pms>p,
@@ -57,7 +57,7 @@
     text-align: center;
 }
 
-@container stretchy-divs (min-width: 10px) {
+@container pmsStretchyDivs (min-width: 10px) {
     p {
         font-size: 10cqw;
     }
