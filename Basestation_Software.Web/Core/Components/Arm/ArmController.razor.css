@@ -1,0 +1,12 @@
+.component-body>div {
+    container: armControllerRows / size;
+}
+
+@container armControllerRows {
+    p {
+        font-size: 2.55cqw;
+    }
+    input {
+        font-size: 2.55cqw;
+    }
+}

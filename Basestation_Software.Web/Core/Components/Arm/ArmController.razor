@@ -10,43 +10,55 @@
     <input type="checkbox" class="output-enabled" @bind=_outputEnabled title="Disable Output" />
     <GamepadSelector @ref=GamepadSelector_ OnUpdate=Update />
 </div>
-<div class="component-body" style="flex-grow: 0; display: grid; grid-template-columns: repeat(4, max-content) 100px 100px; place-items: stretch">
-    <p></p>
-    <p>|Ctrl</p>
-    <p>|Target</p>
-    <p>|Arm</p>
-    <p>Max Delta</p>
-    <p>Speed</p>
-    <p>X</p>
-    <p>|@($"{_controller.X:+000.0;-000.0}")</p>
-    <p>|@($"{_target.X:+000.0;-000.0}")</p>
-    <p>|@($"{_arm?.X:+000.0;-000.0}")</p>
-    <input style=@(_overDelta[0] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.X" />
-    <input style=@(_overSpeed[0] ? "background-color: #ff0" : "") @bind="Speed.X" />
-    <p>J2</p>
-    <p>|@($"{_controller.J2:+000.0;-000.0}")</p>
-    <p>|@($"{_target.J2:+000.0;-000.0}")</p>
-    <p>|@($"{_arm?.J2:+000.0;-000.0}")</p>
-    <input style=@(_overDelta[1] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J2" />
-    <input style=@(_overSpeed[1] ? "background-color: #ff0" : "") @bind="Speed.J2" />
-    <p>J3</p>
-    <p>|@($"{_controller.J3:+000.0;-000.0}")</p>
-    <p>|@($"{_target.J3:+000.0;-000.0}")</p>
-    <p>|@($"{_arm?.J3:+000.0;-000.0}")</p>
-    <input style=@(_overDelta[2] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J3" />
-    <input style=@(_overSpeed[2] ? "background-color: #ff0" : "") @bind="Speed.J3" />
-    <p>J4</p>
-    <p>|@($"{_controller.J4:+000.0;-000.0}")</p>
-    <p>|@($"{_target.J4:+000.0;-000.0}")</p>
-    <p>|@($"{_arm?.J4:+000.0;-000.0}")</p>
-    <input style=@(_overDelta[3] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J4" />
-    <input style=@(_overSpeed[3] ? "background-color: #ff0" : "") @bind="Speed.J4" />
-    <p>J5</p>
-    <p>|@($"{_controller.J5:+000.0;-000.0}")</p>
-    <p>|@($"{_target.J5:+000.0;-000.0}")</p>
-    <p>|@($"{_arm?.J5:+000.0;-000.0}")</p>
-    <input style=@(_overDelta[4] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J5" />
-    <input style=@(_overSpeed[4] ? "background-color: #ff0" : "") @bind="Speed.J5" />
+<div class="component-body" style="display: grid; grid-template-rows: repeat(4, 1fr);">
+    <div style= "display: grid; grid-template-columns: repeat(6, minmax(0, 1fr))">
+        <p> </p>
+        <p>|Ctrl</p>
+        <p>|Target</p>
+        <p>|Arm</p>
+        <p>Max Delta</p>
+        <p>Speed</p>
+    </div>
+    <div style= "display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));">
+        <p>X</p>
+        <p>|@($"{_controller.X:+000.0;-000.0}")</p>
+        <p>|@($"{_target.X:+000.0;-000.0}")</p>
+        <p>|@($"{_arm?.X:+000.0;-000.0}")</p>
+        <input style=@(_overDelta[0] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.X" />
+        <input style=@(_overSpeed[0] ? "background-color: #ff0" : "") @bind="Speed.X" />
+    </div>
+    <div style= "display: grid; grid-template-columns: repeat(6, minmax(0, 1fr))">
+        <p>J2</p>
+        <p>|@($"{_controller.J2:+000.0;-000.0}")</p>
+        <p>|@($"{_target.J2:+000.0;-000.0}")</p>
+        <p>|@($"{_arm?.J2:+000.0;-000.0}")</p>
+        <input style=@(_overDelta[1] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J2" />
+        <input style=@(_overSpeed[1] ? "background-color: #ff0" : "") @bind="Speed.J2" />
+    </div>
+    <div style= "display: grid; grid-template-columns: repeat(6, minmax(0, 1fr))">
+        <p>J3</p>
+        <p>|@($"{_controller.J3:+000.0;-000.0}")</p>
+        <p>|@($"{_target.J3:+000.0;-000.0}")</p>
+        <p>|@($"{_arm?.J3:+000.0;-000.0}")</p>
+        <input style=@(_overDelta[2] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J3" />
+        <input style=@(_overSpeed[2] ? "background-color: #ff0" : "") @bind="Speed.J3" />
+    </div>
+    <div style= "display: grid; grid-template-columns: repeat(6, minmax(0, 1fr))">
+        <p>J4</p>
+        <p>|@($"{_controller.J4:+000.0;-000.0}")</p>
+        <p>|@($"{_target.J4:+000.0;-000.0}")</p>
+        <p>|@($"{_arm?.J4:+000.0;-000.0}")</p>
+        <input style=@(_overDelta[3] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J4" />
+        <input style=@(_overSpeed[3] ? "background-color: #ff0" : "") @bind="Speed.J4" />
+    </div>
+    <div style= "display: grid; grid-template-columns: repeat(6, minmax(0, 1fr))">
+        <p>J5</p>
+        <p>|@($"{_controller.J5:+000.0;-000.0}")</p>
+        <p>|@($"{_target.J5:+000.0;-000.0}")</p>
+        <p>|@($"{_arm?.J5:+000.0;-000.0}")</p>
+        <input style=@(_overDelta[4] ? "background-color: #ff0" : "") @bind="RoverControllerDelta.J5" />
+        <input style=@(_overSpeed[4] ? "background-color: #ff0" : "") @bind="Speed.J5" />
+    </div>
 </div>
 
 @code
