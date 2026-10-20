@@ -308,7 +308,7 @@
         // Sequence number i will increase with little change between renders
         builder.OpenRegion(0); // so we can start i at 0
         int i = 0;
-        foreach ((int componentIndex, Component component) in Page_.Components.Index().OrderBy(x => 1000 * x.Item.Y + x.Item.X))
+        foreach ((int componentIndex, Component component) in Page_.Components.Index()/*.OrderBy(x => 1000 * x.Item.Y + x.Item.X)*/)
         {
             Type? componentType = Type.GetType("Basestation_Software.Web.Core.Components." + component.Type);
             if (componentType == null)
