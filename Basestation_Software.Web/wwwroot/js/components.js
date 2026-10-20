@@ -73,29 +73,30 @@ class Component {
 
             // sets mouse style, to indicate whether component can be dragged or moved
             // and handles moving/resizing when necessary
+            const resizeRadius = 8;
             if (this.dom.hasPointerCapture(event.pointerId) && this.editPositionType == 1) {
                 move(event);
             } else if (this.dom.hasPointerCapture(event.pointerId) && Math.floor(this.editPositionType / 10) != 0) {
                 resize(event, this.editPositionType);
-            } else if (event.clientY < getPageY() + 20 && event.clientY > getPageY() + 5) {
-                this.dom.style.cursor = "move";
-                this.editPositionType = 1;
-            } else if (event.clientX > getPageX() + this.width - 10) {
-                if (event.clientY > getPageY() + this.height - 10) {
+
+            } else if (event.clientX > getPageX() + this.width - resizeRadius) {
+
+                if (event.clientY > getPageY() + this.height - resizeRadius) {
                     this.dom.style.cursor = "se-resize";
                     this.editPositionType = 12;
-                } else if (event.clientY < getPageY() + 10) {
+                } else if (event.clientY < getPageY() + resizeRadius) {
                     this.dom.style.cursor = "ne-resize";
                     this.editPositionType = 11;
                 } else {
                     this.dom.style.cursor = "ew-resize";
                     this.editPositionType = 10;
                 }
-            } else if (event.clientX < getPageX() + 10) {
-                if (event.clientY > getPageY() + this.height - 10) {
+            } else if (event.clientX < getPageX() + resizeRadius) {
+
+                if (event.clientY > getPageY() + this.height - resizeRadius) {
                     this.dom.style.cursor = "sw-resize";
                     this.editPositionType = 22;
-                } else if (event.clientY < getPageY() + 10) {
+                } else if (event.clientY < getPageY() + resizeRadius) {
                     this.dom.style.cursor = "nw-resize";
                     this.editPositionType = 21;
                 } else {
@@ -103,12 +104,16 @@ class Component {
                     this.editPositionType = 20;
                 }
             } else {
-                if (event.clientY > getPageY() + this.height - 10) {
+
+                if (event.clientY > getPageY() + this.height - resizeRadius) {
                     this.dom.style.cursor = "ns-resize";
                     this.editPositionType = 32;
-                } else if (event.clientY < getPageY() + 10) {
+                } else if (event.clientY < getPageY() + resizeRadius) {
                     this.dom.style.cursor = "ns-resize";
                     this.editPositionType = 31;
+                } else if (event.clientY < getPageY() + this.dom.querySelector('.component-header').getBoundingClientRect().height) {
+                    this.dom.style.cursor = "move";
+                    this.editPositionType = 1;
                 } else {
                     this.dom.style.cursor = "default";
                     this.editPositionType = 0;
@@ -122,8 +127,6 @@ class Component {
             this.componentModified_();
         });
         this.dom.addEventListener("touchstart", event => this.dom.preventDefault());
-
-        
 
     }
     
