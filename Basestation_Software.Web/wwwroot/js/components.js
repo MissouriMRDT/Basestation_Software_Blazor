@@ -2,7 +2,7 @@ let dotNetComponent = null;
 let componentTimeouts = [];
 let components = [];
 
-let capturedIndex = 0;
+let capturedIndex = -1;
 function clampedPercent(x, min, max) {
     return Math.min(Math.max(Math.round(x * 100), min), max);
 }
@@ -36,6 +36,7 @@ class Component {
             const layoutRect = document.getElementById("layout-grid").getBoundingClientRect();
             this.dom.style.left = `${clampedPercent(this.x / layoutRect.width, 0, 100)}%`;
             this.dom.style.top = `${clampedPercent(this.y / layoutRect.height, 0, 100)}%`;
+            this.updateStyle();
         };
 
         const resize = (event, editType) => {
@@ -60,7 +61,7 @@ class Component {
         };
 
         this.dom.addEventListener("pointerdown", event => {
-            if (event.target.closest('button') || capturedIndex != 0) {
+            if (event.target.closest('button') || capturedIndex != -1) {
                 // allow components to be deleted
                 return;
             }
@@ -133,7 +134,7 @@ class Component {
     componentModified_() {
         if (capturedIndex != this.idx) { return; }
 
-        capturedIndex = 0;
+        capturedIndex = -1;
 
         const layoutRect = document.getElementById("layout-grid").getBoundingClientRect();
 
