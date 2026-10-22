@@ -86,11 +86,12 @@
 
 .pms>div.thermal {
     display: grid;
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr 1fr;
     grid-template-areas:
         "t1 fan"
         "rpm fan";
     place-items: center;
+    padding: 4px;
 }
 
 .pms>div.thermal>*.fan {
