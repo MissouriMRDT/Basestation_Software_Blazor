@@ -79,7 +79,6 @@ class Component {
                 move(event);
             } else if (this.dom.hasPointerCapture(event.pointerId) && Math.floor(this.editPositionType / 10) != 0) {
                 resize(event, this.editPositionType);
-
             } else if (event.clientX > getPageX() + this.width - resizeRadius) {
 
                 if (event.clientY > getPageY() + this.height - resizeRadius) {
@@ -129,6 +128,11 @@ class Component {
         });
         this.dom.addEventListener("touchstart", event => this.dom.preventDefault());
 
+        // prevent text selection when moving and resizing
+        this.dom.addEventListener('selectstart', (event) => {
+            if(this.editPositionType != 0)
+                event.preventDefault();
+        });
     }
     
     componentModified_() {
