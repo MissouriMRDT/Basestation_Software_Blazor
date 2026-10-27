@@ -85,7 +85,7 @@ button,
 select {
     font-family: "B612", Helvetica, Arial, sans-serif;
     font-size: 8px;
-    padding: 0 2px;
+    padding: 0px 2px;
 }
 
 #blazor-error-ui {
@@ -124,7 +124,9 @@ button {
     --btn-color: #fff;
     --btn-fill: #0d6efd;
     transition: all 100ms;
+    margin-top: 4px;
 }
+
 
 button:hover {
     color: var(--btn-color);
@@ -351,7 +353,6 @@ input[type=checkbox].danger:checked {
     top: 0;
     width: 16px;
     height: 16px;
-    cursor: move;
 }
 
 .component-resize {
