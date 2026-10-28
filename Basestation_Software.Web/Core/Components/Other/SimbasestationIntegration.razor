@@ -1,0 +1,28 @@
+@inject RoveComm.RoveCommService RoveComm
+
+<div class="component-header">
+    <h3>RoveComm Settings</h3>
+    
+    <div class="rove-comm-inputs">
+        <div class="input-group">
+            <label for="ipAddress">Target IP:</label>
+            <input id="ipAddress" type="text" @bind="RoveComm._newRoveCommServiceIp" placeholder="e.g., 127.0.0.1" />
+        </div>
+
+
+        <div class="input-group">
+            <label for="port">Port:</label>
+            <input id="port" type="number" @bind="RoveComm._newRoveCommServicePort" placeholder="e.g., 11000" />
+        </div>
+
+        <button class="btn-confirm" @onclick="ConfirmSettings">Confirm Settings</button>
+    </div>
+</div>
+
+@code {
+    private void ConfirmSettings()
+    {
+
+        StateHasChanged();
+    }
+}
