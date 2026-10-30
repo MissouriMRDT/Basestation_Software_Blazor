@@ -81,6 +81,7 @@
     <button class="success" @onclick=NewPage title="New Page"><i class="bi-file-earmark-plus" /></button>
     <button class="danger" @onclick=DeletePage title="Delete Page"><i class="bi-trash" /></button>
     <button class="success" @onclick=OpenCopyArea title="Edit Page"><i class="bi-pencil" /></button>
+    <button class="success" @onclick=OpenMacrosModal title="Edit Macros"><i class="bi-pencil" /></button>
     <button class="success" @onclick=SavePage title="Save Page"><i class="bi-floppy" /></button>
     <button @onclick=@(() => _luna = !_luna)><i class="bi-moon" /></button>
     <button checked=@_light @onclick=ToggleLightMode><i class="bi-sun" /></button>
@@ -89,14 +90,12 @@
         @SelectOptions
     </select>
 </div>
+<MacrosModal @ref="_macrosModal" />
 <BlazoredToasts ShowProgressBar="false" Timeout="10">
     <CloseButtonContent>
         <i class="bi-x-circle" />
     </CloseButtonContent>
 </BlazoredToasts>
-<div id="layout-grid">
-    @CustomRender
-</div>
 @if (CopyAreaVisible)
 {
     <div id="copy-area">
@@ -126,6 +125,7 @@
     private InputTextArea? CopyArea;
     private string CopyAreaValue = "";
     private bool CopyAreaVisible = false;
+    private MacrosModal? _macrosModal;
     private DotNetObjectReference<MainLayout>? ObjectReference;
     private bool RegisterComponents = false;
     private Timer PageSaveTimer;
@@ -276,6 +276,10 @@
         await using DatabaseContext databaseContext =
             await _dbContextFactory.CreateDbContextAsync();
 
+        var keybind = await databaseContext.Keybinds.FirstOrDefaultAsync();
+        if (keybind is null)
+            return;
+
         List<Guid> pageIds = await databaseContext.Pages
             .OrderBy(page => page.Name)
             .Select(page => page.ID)
@@ -283,22 +287,63 @@
 
         int index = pageIds.IndexOf(PageID);
 
-        switch (e.Key)
+        if (e.Key == keybind.MoveLeft)
         {
-            case "ArrowRight":
-                index = index < pageIds.Count - 1 ? index + 1 : -1;
-                break;
-            case "ArrowLeft":
-                index = index > -1 ? index - 1 : pageIds.Count - 1;
-                break;
-            case "f":
-                OpService.ToggleAllStates();
-                break;
-            default:
-                return;
+            index = index > -1 ? index - 1 : pageIds.Count - 1;
+            await Navigate(index == -1 ? Guid.Empty : pageIds[index]);
+            return;
         }
-
-        await Navigate(index == -1 ? Guid.Empty : pageIds[index]);
+        else if (e.Key == keybind.MoveRight)
+        {
+            index = index < pageIds.Count - 1 ? index + 1 : -1;
+            await Navigate(index == -1 ? Guid.Empty : pageIds[index]);
+            return;
+        }
+        else if (e.Key == keybind.PacketToggle)
+        {
+            OpService.ToggleAllStates();
+            return;
+        }
+        else if (e.Key == keybind.NewComponent)
+        {
+            await NewComponent();
+        }
+        else if (e.Key == keybind.Resubscribe)
+        {
+            _RoveCommService.SubscribeAll();
+        }
+        else if (e.Key == keybind.NewPage)
+        {
+            await NewPage();
+        }
+        else if (e.Key == keybind.DeletePage)
+        {
+            await DeletePage();
+        }
+        else if (e.Key == keybind.OpenCopyArea)
+        {
+            OpenCopyArea();
+        }
+        else if (e.Key == keybind.OpenMacrosModal)
+        {
+            await OpenMacrosModal();
+        }
+        else if (e.Key == keybind.SavePage)
+        {
+            await SavePage();
+        }
+        else if (e.Key == keybind.Luna)
+        {
+            _luna = !_luna;
+        }
+        else if (e.Key == keybind.ToggleLightMode)
+        {
+            await ToggleLightMode();
+        }
+        else
+        {
+            return;
+        }
     }
 
     private RenderFragment CreateSelectOptions() => async builder =>
@@ -425,6 +470,14 @@
     {
         CopyAreaValue = JsonSerializer.Serialize(Page_);
         CopyAreaVisible = true;
+    }
+
+    private async Task OpenMacrosModal()
+    {
+        if (_macrosModal is not null)
+        {
+            await _macrosModal.OpenAsync();
+        }
     }
 
     private async Task ImportPage()

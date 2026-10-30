@@ -1,0 +1,57 @@
+.macros-modal {
+    position: fixed;
+    top: 7%;
+    left: 0;
+    z-index: 2000;
+    background-color: gray;
+    border: 2px solid #ffa94d;
+}
+/*
+.macros-modal ::deep(.modal){
+}
+.macros-modal ::deep(.modal-Header) {
+    background-color: aliceblue;
+    color: black;
+}
+.macros-modal ::deep(.modal-Body) {
+    display: grid;
+    color: black;
+    background-color: darkgray;
+    border: 2px solid #ffa94d;
+}
+.macros-modal ::deep(.modal-Footer) {
+
+}
+
+.modal-title {
+}
+
+.Keybinds {
+    display: grid;
+    color: black;
+    background-color: darkgray;
+    border: 2px solid #ffa94d;
+}
+
+.save-button {
+    background-color: #bb1313;
+}
+.close-button {
+
+}
+
+    overflow-y: auto;
+    position: fixed;
+    inset: 10vh 10vw 10vh 10vw;
+    z-index: 2000;
+    display: grid;
+    grid-template-rows: 9fr 1fr;
+    grid-template-columns: 1fr 1fr;
+
+    position: fixed;
+    top: 5%;
+    left: 5%;
+    z-index: 2000;
+    background-color: gray;
+    border: 2px solid #ffa94d;
+    */

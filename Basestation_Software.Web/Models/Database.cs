@@ -68,4 +68,5 @@ public class DatabaseContext : DbContext
     public DbSet<ArmPose> ArmPoses { get; set; }
     public DbSet<ArmPreset> ControlPresets { get; set; }
     public DbSet<TimerData> Timers { get; set; }
+    public DbSet<Keybind> Keybinds {get; set; } 
 }

@@ -1,0 +1,163 @@
+@using Microsoft.EntityFrameworkCore
+@using Basestation_Software.Web.Core.Services
+@using Basestation_Software.Web.Models
+
+@inject DatabaseContext DbContext
+@inject DatabaseService DatabaseService
+
+@attribute [ComponentAttributes.Ignore]
+
+
+<div class="macros-modal" tabindex="-1" @onkeydown="CaptureKey">
+    <Modal @ref="_modal">
+        <Header>
+            <h5 class="modal-title">Set Keybinds</h5>
+        </Header>
+
+        <Body>
+            <div class="Keybinds">
+                <p>moveLeft</p>
+                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.MoveLeft)" />
+                @(moveLeft == string.Empty ? "Set key" : moveLeft)
+                <p>moveRight</p>
+                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.MoveRight)" />
+                @(moveRight == string.Empty ? "Set key" : moveRight)
+                <p>packetToggle</p>
+                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.PacketToggle)" />
+                @(packetToggle == string.Empty ? "Set key" : packetToggle)
+                <p>newComponent</p>
+                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.NewComponent)" />
+                @(newComponent == string.Empty ? "Set key" : newComponent)
+                <p>resubscribe</p>
+                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.Resubscribe)" />
+                @(resubscribe == string.Empty ? "Set key" : resubscribe)
+                <p>newPage</p>
+                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.NewPage)" />
+                @(newPage == string.Empty ? "Set key" : newPage)
+                <p>deletePage</p>
+                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.DeletePage)" />
+                @(deletePage == string.Empty ? "Set key" : deletePage)
+                <p>openCopyArea</p>
+                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.OpenCopyArea)" />
+                @(openCopyArea == string.Empty ? "Set key" : openCopyArea)
+                <p>openMacrosModal</p>
+                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.OpenMacrosModal)" />
+                @(openMacrosModal == string.Empty ? "Set key" : openMacrosModal)
+                <p>savePage</p>
+                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.SavePage)" />
+                @(savePage == string.Empty ? "Set key" : savePage)
+                <p>luna</p>
+                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.Luna)" />
+                @(luna == string.Empty ? "Set key" : luna)
+                <p>toggleLightMode</p>
+                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.ToggleLightMode)" />
+                @(toggleLightMode == string.Empty ? "Set key" : toggleLightMode)
+            </div>
+        </Body>
+
+        <Footer>
+            <button type="button" class="save-button" @onclick="SaveAndClose">Save</button>
+            <button type="button" class="close-button" @onclick="CloseAsync">Close</button>
+        </Footer>
+    </Modal>
+</div>
+
+@code {
+    private Modal _modal = default!;
+    private string moveLeft = string.Empty;
+    private string moveRight = string.Empty;
+    private string packetToggle = string.Empty;
+    private string newComponent = string.Empty;
+    private string resubscribe = string.Empty;
+    private string newPage = string.Empty;
+    private string deletePage = string.Empty;
+    private string openCopyArea = string.Empty;
+    private string openMacrosModal = string.Empty;
+    private string savePage = string.Empty;
+    private string luna = string.Empty;
+    private string toggleLightMode = string.Empty;
+
+
+    private enum KeybindAction { MoveLeft, MoveRight, PacketToggle, NewComponent, Resubscribe, NewPage, DeletePage, OpenCopyArea, OpenMacrosModal, SavePage, Luna, ToggleLightMode }
+    private KeybindAction? _pendingKeybind;
+
+    private void BeginKeybind(KeybindAction action) => _pendingKeybind = action;
+
+    private void CaptureKey(KeyboardEventArgs e)
+    {
+        switch (_pendingKeybind)
+        {
+            case KeybindAction.MoveLeft: moveLeft = e.Key; break;
+            case KeybindAction.MoveRight: moveRight = e.Key; break;
+            case KeybindAction.PacketToggle: packetToggle = e.Key; break;
+            case KeybindAction.NewComponent: newComponent = e.Key; break;
+            case KeybindAction.Resubscribe: resubscribe = e.Key; break;
+            case KeybindAction.NewPage: newPage = e.Key; break;
+            case KeybindAction.DeletePage: deletePage = e.Key; break;
+            case KeybindAction.OpenCopyArea: openCopyArea = e.Key; break;
+            case KeybindAction.OpenMacrosModal: openMacrosModal = e.Key; break;
+            case KeybindAction.SavePage: savePage = e.Key; break;
+            case KeybindAction.Luna: luna = e.Key; break;
+            case KeybindAction.ToggleLightMode: toggleLightMode = e.Key; break;
+            default: return;
+        }
+
+        _pendingKeybind = null;
+    }
+
+    public async Task OpenAsync()
+    {
+        var settings = await DbContext.Keybinds.FirstOrDefaultAsync();
+
+        if (settings != null)
+        {
+            moveLeft = settings.MoveLeft;
+            moveRight = settings.MoveRight;
+            packetToggle = settings.PacketToggle;
+            newComponent = settings.NewComponent;
+            resubscribe = settings.Resubscribe;
+            newPage = settings.NewPage;
+            deletePage = settings.DeletePage;
+            openCopyArea = settings.OpenCopyArea;
+            openMacrosModal = settings.OpenMacrosModal;
+            savePage = settings.SavePage;
+            luna = settings.Luna;
+            toggleLightMode = settings.ToggleLightMode;
+        }
+
+        _modal.Open();
+    }
+
+    private async Task SaveAndClose()
+    {
+        var settings = await DbContext.Keybinds.FirstOrDefaultAsync();
+
+        if (settings == null)
+        {
+            settings = new Keybind();
+            DbContext.Keybinds.Add(settings);
+        }
+
+        settings.MoveLeft = moveLeft;
+        settings.MoveRight = moveRight;
+        settings.PacketToggle = packetToggle;
+        settings.NewComponent = newComponent;
+        settings.Resubscribe = resubscribe;
+        settings.NewPage = newPage;
+        settings.DeletePage = deletePage;
+        settings.OpenCopyArea = openCopyArea;
+        settings.OpenMacrosModal = openMacrosModal;
+        settings.SavePage = savePage;
+        settings.Luna = luna;
+        settings.ToggleLightMode = toggleLightMode;
+
+        await DbContext.SaveChangesAsync(DatabaseService);
+
+        await _modal.Close();
+    }
+
+    private async Task CloseAsync()
+    {
+        await _modal.Close();
+    }
+}

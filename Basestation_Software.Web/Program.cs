@@ -2,11 +2,12 @@ using Basestation_Software.Web.Core;
 using Basestation_Software.Web.Core.Services;
 using Basestation_Software.Web.Models;
 using Blazored.Toast;
+using Microsoft.EntityFrameworkCore;
 using RoveComm;
 
 #pragma warning disable IDE0211 // Convert to 'Program.Main' style program
 
-using (var context = new DatabaseContext()) { context.Database.EnsureCreated(); }
+using (var context = new DatabaseContext()) { context.Database.Migrate(); }
 
 var builder = WebApplication.CreateBuilder(args);
 
