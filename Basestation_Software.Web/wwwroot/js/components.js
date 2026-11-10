@@ -82,3 +82,18 @@ export function registerComponents() {
         components.push(new Component(component));
     }
 }
+
+export function getDropPosition(clientX, clientY) {
+    const layoutGrid = document.getElementById("layout-grid");
+    const rect = layoutGrid.getBoundingClientRect();
+    
+    // Calculate relative position within the grid
+    const relativeX = clientX - rect.left;
+    const relativeY = clientY - rect.top;
+    
+    // Convert to percentage
+    const percentX = Math.round((relativeX / rect.width) * 100);
+    const percentY = Math.round((relativeY / rect.height) * 100);
+    
+    return { X: percentX, Y: percentY };
+}

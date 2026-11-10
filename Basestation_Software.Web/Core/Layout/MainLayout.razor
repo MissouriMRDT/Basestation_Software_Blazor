@@ -54,6 +54,88 @@
     html.light #resubscribe>img {
         filter: invert(100%);
     }
+
+    button {
+        all: unset;
+    }
+
+    .image-button {
+        
+        all: revert;                 /* Remove global button styles */
+
+        height: 100%;
+        aspect-ratio: 1 / 1;
+
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        flex-shrink: 0;
+
+    }
+
+    .image-button-icon {
+        height: 100%;
+        width: auto;
+        display: block;
+        flex-shrink: 0;
+    }
+
+    .image-button:hover,.image-button:focus-visible {
+        opacity: 0.8;
+    }
+
+    #component-gallery {
+        height: 100%;
+        position: fixed;
+        z-index: 1;
+        top: 0;
+        left: 0;
+        background-color: black;
+        overflow-x: hidden;         /* Disable horizontal scrolling */
+        padding-top: 64px;
+        transition: 0.5s;           /* 0.5 second transition effect to slide in the side nav */
+
+        overflow-y: auto;
+
+        /* Firefox support for scroll-bar styling */
+        scrollbar-width: thin;
+        scrollbar-color: #a0aec0 transparent;
+    }
+
+    #component-gallery::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    #component-gallery::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    #component-gallery::-webkit-scrollbar-thumb {
+        background-color: #a0aec0;
+        border-radius: 3px;
+    }
+
+    #component-gallery::-webkit-scrollbar-thumb:hover {
+        background-color: #718096;
+    }
+
+    .component-tile {
+        padding: 8px 16px;
+        text-decoration: none;
+        font-size: 12px;
+        color: #FFFFFF;
+        background-color: #222222;
+        display: block;
+        margin: 8px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
 </style>
 @if (_luna)
 {
@@ -65,7 +147,9 @@
 }
 <p id="logs" style="z-index: 10000; color: #fff; position: absolute; top: 0px"></p>
 <div id="navbar">
-    <img src="images/swoosh.svg" style="height: 100%">
+    <button type="button" @onclick="toggleComponentGallery" class="image-button">
+        <img src="images/swoosh.svg" style="height: 100%" class="image-button-icon">
+    </button>
     <select @bind=ComponentName>
         @foreach (string name in ComponentNames)
         {
@@ -87,13 +171,29 @@
         @SelectOptions
     </select>
 </div>
+
 <BlazoredToasts ShowProgressBar="false" Timeout="10">
     <CloseButtonContent>
         <i class="bi-x-circle" />
     </CloseButtonContent>
 </BlazoredToasts>
-<div id="layout-grid">
+
+<div id="layout-grid" @ondragover="handleDragOver" @ondragover:preventDefault @ondrop="handleDrop"
+    @onclick="closeComponentGallery">
+    
+    @* Side navigation panel for components *@
+    <div id="component-gallery" style="width: @componentGalleryWidth;">
+        @foreach (string name in ComponentNames)
+        {
+            <div class="component-tile" draggable="true" @ondragstart="() => handleDragStart(name)"
+                @ondragend="openComponentGallery">
+                @name
+            </div>
+        }
+    </div>
+
     @CustomRender
+
 </div>
 @if (CopyAreaVisible)
 {
@@ -127,6 +227,8 @@
     private string ComponentName = "";
     private bool _luna = false;
     private bool _light = false;
+
+    private string componentGalleryWidth { get; set; } = "0";
 
     public MainLayout()
     {
@@ -175,6 +277,57 @@
     {
         _light = !_light;
         await _IJSRuntime.InvokeVoidAsync("eval", $"document.getElementsByTagName('html')[0].className = \"{(_light ? "light" : "")}\"");
+    }
+
+    private void toggleComponentGallery()
+    {
+        if (componentGalleryWidth == "0")
+            openComponentGallery();
+        else
+            closeComponentGallery();
+    }
+
+    private void openComponentGallery()
+    {
+        componentGalleryWidth = "250px";
+    }
+
+    private void closeComponentGallery()
+    {
+        componentGalleryWidth = "0";
+    }
+
+    private void handleDragStart(String componentName)
+    {
+        closeComponentGallery();
+        ComponentName = componentName;
+    }
+
+    private void handleDragOver(DragEventArgs e)
+    {
+        e.DataTransfer.DropEffect = "move";
+    }
+
+    private class DropPosition
+    {
+        public uint X { get; set; }
+        public uint Y { get; set; }
+    }
+
+    private async Task handleDrop(DragEventArgs e)
+    {
+        DropPosition dropPos = await _IJSRuntime.InvokeAsync<DropPosition>("components.getDropPosition", e.ClientX, e.ClientY);
+
+        Page_.Components.Add(new Component
+        {
+            X = (uint)dropPos.X,
+            Y = (uint)dropPos.Y,
+            Width = 20,
+            Height = 10,
+            Type = ComponentName,
+        }
+        );
+        await SavePage();
     }
 
     [JSInvokable]

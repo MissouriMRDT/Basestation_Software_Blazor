@@ -111,7 +111,7 @@ select {
     background-color: var(--secondary-bg);
 }
 
-button {
+button:not(.image-button) {
     cursor: pointer;
     padding: 2px 4px;
     border-radius: 3px;
