@@ -6,23 +6,61 @@
     <div class="rove-comm-inputs">
         <div class="input-group">
             <label for="ipAddress">Target IP:</label>
-            <input id="ipAddress" type="text" @bind="RoveComm._newRoveCommServiceIp" placeholder="e.g., 127.0.0.1" />
+            <input id="ipAddress" type="text" @bind="_pendingIp" placeholder="e.g., 127.0.0.1" />
         </div>
 
 
         <div class="input-group">
             <label for="port">Port:</label>
-            <input id="port" type="number" @bind="RoveComm._newRoveCommServicePort" placeholder="e.g., 11000" />
+            <input id="port" type="number" @bind="_pendingPort" placeholder="e.g., 11000" />
         </div>
 
         <button class="btn-confirm" @onclick="ConfirmSettings">Confirm Settings</button>
+        <button class="btn-confirm" @onclick="ResetSettings">Reset Settings</button>
+        @if (_validationMessage is not null)
+        {
+            <p role="alert">@_validationMessage</p>
+        }
     </div>
 </div>
 
 @code {
+    private string _pendingIp = "";
+    private int _pendingPort;
+    private string? _validationMessage;
+
+    protected override void OnInitialized()
+    {
+        _pendingIp = RoveComm._newRoveCommServiceIp;
+        _pendingPort = RoveComm._newRoveCommServicePort;
+    }
+
     private void ConfirmSettings()
     {
+        if (!System.Net.IPAddress.TryParse(_pendingIp, out _))
+        {
+            _validationMessage = "Enter a valid IP address.";
+            return;
+        }
 
-        StateHasChanged();
+        if (_pendingPort is < 1 or > 65535)
+        {
+            _validationMessage = "Port must be between 1 and 65535.";
+            return;
+        }
+
+        RoveComm._newRoveCommServiceIp = _pendingIp;
+        RoveComm._newRoveCommServicePort = _pendingPort;
+        _validationMessage = null;
+    }
+
+
+    private void ResetSettings()
+    {
+         RoveComm._newRoveCommServiceIp = "";
+        RoveComm._newRoveCommServicePort = 0;
+        _pendingIp = "";
+        _pendingPort = 0;
+        _validationMessage = null;
     }
 }
