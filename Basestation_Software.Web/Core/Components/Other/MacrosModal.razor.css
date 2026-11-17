@@ -1,57 +1,44 @@
 .macros-modal {
     position: fixed;
-    top: 7%;
-    left: 0;
+    top: 8%;
+    left: 25%;
     z-index: 2000;
-    background-color: gray;
-    border: 2px solid #ffa94d;
-}
-/*
-.macros-modal ::deep(.modal){
-}
-.macros-modal ::deep(.modal-Header) {
-    background-color: aliceblue;
-    color: black;
-}
-.macros-modal ::deep(.modal-Body) {
-    display: grid;
-    color: black;
-    background-color: darkgray;
-    border: 2px solid #ffa94d;
-}
-.macros-modal ::deep(.modal-Footer) {
+    color: white;
+    border: 0.125rem solid;
+    border-color: white;
+    margin-left: 0.5rem;
 
 }
 
-.modal-title {
+.macros-modal ::deep .modal-title {
+    margin-left: 0.5rem;
+}
+
+.macros-modal ::deep .modal-footer {
+    padding-bottom: 0.75rem;
 }
 
 .Keybinds {
     display: grid;
-    color: black;
-    background-color: darkgray;
-    border: 2px solid #ffa94d;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    color: white;
+    background-color: black;
 }
 
-.save-button {
-    background-color: #bb1313;
+.keybind {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
 }
-.close-button {
 
+.keybind p {
+    margin-bottom: 0.5rem;
+    gap: 0.5rem;
 }
 
-    overflow-y: auto;
-    position: fixed;
-    inset: 10vh 10vw 10vh 10vw;
-    z-index: 2000;
-    display: grid;
-    grid-template-rows: 9fr 1fr;
-    grid-template-columns: 1fr 1fr;
-
-    position: fixed;
-    top: 5%;
-    left: 5%;
-    z-index: 2000;
-    background-color: gray;
-    border: 2px solid #ffa94d;
-    */
+.modal-footer {
+    padding-bottom: 0.75rem;
+}

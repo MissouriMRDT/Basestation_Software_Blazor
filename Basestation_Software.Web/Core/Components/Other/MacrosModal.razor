@@ -16,48 +16,107 @@
 
         <Body>
             <div class="Keybinds">
-                <p>moveLeft</p>
-                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.MoveLeft)" />
-                @(moveLeft == string.Empty ? "Set key" : moveLeft)
-                <p>moveRight</p>
-                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.MoveRight)" />
-                @(moveRight == string.Empty ? "Set key" : moveRight)
-                <p>packetToggle</p>
-                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.PacketToggle)" />
-                @(packetToggle == string.Empty ? "Set key" : packetToggle)
-                <p>newComponent</p>
-                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.NewComponent)" />
-                @(newComponent == string.Empty ? "Set key" : newComponent)
-                <p>resubscribe</p>
-                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.Resubscribe)" />
-                @(resubscribe == string.Empty ? "Set key" : resubscribe)
-                <p>newPage</p>
-                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.NewPage)" />
-                @(newPage == string.Empty ? "Set key" : newPage)
-                <p>deletePage</p>
-                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.DeletePage)" />
-                @(deletePage == string.Empty ? "Set key" : deletePage)
-                <p>openCopyArea</p>
-                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.OpenCopyArea)" />
-                @(openCopyArea == string.Empty ? "Set key" : openCopyArea)
-                <p>openMacrosModal</p>
-                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.OpenMacrosModal)" />
-                @(openMacrosModal == string.Empty ? "Set key" : openMacrosModal)
-                <p>savePage</p>
-                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.SavePage)" />
-                @(savePage == string.Empty ? "Set key" : savePage)
-                <p>luna</p>
-                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.Luna)" />
-                @(luna == string.Empty ? "Set key" : luna)
-                <p>toggleLightMode</p>
-                <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.ToggleLightMode)" />
-                @(toggleLightMode == string.Empty ? "Set key" : toggleLightMode)
+                <div class="keybind">
+                    <p>moveLeft</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.MoveLeft)" aria-label="Set move-left keybind">
+                        <i class="bi-arrow-left" aria-hidden="true"></i>
+                    </button>
+                    @(moveLeft == string.Empty ? "Set key" : moveLeft)
+                </div>
+
+                <div class="keybind">
+                    <p>moveRight</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.MoveRight)" aria-label="Set move-right keybind">
+                        <i class="bi-arrow-right" aria-hidden="true"></i>
+                    </button>
+                    @(moveRight == string.Empty ? "Set key" : moveRight)
+                </div>
+
+                <div class="keybind">
+                    <p>packetToggle</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.PacketToggle)" aria-label="Set packet-toggle keybind">
+                        <i class="bi-toggle-on" aria-hidden="true"></i>
+                    </button>
+                    @(packetToggle == string.Empty ? "Set key" : packetToggle)
+                </div>
+
+                <div class="keybind">
+                    <p>newComponent</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.NewComponent)" aria-label="Set new-component keybind">
+                        <i class="bi-node-plus" aria-hidden="true"></i>
+                    </button>
+                    @(newComponent == string.Empty ? "Set key" : newComponent)
+                </div>
+
+                <div class="keybind">
+                    <p>resubscribe</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.Resubscribe)" aria-label="Set resubscribe keybind">
+                        <img src="/images/rovecomm-sil.png" alt="" style="height: 8px">
+                    </button>
+                    @(resubscribe == string.Empty ? "Set key" : resubscribe)
+                </div>
+
+                <div class="keybind">
+                    <p>newPage</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.NewPage)" aria-label="Set new-page keybind">
+                        <i class="bi-file-earmark-plus" aria-hidden="true"></i>
+                    </button>
+                    @(newPage == string.Empty ? "Set key" : newPage)
+                </div>
+
+                <div class="keybind">
+                    <p>deletePage</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.DeletePage)" aria-label="Set delete-page keybind">
+                        <i class="bi-trash" aria-hidden="true"></i>
+                    </button>
+                    @(deletePage == string.Empty ? "Set key" : deletePage)
+                </div>
+
+                <div class="keybind">
+                    <p>openCopyArea</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.OpenCopyArea)" aria-label="Set edit-page keybind">
+                        <i class="bi-pencil" aria-hidden="true"></i>
+                    </button>
+                    @(openCopyArea == string.Empty ? "Set key" : openCopyArea)
+                </div>
+
+                <div class="keybind">
+                    <p>openMacrosModal</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.OpenMacrosModal)" aria-label="Set edit-macros keybind">
+                        <i class="bi-pencil" aria-hidden="true"></i>
+                    </button>
+                    @(openMacrosModal == string.Empty ? "Set key" : openMacrosModal)
+                </div>
+
+                <div class="keybind">
+                    <p>savePage</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.SavePage)" aria-label="Set save-page keybind">
+                        <i class="bi-floppy" aria-hidden="true"></i>
+                    </button>
+                    @(savePage == string.Empty ? "Set key" : savePage)
+                </div>
+
+                <div class="keybind">
+                    <p>luna</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.Luna)" aria-label="Set Luna keybind">
+                        <i class="bi-moon" aria-hidden="true"></i>
+                    </button>
+                    @(luna == string.Empty ? "Set key" : luna)
+                </div>
+
+                <div class="keybind">
+                    <p>toggleLightMode</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.ToggleLightMode)" aria-label="Set light-mode keybind">
+                        <i class="bi-sun" aria-hidden="true"></i>
+                    </button>
+                    @(toggleLightMode == string.Empty ? "Set key" : toggleLightMode)
+                </div>
             </div>
         </Body>
 
         <Footer>
-            <button type="button" class="save-button" @onclick="SaveAndClose">Save</button>
-            <button type="button" class="close-button" @onclick="CloseAsync">Close</button>
+            <button type="button" class="success" @onclick="SaveAndClose">Save</button>
+            <button type="button" class="danger" @onclick="CloseAsync">Close</button>
         </Footer>
     </Modal>
 </div>
