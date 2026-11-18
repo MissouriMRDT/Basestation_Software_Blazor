@@ -124,9 +124,7 @@ button {
     --btn-color: #fff;
     --btn-fill: #0d6efd;
     transition: all 100ms;
-    margin-top: 4px;
 }
-
 
 button:hover {
     color: var(--btn-color);
@@ -195,6 +193,29 @@ button.warning {
 
 button.danger {
     --btn-fill: #dc3545;
+}
+
+@scope (.component-body) {
+    button {
+        box-shadow: 0px 4px 0px -2px var(--primary), 0px 4px 0px 0px var(--btn-fill);
+        margin-bottom: 4px !important;
+        margin-top: 0px !important;
+        z-index: 5;
+        transform: none;
+    }
+
+    button:hover {
+        box-shadow: 0 4px color-mix(in oklab, var(--btn-fill) 70%, var(--primary));
+        transform: none;
+    }
+
+    button:active,
+    button[checked] {
+        box-shadow: none;
+        margin-bottom: 0px !important;
+        margin-top: 4px !important;
+        transform: none;
+    }
 }
 
 input {
