@@ -3,6 +3,9 @@ let componentTimeouts = [];
 let components = [];
 
 let capturedIndex = -1;
+
+const registry = new WeakMap();
+
 function clampedPercent(x, min, max) {
     return Math.min(Math.max(Math.round(x * 100), min), max);
 }
@@ -10,11 +13,7 @@ function clampedPercent(x, min, max) {
 class Component {
     constructor(dom) {
         this.dom = dom;
-        this.idx = parseInt(this.dom.getAttribute("idx"));
-        this.x = this.dom.offsetLeft;
-        this.y = this.dom.offsetTop;
-        this.width = this.dom.offsetWidth;
-        this.height = this.dom.offsetHeight;
+        this.refresh();
 
         this.editPositionType = 0;
         // 0 = none, 1 = drag
@@ -65,6 +64,7 @@ class Component {
                 // allow components to be deleted
                 return;
             }
+            this.refresh();
             capturedIndex = this.idx;
             dotNetComponent.invokeMethodAsync("PauseSave");
             this.dom.setPointerCapture(event.pointerId);
@@ -173,6 +173,14 @@ class Component {
         this.dom.style.width = `${width}%`;
         this.dom.style.height = `${height}%`;
     };
+
+    refresh() {
+        this.idx = parseInt(this.dom.getAttribute("idx"));
+        this.x = this.dom.offsetLeft;
+        this.y = this.dom.offsetTop;
+        this.width = this.dom.offsetWidth;
+        this.height = this.dom.offsetHeight;
+    }
 }
 
 export function setDotNetComponent(dotNetComponent_) {
@@ -200,12 +208,21 @@ export function delete_(idx) {
 
     dotNetComponent.invokeMethodAsync("DeleteComponent", idx);
 }
+
 export function registerComponents() {
     components = [];
-    for (const component of document.getElementsByClassName("component")) {
-        components.push(new Component(component));
+    for (const dom of document.getElementsByClassName("component")) {
+        let component = registry.get(dom);
+        if (component) {
+            component.refresh();
+        } else {
+            component = new Component(dom);
+            registry.set(dom, component);
+        }
+        components.push(component);
     }
 }
+
 export function updateComponentsStyle() {
     for (let i = 0; i < components.length; i++) {
         components[i].updateStyle();
