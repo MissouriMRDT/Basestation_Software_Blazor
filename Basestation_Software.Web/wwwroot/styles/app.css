@@ -112,6 +112,7 @@ select {
 }
 
 button {
+    position: relative;
     cursor: pointer;
     padding: 2px 4px;
     border-radius: 3px;
@@ -204,9 +205,12 @@ button.danger {
         transform: none;
     }
 
+    button::before {
+        display: none;
+    }
+
     button:hover {
-        box-shadow: 0 4px color-mix(in oklab, var(--btn-fill) 70%, var(--primary));
-        transform: none;
+        box-shadow: 0px 4px 0px -2px color-mix(in oklab, var(--btn-fill) 70%, var(--primary)), 0px 4px 0px 0px var(--btn-fill);
     }
 
     button:active,
@@ -214,7 +218,6 @@ button.danger {
         box-shadow: none;
         margin-bottom: 0px !important;
         margin-top: 4px !important;
-        transform: none;
     }
 }
 
