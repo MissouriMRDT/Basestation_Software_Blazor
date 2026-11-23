@@ -85,7 +85,7 @@ button,
 select {
     font-family: "B612", Helvetica, Arial, sans-serif;
     font-size: 8px;
-    padding: 0 2px;
+    padding: 0px 2px;
 }
 
 #blazor-error-ui {
@@ -112,6 +112,7 @@ select {
 }
 
 button {
+    position: relative;
     cursor: pointer;
     padding: 2px 4px;
     border-radius: 3px;
@@ -193,6 +194,31 @@ button.warning {
 
 button.danger {
     --btn-fill: #dc3545;
+}
+
+@scope (.component-body) {
+    button {
+        box-shadow: 0px 4px 0px -2px var(--primary), 0px 4px 0px 0px var(--btn-fill);
+        margin-bottom: 4px !important;
+        margin-top: 0px !important;
+        z-index: 5;
+        transform: none;
+    }
+
+    button::before {
+        display: none;
+    }
+
+    button:hover {
+        box-shadow: 0px 4px 0px -2px color-mix(in oklab, var(--btn-fill) 70%, var(--primary)), 0px 4px 0px 0px var(--btn-fill);
+    }
+
+    button:active,
+    button[checked] {
+        box-shadow: none;
+        margin-bottom: 0px !important;
+        margin-top: 4px !important;
+    }
 }
 
 input {
@@ -351,7 +377,6 @@ input[type=checkbox].danger:checked {
     top: 0;
     width: 16px;
     height: 16px;
-    cursor: move;
 }
 
 .component-resize {
