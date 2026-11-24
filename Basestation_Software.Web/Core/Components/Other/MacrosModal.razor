@@ -1,0 +1,222 @@
+@using Microsoft.EntityFrameworkCore
+@using Basestation_Software.Web.Core.Services
+@using Basestation_Software.Web.Models
+
+@inject DatabaseContext DbContext
+@inject DatabaseService DatabaseService
+
+@attribute [ComponentAttributes.Ignore]
+
+
+<div class="macros-modal" tabindex="-1" @onkeydown="CaptureKey">
+    <Modal @ref="_modal">
+        <Header>
+            <h5 class="modal-title">Set Keybinds</h5>
+        </Header>
+
+        <Body>
+            <div class="Keybinds">
+                <div class="keybind">
+                    <p>moveLeft</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.MoveLeft)" aria-label="Set move-left keybind">
+                        <i class="bi-arrow-left" aria-hidden="true"></i>
+                    </button>
+                    @(moveLeft == string.Empty ? "Set key" : moveLeft)
+                </div>
+
+                <div class="keybind">
+                    <p>moveRight</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.MoveRight)" aria-label="Set move-right keybind">
+                        <i class="bi-arrow-right" aria-hidden="true"></i>
+                    </button>
+                    @(moveRight == string.Empty ? "Set key" : moveRight)
+                </div>
+
+                <div class="keybind">
+                    <p>packetToggle</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.PacketToggle)" aria-label="Set packet-toggle keybind">
+                        <i class="bi-toggle-on" aria-hidden="true"></i>
+                    </button>
+                    @(packetToggle == string.Empty ? "Set key" : packetToggle)
+                </div>
+
+                <div class="keybind">
+                    <p>newComponent</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.NewComponent)" aria-label="Set new-component keybind">
+                        <i class="bi-node-plus" aria-hidden="true"></i>
+                    </button>
+                    @(newComponent == string.Empty ? "Set key" : newComponent)
+                </div>
+
+                <div class="keybind">
+                    <p>resubscribe</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.Resubscribe)" aria-label="Set resubscribe keybind">
+                        <img src="/images/rovecomm-sil.png" alt="" style="height: 8px">
+                    </button>
+                    @(resubscribe == string.Empty ? "Set key" : resubscribe)
+                </div>
+
+                <div class="keybind">
+                    <p>newPage</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.NewPage)" aria-label="Set new-page keybind">
+                        <i class="bi-file-earmark-plus" aria-hidden="true"></i>
+                    </button>
+                    @(newPage == string.Empty ? "Set key" : newPage)
+                </div>
+
+                <div class="keybind">
+                    <p>deletePage</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.DeletePage)" aria-label="Set delete-page keybind">
+                        <i class="bi-trash" aria-hidden="true"></i>
+                    </button>
+                    @(deletePage == string.Empty ? "Set key" : deletePage)
+                </div>
+
+                <div class="keybind">
+                    <p>openCopyArea</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.OpenCopyArea)" aria-label="Set edit-page keybind">
+                        <i class="bi-pencil" aria-hidden="true"></i>
+                    </button>
+                    @(openCopyArea == string.Empty ? "Set key" : openCopyArea)
+                </div>
+
+                <div class="keybind">
+                    <p>openMacrosModal</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.OpenMacrosModal)" aria-label="Set edit-macros keybind">
+                        <i class="bi-pencil" aria-hidden="true"></i>
+                    </button>
+                    @(openMacrosModal == string.Empty ? "Set key" : openMacrosModal)
+                </div>
+
+                <div class="keybind">
+                    <p>savePage</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.SavePage)" aria-label="Set save-page keybind">
+                        <i class="bi-floppy" aria-hidden="true"></i>
+                    </button>
+                    @(savePage == string.Empty ? "Set key" : savePage)
+                </div>
+
+                <div class="keybind">
+                    <p>luna</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.Luna)" aria-label="Set Luna keybind">
+                        <i class="bi-moon" aria-hidden="true"></i>
+                    </button>
+                    @(luna == string.Empty ? "Set key" : luna)
+                </div>
+
+                <div class="keybind">
+                    <p>toggleLightMode</p>
+                    <button type="button" class="update-button" @onclick="() => BeginKeybind(KeybindAction.ToggleLightMode)" aria-label="Set light-mode keybind">
+                        <i class="bi-sun" aria-hidden="true"></i>
+                    </button>
+                    @(toggleLightMode == string.Empty ? "Set key" : toggleLightMode)
+                </div>
+            </div>
+        </Body>
+
+        <Footer>
+            <button type="button" class="success" @onclick="SaveAndClose">Save</button>
+            <button type="button" class="danger" @onclick="CloseAsync">Close</button>
+        </Footer>
+    </Modal>
+</div>
+
+@code {
+    private Modal _modal = default!;
+    private string moveLeft = string.Empty;
+    private string moveRight = string.Empty;
+    private string packetToggle = string.Empty;
+    private string newComponent = string.Empty;
+    private string resubscribe = string.Empty;
+    private string newPage = string.Empty;
+    private string deletePage = string.Empty;
+    private string openCopyArea = string.Empty;
+    private string openMacrosModal = string.Empty;
+    private string savePage = string.Empty;
+    private string luna = string.Empty;
+    private string toggleLightMode = string.Empty;
+
+
+    private enum KeybindAction { MoveLeft, MoveRight, PacketToggle, NewComponent, Resubscribe, NewPage, DeletePage, OpenCopyArea, OpenMacrosModal, SavePage, Luna, ToggleLightMode }
+    private KeybindAction? _pendingKeybind;
+
+    private void BeginKeybind(KeybindAction action) => _pendingKeybind = action;
+
+    private void CaptureKey(KeyboardEventArgs e)
+    {
+        switch (_pendingKeybind)
+        {
+            case KeybindAction.MoveLeft: moveLeft = e.Key; break;
+            case KeybindAction.MoveRight: moveRight = e.Key; break;
+            case KeybindAction.PacketToggle: packetToggle = e.Key; break;
+            case KeybindAction.NewComponent: newComponent = e.Key; break;
+            case KeybindAction.Resubscribe: resubscribe = e.Key; break;
+            case KeybindAction.NewPage: newPage = e.Key; break;
+            case KeybindAction.DeletePage: deletePage = e.Key; break;
+            case KeybindAction.OpenCopyArea: openCopyArea = e.Key; break;
+            case KeybindAction.OpenMacrosModal: openMacrosModal = e.Key; break;
+            case KeybindAction.SavePage: savePage = e.Key; break;
+            case KeybindAction.Luna: luna = e.Key; break;
+            case KeybindAction.ToggleLightMode: toggleLightMode = e.Key; break;
+            default: return;
+        }
+
+        _pendingKeybind = null;
+    }
+
+    public async Task OpenAsync()
+    {
+        var settings = await DbContext.Keybinds.FirstOrDefaultAsync();
+
+        if (settings != null)
+        {
+            moveLeft = settings.MoveLeft;
+            moveRight = settings.MoveRight;
+            packetToggle = settings.PacketToggle;
+            newComponent = settings.NewComponent;
+            resubscribe = settings.Resubscribe;
+            newPage = settings.NewPage;
+            deletePage = settings.DeletePage;
+            openCopyArea = settings.OpenCopyArea;
+            openMacrosModal = settings.OpenMacrosModal;
+            savePage = settings.SavePage;
+            luna = settings.Luna;
+            toggleLightMode = settings.ToggleLightMode;
+        }
+
+        _modal.Open();
+    }
+
+    private async Task SaveAndClose()
+    {
+        var settings = await DbContext.Keybinds.FirstOrDefaultAsync();
+
+        if (settings == null)
+        {
+            settings = new Keybind();
+            DbContext.Keybinds.Add(settings);
+        }
+
+        settings.MoveLeft = moveLeft;
+        settings.MoveRight = moveRight;
+        settings.PacketToggle = packetToggle;
+        settings.NewComponent = newComponent;
+        settings.Resubscribe = resubscribe;
+        settings.NewPage = newPage;
+        settings.DeletePage = deletePage;
+        settings.OpenCopyArea = openCopyArea;
+        settings.OpenMacrosModal = openMacrosModal;
+        settings.SavePage = savePage;
+        settings.Luna = luna;
+        settings.ToggleLightMode = toggleLightMode;
+
+        await DbContext.SaveChangesAsync(DatabaseService);
+
+        await _modal.Close();
+    }
+
+    private async Task CloseAsync()
+    {
+        await _modal.Close();
+    }
+}
